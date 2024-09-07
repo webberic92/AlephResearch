@@ -187,6 +187,8 @@ Once the experiments are complete and metrics have been collected, use Jupyter N
 
    # Display the data
    print(df)
+
+
 <!-- import matplotlib.pyplot as plt
 import seaborn as sns
 
