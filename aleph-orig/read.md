@@ -22,28 +22,13 @@ To implement and test the original Aleph protocol with Merkle trees, follow thes
      ```
    - Follow the on-screen instructions and restart your terminal.
 
-2. **Clone the Aleph Protocol Repository:**
-   - Clone the repository for the Aleph protocol or create a new Rust project:
+2. **Verify Rust Installation:**
+   - Check if Rust and Cargo are installed correctly:
      ```sh
-     git clone <aleph-protocol-repo-url>
-     cd aleph-protocol-repo
+     rustc --version
+     cargo --version
      ```
-   - If you are creating a new project:
-     ```sh
-     cargo new aleph_protocol --bin
-     cd aleph_protocol
-     ```
-
-3. **Add Dependencies to `Cargo.toml`:**
-   - Open the `Cargo.toml` file and add the following dependencies:
-     ```toml
-     [dependencies]
-     tokio = { version = "1", features = ["full"] }
-     tracing = "0.1"
-     tracing-subscriber = "0.2"
-     postgres = "0.19"
-     ```
-   - Save the `Cargo.toml` file.
+   - Both commands should output the installed versions of Rust and Cargo.
 
 ## 2. Install and Configure PostgreSQL
 
@@ -53,34 +38,18 @@ The Rust program uses PostgreSQL to log metrics such as transaction throughput, 
 
 1. **Install PostgreSQL:**
    - **Locally:** Follow the instructions on [PostgreSQL's official website](https://www.postgresql.org/download/) for your operating system.
-   - **On AWS RDS:** You can also set up PostgreSQL on AWS RDS. Follow the AWS [RDS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreatePostgreSQLInstance.html).
+   - **On AWS RDS:** Set up PostgreSQL on AWS RDS following the AWS [RDS documentation](https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_CreatePostgreSQLInstance.html).
 
-2. **Create a PostgreSQL Database and Table:**
-   - Log in to PostgreSQL using `psql` or any other client:
+2. **Verify PostgreSQL Installation:**
+   - Check PostgreSQL version:
+     ```sh
+     psql --version
+     ```
+   - Connect to the local PostgreSQL server to ensure it is running:
      ```sh
      psql -U postgres
      ```
-   - Create a new database:
-     ```sql
-     CREATE DATABASE aleph_protocol;
-     \c aleph_protocol;
-     ```
-   - Create the `metrics` table:
-     ```sql
-     CREATE TABLE metrics (
-         id SERIAL PRIMARY KEY,
-         node_id INTEGER,
-         metric_name TEXT,
-         value FLOAT
-     );
-     ```
-
-3. **Configure the Database Connection:**
-   - Update the database connection string in the Rust code (`main.rs`) if necessary:
-     ```rust
-     match Client::connect("host=localhost user=postgres dbname=aleph_protocol", NoTls) { ... }
-     ```
-   - Adjust the connection string to match your setup (e.g., username, host, database name).
+   - Run `\l` to list databases and ensure you have the correct database set up.
 
 ## 3. Run the Rust Program
 
@@ -121,7 +90,13 @@ We will use AWS Cloud Development Kit (CDK) to deploy the necessary infrastructu
      npm install -g aws-cdk
      ```
 
-2. **Create a New CDK Application:**
+2. **Verify AWS CDK Installation:**
+   - Check AWS CDK version:
+     ```sh
+     cdk --version
+     ```
+
+3. **Create a New CDK Application:**
    - Navigate to your project directory and initialize a new CDK application:
      ```sh
      mkdir aleph-cdk
@@ -129,24 +104,24 @@ We will use AWS Cloud Development Kit (CDK) to deploy the necessary infrastructu
      cdk init app --language=typescript
      ```
 
-3. **Add AWS CDK Dependencies:**
+4. **Add AWS CDK Dependencies:**
    - Install necessary AWS CDK dependencies:
      ```sh
      npm install @aws-cdk/aws-ec2 @aws-cdk/aws-rds @aws-cdk/aws-ssm constructs
      ```
 
-4. **Create AWS Infrastructure:**
+5. **Create AWS Infrastructure:**
    - Use the provided `cdk_infrastructure.ts` code to define the infrastructure:
    - Open `lib/aleph-cdk-stack.ts` and replace its content with the AWS CDK code provided.
 
-5. **Deploy the Infrastructure:**
+6. **Deploy the Infrastructure:**
    - Run the following command to deploy the CDK stack:
      ```sh
      cdk deploy
      ```
    - Follow the prompts to approve the deployment.
 
-6. **Access Database Information:**
+7. **Access Database Information:**
    - After deployment, use AWS Systems Manager (SSM) to retrieve the PostgreSQL endpoint and credentials created by the CDK.
 
 ## 5. Analyze Metrics with Jupyter Notebooks
@@ -161,14 +136,20 @@ Once the experiments are complete and metrics have been collected, use Jupyter N
      pip install notebook
      ```
 
-2. **Start Jupyter Notebooks:**
+2. **Verify Jupyter Installation:**
+   - Check Jupyter version:
+     ```sh
+     jupyter --version
+     ```
+
+3. **Start Jupyter Notebooks:**
    - Run the following command to start Jupyter:
      ```sh
      jupyter notebook
      ```
    - Open your browser to the provided URL.
 
-3. **Connect to PostgreSQL Database:**
+4. **Connect to PostgreSQL Database:**
    - Use a Python library like `psycopg2` or `SQLAlchemy` to connect to the PostgreSQL database:
    ```python
    import psycopg2
@@ -187,12 +168,3 @@ Once the experiments are complete and metrics have been collected, use Jupyter N
 
    # Display the data
    print(df)
-
-
-<!-- import matplotlib.pyplot as plt
-import seaborn as sns
-
-# Plot transaction throughput
-sns.lineplot(x="node_id", y="value", hue="metric_name", data=df)
-plt.title("Transaction Throughput by Node")
-plt.show() -->
