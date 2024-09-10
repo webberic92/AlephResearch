@@ -1,1 +1,2 @@
-aleph-orig/rust/target/
+aleph-/rust/target/*
+AlephResearch/aleph-orig/rust/target/*
