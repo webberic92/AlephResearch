@@ -1,2 +1,3 @@
 aleph-/rust/target/*
 AlephResearch/aleph-orig/rust/target/*
+node_modules/
