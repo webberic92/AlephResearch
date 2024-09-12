@@ -18,9 +18,5 @@ For detailed instructions and implementation specifics, refer to the individual 
 
 - [aleph-rsa](./aleph-rsa/README.md): Guidelines for implementing, running, and assessing the Aleph protocol with RSA accumulators.
 
-## Getting Started
 
-1. **Clone the Repository**
-   ```sh
-   git clone <repository-url>
-   cd AlephResearch
+  
