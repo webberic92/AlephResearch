@@ -1,3 +1,5 @@
 aleph-/rust/target/*
 AlephResearch/aleph-orig/rust/target/*
 node_modules/
+alephResearch.pem
+.venv

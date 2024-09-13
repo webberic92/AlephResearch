@@ -15,7 +15,7 @@ class MyEc2Stack(core.Stack):
                                     instance_type=ec2.InstanceType("t3.medium"),
                                     machine_image=ec2.MachineImage.latest_amazon_linux(),
                                     vpc=vpc,
-                                    key_name="your-key-pair-name"  # Replace with your key pair name
+                                    key_name="alephResearch" # Replace with your key pair name
             )
             
             # Install dependencies using user data script
