@@ -5,14 +5,14 @@ from aws_cdk import (
     core
 )
 
-class MySecurityGroupStack(core.Stack):
+class AlephOriginalSecurityGroupStack(core.Stack):
     def __init__(self, scope: core.Construct, id: str, vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         # Define a security group
-        self.security_group = ec2.SecurityGroup(self, "MySecurityGroup",
+        self.security_group = ec2.SecurityGroup(self, "AlephOriginalSecurityGroup",
                                            vpc=vpc,
-                                           description="Allow SSH and application communication",
+                                           description="Allow SSH and application communication for the original ALEPH nodes.",
                                            allow_all_outbound=True
         )
 
