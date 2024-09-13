@@ -5,5 +5,22 @@ authors = ["Eric Webb webberic92@yahoo.com"]
 edition = "2021"
 
 [dependencies]
-ring = "0.16"  # For cryptographic operations
-tokio = { version = "1", features = ["full"] }  # For asynchronous runtime
+tokio = { version = "1", features = ["full"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+postgres = "0.19"  # For PostgreSQL database interaction
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"  # If you need to handle JSON
+
+[[bin]]
+name = "generate_keys"
+path = "src/generate_keys.rs"
+
+[[bin]]
+name = "alephRBC"
+path = "src/alephRBC.rs"
+
+
+[[bin]]
+name = "node_discovery"
+path = "src/node_discovery.rs"
