@@ -1,0 +1,9 @@
+[package]
+name = "AlephResearch-Original"
+version = "0.1.0"
+authors = ["Eric Webb webberic92@yahoo.com"]
+edition = "2021"
+
+[dependencies]
+ring = "0.16"  # For cryptographic operations
+tokio = { version = "1", features = ["full"] }  # For asynchronous runtime
