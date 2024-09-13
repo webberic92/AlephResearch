@@ -1,0 +1,30 @@
+# aleph_config.toml
+
+# Node Identity Configuration
+[node]
+name = "aleph-node-1"  # Name of your node
+identity = "/path/to/identity/file"  # Path to the identity key file
+
+# Network Configuration
+[network]
+listen_address = "/ip4/0.0.0.0/tcp/30333"  # The address the node listens on
+bootnodes = [
+    "/ip4/127.0.0.1/tcp/30333/p2p/your_bootnode_id"  # Replace with actual bootnodes
+]
+
+# Consensus Parameters
+[consensus]
+batch_size = 256  # Number of transactions per batch
+timeout = 5000  # Timeout in milliseconds
+
+# Data Directories
+[data]
+data_dir = "/home/aleph-node/data"  # Directory where the blockchain data will be stored
+log_dir = "/home/aleph-node/logs"  # Directory where logs will be stored
+
+# Miscellaneous
+[logging]
+level = "info"  # Logging level: info, debug, error, etc.
+
+[metrics]
+enabled = true  # Enable metrics collection
