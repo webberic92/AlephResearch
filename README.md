@@ -10,13 +10,4 @@ AlephResearch is a comprehensive project aimed at enhancing the Aleph protocol's
 
 AlephResearch explores the efficiency of the Aleph protocol under different configurations, focusing on reducing communication overhead and enhancing scalability. The project involves implementing and comparing the original and modified protocols to assess improvements in transaction throughput, latency, and resource utilization.
 
-## Sub-Projects
-
-For detailed instructions and implementation specifics, refer to the individual README files in the sub-project directories:
-
-- [aleph-orig](./aleph-orig/README.md): Instructions for setting up, running, and evaluating the original Aleph protocol.
-
-- [aleph-rsa](./aleph-rsa/README.md): Guidelines for implementing, running, and assessing the Aleph protocol with RSA accumulators.
-
-
   

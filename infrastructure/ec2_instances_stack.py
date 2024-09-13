@@ -21,5 +21,7 @@ class MyEc2Stack(core.Stack):
             # Install dependencies using user data script
             instance.user_data.add_commands(
                 "sudo yum update -y",
-                "sudo yum install -y rust tokio"  # Add additional dependencies as needed
+                "sudo yum install -y rust cargo",
+                "cargo install tokio" 
+                # Add additional dependencies as needed
             )
