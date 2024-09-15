@@ -2,3 +2,5 @@
 AlephResearch/rust/target/*
 alephResearch.pem
 .venv/
+*/__pycache__
+cdk.out/
