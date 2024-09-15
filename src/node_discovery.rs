@@ -1,42 +1,49 @@
+use std::net::IpAddr;
+use std::sync::{Arc, Mutex};
 use tokio::net::UdpSocket;
-use tokio::sync::broadcast;
-use std::collections::HashSet;
-use std::fs;
-use serde_json;
+use serde_json::json;
+use serde::{Serialize, Deserialize};
 
-async fn discover_nodes(socket: UdpSocket, known_nodes: &HashSet<String>) {
-    let mut buf = [0; 1024];
-    let mut discovered_nodes = known_nodes.clone();
+#[derive(Serialize, Deserialize, Debug)]
+struct NodeInfo {
+    ip_address: String,
+    multiaddr: String,
+}
+
+async fn node_discovery(known_nodes: Arc<Mutex<Vec<NodeInfo>>>) {
+    let socket = UdpSocket::bind("0.0.0.0:30333").await.expect("Could not bind socket");
 
     loop {
-        let (size, addr) = socket.recv_from(&mut buf).await.unwrap();
-        let message = String::from_utf8_lossy(&buf[..size]);
-        println!("Received message from {}: {}", addr, message);
-        
-        // Parse and update known nodes
-        if let Ok(node) = serde_json::from_str::<String>(&message) {
-            if !discovered_nodes.contains(&node) {
-                discovered_nodes.insert(node.clone());
-                println!("Discovered new node: {}", node);
+        let mut buf = [0; 1024];
+        let (len, addr) = socket.recv_from(&mut buf).await.expect("Failed to receive data");
+        let received_data = String::from_utf8_lossy(&buf[..len]);
+
+        // Parse the incoming message and add it to known nodes
+        let node_info: NodeInfo = serde_json::from_str(&received_data).unwrap_or_else(|_| {
+            NodeInfo {
+                ip_address: addr.to_string(),
+                multiaddr: format!("/ip4/{}/tcp/30333", addr),
             }
+        });
+
+        let mut known_nodes_locked = known_nodes.lock().unwrap();
+        if !known_nodes_locked.iter().any(|node| node.ip_address == node_info.ip_address) {
+            known_nodes_locked.push(node_info);
+            println!("Discovered new node: {:?}", known_nodes_locked);
         }
 
-        // Write discovered nodes to a file
-        let nodes_list: Vec<String> = discovered_nodes.iter().cloned().collect();
-        let json_data = serde_json::to_string(&nodes_list).unwrap();
-        fs::write("/home/aleph-node/known_nodes.json", json_data).unwrap();
-        
-        // Broadcast the known node list
-        let broadcast_message = serde_json::to_string(&nodes_list).unwrap();
-        socket.send_to(broadcast_message.as_bytes(), addr).await.unwrap();
+        // Periodically write the known nodes to file
+        if known_nodes_locked.len() > 0 {
+            let known_nodes_json = serde_json::to_string(&*known_nodes_locked).unwrap();
+            tokio::fs::write("/home/aleph-node/known_nodes.json", known_nodes_json).await.unwrap();
+        }
     }
 }
 
 #[tokio::main]
 async fn main() {
-    let socket = UdpSocket::bind("0.0.0.0:0").await.unwrap();
-    let known_nodes: HashSet<String> = HashSet::new(); // This could be initialized with known nodes
-
-    println!("Starting node discovery...");
-    discover_nodes(socket, &known_nodes).await;
+    let known_nodes = Arc::new(Mutex::new(Vec::new()));
+    
+    // Start the node discovery process
+    tokio::spawn(node_discovery(known_nodes.clone()));
 }
