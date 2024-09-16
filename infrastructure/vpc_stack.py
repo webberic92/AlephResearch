@@ -4,7 +4,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class MyVpcStack(Stack):
+class AlephVPC(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 

@@ -1,0 +1,7 @@
+Transaction Throughput: Number of transactions processed per second.
+
+Latency: Time from the first node receiving a client request to the (N−f)th node completing the consensus process.
+
+Communication Overhead: Total number of messages exchanged during the consensus process.
+
+Resource Utilization: CPU and memory usage across nodes during the RBC process.
