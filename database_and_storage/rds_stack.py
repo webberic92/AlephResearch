@@ -7,7 +7,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-class RdsStack(Stack):
+class AlephRdsStack(Stack):
     def __init__(self, scope: Construct, id: str, vpc: ec2.IVpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
@@ -35,3 +35,12 @@ class RdsStack(Stack):
         CfnOutput(self, "RDSInstanceUsername",
                    value="dbadmin",  # Update username here
                    description="The username for the RDS PostgreSQL instance.")
+
+        # Output the secret ARN for the RDS credentials
+        secret = db_instance.secret
+        if secret:
+            CfnOutput(self, "RDSInstanceSecretArn",
+                       value=secret.secret_arn,
+                       description="The ARN of the RDS credentials secret.")
+        else:
+            print("Warning: RDS credentials secret was not created.")
