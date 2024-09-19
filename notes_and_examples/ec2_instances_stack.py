@@ -13,7 +13,7 @@ class MyEc2Stack(core.Stack):
         for i in range(2):  # Launch two instances
             instance = ec2.Instance(self, f"MyInstance{i+1}",
                                     instance_type=ec2.InstanceType("t3.medium"),
-                                    machine_image=ec2.MachineImage.latest_amazon_linux(),
+                                    machine_image=ec2.MachineImage.latest_amazon_linux2(),
                                     vpc=vpc,
                                     key_name="alephResearch" # Replace with your key pair name
             )

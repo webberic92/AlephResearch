@@ -11,6 +11,7 @@ tracing-subscriber = "0.3"
 postgres = "0.19"  # For PostgreSQL database interaction
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"  # If you need to handle JSON
+aws-sdk-cloudwatchlogs = "0.0.27-alpha"  # Use the latest version
 
 [[bin]]
 name = "generate_keys"

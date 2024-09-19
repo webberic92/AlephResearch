@@ -1,21 +1,15 @@
-# security_groups.py
-# Security group definitions and rules for EC2 instances.
-from aws_cdk import (
-    aws_ec2 as ec2,
-    Stack
-)
+from aws_cdk import aws_ec2 as ec2
 from constructs import Construct
 
-class AlephOriginalSecurityGroupStack(Stack):
-    def __init__(self, scope: Construct, id: str, vpc: ec2.IVpc, **kwargs) -> None:
-        super().__init__(scope, id, **kwargs)
+class AlephOriginalSecurityGroupStack(Construct):
+    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, security_group_id: str) -> None:
+        super().__init__(scope, id)
 
-        # Define a security group
-        self.security_group = ec2.SecurityGroup(self, "AlephOriginalSecurityGroup",
-                                           vpc=vpc,
-                                           description="Allow SSH and application communication for the original ALEPH nodes.",
-                                           allow_all_outbound=True
-        )
+        # Import existing security group
+        self.security_group = ec2.SecurityGroup.from_security_group_id(self, "ExistingSecurityGroup", security_group_id)
+
+        # Now you can use self.security_group in your other resources
+        
 
         # Allow SSH access (port 22)
         self.security_group.add_ingress_rule(
