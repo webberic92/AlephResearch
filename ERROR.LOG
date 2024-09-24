@@ -1,0 +1,17 @@
+ERROR.LOG
+
+
+  This API will be removed in the next major release.
+
+✨  Synthesis time: 4.83s
+
+MyCdkStack
+MyCdkStackdeployAleph24881BA4:  start: Building d10ec7749a424f8035f6431d510fd3d8b8d0e67e92ead795d7287c2879d8c6d2:current_account-current_region
+MyCdkStackdeployAleph24881BA4:  success: Built d10ec7749a424f8035f6431d510fd3d8b8d0e67e92ead795d7287c2879d8c6d2:current_account-current_region
+MyCdkStackdeployAleph24881BA4:  start: Publishing d10ec7749a424f8035f6431d510fd3d8b8d0e67e92ead795d7287c2879d8c6d2:current_account-current_region
+MyCdkStack: deploying... [2/2]
+MyCdkStackdeployAleph24881BA4:  success: Published d10ec7749a424f8035f6431d510fd3d8b8d0e67e92ead795d7287c2879d8c6d2:current_account-current_region
+
+ ✅  MyCdkStack (no changes)
+
+✨  Deployment time: 0.63s
