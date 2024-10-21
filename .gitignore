@@ -4,3 +4,6 @@ alephResearch.pem
 .venv/
 */__pycache__
 cdk.out/
+alepkey.txt
+cdkSynth.txt
+
