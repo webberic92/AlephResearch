@@ -6,4 +6,5 @@ alephResearch.pem
 cdk.out/
 alepkey.txt
 cdkSynth.txt
+target/*
 
