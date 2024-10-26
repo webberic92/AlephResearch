@@ -4,48 +4,48 @@ use std::collections::HashMap;
 use tracing::{info, error};
 use postgres::{Client, NoTls};
 
-// Define the Node struct, which represents each node in the network.
+// Node represents each network node.
 struct Node {
-    id: usize,  // Unique identifier for the node.
-    total_nodes: usize,  // Total number of nodes in the network.
-    f: usize,  // Fault tolerance (number of Byzantine nodes the network can tolerate).
-    round: usize,  // Current round number the node is processing.
-    received_propose: bool,  // Flag to check if the node has already received a propose message in the current round.
-    storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>,  // Shared storage for data received by the node.
+    id: usize,                    // Unique identifier
+    total_nodes: usize,           // Total number of nodes
+    fault_tolerance: usize,       // Number of Byzantine faults tolerated
+    round: usize,                 // Current processing round
+    received_propose: bool,       // Indicates if propose message was received
+    storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>, // Shared storage
 }
 
-// Define the MerkleTree struct to represent a Merkle tree for data integrity checks.
+// MerkleTree handles data integrity checks.
 #[derive(Clone, Debug)]
 struct MerkleTree {
-    root: Vec<u8>,  // Root hash of the Merkle tree.
-    branches: HashMap<usize, Vec<u8>>,  // Merkle branches per node (used for verifying data).
+    root: Vec<u8>,                // Merkle tree root hash
+    branches: HashMap<usize, Vec<u8>>, // Branches per node for verification
 }
 
-// Implement methods for the MerkleTree struct.
 impl MerkleTree {
     fn new(data: &[u8], n: usize) -> Self {
-        let root = data.to_vec();  // Simplified representation of the Merkle root.
-        let branches = (0..n).map(|i| (i, data.to_vec())).collect();  // Generate branches (simplified).
-        MerkleTree { root, branches }  // Return the newly created MerkleTree struct.
+        let root = data.to_vec(); // Simplified Merkle root
+        let branches = (0..n).map(|i| (i, data.to_vec())).collect();
+        MerkleTree { root, branches }
     }
 
     fn branch(&self, index: usize) -> Option<Vec<u8>> {
-        self.branches.get(&index).cloned()  // Return a clone of the Merkle branch if it exists.
+        self.branches.get(&index).cloned()
     }
 }
 
-// Implement methods for the Node struct.
+// Node's behaviors and message handling.
 impl Node {
-    fn new(id: usize, total_nodes: usize, f: usize, storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>) -> Self {
-        Node { id, total_nodes, f, round: 0, received_propose: false, storage }  // Initialize a new node with the given parameters.
+    fn new(id: usize, total_nodes: usize, fault_tolerance: usize, storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>) -> Self {
+        Node { id, total_nodes, fault_tolerance, round: 0, received_propose: false, storage }
     }
 
     async fn propose(&self, data: Vec<u8>) {
         let shares: Vec<Vec<u8>> = (0..self.total_nodes).map(|_| data.clone()).collect();
         let merkle_tree = MerkleTree::new(&data, self.total_nodes);
         for i in 0..self.total_nodes {
-            let branch = merkle_tree.branch(i).unwrap();
-            self.send_propose(i, merkle_tree.root.clone(), branch, shares[i].clone()).await;
+            if let Some(branch) = merkle_tree.branch(i) {
+                self.send_propose(i, merkle_tree.root.clone(), branch, shares[i].clone()).await;
+            }
         }
     }
 
@@ -54,29 +54,25 @@ impl Node {
     }
 
     async fn handle_propose(&mut self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        if self.received_propose {
+        if self.received_propose || !self.check_size(&share) {
             return;
         }
-
-        if self.check_size(&share) {
-            self.wait_for_dag().await;
-            self.multicast_prevote(root.clone(), branch, share).await;
-        }
-
         self.received_propose = true;
+        self.wait_for_dag().await;
+        self.multicast_prevote(root, branch, share).await;
     }
 
     fn check_size(&self, share: &Vec<u8>) -> bool {
-        let size_limit = 1024;
-        share.len() <= size_limit
+        const SIZE_LIMIT: usize = 1024;
+        share.len() <= SIZE_LIMIT
     }
 
     async fn wait_for_dag(&self) {
-        info!("Node {} waits for DAG to reach round {}", self.id, self.round - 1);
+        info!("Node {} waiting for DAG to reach round {}", self.id, self.round - 1);
     }
 
     async fn multicast_prevote(&self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        info!("Node {} multicasts prevote with root {:?} and share {:?}", self.id, root, share);
+        info!("Node {} multicasting prevote with root {:?} and share {:?}", self.id, root, share);
     }
 
     async fn handle_prevote(&self, root: Vec<u8>, shares: Vec<Vec<u8>>) {
@@ -84,7 +80,6 @@ impl Node {
         if !self.is_valid_unit(&unit) {
             return;
         }
-
         self.wait_for_parents().await;
         self.multicast_commit(root).await;
     }
@@ -94,24 +89,24 @@ impl Node {
     }
 
     async fn wait_for_parents(&self) {
-        info!("Node {} waits for all parents to be received", self.id);
+        info!("Node {} waiting for all parents to be received", self.id);
     }
 
     async fn multicast_commit(&self, root: Vec<u8>) {
-        info!("Node {} multicasts commit with root {:?}", self.id, root);
+        info!("Node {} multicasting commit with root {:?}", self.id, root);
     }
 }
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt::init(); // Initialize the tracing subscriber for logging
+    tracing_subscriber::fmt::init(); // Initialize tracing
 
     let storage = Arc::new(Mutex::new(HashMap::new()));
     let nodes: Vec<Node> = (0..5).map(|id| Node::new(id, 5, 1, storage.clone())).collect();
 
     nodes[0].propose(vec![1, 2, 3, 4]).await; // Node 0 proposes a unit
 
-    // Example connection to PostgreSQL database for storing results
+    // Database connection to PostgreSQL
     match Client::connect("host=localhost user=postgres", NoTls) {
         Ok(mut client) => {
             client.batch_execute("
@@ -122,7 +117,7 @@ async fn main() {
                     value FLOAT
                 )
             ").unwrap();
-            info!("Connected to PostgreSQL and ensured table exists.");
+            info!("Connected to PostgreSQL and ensured metrics table exists.");
         },
         Err(e) => error!("Failed to connect to PostgreSQL: {}", e),
     }
