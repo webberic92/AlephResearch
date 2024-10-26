@@ -10,14 +10,11 @@ from constructs import Construct
 from datetime import datetime
 
 class TestAleph(Stack):
-    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+    def __init__(self, scope: Construct, id: str, vpc: ec2.Vpc, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 4
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
-
-        # Create a VPC within the scope of this Stack
-        vpc = ec2.Vpc(self, "MyVpc", max_azs=2)
 
         # Create a log group for CloudWatch logging
         log_group = logs.LogGroup(self, "AlephNodeLogGroup", log_group_name=f"/aleph-research/nodes-{unique_id}")
@@ -121,6 +118,7 @@ class TestAleph(Stack):
 
 # App setup
 app = App()
-TestAleph(app, "TestAleph")  # Instantiate the TestAleph Stack within the app
+vpc = ec2.Vpc(app, "MyVpc", max_azs=2)  # Create a VPC with 2 Availability Zones
+TestAleph(app, "TestAleph", vpc=vpc)
 
 app.synth()
