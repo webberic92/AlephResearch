@@ -1,27 +1,21 @@
 use ring::rand::SystemRandom;
-use ring::signature::Ed25519KeyPair;
+use ring::signature::{Ed25519KeyPair, KeyPair};
 use std::fs::File;
 use std::io::Write;
-use std::env;
+use std::error::Error;
 
-fn main() {
+fn main() -> Result<(), Box<dyn Error>> {
     let rng = SystemRandom::new();
-    let key_pair = Ed25519KeyPair::generate_pkcs8(&rng)
-        .expect("failed to generate key pair");
-    
-    // Get node index from environment variable
-    let node_index = env::var("NODE_INDEX")
-        .expect("NODE_INDEX must be set")
-        .parse::<u8>()
-        .expect("NODE_INDEX must be an integer");
+    let pkcs8_bytes = Ed25519KeyPair::generate_pkcs8(&rng).map_err(|_| "Failed to generate pkcs8 key")?;
+    let key_pair = Ed25519KeyPair::from_pkcs8(pkcs8_bytes.as_ref()).map_err(|_| "Failed to parse pkcs8 key")?;
 
-    let key_file_path = format!("/home/aleph-node/identity-{}.pem", node_index);
-    
-    // Save key to a file
-    let mut key_file = File::create(&key_file_path)
-        .expect("failed to create key file");
-    key_file.write_all(key_pair.as_ref())
-        .expect("failed to write key file");
-    
-    println!("Key saved to {}", key_file_path);
+    // Save private key
+    let mut private_key_file = File::create("private_key.pkcs8")?;
+    private_key_file.write_all(pkcs8_bytes.as_ref())?;
+
+    // Save public key
+    let mut public_key_file = File::create("public_key.der")?;
+    public_key_file.write_all(key_pair.public_key().as_ref())?;
+
+    Ok(())
 }
