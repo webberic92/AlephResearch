@@ -20,8 +20,3 @@ path = "src/generate_keys.rs"
 [[bin]]
 name = "alephRBC"
 path = "src/alephRBC.rs"
-
-
-[[bin]]
-name = "node_discovery"
-path = "src/node_discovery.rs"
