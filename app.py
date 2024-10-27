@@ -13,7 +13,8 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 4
+        INSTANCES_NUMBER = 2  # Define the number of instances
+        TRANSACTIONS_PER_NODE = 4  # Define the number of transactions per node for the test
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -22,101 +23,106 @@ class TestAleph(Stack):
         # Create a log group for CloudWatch logging
         log_group = logs.LogGroup(self, "AlephNodeLogGroup", log_group_name=f"/aleph-research/nodes-{unique_id}")
 
-        # Create a security group for EC2 instances
+        # Create a security group for EC2 instances with intra-VPC communication
         security_group = ec2.SecurityGroup(
             self, "AlephNodeSG",
             vpc=vpc,
             allow_all_outbound=True
         )
-        # Allow incoming traffic on TCP 30333 (node communication)
-        security_group.add_ingress_rule(ec2.Peer.any_ipv4(), ec2.Port.tcp(30333), "Allow node communication on TCP 30333")
+        security_group.add_ingress_rule(ec2.Peer.ipv4(vpc.vpc_cidr_block), ec2.Port.all_traffic(), "Allow VPC-wide communication")
 
-        # IAM Role for EC2 Instances (for terminating instances and pushing logs)
+        # IAM Role for EC2 Instances (for S3, CloudWatch, and SSM)
         instance_role = iam.Role(
             self, "InstanceRole",
             assumed_by=iam.ServicePrincipal("ec2.amazonaws.com")
         )
+        # Attach policies for S3, CloudWatch Logs, and SSM Session Manager
         instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess"))
-        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonEC2FullAccess"))
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3ReadOnlyAccess"))
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"))
 
-        # Add a lightweight t2.micro instance for IP management
+        # Define a lightweight t2.micro instance as the IP Manager
         ip_manager_instance = ec2.Instance(self, "IPManager",
                                            instance_type=ec2.InstanceType("t2.micro"),
                                            machine_image=ec2.MachineImage.latest_amazon_linux2(),
                                            vpc=vpc,
                                            security_group=security_group,
-                                           key_name="alephResearch",
                                            role=instance_role
         )
-        # Install Python and start the IP server for IP allocation
+        # Start the IP server for readiness tracking
         ip_manager_instance.user_data.add_commands(
             "sudo yum update -y",
-            "sudo yum install -y python3 jq",  # Install Python3 and jq for scripting
-            "cd /home/ec2-user",
-            "git clone https://github.com/webberic92/AlephResearch.git",  # Assuming the IP server script is in the same repo
-            "cd AlephResearch/src",  # Navigate to the src directory where the IP server is located
-            "python3 IpServer.py &"  # Start the IP server in the background
+            "sudo yum install -y python3 jq",
+            "aws s3 cp s3://aleph-research/IpServer.py /home/ec2-user/ --quiet",
+            "sudo chmod -R 777 /home/ec2-user",
+            "cd /home/ec2-user", 
+            "python3 IpServer.py &"
         )
 
         # Define the EC2 instances for Aleph nodes
         for i in range(INSTANCES_NUMBER):
-            instance = ec2.Instance(self, f"MyInstance{i+1}",
-                                    instance_type=ec2.InstanceType("t3.medium"),
-                                    machine_image=ec2.MachineImage.latest_amazon_linux2(),
-                                    vpc=vpc,
-                                    security_group=security_group,
-                                    key_name="alephResearch",
-                                    role=instance_role
+            ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
+                                        instance_type=ec2.InstanceType("t3.medium"),
+                                        machine_image=ec2.MachineImage.latest_amazon_linux2(),
+                                        vpc=vpc,
+                                        security_group=security_group,
+                                        role=instance_role
             )
 
-            # Install dependencies and configure the instance with user data
-            instance.user_data.add_commands(
+            # Install dependencies, download binaries, and configure instance
+            ec2_instance.user_data.add_commands(
                 "sudo yum update -y",
-                "sudo yum install -y git cargo jq python3 awslogs amazon-ssm-agent",  # Install necessary packages
-                "git clone https://github.com/webberic92/AlephResearch.git",  # Clone the Aleph repository
-                "cd AlephResearch",
-                "git checkout aleph-orig",  # Checkout the specific branch
-                "cargo build --release",  # Build the project
+                "sudo yum install -y git jq python3 awslogs amazon-ssm-agent aws-cli",
+                "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
+                "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
+                "sudo chmod -R 777 /home/aleph-node/",  # Make binaries executable
 
-                # Create necessary directories for logs
-                "mkdir -p /home/aleph-node/logs/{memory_usage, node_status, error_logs, transaction_metrics, network_metrics}",
-                "mkdir -p /home/aleph-node",
+                # Create necessary logs
+                "mkdir -p /home/aleph-node/logs/",
+                "touch /home/aleph-node/logs/resource_usage",
+                "touch /home/aleph-node/logs/node_status",
+                "touch /home/aleph-node/logs/error_logs",
+                "touch /home/aleph-node/logs/transaction_metrics",
+                "touch /home/aleph-node/logs/network_metrics",
+                "chmod -R 777 /home/aleph-node/logs/",
 
-                # Fetch IP from the IP manager service (IPManager instance running on port 8080)
-                f"NEW_IP=$(curl http://{ip_manager_instance.instance_private_ip}:8080/get_ip)",
-                "if [ -z \"$NEW_IP\" ]; then",
-                "   NEW_IP=\"192.168.0.1\";",  # Default IP if the IP Manager fails
-                "fi",
+                # Initialize node_status log
+                "echo 'Node Status init test...' >> /home/aleph-node/logs/node_status",
+                f"echo 'Registering node IP with IP Manager.' >> /home/aleph-node/logs/node_status",
 
-                # Write network configuration to TOML file
-                "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
-                "echo 'listen_address = \"/ip4/${NEW_IP}/tcp/30333\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'bootnodes = []' >> /home/aleph-node/aleph-node-config.toml",  # No discovery logic needed
+                # Register node as ready with the IP manager
+                f"curl -X POST -H 'Content-Type: application/json' -d '{{\"node_ip\": \"$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready",
 
-                # Add consensus and logging configuration
-                "echo '[consensus]\\nbatch_size = 256\\ntimeout = 5000\\n' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[logging]\\nlevel = \"info\"\\n' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[metrics]\\nenabled = true\\n' >> /home/aleph-node/aleph-node-config.toml",
+                # Loop to check IP Manager endpoint readiness
+                "while true; do",
+                f"  if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '\"all_ready\": true'; then",
+                "    echo 'IP Manager is reachable and all nodes are ready.' >> /home/aleph-node/logs/node_status;",
+                "    break;",  # Exit loop if IP Manager is reachable and all nodes are ready
+                "  else",
+                "    echo 'IP Manager not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "  fi",
+                "  sleep 5;",  # Wait before retrying
+                "done",
 
-                # Start the Aleph node with the generated configuration file
-                "./target/release/aleph-node --config /home/aleph-node/aleph-node-config.toml",
+                "echo 'About to start alephRBC' >> /home/aleph-node/logs/node_status",
 
-                # CloudWatch Logs setup
-                "sudo tee /etc/awslogs/awslogs.conf << EOF",
-                "[general]",
-                "state_file = /var/lib/awslogs/agent-state",
-                f"[/home/aleph-node/logs]",
-                "file = /home/aleph-node/logs/*.log",
-                f"log_group_name = {log_group.log_group_name}",
-                f"log_stream_name = MyInstance{i+1}/aleph-node-log",
-                "datetime_format = %Y-%m-%d %H:%M:%S",
-                "EOF",
-                "sudo systemctl start awslogsd"
+                # Start the Aleph node with the configuration file
+                "/home/ec2-user/alephRBC --config /home/aleph-node/aleph-node-config.toml",
+
+                # Log resource usage every 5 seconds
+                "while true; do",
+                "  top -b -n1 | grep 'Cpu(s)' >> /home/aleph-node/logs/resource_usage",
+                "  free -m >> /home/aleph-node/logs/resource_usage",
+                "  sleep 5;",  # Log every 5 seconds
+                "done &",
+
+                # Sync logs to S3 after the test
+                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{TRANSACTIONS_PER_NODE}transactions/instance-{i+1}/ --quiet"
             )
 
             # Output the instance ID for debugging
             CfnOutput(self, f"InstanceIdOutput{i+1}",
-                      value=instance.instance_id,
+                      value=ec2_instance.instance_id,
                       description=f"Instance ID for MyInstance{i+1}")
 
 # App setup
