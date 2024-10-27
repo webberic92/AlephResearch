@@ -104,7 +104,31 @@ class TestAleph(Stack):
                 "  sleep 5;",  # Wait before retrying
                 "done",
 
-                "echo 'About to start alephRBC' >> /home/aleph-node/logs/node_status",
+                "echo 'Time to Configure config.toml' >> /home/aleph-node/logs/node_status",
+
+                # Create config.toml with dynamic values
+                "cat <<EOF > /home/aleph-node/aleph-node-config.toml",
+                "[network]",
+                "listen_address = \"/ip4/0.0.0.0/tcp/30333\"",
+                "bootnodes = [\$NODES]",
+
+                "[consensus]",
+                f"batch_size = {TRANSACTIONS_PER_NODE}",
+                "transaction_size = 256",  # bytes
+
+                "[logging]",
+                "level = \"info\"",
+                "log_file_path = \"/home/aleph-node/logs/consensus.log\"",
+
+                "[metrics]",
+                "enabled = true",
+                "transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"",
+
+                "[node]",
+                f"id = {i + 1}",  # Each node gets a unique ID
+                f"total_nodes = {INSTANCES_NUMBER}",
+                "EOF",
+
 
                 # Start the Aleph node with the configuration file
                 "/home/ec2-user/alephRBC --config /home/aleph-node/aleph-node-config.toml",
