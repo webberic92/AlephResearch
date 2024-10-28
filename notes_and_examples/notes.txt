@@ -1,0 +1,22 @@
+netstat -tuln | grep 8080
+
+
+curl -X POST -H 'Content-Type: application/json' -d '{"node_ip": "10.0.189.234"}' http://10.0.143.81:8080/node_ready -v
+
+curl http://10.0.143.81:8080/get_all_nodes
+
+
+
+
+[network]
+listen_address = "/ip4/0.0.0.0/tcp/30333"
+bootnodes = ['']
+[consensus]
+batch_size = 4
+transaction_size = 256
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+[node]
+id = 1
+total_nodes = 2
