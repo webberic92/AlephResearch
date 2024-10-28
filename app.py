@@ -59,7 +59,6 @@ class TestAleph(Stack):
             "python3 IpServer.py &"
         )
 
-        # Define the EC2 instances for Aleph nodes
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
                                         instance_type=ec2.InstanceType("t3.medium"),
@@ -68,30 +67,35 @@ class TestAleph(Stack):
                                         security_group=security_group,
                                         role=instance_role
             )
-
-            # Install dependencies, download binaries, and configure instance
+            
+            # Ensure `user_data` commands are added for each instance within the loop
             ec2_instance.user_data.add_commands(
+                # Install dependencies and prepare environment
                 "sudo yum update -y",
                 "sudo yum install -y git jq python3 awslogs amazon-ssm-agent aws-cli",
                 "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
-                "sudo chmod -R 777 /home/aleph-node/",  # Make binaries executable
+                "sudo chmod -R 777 /home/aleph-node/",
 
                 # Create necessary logs
                 "mkdir -p /home/aleph-node/logs/",
                 "touch /home/aleph-node/logs/resource_usage",
                 "touch /home/aleph-node/logs/node_status",
-                "touch /home/aleph-node/logs/error_logs",
                 "touch /home/aleph-node/logs/transaction_metrics",
-                "touch /home/aleph-node/logs/network_metrics",
                 "chmod -R 777 /home/aleph-node/logs/",
 
-                # Initialize node_status log
-                "echo 'Node Status init test...' >> /home/aleph-node/logs/node_status",
-                f"echo 'Registering node IP with IP Manager.' >> /home/aleph-node/logs/node_status",
+                # Retrieve and log the private IP for ongoing reference
+                "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
+                "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /home/aleph-node/logs/node_status",
 
-                # Register node as ready with the IP manager
-                f"curl -X POST -H 'Content-Type: application/json' -d '{{\"node_ip\": \"$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)\"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready",
+                # Register node as ready with the IP Manager using the expanded PRIVATE_IP
+                f"""RESPONSE=$(curl -s -o /dev/null -w "%{{http_code}}" -X POST -H 'Content-Type: application/json' -d '{{"node_ip": "'$PRIVATE_IP'"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready);
+                if [ "$RESPONSE" -eq 200 ]; then
+                    echo "Node registration success." >> /home/aleph-node/logs/node_status;
+                else
+                    echo "Node registration failed with status $RESPONSE." >> /home/aleph-node/logs/node_status;
+                fi""",
+
 
                 # Loop to check IP Manager endpoint readiness
                 "while true; do",
@@ -104,13 +108,15 @@ class TestAleph(Stack):
                 "  sleep 5;",  # Wait before retrying
                 "done",
 
-                "echo 'Time to Configure config.toml' >> /home/aleph-node/logs/node_status",
+                # Retrieve all node IPs for bootnodes configuration
+                f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r '.ips | map(\"/ip4/\" + . + \"/tcp/30333\") | join(\",\")')",
+                "echo 'Retrieved all nodes for bootnodes: $NODES' >> /home/aleph-node/logs/node_status",
 
                 # Create config.toml with dynamic values
                 "cat <<EOF > /home/aleph-node/aleph-node-config.toml",
                 "[network]",
                 "listen_address = \"/ip4/0.0.0.0/tcp/30333\"",
-                "bootnodes = [\$NODES]",
+                "bootnodes = [$NODES]",
 
                 "[consensus]",
                 f"batch_size = {TRANSACTIONS_PER_NODE}",
@@ -118,20 +124,15 @@ class TestAleph(Stack):
 
                 "[logging]",
                 "level = \"info\"",
-                "log_file_path = \"/home/aleph-node/logs/consensus.log\"",
-
-                "[metrics]",
-                "enabled = true",
                 "transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"",
 
                 "[node]",
-                f"id = {i + 1}",  # Each node gets a unique ID
+                f"id = {i + 1}",
                 f"total_nodes = {INSTANCES_NUMBER}",
                 "EOF",
 
-
                 # Start the Aleph node with the configuration file
-                "/home/ec2-user/alephRBC --config /home/aleph-node/aleph-node-config.toml",
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml",
 
                 # Log resource usage every 5 seconds
                 "while true; do",
@@ -143,11 +144,11 @@ class TestAleph(Stack):
                 # Sync logs to S3 after the test
                 f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{TRANSACTIONS_PER_NODE}transactions/instance-{i+1}/ --quiet"
             )
-
+            
             # Output the instance ID for debugging
             CfnOutput(self, f"InstanceIdOutput{i+1}",
-                      value=ec2_instance.instance_id,
-                      description=f"Instance ID for MyInstance{i+1}")
+                    value=ec2_instance.instance_id,
+                    description=f"Instance ID for MyInstance{i+1}")
 
 # App setup
 app = App()
