@@ -109,27 +109,25 @@ class TestAleph(Stack):
                 "done",
 
                 # Retrieve all node IPs for bootnodes configuration
-                f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r '.ips | map(\"/ip4/\" + . + \"/tcp/30333\") | join(\",\")')",
-                "echo 'Retrieved all nodes for bootnodes: $NODES' >> /home/aleph-node/logs/node_status",
+                f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r '.node_ips  | map("/ip4/" + . + "/tcp/30333") | join(",")');
+                echo "Retrieved all nodes for nodes: $NODES" >> /home/aleph-node/logs/node_status;
+                cat <<EOF > /home/aleph-node/aleph-node-config.toml
+            [network]
+            listen_address = "/ip4/0.0.0.0/tcp/30333"
+            nodes = [$NODES]
 
-                # Create config.toml with dynamic values
-                "cat <<EOF > /home/aleph-node/aleph-node-config.toml",
-                "[network]",
-                "listen_address = \"/ip4/0.0.0.0/tcp/30333\"",
-                "bootnodes = [$NODES]",
+            [consensus]
+            batch_size = {TRANSACTIONS_PER_NODE}
+            transaction_size = 256  # bytes
 
-                "[consensus]",
-                f"batch_size = {TRANSACTIONS_PER_NODE}",
-                "transaction_size = 256",  # bytes
+            [logging]
+            level = "info"
+            transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
 
-                "[logging]",
-                "level = \"info\"",
-                "transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"",
-
-                "[node]",
-                f"id = {i + 1}",
-                f"total_nodes = {INSTANCES_NUMBER}",
-                "EOF",
+            [node]
+            id = {i + 1}
+            total_nodes = {INSTANCES_NUMBER}
+            EOF""",
 
                 # Start the Aleph node with the configuration file
                 "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml",
