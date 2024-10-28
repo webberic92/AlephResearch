@@ -111,7 +111,7 @@ class TestAleph(Stack):
                 # Retrieve all node IPs for bootnodes configuration
                 f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r '.node_ips  | map("/ip4/" + . + "/tcp/30333") | join(",")');
                 echo "Retrieved all nodes for nodes: $NODES" >> /home/aleph-node/logs/node_status;
-                cat <<EOF > /home/aleph-node/aleph-node-config.toml
+                cat > /home/aleph-node/aleph-node-config.toml <<EOF
             [network]
             listen_address = "/ip4/0.0.0.0/tcp/30333"
             nodes = [$NODES]
