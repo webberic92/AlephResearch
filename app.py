@@ -14,7 +14,8 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 2  # Define the number of instances
-        TRANSACTIONS_PER_NODE = 4  # Define the number of transactions per node for the test
+        BATCH_SIZE = 4  # Define the number of transactions per node for the test
+        TRANSACTION_SIZE = 256 #Bytes
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -116,9 +117,12 @@ class TestAleph(Stack):
 
             # Part 2: Retrieve Node IPs and Generate Config File
             ec2_instance.user_data.add_commands(
-                # Retrieve all node IPs for bootnodes configuration
-                f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r '.node_ips | map("/ip4/" + . + "/tcp/30333") | join(",")')""",
-                "echo \"Retrieved all nodes for nodes: $NODES\" >> /home/aleph-node/logs/node_status",
+                # Retrieve all node IPs, exclude the current node's IP, and format for config
+                f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | \
+                jq -r --arg PRIVATE_IP "$PRIVATE_IP" '.node_ips | map(select(. != $PRIVATE_IP)) | map("/ip4/" + . + "/tcp/30333") | join(",")')""",
+                
+                # Log the filtered node list
+                "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
 
                 # Write config.toml file line by line
                 "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
@@ -127,8 +131,8 @@ class TestAleph(Stack):
 
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'batch_size = {TRANSACTIONS_PER_NODE}' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'transaction_size = 256  # bytes' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
 
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
@@ -154,7 +158,7 @@ class TestAleph(Stack):
                 "done &",
 
                 # Sync logs to S3 after the test
-                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{TRANSACTIONS_PER_NODE}transactions/instance-{i+1}/ --quiet"
+                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet"
             )
 
             # Output the instance ID for debugging
