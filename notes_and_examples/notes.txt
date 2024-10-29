@@ -1,8 +1,8 @@
 netstat -tuln | grep 8080
 
 
-curl -X POST -H 'Content-Type: application/json' -d '{"node_ip": "10.0.189.234"}' http://10.0.143.81:8080/node_ready -v
-
+curl -X POST -H 'Content-Type: application/json' -d '{"node_ip": "10.0.189.234"}' http://10.0.177.172:8080/node_ready -v
+10.0.177.172
 curl http://10.0.143.81:8080/get_all_nodes
 
 
@@ -20,3 +20,25 @@ transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
 [node]
 id = 1
 total_nodes = 2
+
+
+
+
+
+
+    Should the nodes list be fetched from the API rather than the TOML?
+    Yes, it’s possible for the alephRBC code to fetch the list of nodes dynamically from the API. This can reduce configuration complexity by eliminating the need to manually add node IPs to the config.toml file for every node instance. Additionally, if the current node’s IP is included in the list of bootnodes, the code should exclude it when attempting to establish peer connections.
+
+    Is listen_address in the TOML required?
+    The listen address can be defined directly in the Rust code with "/ip4/0.0.0.0/tcp/30333". Defining it within the TOML allows for easier reconfiguration if the address or port ever needs to be changed without recompiling the code.
+
+    Should batch_size and transaction_size be defined in TOML or Rust?
+    Including these in the TOML provides flexibility to adjust transaction and batch size settings dynamically without modifying the Rust code. This approach is beneficial if you anticipate frequently adjusting these parameters.
+
+    Is the transaction_metrics_log path required in TOML?
+    Defining the log path in TOML allows easy reconfiguration if the log file path ever needs to change. However, if the path is fixed and unlikely to change, it could be hardcoded in Rust.
+
+    Should id and total_nodes be in the TOML?
+    Since total_nodes can be derived from the bootnode list fetched from the API, it’s not strictly necessary in the TOML. Likewise, id could be set dynamically at runtime if each node can determine its ID based on some unique property.
+
+Given these considerations, the code below is optimized based on your questions. I’ll remove the TOML settings that are best defined within Rust, leaving only the fields that benefit most from TOML configuration. Here’s the revised code and minimal TOML file.
