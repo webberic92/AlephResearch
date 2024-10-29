@@ -198,7 +198,7 @@ impl Node {
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-    let payload = vec![0u8; 250]; // Payload of 250 Bytes
+    
 
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let storage = Arc::new(Mutex::new(HashMap::new()));
@@ -207,6 +207,6 @@ async fn main() {
         .collect();
 
     for node in &mut nodes {
-        node.propose(payload).await;
+        node.propose(vec![1, 2, 3, 4]).await;
     }
 }
