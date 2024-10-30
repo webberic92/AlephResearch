@@ -1,7 +1,7 @@
 sh-4.2$ cat /home/aleph-node/aleph-node-config.toml
 [network]
 listen_address = "/ip4/0.0.0.0/tcp/30333"
-nodes = [/ip4/10.0.145.75/tcp/30333]
+nodes = [/ip4/10.0.145.75/tcp/30333] #theres only 2 nodes on the network and you dont display ur self.
 
 [consensus]
 batch_size = 4
