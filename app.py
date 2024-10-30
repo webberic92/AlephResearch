@@ -77,6 +77,8 @@ class TestAleph(Stack):
                 "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
+                "chmod +x /home/aleph-node/alephRBC/",
+                
 
                 # Create necessary logs
                 "mkdir -p /home/aleph-node/logs/",
@@ -147,8 +149,27 @@ class TestAleph(Stack):
 
             # Part 3: Start Aleph Node and Monitor Logs
             ec2_instance.user_data.add_commands(
-                # Start the Aleph node with the configuration file
-                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml",
+
+
+                "echo 'Starting alephRBC execution' >> /home/aleph-node/logs/node_status",
+
+                # Check if the alephRBC binary is reachable and log the result
+                "if [ -f /home/aleph-node/alephRBC ]; then",
+                "  echo 'alephRBC binary is found at /home/aleph-node/alephRBC' >> /home/aleph-node/logs/node_status;",
+                "else",
+                "  echo 'ERROR: alephRBC binary not found at /home/aleph-node/alephRBC' >> /home/aleph-node/logs/node_status;",
+                "fi",
+
+                # Check if the configuration file is reachable and log the result
+                "if [ -f /home/aleph-node/aleph-node-config.toml ]; then",
+                "  echo 'Configuration file found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
+                "else",
+                "  echo 'ERROR: Configuration file not found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
+                "fi",
+
+                # Start the Aleph node with the configuration file and log the outcome
+                "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"                
 
                 # Log resource usage every 5 seconds
                 "while true; do",
