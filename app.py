@@ -73,12 +73,7 @@ class TestAleph(Stack):
             ec2_instance.user_data.add_commands(
                 # Install dependencies and prepare environment
                 "sudo yum update -y",
-                "sudo yum install -y git jq python3 awslogs amazon-ssm-agent aws-cli",
-                "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
-                "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
-                "sudo chmod -R 777 /home/aleph-node/",
-                "chmod +x /home/aleph-node/alephRBC/",
-                
+                "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
                 # Create necessary logs
                 "mkdir -p /home/aleph-node/logs/",
@@ -86,6 +81,49 @@ class TestAleph(Stack):
                 "touch /home/aleph-node/logs/node_status",
                 "touch /home/aleph-node/logs/transaction_metrics",
                 "chmod -R 777 /home/aleph-node/logs/",
+
+                # Continue setup for Aleph node
+                "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
+                "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
+                "sudo chmod -R 777 /home/aleph-node/",
+
+                # # Install make 4.3
+                # "echo 'Starting installation of make 4.3...' >> /home/aleph-node/logs/node_status",
+                # "wget https://ftp.gnu.org/gnu/make/make-4.3.tar.gz",
+                # "echo 'Downloaded make-4.3.tar.gz, extracting...' >> /home/aleph-node/logs/node_status",
+                # "tar -zxvf make-4.3.tar.gz",
+                # "cd make-4.3",
+                # "echo 'Configuring make 4.3 build...' >> /home/aleph-node/logs/node_status",
+                # "./configure",
+                # "echo 'Building make 4.3 with 4 threads...' >> /home/aleph-node/logs/node_status",
+                # "make -j4",
+                # "echo 'Installing make 4.3...' >> /home/aleph-node/logs/node_status",
+                # "sudo make install",
+                # "echo 'Make 4.3 installation complete.' >> /home/aleph-node/logs/node_status",
+                # "cd ..",
+
+                # # Part 2: Install `glibc 2.34`
+                # "echo 'Starting installation of glibc 2.34...' >> /home/aleph-node/logs/node_status",
+                # "mkdir -p /home/aleph-node/glibc-2.34",  # Optional: create directory for clarity
+                # "cd /home/aleph-node",
+                # "wget http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz",
+                # "echo 'Downloaded glibc-2.34.tar.gz, extracting...' >> /home/aleph-node/logs/node_status",
+                # "tar -zxvf glibc-2.34.tar.gz",
+                # "cd glibc-2.34",
+                # "mkdir build",
+                # "cd build",
+                # "echo 'Configuring glibc 2.34 build with prefix /opt/glibc-2.34...' >> /home/aleph-node/logs/node_status",
+                # "MAKE=/usr/local/bin/make ../configure --prefix=/opt/glibc-2.34",
+                # "echo 'Building glibc 2.34 with 4 threads...' >> /home/aleph-node/logs/node_status",
+                # "make -j4",
+                # "echo 'Installing glibc 2.34 to /opt...' >> /home/aleph-node/logs/node_status",
+                # "sudo make install",
+                # "echo 'glibc 2.34 installation complete.' >> /home/aleph-node/logs/node_status",
+
+                # # Update the LD_LIBRARY_PATH environment variable to point to the new glibc
+                # "echo 'Updating LD_LIBRARY_PATH to include /opt/glibc-2.34/lib...' >> /home/aleph-node/logs/node_status",
+                # "export LD_LIBRARY_PATH=/opt/glibc-2.34/lib:$LD_LIBRARY_PATH",
+                # "echo 'LD_LIBRARY_PATH updated. glibc 2.34 setup complete.' >> /home/aleph-node/logs/node_status",
 
                 # Retrieve and log the private IP for ongoing reference
                 "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
@@ -149,8 +187,6 @@ class TestAleph(Stack):
 
             # Part 3: Start Aleph Node and Monitor Logs
             ec2_instance.user_data.add_commands(
-
-
                 "echo 'Starting alephRBC execution' >> /home/aleph-node/logs/node_status",
 
                 # Check if the alephRBC binary is reachable and log the result
@@ -167,15 +203,18 @@ class TestAleph(Stack):
                 "  echo 'ERROR: Configuration file not found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
                 "fi",
 
+                # Sync logs to S3 after the test
+                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
+
                 # Start the Aleph node with the configuration file and log the outcome
                 "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"                
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
 
                 # Log resource usage every 5 seconds
                 "while true; do",
                 "  top -b -n1 | grep 'Cpu(s)' >> /home/aleph-node/logs/resource_usage",
                 "  free -m >> /home/aleph-node/logs/resource_usage",
-                "  sleep 5;",  # Log every 5 seconds
+                "  sleep 60;",  # Log every 5 seconds
                 "done &",
 
                 # Sync logs to S3 after the test
