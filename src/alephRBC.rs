@@ -1,15 +1,14 @@
+use std::fs::OpenOptions;
+use std::io::Write;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use std::collections::HashMap;
 use tracing::info;
 use std::time::{Instant, Duration, SystemTime, UNIX_EPOCH};
-use std::fs::OpenOptions;
-use std::io::Write;
 use serde::Deserialize;
 use std::fs;
 use toml;
 
-// Add the missing import for MerkleTree
 struct MerkleTree {
     root: Vec<u8>,
     branches: HashMap<usize, Vec<u8>>,
@@ -32,21 +31,6 @@ impl MerkleTree {
         context.update(data);
         context.finish().as_ref().to_vec()
     }
-}
-
-
-
-
-fn write_host_log(message: &str) -> std::io::Result<()> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_secs();
-    let log_path = "/home/aleph-node/logs/node_status";
-    let formatted_message = format!("[{}] {}\n", timestamp, message);
-    let mut file = OpenOptions::new().append(true).create(true).open(log_path)?;
-    file.write_all(formatted_message.as_bytes())?;
-    Ok(())
 }
 
 #[derive(Debug, serde::Deserialize)]
@@ -162,6 +146,18 @@ impl Node {
     }
 }
 
+fn write_host_log(message: &str) -> std::io::Result<()> {
+    let timestamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("Time went backwards")
+        .as_secs();
+    let log_path = "/home/aleph-node/logs/node_status";
+    let formatted_message = format!("[{}] {}\n", timestamp, message);
+    let mut file = OpenOptions::new().append(true).create(true).open(log_path)?;
+    file.write_all(formatted_message.as_bytes())?;
+    Ok(())
+}
+
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -169,7 +165,7 @@ async fn main() {
     if let Err(e) = write_host_log("Host initialization complete.") {
         eprintln!("Failed to write to host log: {}", e);
     }
-
+    
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let storage = Arc::new(Mutex::new(HashMap::new()));
     let mut node = Node::new(&config, 1, storage.clone());
