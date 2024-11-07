@@ -26,14 +26,14 @@ impl MerkleTree {
     }
 
     fn hash_data(data: &[u8]) -> Vec<u8> {
-        use ring::digest::{Context, SHA256}; // Import hashing functionality from ring
+        use ring::digest::{Context, SHA256};
         let mut context = Context::new(&SHA256);
         context.update(data);
         context.finish().as_ref().to_vec()
     }
 }
 
-#[derive(Debug, serde::Deserialize)]
+#[derive(Debug, Deserialize)]
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
@@ -106,8 +106,7 @@ impl Node {
     }
 
     async fn propose(&mut self, data: Vec<u8>) {
-        let start_time = Instant::now();
-        let shares: Vec<Vec<u8>> = self.erasure_code(data.clone());
+        let shares = self.erasure_code(data.clone());
         let merkle_tree = MerkleTree::new(&data, self.total_nodes);
 
         for i in 0..self.total_nodes {
@@ -115,9 +114,6 @@ impl Node {
                 self.send_propose(i, merkle_tree.root.clone(), branch, shares[i].clone()).await;
             }
         }
-
-        let duration = start_time.elapsed();
-        self.log_throughput(duration, shares.len()).unwrap();
     }
 
     fn erasure_code(&self, data: Vec<u8>) -> Vec<Vec<u8>> {
@@ -127,22 +123,34 @@ impl Node {
     async fn send_propose(&mut self, to: usize, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
         info!("Node {} sends propose to {} with root {:?} and share {:?}", self.id, to, root, share);
         self.message_count += 1;
+        // Simulate prevote reception
+        self.handle_prevote(root, branch, share).await;
     }
 
-    fn log_throughput(&self, duration: Duration, transaction_count: usize) -> std::io::Result<()> {
-        let throughput = transaction_count as f64 / duration.as_secs_f64();
-        let log_msg = format!(
-            "Node {}: Throughput = {:.2} transactions/sec over {} transactions.\n",
-            self.id, throughput, transaction_count
-        );
-        self.write_to_log("throughput.log", log_msg)
+    async fn handle_prevote(&mut self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
+        if !self.received_propose {
+            if self.check_size(&share) {
+                self.received_propose = true;
+                info!("Node {}: Prevote phase with root {:?}", self.id, root);
+                // In a real system, this would be a multicast to all other nodes
+                self.handle_commit(root).await;
+            }
+        }
     }
 
-    fn write_to_log(&self, file_name: &str, message: String) -> std::io::Result<()> {
-        let log_path = format!("/home/aleph-node/logs/{}", file_name);
-        let mut file = OpenOptions::new().append(true).create(true).open(log_path)?;
-        file.write_all(message.as_bytes())?;
-        Ok(())
+    async fn handle_commit(&mut self, root: Vec<u8>) {
+        info!("Node {}: Entering commit phase with root {:?}", self.id, root);
+        // In a real system, this would broadcast commit to all nodes
+        self.finalize_broadcast(root).await;
+    }
+
+    async fn finalize_broadcast(&mut self, root: Vec<u8>) {
+        info!("Node {}: Finalizing broadcast with root {:?}", self.id, root);
+        // Output the proposed data as the reliable broadcast output
+    }
+
+    fn check_size(&self, share: &[u8]) -> bool {
+        share.len() <= self.transaction_size
     }
 }
 
