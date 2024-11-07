@@ -162,7 +162,7 @@ fn write_host_log(message: &str) -> std::io::Result<()> {
 async fn main() {
     tracing_subscriber::fmt::init();
 
-    if let Err(e) = write_host_log("Host initialization complete.") {
+    if let Err(e) = write_host_log("AlephRBC rust code initialized.") {
         eprintln!("Failed to write to host log: {}", e);
     }
     

@@ -157,33 +157,33 @@ class TestAleph(Stack):
 
             # Part 2: Retrieve Node IPs and Generate Config File
             ec2_instance.user_data.add_commands(
-                # Retrieve all node IPs, exclude the current node's IP, and format for config
-                f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | \
-                jq -r --arg PRIVATE_IP "$PRIVATE_IP" '.node_ips | map(select(. != $PRIVATE_IP)) | map("/ip4/" + . + "/tcp/30333") | join(",")')""",
-                
-                # Log the filtered node list
-                "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
+            # Retrieve all node IPs, exclude the current node's IP, and format for config
+            f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | \
+            jq -r --arg PRIVATE_IP "$PRIVATE_IP" '.node_ips | map(select(. != $PRIVATE_IP)) | map("\"/ip4/" + . + "/tcp/30333\"") | join(",")')""",
 
-                # Write config.toml file line by line
-                "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
-                "echo 'listen_address = \"/ip4/0.0.0.0/tcp/30333\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
+            # Log the filtered node list
+            "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
 
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+            # Write config.toml file line by line
+            "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
+            "echo 'listen_address = \"/ip4/0.0.0.0/tcp/30333\"' >> /home/aleph-node/aleph-node-config.toml",
+            "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
 
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'level = \"info\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"' >> /home/aleph-node/aleph-node-config.toml",
+            "echo '' >> /home/aleph-node/aleph-node-config.toml",
+            "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
 
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[node]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml"
-            )
+            "echo '' >> /home/aleph-node/aleph-node-config.toml",
+            "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
+            "echo 'level = \"info\"' >> /home/aleph-node/aleph-node-config.toml",
+            "echo 'transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"' >> /home/aleph-node/aleph-node-config.toml",
+
+            "echo '' >> /home/aleph-node/aleph-node-config.toml",
+            "echo '[node]' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml"
+        )
 
             # Part 3: Start Aleph Node and Monitor Logs
             ec2_instance.user_data.add_commands(
