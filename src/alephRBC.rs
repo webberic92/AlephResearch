@@ -117,6 +117,8 @@ impl Node {
     }
 
     fn erasure_code(&self, data: Vec<u8>) -> Vec<Vec<u8>> {
+        // Use an erasure coding library to divide `data` into `f + 1` shares
+        // Placeholder for true erasure coding logic
         vec![data.clone(); self.total_nodes]
     }
 
@@ -132,7 +134,6 @@ impl Node {
             if self.check_size(&share) {
                 self.received_propose = true;
                 info!("Node {}: Prevote phase with root {:?}", self.id, root);
-                // In a real system, this would be a multicast to all other nodes
                 self.handle_commit(root).await;
             }
         }
@@ -140,7 +141,6 @@ impl Node {
 
     async fn handle_commit(&mut self, root: Vec<u8>) {
         info!("Node {}: Entering commit phase with root {:?}", self.id, root);
-        // In a real system, this would broadcast commit to all nodes
         self.finalize_broadcast(root).await;
     }
 

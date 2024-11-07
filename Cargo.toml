@@ -14,6 +14,7 @@ serde_json = "1.0"  # JSON handling
 aws-sdk-cloudwatchlogs = "1.53.0"  # Latest stable version
 ring = "0.17.8"  # Add ring for cryptographic functions
 toml = "0.8.19"
+reed-solomon-erasure = "6.0.0"  # Adjust the version if necessary
 
 [[bin]]
 name = "generate_keys"
