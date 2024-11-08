@@ -13,9 +13,10 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 2  # Define the number of instances
+        INSTANCES_NUMBER = 3  # Define the number of instances
         BATCH_SIZE = 4  # Define the number of transactions per node for the test
         TRANSACTION_SIZE = 256 #Bytes
+        ROUND_SIZE = 1 
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -173,6 +174,7 @@ class TestAleph(Stack):
             "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
             f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
             f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'round_size = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
 
             "echo '' >> /home/aleph-node/aleph-node-config.toml",
             "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
