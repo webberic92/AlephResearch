@@ -1,23 +1,36 @@
 use std::fs::OpenOptions;
 use std::io::Write;
 use std::sync::Arc;
-use tokio::sync::Mutex;
-use std::collections::HashMap;
+use tokio::sync::{Mutex, RwLock};
+use std::collections::{HashMap, HashSet};
 use tracing::info;
 use std::time::{Instant, Duration, SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
 use std::fs;
 use toml;
+use reed_solomon_erasure::galois_8::ReedSolomon;
+use ring::digest::{Context, SHA256};
 
+const FAULT_TOLERANCE: usize = 1; // f
+const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1; // f + 1 for fault tolerance
+
+// DAG Node for tracking dependencies
+#[derive(Clone)]
+struct DagNode {
+    round: usize,
+    data: Vec<u8>,
+}
+
+// Merkle Tree for integrity checking
 struct MerkleTree {
     root: Vec<u8>,
     branches: HashMap<usize, Vec<u8>>,
 }
 
 impl MerkleTree {
-    fn new(data: &[u8], n: usize) -> Self {
-        let root = MerkleTree::hash_data(data);
-        let branches = (0..n).map(|i| (i, data.to_vec())).collect();
+    fn new(data: &[Vec<u8>], n: usize) -> Self {
+        let root = MerkleTree::hash_data(&data.concat());
+        let branches = (0..n).map(|i| (i, data[i].clone())).collect();
         MerkleTree { root, branches }
     }
 
@@ -26,13 +39,13 @@ impl MerkleTree {
     }
 
     fn hash_data(data: &[u8]) -> Vec<u8> {
-        use ring::digest::{Context, SHA256};
         let mut context = Context::new(&SHA256);
         context.update(data);
         context.finish().as_ref().to_vec()
     }
 }
 
+// Configuration structs
 #[derive(Debug, Deserialize)]
 struct Config {
     network: NetworkConfig,
@@ -51,6 +64,7 @@ struct NetworkConfig {
 struct ConsensusConfig {
     batch_size: usize,
     transaction_size: usize,
+    round: usize,  // Round for tracking
 }
 
 #[derive(Debug, Deserialize)]
@@ -76,7 +90,9 @@ struct Node {
     fault_tolerance: usize,
     received_propose: bool,
     storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>,
-    message_count: usize,
+    quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
+    dag: Arc<Mutex<HashMap<usize, DagNode>>>, // DAG for round tracking
+    round: usize,
     batch_size: usize,
     transaction_size: usize,
 }
@@ -89,7 +105,9 @@ impl Node {
             fault_tolerance,
             received_propose: false,
             storage,
-            message_count: 0,
+            quorum_votes: Arc::new(RwLock::new(HashMap::new())),
+            dag: Arc::new(Mutex::new(HashMap::new())),
+            round: config.consensus.round,
             batch_size: config.consensus.batch_size,
             transaction_size: config.consensus.transaction_size,
         };
@@ -106,8 +124,8 @@ impl Node {
     }
 
     async fn propose(&mut self, data: Vec<u8>) {
-        let shares = self.erasure_code(data.clone());
-        let merkle_tree = MerkleTree::new(&data, self.total_nodes);
+        let shares = self.erasure_code(&data);
+        let merkle_tree = MerkleTree::new(&shares, self.total_nodes);
 
         for i in 0..self.total_nodes {
             if let Some(branch) = merkle_tree.branch(i) {
@@ -116,27 +134,46 @@ impl Node {
         }
     }
 
-    fn erasure_code(&self, data: Vec<u8>) -> Vec<Vec<u8>> {
-        // Use an erasure coding library to divide `data` into `f + 1` shares
-        // Placeholder for true erasure coding logic
-        vec![data.clone(); self.total_nodes]
+    fn erasure_code(&self, data: &[u8]) -> Vec<Vec<u8>> {
+        let rs = ReedSolomon::new(MINIMUM_SHARES, self.total_nodes - MINIMUM_SHARES)
+            .expect("Failed to create ReedSolomon instance");
+
+        let mut shards: Vec<Vec<u8>> = vec![vec![0; data.len()]; self.total_nodes];
+        for (i, shard) in shards.iter_mut().take(MINIMUM_SHARES).enumerate() {
+            shard.copy_from_slice(data);
+        }
+
+        rs.encode(&mut shards).expect("Failed to encode data");
+        shards
     }
 
     async fn send_propose(&mut self, to: usize, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
         info!("Node {} sends propose to {} with root {:?} and share {:?}", self.id, to, root, share);
-        self.message_count += 1;
-        // Simulate prevote reception
         self.handle_prevote(root, branch, share).await;
     }
 
     async fn handle_prevote(&mut self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        if !self.received_propose {
-            if self.check_size(&share) {
-                self.received_propose = true;
-                info!("Node {}: Prevote phase with root {:?}", self.id, root);
+        if !self.received_propose && self.check_size(&share) {
+            self.wait_for_round(self.round - 1).await;
+            self.received_propose = true;
+            info!("Node {}: Prevote phase with root {:?}", self.id, root);
+            self.register_vote(root.clone()).await;
+
+            if self.check_quorum(&root).await {
                 self.handle_commit(root).await;
             }
         }
+    }
+
+    async fn register_vote(&self, root: Vec<u8>) {
+        let mut quorum_votes = self.quorum_votes.write().await;
+        let counter = quorum_votes.entry(root).or_insert(0);
+        *counter += 1;
+    }
+
+    async fn check_quorum(&self, root: &[u8]) -> bool {
+        let quorum_votes = self.quorum_votes.read().await;
+        quorum_votes.get(root).cloned().unwrap_or(0) >= 2 * self.fault_tolerance + 1
     }
 
     async fn handle_commit(&mut self, root: Vec<u8>) {
@@ -146,14 +183,29 @@ impl Node {
 
     async fn finalize_broadcast(&mut self, root: Vec<u8>) {
         info!("Node {}: Finalizing broadcast with root {:?}", self.id, root);
-        // Output the proposed data as the reliable broadcast output
+        let storage = self.storage.lock().await;
+        if let Some(data) = storage.get(&self.id) {
+            if MerkleTree::hash_data(data) == root {
+                info!("Node {} successfully validated data integrity", self.id);
+            } else {
+                info!("Node {} detected Merkle root mismatch!", self.id);
+            }
+        }
     }
 
     fn check_size(&self, share: &[u8]) -> bool {
         share.len() <= self.transaction_size
     }
+
+    async fn wait_for_round(&self, required_round: usize) {
+        let dag = self.dag.lock().await;
+        while dag.get(&required_round).is_none() {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+        }
+    }
 }
 
+// Helper function to log to host system
 fn write_host_log(message: &str) -> std::io::Result<()> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -176,7 +228,7 @@ async fn main() {
     
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let storage = Arc::new(Mutex::new(HashMap::new()));
-    let mut node = Node::new(&config, 1, storage.clone());
+    let mut node = Node::new(&config, FAULT_TOLERANCE, storage.clone());
 
     let data = vec![0u8; config.consensus.transaction_size];
     node.propose(data).await;
