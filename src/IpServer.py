@@ -7,7 +7,7 @@ assigned_ips = []  # Stores the IPs of ready nodes
 
 # Dictionary to track node readiness
 node_status = {}
-total_nodes = 2  # Define the total number of nodes required for readiness
+total_nodes = 4  # Define the total number of nodes required for readiness
 
 # Lock for thread-safe access
 lock = Lock()
