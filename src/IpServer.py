@@ -1,5 +1,6 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 import json
+import sys
 from threading import Lock
 
 # List to track assigned IPs
@@ -7,7 +8,6 @@ assigned_ips = []  # Stores the IPs of ready nodes
 
 # Dictionary to track node readiness
 node_status = {}
-total_nodes = 4  # Define the total number of nodes required for readiness
 
 # Lock for thread-safe access
 lock = Lock()
@@ -67,8 +67,15 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
 def run(server_class=HTTPServer, handler_class=IPAllocationHandler, port=8080):
     server_address = ('', port)
     httpd = server_class(server_address, handler_class)
-    print(f'Starting IP readiness server on port {port}...')
+    print(f'Starting IP readiness server on port {port} with total nodes required: {total_nodes}...')
     httpd.serve_forever()
 
 if __name__ == "__main__":
+    # Ensure INSTANCES_NUMBER is provided as a command-line argument
+    if len(sys.argv) < 2:
+        print("Usage: python3 IpServer.py <INSTANCES_NUMBER>")
+        sys.exit(1)
+    # Parse INSTANCES_NUMBER from command-line arguments
+    total_nodes = int(sys.argv[1])
+    
     run()

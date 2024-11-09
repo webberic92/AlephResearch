@@ -58,7 +58,7 @@ class TestAleph(Stack):
             "aws s3 cp s3://aleph-research/IpServer.py /home/ec2-user/ --quiet",
             "sudo chmod -R 777 /home/ec2-user",
             "cd /home/ec2-user", 
-            "python3 IpServer.py &"
+            f"python3 IpServer.py {INSTANCES_NUMBER} &"
         )
 
         for i in range(INSTANCES_NUMBER):
