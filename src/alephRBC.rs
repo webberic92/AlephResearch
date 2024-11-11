@@ -4,24 +4,24 @@ use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 use std::collections::{HashMap, HashSet};
 use tracing::info;
-use std::time::{Instant, Duration, SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
 use std::fs;
 use toml;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use ring::digest::{Context, SHA256};
 
-const FAULT_TOLERANCE: usize = 1; // f
-const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1; // f + 1 for fault tolerance
+const FAULT_TOLERANCE: usize = 1;
+const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1;
+const CB: usize = 100; // Example batch-specific size parameter
 
-// DAG Node for tracking dependencies
 #[derive(Clone)]
 struct DagNode {
     round: usize,
     data: Vec<u8>,
+    parents: Vec<usize>, // Tracking specific parent nodes
 }
 
-// Merkle Tree for integrity checking
 struct MerkleTree {
     root: Vec<u8>,
     branches: HashMap<usize, Vec<u8>>,
@@ -45,7 +45,6 @@ impl MerkleTree {
     }
 }
 
-// Configuration structs
 #[derive(Debug, Deserialize)]
 struct Config {
     network: NetworkConfig,
@@ -64,7 +63,7 @@ struct NetworkConfig {
 struct ConsensusConfig {
     batch_size: usize,
     transaction_size: usize,
-    round: usize,  // Round for tracking
+    round: usize,
 }
 
 #[derive(Debug, Deserialize)]
@@ -88,13 +87,15 @@ struct Node {
     id: usize,
     total_nodes: usize,
     fault_tolerance: usize,
-    received_propose: bool,
+    received_propose: HashMap<usize, bool>, // Track for each round
     storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    dag: Arc<Mutex<HashMap<usize, DagNode>>>, // DAG for round tracking
+    commit_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
+    dag: Arc<Mutex<HashMap<usize, DagNode>>>,
     round: usize,
     batch_size: usize,
     transaction_size: usize,
+    termination_state: HashMap<usize, bool>, // Track per round
 }
 
 impl Node {
@@ -103,23 +104,22 @@ impl Node {
             id: config.node.id,
             total_nodes: config.node.total_nodes,
             fault_tolerance,
-            received_propose: false,
+            received_propose: HashMap::new(),
             storage,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
+            commit_votes: Arc::new(RwLock::new(HashMap::new())),
             dag: Arc::new(Mutex::new(HashMap::new())),
             round: config.consensus.round,
             batch_size: config.consensus.batch_size,
             transaction_size: config.consensus.transaction_size,
+            termination_state: HashMap::new(),
         };
         node.log_initialization();
         node
     }
 
     fn log_initialization(&self) {
-        let log_msg = format!(
-            "Node initialized with ID {} and total nodes {}\n",
-            self.id, self.total_nodes
-        );
+        let log_msg = format!("Node initialized with ID {} and total nodes {}\n", self.id, self.total_nodes);
         write_host_log(&log_msg).expect("Failed to log initialization");
     }
 
@@ -153,13 +153,14 @@ impl Node {
     }
 
     async fn handle_prevote(&mut self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        if !self.received_propose && self.check_size(&share) {
+        if !*self.received_propose.entry(self.round).or_insert(false) && self.check_size(&share) {
             self.wait_for_round(self.round - 1).await;
-            self.received_propose = true;
+            self.received_propose.insert(self.round, true);
             info!("Node {}: Prevote phase with root {:?}", self.id, root);
             self.register_vote(root.clone()).await;
 
             if self.check_quorum(&root).await {
+                self.reconstruct_unit(&share).await;
                 self.handle_commit(root).await;
             }
         }
@@ -176,9 +177,38 @@ impl Node {
         quorum_votes.get(root).cloned().unwrap_or(0) >= 2 * self.fault_tolerance + 1
     }
 
+    async fn reconstruct_unit(&mut self, share: &[u8]) {
+        let unit_data = share.to_vec(); // Placeholder: reconstruct the data from shares
+        let validity_check = self.validate_unit(&unit_data);
+        if !validity_check {
+            panic!("Node {}: Invalid unit after reconstruction", self.id);
+        }
+        info!("Node {} successfully reconstructed valid unit", self.id);
+    }
+
+    fn validate_unit(&self, unit: &[u8]) -> bool {
+        unit.len() >= self.transaction_size
+    }
+
     async fn handle_commit(&mut self, root: Vec<u8>) {
+        self.wait_for_parents_output(vec![self.round - 1]).await;
         info!("Node {}: Entering commit phase with root {:?}", self.id, root);
-        self.finalize_broadcast(root).await;
+        self.register_commit(root.clone()).await;
+
+        if self.check_commit_threshold(&root).await {
+            self.finalize_broadcast(root).await;
+        }
+    }
+
+    async fn register_commit(&self, root: Vec<u8>) {
+        let mut commit_votes = self.commit_votes.write().await;
+        let counter = commit_votes.entry(root).or_insert(0);
+        *counter += 1;
+    }
+
+    async fn check_commit_threshold(&self, root: &[u8]) -> bool {
+        let commit_votes = self.commit_votes.read().await;
+        commit_votes.get(root).cloned().unwrap_or(0) >= self.fault_tolerance + 1
     }
 
     async fn finalize_broadcast(&mut self, root: Vec<u8>) {
@@ -187,6 +217,7 @@ impl Node {
         if let Some(data) = storage.get(&self.id) {
             if MerkleTree::hash_data(data) == root {
                 info!("Node {} successfully validated data integrity", self.id);
+                self.termination_state.insert(self.round, true);
             } else {
                 info!("Node {} detected Merkle root mismatch!", self.id);
             }
@@ -194,7 +225,7 @@ impl Node {
     }
 
     fn check_size(&self, share: &[u8]) -> bool {
-        share.len() <= self.transaction_size
+        share.len() <= self.transaction_size * CB
     }
 
     async fn wait_for_round(&self, required_round: usize) {
@@ -203,9 +234,14 @@ impl Node {
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
     }
+
+    async fn wait_for_parents_output(&self, parent_rounds: Vec<usize>) {
+        for round in parent_rounds {
+            self.wait_for_round(round).await;
+        }
+    }
 }
 
-// Helper function to log to host system
 fn write_host_log(message: &str) -> std::io::Result<()> {
     let timestamp = SystemTime::now()
         .duration_since(UNIX_EPOCH)
