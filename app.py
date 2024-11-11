@@ -174,7 +174,7 @@ class TestAleph(Stack):
             "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
             f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
             f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
-            f"echo 'round_size = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+            f"echo 'round = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
 
             "echo '' >> /home/aleph-node/aleph-node-config.toml",
             "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
