@@ -88,44 +88,6 @@ class TestAleph(Stack):
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
 
-                # # Install make 4.3
-                # "echo 'Starting installation of make 4.3...' >> /home/aleph-node/logs/node_status",
-                # "wget https://ftp.gnu.org/gnu/make/make-4.3.tar.gz",
-                # "echo 'Downloaded make-4.3.tar.gz, extracting...' >> /home/aleph-node/logs/node_status",
-                # "tar -zxvf make-4.3.tar.gz",
-                # "cd make-4.3",
-                # "echo 'Configuring make 4.3 build...' >> /home/aleph-node/logs/node_status",
-                # "./configure",
-                # "echo 'Building make 4.3 with 4 threads...' >> /home/aleph-node/logs/node_status",
-                # "make -j4",
-                # "echo 'Installing make 4.3...' >> /home/aleph-node/logs/node_status",
-                # "sudo make install",
-                # "echo 'Make 4.3 installation complete.' >> /home/aleph-node/logs/node_status",
-                # "cd ..",
-
-                # # Part 2: Install `glibc 2.34`
-                # "echo 'Starting installation of glibc 2.34...' >> /home/aleph-node/logs/node_status",
-                # "mkdir -p /home/aleph-node/glibc-2.34",  # Optional: create directory for clarity
-                # "cd /home/aleph-node",
-                # "wget http://ftp.gnu.org/gnu/libc/glibc-2.34.tar.gz",
-                # "echo 'Downloaded glibc-2.34.tar.gz, extracting...' >> /home/aleph-node/logs/node_status",
-                # "tar -zxvf glibc-2.34.tar.gz",
-                # "cd glibc-2.34",
-                # "mkdir build",
-                # "cd build",
-                # "echo 'Configuring glibc 2.34 build with prefix /opt/glibc-2.34...' >> /home/aleph-node/logs/node_status",
-                # "MAKE=/usr/local/bin/make ../configure --prefix=/opt/glibc-2.34",
-                # "echo 'Building glibc 2.34 with 4 threads...' >> /home/aleph-node/logs/node_status",
-                # "make -j4",
-                # "echo 'Installing glibc 2.34 to /opt...' >> /home/aleph-node/logs/node_status",
-                # "sudo make install",
-                # "echo 'glibc 2.34 installation complete.' >> /home/aleph-node/logs/node_status",
-
-                # # Update the LD_LIBRARY_PATH environment variable to point to the new glibc
-                # "echo 'Updating LD_LIBRARY_PATH to include /opt/glibc-2.34/lib...' >> /home/aleph-node/logs/node_status",
-                # "export LD_LIBRARY_PATH=/opt/glibc-2.34/lib:$LD_LIBRARY_PATH",
-                # "echo 'LD_LIBRARY_PATH updated. glibc 2.34 setup complete.' >> /home/aleph-node/logs/node_status",
-
                 # Retrieve and log the private IP for ongoing reference
                 "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
                 "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /home/aleph-node/logs/node_status",
@@ -158,9 +120,11 @@ class TestAleph(Stack):
 
             # Part 2: Retrieve Node IPs and Generate Config File
             ec2_instance.user_data.add_commands(
+
+            "PRIVATE_IP=$(grep 'PRIVATE_IP =' /home/aleph-node/logs/node_status | awk -F '= ' '{print $2}')",
+
             # Retrieve all node IPs, exclude the current node's IP, and format for config
-            f"""NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | \
-            jq -r --arg PRIVATE_IP "$PRIVATE_IP" '.node_ips | map(select(. != $PRIVATE_IP)) | map("\"/ip4/" + . + "/tcp/30333\"") | join(",")')""",
+            f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r --arg PRIVATE_IP \"$PRIVATE_IP\" '.node_ips | map(select(. != $PRIVATE_IP)) | map(\"/ip4/\" + . + \"/tcp/30333\") | join(\",\")')",
 
             # Log the filtered node list
             "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
