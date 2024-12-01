@@ -18,3 +18,12 @@ AlephResearch is dedicated to exploring the efficiency of the Aleph protocol by 
 
 For more information on the overall project and other branches, refer to the main [AlephResearch README](../README.md).
 
+## How To Compile
+
+- cargo build --release --target x86_64-unknown-linux-musl
+
+## How To Push to AWS
+- aws s3 cp target/x86_64-unknown-linux-musl/release/alephRBC s3://aleph-research/
+
+## How to Deploy to AWS
+- cdk deploy
