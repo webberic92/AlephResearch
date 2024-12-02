@@ -123,7 +123,7 @@ class TestAleph(Stack):
                 "PRIVATE_IP=$(grep 'PRIVATE_IP =' /home/aleph-node/logs/node_status | awk -F '= ' '{print $2}')",
 
                 # Retrieve all node IPs, exclude the current node's IP, and format them properly for the TOML configuration
-                f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r --arg PRIVATE_IP \"$PRIVATE_IP\" '.node_ips | map(select(. != $PRIVATE_IP)) | map(\"\\\"/ip4/\" + . + \"/tcp/30333\\\"\") | join(\", \")')",
+                f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r --arg PRIVATE_IP \"$PRIVATE_IP\" '.node_ips | map(select(. != $PRIVATE_IP)) | map(\"\\\"/\" + . + \":30333\\\"\") | join(\", \")')",
 
                 # Log the filtered node list for verification
                 "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
