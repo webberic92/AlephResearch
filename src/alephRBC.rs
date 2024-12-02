@@ -174,7 +174,8 @@ impl Node {
 
     async fn check_quorum(&self, root: &[u8]) -> bool {
         let quorum_votes = self.quorum_votes.read().await;
-        quorum_votes.get(root).cloned().unwrap_or(0) >= 2 * self.fault_tolerance + 1
+        let votes = quorum_votes.get(root).cloned().unwrap_or(0);
+        votes >= (2 * self.fault_tolerance + 1) // Quorum condition
     }
 
     async fn reconstruct_unit(&mut self, share: &[u8]) {
@@ -229,11 +230,15 @@ impl Node {
     }
 
     async fn wait_for_round(&self, required_round: usize) {
-        let dag = self.dag.lock().await;
-        while dag.get(&required_round).is_none() {
+        loop {
+            let dag = self.dag.lock().await;
+            if dag.get(&required_round).is_some() {
+                break;
+            }
             tokio::time::sleep(Duration::from_millis(100)).await;
         }
     }
+    
 
     async fn wait_for_parents_output(&self, parent_rounds: Vec<usize>) {
         for round in parent_rounds {
@@ -261,11 +266,17 @@ async fn main() {
     if let Err(e) = write_host_log("AlephRBC rust code initialized.") {
         eprintln!("Failed to write to host log: {}", e);
     }
-    
+
+    // Load configuration
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let storage = Arc::new(Mutex::new(HashMap::new()));
     let mut node = Node::new(&config, FAULT_TOLERANCE, storage.clone());
 
-    let data = vec![0u8; config.consensus.transaction_size];
-    node.propose(data).await;
+    // Use batch_size from the configuration for the number of transactions
+    for i in 0..config.consensus.batch_size {
+        let data = vec![i as u8; config.consensus.transaction_size]; // Sample data for each transaction
+        node.propose(data).await;
+    }
+
+    info!("Node {} completed its {} transactions.", node.id, config.consensus.batch_size);
 }
