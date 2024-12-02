@@ -1,27 +1,27 @@
-use std::fs::OpenOptions;
-use std::io::Write;
+use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
-use std::collections::{HashMap, HashSet};
+use tokio::sync::{mpsc, Mutex, RwLock};
 use tracing::info;
-use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use serde::Deserialize;
-use std::fs;
-use toml;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use ring::digest::{Context, SHA256};
+use std::fs::{self, OpenOptions};
+use std::io::Write;
+use std::time::{SystemTime, UNIX_EPOCH};
+use toml;
 
-const FAULT_TOLERANCE: usize = 1;
-const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1;
-const CB: usize = 100; // Example batch-specific size parameter
+const FAULT_TOLERANCE: usize = 1; // Fault tolerance threshold
+const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1; // Minimum shares for quorum
 
+/// DAG Node structure to track rounds and data
 #[derive(Clone)]
 struct DagNode {
     round: usize,
     data: Vec<u8>,
-    parents: Vec<usize>, // Tracking specific parent nodes
+    parents: Vec<usize>, // Parent nodes in the DAG
 }
 
+/// Merkle Tree for cryptographic data integrity
 struct MerkleTree {
     root: Vec<u8>,
     branches: HashMap<usize, Vec<u8>>,
@@ -49,7 +49,6 @@ impl MerkleTree {
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
-    logging: LoggingConfig,
     node: NodeConfig,
 }
 
@@ -67,12 +66,6 @@ struct ConsensusConfig {
 }
 
 #[derive(Debug, Deserialize)]
-struct LoggingConfig {
-    level: String,
-    transaction_metrics_log: String,
-}
-
-#[derive(Debug, Deserialize)]
 struct NodeConfig {
     id: usize,
     total_nodes: usize,
@@ -87,176 +80,160 @@ struct Node {
     id: usize,
     total_nodes: usize,
     fault_tolerance: usize,
-    received_propose: HashMap<usize, bool>, // Track for each round
-    storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     commit_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    dag: Arc<Mutex<HashMap<usize, DagNode>>>,
-    round: usize,
-    batch_size: usize,
-    transaction_size: usize,
-    termination_state: HashMap<usize, bool>, // Track per round
+    data_storage: Arc<Mutex<HashMap<Vec<u8>, Vec<u8>>>>,
+    config: Arc<Config>,
+    message_tx: mpsc::Sender<Message>,
+    message_rx: mpsc::Receiver<Message>,
+}
+
+enum Message {
+    Propose { sender: usize, chunk: Vec<u8>, proof: Vec<u8> },
+    Prevote { sender: usize, root: Vec<u8> },
+    Commit { sender: usize, root: Vec<u8> },
 }
 
 impl Node {
-    fn new(config: &Config, fault_tolerance: usize, storage: Arc<Mutex<HashMap<usize, Vec<u8>>>>) -> Self {
+    fn new(config: Arc<Config>) -> (Arc<Mutex<Self>>, mpsc::Sender<Message>) {
+        let (tx, rx) = mpsc::channel(100);
         let node = Node {
             id: config.node.id,
             total_nodes: config.node.total_nodes,
-            fault_tolerance,
-            received_propose: HashMap::new(),
-            storage,
+            fault_tolerance: FAULT_TOLERANCE,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             commit_votes: Arc::new(RwLock::new(HashMap::new())),
-            dag: Arc::new(Mutex::new(HashMap::new())),
-            round: config.consensus.round,
-            batch_size: config.consensus.batch_size,
-            transaction_size: config.consensus.transaction_size,
-            termination_state: HashMap::new(),
+            data_storage: Arc::new(Mutex::new(HashMap::new())),
+            config,
+            message_tx: tx.clone(),
+            message_rx: rx,
         };
-        node.log_initialization();
-        node
+        (Arc::new(Mutex::new(node)), tx)
     }
 
-    fn log_initialization(&self) {
-        let log_msg = format!("Node initialized with ID {} and total nodes {}\n", self.id, self.total_nodes);
-        write_host_log(&log_msg).expect("Failed to log initialization");
-    }
+    async fn run(node: Arc<Mutex<Self>>) {
+        let node_clone = node.clone();
+        let config = {
+            let locked_node = node.lock().await;
+            locked_node.config.clone()
+        };
 
-    async fn propose(&mut self, data: Vec<u8>) {
-        let shares = self.erasure_code(&data);
-        let merkle_tree = MerkleTree::new(&shares, self.total_nodes);
+        tokio::spawn(async move {
+            loop {
+                let message = {
+                    let mut locked_node = node_clone.lock().await;
+                    locked_node.message_rx.recv().await
+                };
 
-        for i in 0..self.total_nodes {
-            if let Some(branch) = merkle_tree.branch(i) {
-                self.send_propose(i, merkle_tree.root.clone(), branch, shares[i].clone()).await;
+                if let Some(message) = message {
+                    let node_clone = node_clone.clone();
+                    tokio::spawn(async move {
+                        let locked_node = node_clone.lock().await;
+                        match message {
+                            Message::Propose { sender, chunk, proof } => {
+                                locked_node.handle_propose(sender, chunk, proof).await;
+                            }
+                            Message::Prevote { sender, root } => {
+                                locked_node.handle_prevote(sender, root).await;
+                            }
+                            Message::Commit { sender, root } => {
+                                locked_node.handle_commit(sender, root).await;
+                            }
+                        }
+                    });
+                } else {
+                    break;
+                }
             }
+        });
+
+        for i in 0..config.consensus.batch_size {
+            let data = vec![i as u8; config.consensus.transaction_size];
+            let locked_node = node.lock().await;
+            locked_node.propose(data).await;
         }
     }
 
-    fn erasure_code(&self, data: &[u8]) -> Vec<Vec<u8>> {
+    async fn propose(&self, data: Vec<u8>) {
         let rs = ReedSolomon::new(MINIMUM_SHARES, self.total_nodes - MINIMUM_SHARES)
-            .expect("Failed to create ReedSolomon instance");
+            .expect("Failed to initialize Reed-Solomon encoder");
 
-        let mut shards: Vec<Vec<u8>> = vec![vec![0; data.len()]; self.total_nodes];
-        for (i, shard) in shards.iter_mut().take(MINIMUM_SHARES).enumerate() {
-            shard.copy_from_slice(data);
+        let shard_size = (data.len() + MINIMUM_SHARES - 1) / MINIMUM_SHARES;
+        let mut shards: Vec<Vec<u8>> = vec![vec![0u8; shard_size]; rs.total_shard_count()];
+
+        for (i, byte) in data.iter().enumerate() {
+            shards[i % MINIMUM_SHARES][i / MINIMUM_SHARES] = *byte;
         }
 
-        rs.encode(&mut shards).expect("Failed to encode data");
-        shards
-    }
+        rs.encode(&mut shards).expect("Reed-Solomon encoding failed");
 
-    async fn send_propose(&mut self, to: usize, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        info!("Node {} sends propose to {} with root {:?} and share {:?}", self.id, to, root, share);
-        self.handle_prevote(root, branch, share).await;
-    }
+        let merkle_tree = MerkleTree::new(&shards, rs.total_shard_count());
 
-    async fn handle_prevote(&mut self, root: Vec<u8>, branch: Vec<u8>, share: Vec<u8>) {
-        if !*self.received_propose.entry(self.round).or_insert(false) && self.check_size(&share) {
-            self.wait_for_round(self.round - 1).await;
-            self.received_propose.insert(self.round, true);
-            info!("Node {}: Prevote phase with root {:?}", self.id, root);
-            self.register_vote(root.clone()).await;
+        for (i, shard) in shards.into_iter().enumerate() {
+            if let Some(proof) = merkle_tree.branch(i) {
+                for peer in &self.config.network.nodes {
+                    let url = format!("http://{}/propose", peer);
+                    let payload = serde_json::json!({
+                        "sender": self.id,
+                        "chunk": shard,
+                        "proof": proof,
+                    });
 
-            if self.check_quorum(&root).await {
-                self.reconstruct_unit(&share).await;
-                self.handle_commit(root).await;
+                    let client = reqwest::Client::new();
+                    if let Err(err) = client.post(&url).json(&payload).send().await {
+                        info!(
+                            "Node {} encountered an error sending shard to {}: {}",
+                            self.id, peer, err
+                        );
+                    }
+                }
             }
         }
+
+        info!("Node {} completed proposal phase.", self.id);
     }
 
-    async fn register_vote(&self, root: Vec<u8>) {
+    async fn handle_propose(&self, _sender: usize, chunk: Vec<u8>, _proof: Vec<u8>) {
+        let root = MerkleTree::hash_data(&chunk);
         let mut quorum_votes = self.quorum_votes.write().await;
-        let counter = quorum_votes.entry(root).or_insert(0);
+        let counter = quorum_votes.entry(root.clone()).or_insert(0);
         *counter += 1;
-    }
 
-    async fn check_quorum(&self, root: &[u8]) -> bool {
-        let quorum_votes = self.quorum_votes.read().await;
-        let votes = quorum_votes.get(root).cloned().unwrap_or(0);
-        votes >= (2 * self.fault_tolerance + 1) // Quorum condition
-    }
-
-    async fn reconstruct_unit(&mut self, share: &[u8]) {
-        let unit_data = share.to_vec(); // Placeholder: reconstruct the data from shares
-        let validity_check = self.validate_unit(&unit_data);
-        if !validity_check {
-            panic!("Node {}: Invalid unit after reconstruction", self.id);
-        }
-        info!("Node {} successfully reconstructed valid unit", self.id);
-    }
-
-    fn validate_unit(&self, unit: &[u8]) -> bool {
-        unit.len() >= self.transaction_size
-    }
-
-    async fn handle_commit(&mut self, root: Vec<u8>) {
-        self.wait_for_parents_output(vec![self.round - 1]).await;
-        info!("Node {}: Entering commit phase with root {:?}", self.id, root);
-        self.register_commit(root.clone()).await;
-
-        if self.check_commit_threshold(&root).await {
-            self.finalize_broadcast(root).await;
+        if *counter >= (2 * self.fault_tolerance + 1) {
+            for _peer in &self.config.network.nodes {
+                let _ = self.message_tx.send(Message::Prevote {
+                    sender: self.id,
+                    root: root.clone(),
+                }).await;
+            }
         }
     }
 
-    async fn register_commit(&self, root: Vec<u8>) {
+    async fn handle_prevote(&self, _sender: usize, root: Vec<u8>) {
         let mut commit_votes = self.commit_votes.write().await;
-        let counter = commit_votes.entry(root).or_insert(0);
+        let counter = commit_votes.entry(root.clone()).or_insert(0);
         *counter += 1;
-    }
 
-    async fn check_commit_threshold(&self, root: &[u8]) -> bool {
-        let commit_votes = self.commit_votes.read().await;
-        commit_votes.get(root).cloned().unwrap_or(0) >= self.fault_tolerance + 1
-    }
-
-    async fn finalize_broadcast(&mut self, root: Vec<u8>) {
-        info!("Node {}: Finalizing broadcast with root {:?}", self.id, root);
-        let storage = self.storage.lock().await;
-        if let Some(data) = storage.get(&self.id) {
-            if MerkleTree::hash_data(data) == root {
-                info!("Node {} successfully validated data integrity", self.id);
-                self.termination_state.insert(self.round, true);
-            } else {
-                info!("Node {} detected Merkle root mismatch!", self.id);
+        if *counter >= (self.fault_tolerance + 1) {
+            for peer in &self.config.network.nodes {
+                let _ = self.message_tx.send(Message::Commit {
+                    sender: self.id,
+                    root: root.clone(),
+                }).await;
             }
         }
     }
 
-    fn check_size(&self, share: &[u8]) -> bool {
-        share.len() <= self.transaction_size * CB
-    }
-
-    async fn wait_for_round(&self, required_round: usize) {
-        loop {
-            let dag = self.dag.lock().await;
-            if dag.get(&required_round).is_some() {
-                break;
-            }
-            tokio::time::sleep(Duration::from_millis(100)).await;
-        }
-    }
-    
-
-    async fn wait_for_parents_output(&self, parent_rounds: Vec<usize>) {
-        for round in parent_rounds {
-            self.wait_for_round(round).await;
-        }
+    async fn handle_commit(&self, _sender: usize, root: Vec<u8>) {
+        info!("Node {} committed to root {:?}", self.id, root);
     }
 }
 
 fn write_host_log(message: &str) -> std::io::Result<()> {
-    let timestamp = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .expect("Time went backwards")
-        .as_secs();
+    let timestamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
     let log_path = "/home/aleph-node/logs/node_status";
-    let formatted_message = format!("[{}] {}\n", timestamp, message);
     let mut file = OpenOptions::new().append(true).create(true).open(log_path)?;
-    file.write_all(formatted_message.as_bytes())?;
-    Ok(())
+    writeln!(file, "[{}] {}", timestamp, message)
 }
 
 #[tokio::main]
@@ -267,16 +244,18 @@ async fn main() {
         eprintln!("Failed to write to host log: {}", e);
     }
 
-    // Load configuration
-    let config = load_config("/home/aleph-node/aleph-node-config.toml");
-    let storage = Arc::new(Mutex::new(HashMap::new()));
-    let mut node = Node::new(&config, FAULT_TOLERANCE, storage.clone());
+    let config = Arc::new(load_config("/home/aleph-node/aleph-node-config.toml"));
+    let (node, tx) = Node::new(config.clone());
 
-    // Use batch_size from the configuration for the number of transactions
-    for i in 0..config.consensus.batch_size {
-        let data = vec![i as u8; config.consensus.transaction_size]; // Sample data for each transaction
-        node.propose(data).await;
+    tokio::spawn(async move {
+        Node::run(node.clone()).await;
+    });
+
+    for _peer in &config.network.nodes {
+        let _ = tx.send(Message::Propose {
+            sender: config.node.id,
+            chunk: vec![1, 2, 3],
+            proof: vec![4, 5, 6],
+        }).await;
     }
-
-    info!("Node {} completed its {} transactions.", node.id, config.consensus.batch_size);
 }
