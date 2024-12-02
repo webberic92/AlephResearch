@@ -1,19 +1,35 @@
-db_upgrade            grub2-mkimage                       more                   pm-is-supported       runcon                   teamdctl
-sh-4.2$ cat /home/aleph-node/
-aleph-node-config.toml  alephRBC                generate_keys           logs/
-sh-4.2$ cat /home/aleph-node/logs/
+sh-4.2$  cat /home/aleph-node/aleph-node-config.toml
+[network]
+listen_address = "/ip4/0.0.0.0/tcp/30333"
+nodes = ["/ip4/10.0.130.56/tcp/30333", "/ip4/10.0.169.160/tcp/30333"]
+
+[consensus]
+batch_size = 4
+transaction_size = 256 # bytes
+round = 1 # bytes
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 3
+total_nodes = 3
+sh-4.2$  cat /home/aleph-node/logs/
 node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.190.28
+sh-4.2$  cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.152.230
+Node registration failed with status 000. Retrying...
 Node registration success.
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self):
+Retrieved all nodes for nodes (excluding self): "/ip4/10.0.130.56/tcp/30333", "/ip4/10.0.169.160/tcp/30333"
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
-[1731030735] AlephRBC rust code initialized.
-thread 'main' panicked at src/alephRBC.rs:84:38:
-Failed to parse configuration.: Error { inner: Error { inner: TomlError { message: "missing field `round`", raw: Some("[network]\nlisten_address = \"/ip4/0.0.0.0/tcp/30333\"\nnodes = []\n\n[consensus]\nbatch_size = 4\ntransaction_size = 256 # bytes\n\n[logging]\nlevel = \"info\"\ntransaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"\n\n[node]\nid = 1\ntotal_nodes = 2\n"), keys: ["consensus"], span: Some(64..113) } } }
-note: run with `RUST_BACKTRACE=1` environment variable to display a backtrace
-Execution failed
+[1733095838] AlephRBC rust code initialized.
+[1733095838] Node initialized with ID 3 and total nodes 3
+
+2024-12-01T23:30:38.419674Z  INFO alephRBC: Node 3 sends propose to 0 with root [239, 17, 90, 14, 12, 21, 205, 196, 25, 88, 202, 70, 181, 177, 75, 69, 97, 21, 244, 186, 236, 94, 60, 166, 133, 153, 210, 168, 244, 53, 227, 184] and share [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+sh-4.2$
