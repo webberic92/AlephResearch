@@ -1,7 +1,17 @@
+sh-4.2$ cat /home/
+aleph-node/ ec2-user/   ssm-user/
+sh-4.2$ cat /home/
+aleph-node/ ec2-user/   ssm-user/
+sh-4.2$ cat /home/aleph-node/
+aleph-node-config.toml  alephRBC                generate_keys           logs/
+sh-4.2$ cat /home/aleph-node/
+aleph-node-config.toml  alephRBC                generate_keys           logs/
+sh-4.2$ cat /home/aleph-node/aleph
+aleph-node-config.toml  alephRBC
 sh-4.2$ cat /home/aleph-node/aleph-node-config.toml
 [network]
-listen_address = "/ip4/0.0.0.0/tcp/30333"
-nodes = ["/ip4/10.0.129.6/tcp/30333", "/ip4/10.0.161.129/tcp/30333"]
+listen_address = "0.0.0.0:30333"
+nodes = ["10.0.131.48:30333", "10.0.191.54:30333"]
 
 [consensus]
 batch_size = 4
@@ -13,44 +23,24 @@ level = "info"
 transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
 
 [node]
-id = 3
+id = 2
 total_nodes = 3
 sh-4.2$ cat /home/aleph-node/logs/
-cat: /home/aleph-node/logs/: Is a directory
-sh-4.2$ cat /home/aleph-node/logs/
 node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/
-node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/transaction_metrics
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.183.94
-Node registration failed with status 000. Retrying...
-Node registration failed with status 000. Retrying...
-Node registration failed with status 000. Retrying...
-Node registration failed with status 000. Retrying...
-Node registration failed with status 000. Retrying...
+PRIVATE_IP = 10.0.129.151
 Node registration success.
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "/ip4/10.0.129.6/tcp/30333", "/ip4/10.0.161.129/tcp/30333"
+Retrieved all nodes for nodes (excluding self): "10.0.131.48:30333", "10.0.191.54:30333"
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
-[1733101908] AlephRBC rust code initialized.
-2024-12-02T01:11:48.390937Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.129.6/tcp/30333: error sending request for url (http://ip4/10.0.129.6/tcp/30333/propose)
-2024-12-02T01:11:48.406626Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.161.129/tcp/30333: error sending request for url (http://ip4/10.0.161.129/tcp/30333/propose)
-2024-12-02T01:11:48.407645Z  INFO alephRBC: Node 3 entering prevote phase.
-2024-12-02T01:11:48.407656Z  INFO alephRBC: Node 3 entering commit phase.
-2024-12-02T01:11:48.427694Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.129.6/tcp/30333: error sending request for url (http://ip4/10.0.129.6/tcp/30333/propose)
-2024-12-02T01:11:48.442340Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.161.129/tcp/30333: error sending request for url (http://ip4/10.0.161.129/tcp/30333/propose)
-2024-12-02T01:11:48.443260Z  INFO alephRBC: Node 3 entering prevote phase.
-2024-12-02T01:11:48.443268Z  INFO alephRBC: Node 3 entering commit phase.
-2024-12-02T01:11:48.489333Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.129.6/tcp/30333: error sending request for url (http://ip4/10.0.129.6/tcp/30333/propose)
-2024-12-02T01:11:48.515756Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.161.129/tcp/30333: error sending request for url (http://ip4/10.0.161.129/tcp/30333/propose)
-2024-12-02T01:11:48.517151Z  INFO alephRBC: Node 3 entering prevote phase.
-2024-12-02T01:11:48.517165Z  INFO alephRBC: Node 3 entering commit phase.
-2024-12-02T01:11:48.538392Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.129.6/tcp/30333: error sending request for url (http://ip4/10.0.129.6/tcp/30333/propose)
-2024-12-02T01:11:48.562566Z  INFO alephRBC: Node 3 encountered an error sending proposal to /ip4/10.0.161.129/tcp/30333: error sending request for url (http://ip4/10.0.161.129/tcp/30333/propose)
-2024-12-02T01:11:48.563881Z  INFO alephRBC: Node 3 entering prevote phase.
-2024-12-02T01:11:48.563895Z  INFO alephRBC: Node 3 entering commit phase.
-2024-12-02T01:11:48.563900Z  INFO alephRBC: Node 3 completed its 4 transactions.
+2024-12-03T02:53:54.435527Z  INFO alephRBC: Node 2 starting. Listening on 0.0.0.0:30333. Total nodes: 3
+2024-12-03T02:53:54.435624Z  INFO alephRBC: Server running on 0.0.0.0:30333
+2024-12-03T02:53:54.435660Z  INFO alephRBC: Node 2 starting transactions. Batch size: 4, Transaction size: 256 bytes
+2024-12-03T02:53:54.435668Z  INFO alephRBC: Node 2 processed transaction 1/4
+2024-12-03T02:53:54.435673Z  INFO alephRBC: Node 2 processed transaction 2/4
+2024-12-03T02:53:54.435677Z  INFO alephRBC: Node 2 processed transaction 3/4
+2024-12-03T02:53:54.435682Z  INFO alephRBC: Node 2 processed transaction 4/4
+2024-12-03T02:53:54.435686Z  INFO alephRBC: Node 2 completed all transactions.
