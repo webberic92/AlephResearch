@@ -4,21 +4,21 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::fs;
 use std::net::SocketAddr;
 use std::sync::Arc;
-use tokio::sync::{RwLock};
+use tokio::sync::RwLock;
 use tracing::{info, Level};
-use toml;
 
 // Constants for fault tolerance
 const FAULT_TOLERANCE: usize = 1;
-const MINIMUM_SHARES: usize = FAULT_TOLERANCE + 1;
 
 // Configuration structures
 #[derive(Debug, Deserialize)]
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
+    logging: LoggingConfig,
     node: NodeConfig,
 }
 
@@ -32,19 +32,19 @@ struct NetworkConfig {
 struct ConsensusConfig {
     batch_size: usize,
     transaction_size: usize,
-    cb: usize,
     round: usize,
+}
+
+#[derive(Debug, Deserialize)]
+struct LoggingConfig {
+    level: String,
+    transaction_metrics_log: String,
 }
 
 #[derive(Debug, Deserialize)]
 struct NodeConfig {
     id: usize,
     total_nodes: usize,
-}
-
-fn load_config(file_path: &str) -> Config {
-    let config_contents = std::fs::read_to_string(file_path).expect("Failed to read configuration file.");
-    toml::from_str(&config_contents).expect("Failed to parse configuration.")
 }
 
 // Message types
@@ -73,23 +73,43 @@ struct Response {
     status: String,
 }
 
+#[derive(Debug, Clone)] // Add Clone here
 struct Node {
     id: usize,
     total_nodes: usize,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     commit_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     config: Arc<Config>,
+    transaction_count: usize,
 }
 
 impl Node {
-    fn new(config: Arc<Config>) -> Arc<Self> {
-        Arc::new(Node {
+    fn new(config: Arc<Config>) -> Self {
+        Node {
             id: config.node.id,
             total_nodes: config.node.total_nodes,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             commit_votes: Arc::new(RwLock::new(HashMap::new())),
             config,
-        })
+            transaction_count: 0,
+        }
+    }
+
+    async fn process_transactions(&mut self) {
+        info!(
+            "Node {} starting transactions. Batch size: {}, Transaction size: {} bytes",
+            self.id, self.config.consensus.batch_size, self.config.consensus.transaction_size
+        );
+
+        for i in 0..self.config.consensus.batch_size {
+            self.transaction_count += 1;
+            info!(
+                "Node {} processed transaction {}/{}",
+                self.id, i + 1, self.config.consensus.batch_size
+            );
+        }
+
+        info!("Node {} completed all transactions.", self.id);
     }
 
     async fn handle_propose(&self, root: Vec<u8>) {
@@ -111,22 +131,30 @@ impl Node {
     }
 }
 
+fn load_config(file_path: &str) -> Config {
+    let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
+    toml::from_str(&config_contents).expect("Failed to parse configuration.")
+}
+
 // HTTP Handlers
-async fn propose_handler(Json(payload): Json<ProposeRequest>, node: Arc<Node>) -> Json<Response> {
+async fn propose_handler(Json(payload): Json<ProposeRequest>, node: Arc<RwLock<Node>>) -> Json<Response> {
+    let node = node.write().await; // Acquire write lock for mutation
     node.handle_propose(payload.root).await;
     Json(Response {
         status: "Propose accepted".to_string(),
     })
 }
 
-async fn prevote_handler(Json(payload): Json<PrevoteRequest>, node: Arc<Node>) -> Json<Response> {
+async fn prevote_handler(Json(payload): Json<PrevoteRequest>, node: Arc<RwLock<Node>>) -> Json<Response> {
+    let node = node.write().await; // Acquire write lock for mutation
     node.handle_prevote(payload.root).await;
     Json(Response {
         status: "Prevote accepted".to_string(),
     })
 }
 
-async fn commit_handler(Json(payload): Json<CommitRequest>, node: Arc<Node>) -> Json<Response> {
+async fn commit_handler(Json(payload): Json<CommitRequest>, node: Arc<RwLock<Node>>) -> Json<Response> {
+    let node = node.write().await; // Acquire write lock for mutation
     node.handle_commit(payload.root).await;
     Json(Response {
         status: "Commit accepted".to_string(),
@@ -135,37 +163,51 @@ async fn commit_handler(Json(payload): Json<CommitRequest>, node: Arc<Node>) -> 
 
 #[tokio::main]
 async fn main() {
-    tracing_subscriber::fmt().with_max_level(Level::INFO).init();
+    tracing_subscriber::fmt()
+        .with_max_level(Level::INFO)
+        .init();
 
     let config = Arc::new(load_config("/home/aleph-node/aleph-node-config.toml"));
-    let node = Node::new(config.clone());
+
+    info!(
+        "Node {} starting. Listening on {}. Total nodes: {}",
+        config.node.id,
+        config.network.listen_address,
+        config.node.total_nodes
+    );
+
+    let node = Arc::new(RwLock::new(Node::new(config.clone())));
+
+    // Start transaction processing
+    let node_clone = node.clone();
+    tokio::spawn(async move {
+        let mut node = node_clone.write().await; // Acquire write lock
+        node.process_transactions().await;
+    });
 
     let app = Router::new()
-        .route("/propose", post({
-            let node = node.clone();
-            move |payload| propose_handler(payload, node.clone())
-        }))
-        .route("/prevote", post({
-            let node = node.clone();
-            move |payload| prevote_handler(payload, node.clone())
-        }))
-        .route("/commit", post({
-            let node = node.clone();
-            move |payload| commit_handler(payload, node.clone())
-        }));
+    .route("/propose", {
+        let node = node.clone();
+        post(move |payload| propose_handler(payload, node.clone()))
+    })
+    .route("/prevote", {
+        let node = node.clone();
+        post(move |payload| prevote_handler(payload, node.clone()))
+    })
+    .route("/commit", {
+        let node = node.clone();
+        post(move |payload| commit_handler(payload, node.clone()))
+    });
 
-    // Parse the listening address from the configuration
     let addr: SocketAddr = config.network.listen_address.parse().expect("Invalid listen address");
 
-    // Bind to the specified address using a TcpListener
     let listener = tokio::net::TcpListener::bind(addr)
         .await
         .expect("Failed to bind to address");
 
-    // Serve the application
+    info!("Server running on {}", addr);
+
     axum::serve(listener, app)
         .await
         .expect("Server failed to start");
 }
-
-
