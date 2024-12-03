@@ -141,31 +141,15 @@ async fn main() {
     let node = Node::new(config.clone());
 
     let app = Router::new()
-        .route("/propose", post({
-            let node = node.clone();
-            move |payload| propose_handler(payload, node.clone())
-        }))
-        .route("/prevote", post({
-            let node = node.clone();
-            move |payload| prevote_handler(payload, node.clone())
-        }))
-        .route("/commit", post({
-            let node = node.clone();
-            move |payload| commit_handler(payload, node.clone())
-        }));
+        .route("/propose", post(|payload| propose_handler(payload, node.clone())))
+        .route("/prevote", post(|payload| prevote_handler(payload, node.clone())))
+        .route("/commit", post(|payload| commit_handler(payload, node.clone())));
 
-    // Parse the listening address from the configuration
-    let addr: SocketAddr = config.network.listen_address.parse().expect("Invalid listen address");
+    let addr = config.network.listen_address.parse::<SocketAddr>().unwrap();
 
-    // Bind to the specified address using a TcpListener
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("Failed to bind to address");
-
-    // Serve the application
-    axum::serve(listener, app)
+    // Use Axum's built-in `serve`
+    axum::Server::bind(&addr)
+        .serve(app.into_make_service())
         .await
         .expect("Server failed to start");
 }
-
-
