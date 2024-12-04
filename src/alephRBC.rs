@@ -322,7 +322,7 @@ async fn main() {
     let node = Arc::new(RwLock::new(Node::new(config.clone())));
 
     // Initialize APIs
-    let app = initialize_apis(node.clone(), config.clone());
+    let app: Router = initialize_apis(node.clone(), config.clone());
 
     let addr: SocketAddr = config.network.listen_address.parse().expect("Invalid listen address");
 
