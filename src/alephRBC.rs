@@ -2,14 +2,16 @@ use axum::{
     routing::post,
     Json, Router,
 };
+use std::{error::Error, sync::Arc};
+use std::net::SocketAddr;
+use tokio::sync::RwLock;
+use tokio::net::TcpListener;
+use tracing::{info, error};
+use tracing_subscriber;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
-use std::net::SocketAddr;
-use std::sync::Arc;
-use tokio::sync::RwLock;
-use tracing::{info, Level, error}; 
 // Constants for fault tolerance
 const FAULT_TOLERANCE: usize = 1;
 
@@ -312,45 +314,100 @@ fn initialize_apis(node: Arc<RwLock<Node>>, config: Arc<Config>) -> Router {
         })
 }
 
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt()
-    .with_max_level(Level::INFO)
-    .init();
 
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize tracing subscriber for logging
+    tracing_subscriber::fmt()
+        .with_max_level(tracing::Level::INFO)
+        .init();
+
+    // Load configuration
     let config = Arc::new(load_config("/home/aleph-node/aleph-node-config.toml"));
     let node = Arc::new(RwLock::new(Node::new(config.clone())));
 
     // Initialize APIs
-    let app: Router = initialize_apis(node.clone(), config.clone());
+    let app = initialize_apis(node.clone(), config.clone());
 
+    // Bind to the desired address and port
     let addr: SocketAddr = config.network.listen_address.parse().expect("Invalid listen address");
+    info!("Attempting to bind to {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr)
+    // Bind the TCP listener
+    let listener = TcpListener::bind(addr).await.map_err(|e| {
+        error!("Failed to bind to {}: {:?}", addr, e);
+        e
+    })?;
+
+    info!("Successfully bound to {}", addr);
+
+    // Run the Axum server
+    axum::serve(listener, app.into_make_service())
         .await
-        .expect("Failed to bind to address");
+        .map_err(|e| {
+            error!("Server failed: {:?}", e);
+            e
+        })?;
 
-    info!("Server running on {}", addr);
-
-
-    let server_task = tokio::spawn(async move {
-    axum::serve(listener, app)
-        .await
-        .expect("Server failed to start");
-        info!("Server SERVING about to start transactions.");
-    });
-
-      // Start transaction processing in another task
-      let node_clone = node.clone();
-      let transaction_task = tokio::spawn(async move {
-          info!("Server SERVING about to start transactions.");
-          let mut node = node_clone.write().await; // Acquire write lock
-          node.process_transactions().await;
-      });
-
-          // Wait for both tasks to complete (server runs indefinitely)
-    tokio::select! {
-        _ = server_task => info!("Server task finished."),
-        _ = transaction_task => info!("Transaction task finished."),
-    }
+    Ok(())
 }
+
+
+
+//NEED TO WORK
+//sudo netstat -tuln | grep 30333
+// #[tokio::main]
+// async fn main() {
+    //     tracing_subscriber::fmt()
+    //         .with_max_level(tracing::Level::INFO)
+    //         .init();
+    
+    //     let config = Arc::new(load_config("/home/aleph-node/aleph-node-config.toml"));
+    //     let node = Arc::new(RwLock::new(Node::new(config.clone())));
+    
+    //     // Initialize APIs
+    //     let app = initialize_apis(node.clone(), config.clone());
+    
+    //     // Create a listener for the server
+    //     let addr: SocketAddr = config.network.listen_address.parse().expect("Invalid listen address");
+    //     info!("Attempting to bind to {}", addr);
+    //     let listener = tokio::net::TcpListener::bind("0.0.0.0:30333")
+    //     .await
+    //     .expect("Failed to bind to address");
+    
+    // axum::serve(listener, app)
+    //     .await
+    //     .expect("Server failed");
+    //     // let listener = tokio::net::TcpListener::bind(addr)
+    //     //     .await
+    //     //     .expect("Failed to bind to address");
+    //     // info!("Successfully bound to {}", addr);
+    
+    //     // // Spawn the Axum server in a separate task
+    //     // let server_task = tokio::spawn(async move {
+        //     //     axum::serve(listener, app.into_make_service())
+        //     //     .await
+        //     //     .map_err(|e| {
+            //     //         error!("Server failed with error: {}", e);
+            //     //         e
+            //     //     })
+            //     // });
+            
+            
+            //     info!("APIS Should be running.");
+            
+            //     // Spawn transaction processing in another task
+            //     let node_clone = node.clone();
+            //     let transaction_task = tokio::spawn(async move {
+                //         info!("Starting transaction processing...");
+                //         let mut node = node_clone.write().await; // Acquire write lock
+                //         node.process_transactions().await;
+                //     });
+                
+                //     // // Wait for both tasks
+                //     // tokio::select! {
+//     //     _ = server_task => info!("Server task finished."),
+//     //     _ = transaction_task => info!("Transaction task finished."),
+//     // }
+// }
