@@ -44,3 +44,46 @@ Attempting to execute alephRBC with configuration
 2024-12-03T02:53:54.435677Z  INFO alephRBC: Node 2 processed transaction 3/4
 2024-12-03T02:53:54.435682Z  INFO alephRBC: Node 2 processed transaction 4/4
 2024-12-03T02:53:54.435686Z  INFO alephRBC: Node 2 completed all transactions.
+
+
+
+
+
+
+
+Attempting to execute alephRBC with configuration
+2024-12-05T02:18:58.932676Z  INFO alephRBC: Attempting to bind to 0.0.0.0:30333
+2024-12-05T02:18:58.932721Z  INFO alephRBC: Successfully bound to 0.0.0.0:30333
+sh-4.2$ netstat -tuln | grep 30333
+tcp        0      0 0.0.0.0:30333           0.0.0.0:*               LISTEN
+sh-4.2$ curl -X POST http://<node_ip>:<port>/prevote \
+>      -H "Content-Type: application/json" \
+>      -d '{
+>            "sender": 1,
+>            "root": "dGVzdF9yb290"
+>          }'
+sh: node_ip: No such file or directory
+sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote      -H "Content-Type: application/json"      -d '{
+           "sender": 1,
+           "root": "dGVzdF9yb290"
+         }'
+Failed to deserialize the JSON body into the target type: root: invalid type: string "dGVzdF9yb290", expected a sequence at line 3 column 33sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote      -H"Content-Type: application/j10.0.163.163:30333
+           "sender": 1,
+           "root": "dGVzdF9yb290"
+         }'
+Failed to deserialize the JSON body into the target type: root: invalid type: string "dGVzdF9yb290", expected a sequence at line 3 column 33sh-4.2$
+sh-4.2$
+sh-4.2$
+sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote -H "Content-Type: application/json" -d '{"sender":1,"root":[100,71,86,122,100,70,57,114,98,50,57,48]}'
+{"status":"Prevote accepted"}sh-4.2$
+
+
+
+
+
+
+
+
+
+
+
