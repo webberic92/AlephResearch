@@ -1,89 +1,37 @@
-sh-4.2$ cat /home/
+bin/          dev/          home/         lib64/        media/        opt/          root/         sbin/         sys/          usr/
+sh-4.2$ cat  /home/
 aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/
+sh-4.2$ cat  /home/
 aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/aleph-node/
-aleph-node-config.toml  alephRBC                generate_keys           logs/
-sh-4.2$ cat /home/aleph-node/
-aleph-node-config.toml  alephRBC                generate_keys           logs/
-sh-4.2$ cat /home/aleph-node/aleph
-aleph-node-config.toml  alephRBC
-sh-4.2$ cat /home/aleph-node/aleph-node-config.toml
-[network]
-listen_address = "0.0.0.0:30333"
-nodes = ["10.0.131.48:30333", "10.0.191.54:30333"]
-
-[consensus]
-batch_size = 4
-transaction_size = 256 # bytes
-round = 1 # bytes
-
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 2
-total_nodes = 3
-sh-4.2$ cat /home/aleph-node/logs/
-node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.129.151
+sh-4.2$ cat  /home/aleph-node/
+aleph-node-config.toml  alephRBC                alephStart              generate_keys           logs/
+sh-4.2$ cat  /home/aleph-node/
+aleph-node-config.toml  alephRBC                alephStart              generate_keys           logs/
+sh-4.2$ cat  /home/aleph-node/
+aleph-node-config.toml  alephRBC                alephStart              generate_keys           logs/
+sh-4.2$ cat  /home/aleph-node/logs/
+alephRBC.log         node_status          resource_usage       transaction_metrics
+sh-4.2$ cat  /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.180.134
 Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.131.48:30333", "10.0.191.54:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.130.22:30333", "10.0.131.241:30333"
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
-2024-12-03T02:53:54.435527Z  INFO alephRBC: Node 2 starting. Listening on 0.0.0.0:30333. Total nodes: 3
-2024-12-03T02:53:54.435624Z  INFO alephRBC: Server running on 0.0.0.0:30333
-2024-12-03T02:53:54.435660Z  INFO alephRBC: Node 2 starting transactions. Batch size: 4, Transaction size: 256 bytes
-2024-12-03T02:53:54.435668Z  INFO alephRBC: Node 2 processed transaction 1/4
-2024-12-03T02:53:54.435673Z  INFO alephRBC: Node 2 processed transaction 2/4
-2024-12-03T02:53:54.435677Z  INFO alephRBC: Node 2 processed transaction 3/4
-2024-12-03T02:53:54.435682Z  INFO alephRBC: Node 2 processed transaction 4/4
-2024-12-03T02:53:54.435686Z  INFO alephRBC: Node 2 completed all transactions.
-
-
-
-
-
-
-
-Attempting to execute alephRBC with configuration
-2024-12-05T02:18:58.932676Z  INFO alephRBC: Attempting to bind to 0.0.0.0:30333
-2024-12-05T02:18:58.932721Z  INFO alephRBC: Successfully bound to 0.0.0.0:30333
-sh-4.2$ netstat -tuln | grep 30333
-tcp        0      0 0.0.0.0:30333           0.0.0.0:*               LISTEN
-sh-4.2$ curl -X POST http://<node_ip>:<port>/prevote \
->      -H "Content-Type: application/json" \
->      -d '{
->            "sender": 1,
->            "root": "dGVzdF9yb290"
->          }'
-sh: node_ip: No such file or directory
-sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote      -H "Content-Type: application/json"      -d '{
-           "sender": 1,
-           "root": "dGVzdF9yb290"
-         }'
-Failed to deserialize the JSON body into the target type: root: invalid type: string "dGVzdF9yb290", expected a sequence at line 3 column 33sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote      -H"Content-Type: application/j10.0.163.163:30333
-           "sender": 1,
-           "root": "dGVzdF9yb290"
-         }'
-Failed to deserialize the JSON body into the target type: root: invalid type: string "dGVzdF9yb290", expected a sequence at line 3 column 33sh-4.2$
+Waiting for alephRBC to be ready on port 30333
+alephRBC is ready.
+Attempting to execute alephStart with configuration
+2024-12-08T01:10:09.946867Z  INFO alephStart: Response from http://127.0.0.1:30333: "{\"status\":\"Propose accepted\"}"
+2024-12-08T01:10:09.947090Z  INFO alephStart: Response from http://127.0.0.1:30333: "{\"status\":\"Prevote accepted\"}"
+2024-12-08T01:10:09.947389Z  INFO alephStart: Response from http://127.0.0.1:30333: "{\"status\":\"Commit accepted\"}"
+sh-4.2$ cat  /home/aleph-node/logs/
+alephRBC.log         node_status          resource_usage       transaction_metrics
+sh-4.2$ cat  /home/aleph-node/logs/
+alephRBC.log         node_status          resource_usage       transaction_metrics
+sh-4.2$ cat  /home/aleph-node/logs/transaction_metrics
 sh-4.2$
-sh-4.2$
-sh-4.2$ curl -X POST http://10.0.163.163:30333/prevote -H "Content-Type: application/json" -d '{"sender":1,"root":[100,71,86,122,100,70,57,114,98,50,57,48]}'
-{"status":"Prevote accepted"}sh-4.2$
-
-
-
-
-
-
-
-
-
-
-

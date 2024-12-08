@@ -169,8 +169,20 @@ class TestAleph(Stack):
 
                 # Start the Aleph APIs
                 "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/alephRBC.log 2>&1 &",
 
+                # Wait for the alephRBC server to be ready (simple retry logic)
+                "echo 'Waiting for alephRBC to be ready on port 30333' >> /home/aleph-node/logs/node_status;",
+                """
+                for i in {1..30}; do
+                    if netstat -tuln | grep -q ':30333'; then
+                        echo 'alephRBC is ready.' >> /home/aleph-node/logs/node_status;
+                        break;
+                    fi
+                    echo 'alephRBC not ready, retrying...' >> /home/aleph-node/logs/node_status;
+                    sleep 5;
+                done
+                """,
                 # Start the Aleph testing
                 "echo 'Attempting to execute alephStart with configuration' >> /home/aleph-node/logs/node_status;",
                 "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
