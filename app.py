@@ -85,6 +85,7 @@ class TestAleph(Stack):
 
                 # Continue setup for Aleph node
                 "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
+                "aws s3 cp s3://aleph-research/alephStart /home/aleph-node/ --quiet",
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
 
@@ -165,19 +166,24 @@ class TestAleph(Stack):
                 "  echo 'ERROR: Configuration file not found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
                 "fi",
 
-                # Sync logs to S3 after the test
-                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
 
-                # Start the Aleph node with the configuration file and log the outcome
+                # Start the Aleph APIs
                 "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
                 "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
 
+                # Start the Aleph testing
+                "echo 'Attempting to execute alephStart with configuration' >> /home/aleph-node/logs/node_status;",
+                "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
+
+                # Sync logs to S3 after the test
+                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
+
                 # Log resource usage every 5 seconds
-                "while true; do",
-                "  top -b -n1 | grep 'Cpu(s)' >> /home/aleph-node/logs/resource_usage",
-                "  free -m >> /home/aleph-node/logs/resource_usage",
-                "  sleep 60;",  # Log every 5 seconds
-                "done &",
+                # "while true; do",
+                # "  top -b -n1 | grep 'Cpu(s)' >> /home/aleph-node/logs/resource_usage",
+                # "  free -m >> /home/aleph-node/logs/resource_usage",
+                # "  sleep 60;",  # Log every 5 seconds
+                # "done &",
 
                 # Sync logs to S3 after the test
                 f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet"
