@@ -1,0 +1,16 @@
+[network]
+listen_address = "0.0.0.0:30333"
+nodes = ["10.0.190.122:30333", "10.0.182.83:30333"]
+
+[consensus]
+batch_size = 4
+transaction_size = 256 # bytes
+round = 1 # bytes
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 3
+total_nodes = 3

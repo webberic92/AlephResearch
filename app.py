@@ -14,7 +14,7 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 3  # Define the number of instances
-        BATCH_SIZE = 4  # Define the number of transactions per node for the test
+        BATCH_SIZE = 1  # Define the number of transactions per node for the test
         TRANSACTION_SIZE = 256 #Bytes
         ROUND_SIZE = 1 
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
@@ -169,7 +169,7 @@ class TestAleph(Stack):
 
                 # Start the Aleph APIs
                 "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/alephRBC.log 2>&1 &",
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 &",
 
                 # Wait for the alephRBC server to be ready (simple retry logic)
                 "echo 'Waiting for alephRBC to be ready on port 30333' >> /home/aleph-node/logs/node_status;",

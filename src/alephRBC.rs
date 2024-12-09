@@ -1,11 +1,49 @@
 use axum::{routing::post, Json, Router};
-use std::sync::Arc;
+use std::{error::Error, sync::Arc};
+use std::collections::HashMap;
+use std::fs;
+use std::net::SocketAddr;
 use tokio::sync::RwLock;
 use tokio::net::TcpListener;
 use tracing::{info, error};
 use serde::{Deserialize, Serialize};
 use tracing_subscriber;
 
+// Configuration structures
+#[derive(Debug, Deserialize)]
+struct Config {
+    network: NetworkConfig,
+    consensus: ConsensusConfig,
+    logging: LoggingConfig,
+    node: NodeConfig,
+}
+
+#[derive(Debug, Deserialize)]
+struct NetworkConfig {
+    listen_address: String,
+    nodes: Vec<String>,
+}
+
+#[derive(Debug, Deserialize)]
+struct ConsensusConfig {
+    batch_size: usize,
+    transaction_size: usize,
+    round: usize,
+}
+
+#[derive(Debug, Deserialize)]
+struct LoggingConfig {
+    level: String,
+    transaction_metrics_log: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct NodeConfig {
+    id: usize,
+    total_nodes: usize,
+}
+
+// Message types
 #[derive(Deserialize)]
 struct ProposeRequest {
     sender: usize,
@@ -34,7 +72,7 @@ struct Response {
 #[derive(Debug, Clone)]
 struct Node {
     id: usize,
-    quorum_votes: Arc<RwLock<usize>>,
+    quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     commit_votes: Arc<RwLock<usize>>,
 }
 
@@ -42,16 +80,56 @@ impl Node {
     fn new(id: usize) -> Self {
         Self {
             id,
-            quorum_votes: Arc::new(RwLock::new(0)),
+            quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             commit_votes: Arc::new(RwLock::new(0)),
         }
     }
 
+
+    // Receiver Logic:
+
+    // What it Does:
+    //     Accepts a propose request containing the root and validates the size of the root to prevent oversized proposals.
+    //     Increments the quorum votes for the corresponding root if the size is valid.
+
+    // Issues/Improvements:
+    //     Validation of Merkle Branches:
+    //         The receiver should validate the Merkle branch included in the propose message against the Merkle root.
+    //     Lack of Context for Shares:
+    //         The receiver logic does not handle shares or check their validity (e.g., reconstructing the data using erasure coding or verifying consistency with the root).
+
+    // Missing Steps:
+    //     Validate the received Merkle branch against the Merkle root.
+    //     Add logic for handling shares, if necessary, in this phase.
+
+
     // Phase 1: Proposal Phase
-    async fn handle_propose(&self) {
+    // The sender node creates shares of the data to be broadcast using erasure coding
+    // and computes a Merkle tree root for the shares. Each share, along with the 
+    // corresponding Merkle branch, is sent to the respective recipient nodes in a 
+    // `propose` message. Nodes validate the size of the share to prevent malicious 
+    // oversized proposals.   
+    pub async fn handle_propose(&self, root: Vec<u8>, max_size: usize) {
         info!("Node {} handling propose request", self.id);
+
+        if root.len() > max_size {
+            info!(
+                "Node {} rejected proposal due to size: {} (max: {}).",
+                self.id,
+                root.len(),
+                max_size
+            );
+            return;
+        }
+
         let mut quorum_votes = self.quorum_votes.write().await;
-        *quorum_votes += 1;
+        let counter = quorum_votes.entry(root.clone()).or_insert(0);
+        *counter += 1;
+
+        info!(
+            "Node {} successfully handled propose. Quorum votes for root {:?}: {}",
+            self.id, root, *counter
+        );
     }
 
     // Phase 2: Prevote Phase
@@ -65,11 +143,6 @@ impl Node {
     async fn handle_commit(&self) {
         info!("Node {} handling commit request", self.id);
     }
-
-    // Phase 4: Output Phase TBD
-    async fn handle_output(&self, root: Vec<u8>) {
-        info!("This is the output phase. Node {} received output for root {:?}", self.id, root);
-    }
 }
 
 fn initialize_apis(node: Arc<Node>) -> Router {
@@ -79,7 +152,7 @@ fn initialize_apis(node: Arc<Node>) -> Router {
             move |Json(payload): Json<ProposeRequest>| {
                 let node = node.clone();
                 async move {
-                    node.handle_propose().await;
+                    node.handle_propose(payload.root, 1024).await;
                     Json(Response {
                         status: "Propose accepted".to_string(),
                     })
@@ -88,7 +161,7 @@ fn initialize_apis(node: Arc<Node>) -> Router {
         }))
         .route("/prevote", post({
             let node = node.clone();
-            move |Json(payload): Json<PrevoteRequest>| {
+            move |Json(_payload): Json<PrevoteRequest>| {
                 let node = node.clone();
                 async move {
                     node.handle_prevote().await;
@@ -100,7 +173,7 @@ fn initialize_apis(node: Arc<Node>) -> Router {
         }))
         .route("/commit", post({
             let node = node.clone();
-            move |Json(payload): Json<CommitRequest>| {
+            move |Json(_payload): Json<CommitRequest>| {
                 let node = node.clone();
                 async move {
                     node.handle_commit().await;
@@ -112,16 +185,25 @@ fn initialize_apis(node: Arc<Node>) -> Router {
         }))
 }
 
+fn load_config(file_path: &str) -> Config {
+    let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
+    toml::from_str(&config_contents).expect("Failed to parse configuration.")
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
 
-    let node = Arc::new(Node::new(1));
+    // Load configuration
+    let config = load_config("/home/aleph-node/aleph-node-config.toml");
+    let addr = config.network.listen_address.parse::<SocketAddr>()?;
+    info!("Loaded configuration: {:?}", config);
+
+    let node = Arc::new(Node::new(config.node.id));
     let app = initialize_apis(node);
 
-    let addr = "0.0.0.0:30333".parse::<std::net::SocketAddr>()?;
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
 
