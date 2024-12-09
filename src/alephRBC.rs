@@ -1,13 +1,12 @@
 use axum::{routing::post, Json, Router};
-use std::{error::Error, sync::Arc};
-use std::collections::HashMap;
-use std::fs;
-use std::net::SocketAddr;
+use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
 use tokio::sync::RwLock;
 use tokio::net::TcpListener;
 use tracing::{info, error};
 use serde::{Deserialize, Serialize};
 use tracing_subscriber;
+use reed_solomon_erasure::galois_8::ReedSolomon;
+use sha2::{Digest, Sha256};
 
 // Configuration structures
 #[derive(Debug, Deserialize)]
@@ -48,7 +47,7 @@ struct NodeConfig {
 struct ProposeRequest {
     sender: usize,
     shard: Vec<u8>,
-    proof: Vec<u8>,
+    proof: Vec<Vec<u8>>, // Add proof (Merkle branch)
     root: Vec<u8>,
 }
 
@@ -85,43 +84,48 @@ impl Node {
         }
     }
 
-
-    // Receiver Logic:
-
-    // What it Does:
-    //     Accepts a propose request containing the root and validates the size of the root to prevent oversized proposals.
-    //     Increments the quorum votes for the corresponding root if the size is valid.
-
-    // Issues/Improvements:
-    //     Validation of Merkle Branches:
-    //         The receiver should validate the Merkle branch included in the propose message against the Merkle root.
-    //     Lack of Context for Shares:
-    //         The receiver logic does not handle shares or check their validity (e.g., reconstructing the data using erasure coding or verifying consistency with the root).
-
-    // Missing Steps:
-    //     Validate the received Merkle branch against the Merkle root.
-    //     Add logic for handling shares, if necessary, in this phase.
-
-
     // Phase 1: Proposal Phase
     // The sender node creates shares of the data to be broadcast using erasure coding
     // and computes a Merkle tree root for the shares. Each share, along with the 
     // corresponding Merkle branch, is sent to the respective recipient nodes in a 
     // `propose` message. Nodes validate the size of the share to prevent malicious 
-    // oversized proposals.   
-    pub async fn handle_propose(&self, root: Vec<u8>, max_size: usize) {
+    // oversized proposals. They also validate the Merkle branch against the root.
+    pub async fn handle_propose(
+        &self,
+        root: Vec<u8>,
+        proof: Vec<Vec<u8>>,
+        shard: Vec<u8>,
+        max_transaction_size: usize,
+    ) {
         info!("Node {} handling propose request", self.id);
 
-        if root.len() > max_size {
+        // Step 1: Validate shard size
+        // Step 1: Validate shard size
+        let data_shards = 4; // Number of data shards used in erasure coding
+        let max_shard_size = (max_transaction_size + data_shards - 1) / data_shards; // Compute max shard size
+
+        // Validate shard size against max_shard_size
+        if shard.len() > max_shard_size {
             info!(
-                "Node {} rejected proposal due to size: {} (max: {}).",
+                "Node {} rejected proposal due to shard size: {} (max shard size: {}).",
                 self.id,
-                root.len(),
-                max_size
+                shard.len(),
+                max_shard_size
             );
             return;
         }
 
+        // Step 2: Validate Merkle branch against the root
+        let computed_root = Self::validate_merkle_branch(&shard, &proof);
+        if computed_root != root {
+            info!(
+                "Node {} rejected proposal due to invalid Merkle proof. Provided root: {:?}, Computed root: {:?}",
+                self.id, root, computed_root
+            );
+            return;
+        }
+
+        // Step 3: Quorum vote logic
         let mut quorum_votes = self.quorum_votes.write().await;
         let counter = quorum_votes.entry(root.clone()).or_insert(0);
         *counter += 1;
@@ -132,7 +136,22 @@ impl Node {
         );
     }
 
+    // Helper function to validate the Merkle branch
+    fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
+        let mut hash = Sha256::digest(shard).to_vec(); // Hash the shard
+        for sibling in proof {
+            let combined = if hash < *sibling {
+                [hash.clone(), sibling.clone()].concat()
+            } else {
+                [sibling.clone(), hash.clone()].concat()
+            };
+            hash = Sha256::digest(&combined).to_vec();
+        }
+        hash
+    }
+
     // Phase 2: Prevote Phase
+    // Nodes validate the root from the propose phase and vote to move forward.
     async fn handle_prevote(&self) {
         info!("Node {} handling prevote request", self.id);
         let mut commit_votes = self.commit_votes.write().await;
@@ -140,19 +159,26 @@ impl Node {
     }
 
     // Phase 3: Commit Phase
+    // Once a quorum of prevotes is reached, nodes finalize the transaction.
     async fn handle_commit(&self) {
         info!("Node {} handling commit request", self.id);
     }
 }
 
-fn initialize_apis(node: Arc<Node>) -> Router {
+fn initialize_apis(node: Arc<Node>, config: &Config) -> Router {
+    let transaction_size = config.consensus.transaction_size;
+    let data_shards = 4; // Adjust this if needed, but it's typically constant.
+    let shard_size = (transaction_size + data_shards - 1) / data_shards;
+
     Router::new()
         .route("/propose", post({
             let node = node.clone();
+            let config = config.clone();
+            let max_size: usize = config.consensus.transaction_size;
             move |Json(payload): Json<ProposeRequest>| {
                 let node = node.clone();
                 async move {
-                    node.handle_propose(payload.root, 1024).await;
+                    node.handle_propose(payload.root, payload.proof, payload.shard, max_size).await;
                     Json(Response {
                         status: "Propose accepted".to_string(),
                     })
@@ -202,7 +228,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     info!("Loaded configuration: {:?}", config);
 
     let node = Arc::new(Node::new(config.node.id));
-    let app = initialize_apis(node);
+    let app = initialize_apis(node, &config);
 
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
