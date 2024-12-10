@@ -17,6 +17,7 @@ class TestAleph(Stack):
         BATCH_SIZE = 1  # Define the number of transactions per node for the test
         TRANSACTION_SIZE = 256 #Bytes
         ROUND_SIZE = 1 
+        SHARD_SIZE = 4
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -137,6 +138,7 @@ class TestAleph(Stack):
                 f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'round = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
                 "echo 'level = \"info\"' >> /home/aleph-node/aleph-node-config.toml",
@@ -183,12 +185,13 @@ class TestAleph(Stack):
                     sleep 5;
                 done
                 """,
+                
                 # Start the Aleph testing
                 "echo 'Attempting to execute alephStart with configuration' >> /home/aleph-node/logs/node_status;",
                 "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
 
                 # Sync logs to S3 after the test
-                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
+                # f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
 
                 # Log resource usage every 5 seconds
                 # "while true; do",
@@ -198,7 +201,7 @@ class TestAleph(Stack):
                 # "done &",
 
                 # Sync logs to S3 after the test
-                f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet"
+                # f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet"
             )
 
             # Output the instance ID for debugging

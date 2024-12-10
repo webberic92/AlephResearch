@@ -2,10 +2,8 @@ use axum::{routing::post, Json, Router};
 use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
 use tokio::sync::RwLock;
 use tokio::net::TcpListener;
-use tracing::{info, error};
+use tracing::info;
 use serde::{Deserialize, Serialize};
-use tracing_subscriber;
-use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 
 // Configuration structures
@@ -13,7 +11,6 @@ use sha2::{Digest, Sha256};
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
-    logging: LoggingConfig,
     node: NodeConfig,
 }
 
@@ -27,13 +24,7 @@ struct NetworkConfig {
 struct ConsensusConfig {
     batch_size: usize,
     transaction_size: usize,
-    round: usize,
-}
-
-#[derive(Debug, Deserialize)]
-struct LoggingConfig {
-    level: String,
-    transaction_metrics_log: String,
+    data_shards: usize,
 }
 
 #[derive(Debug, Deserialize)]
@@ -71,74 +62,65 @@ struct Response {
 #[derive(Debug, Clone)]
 struct Node {
     id: usize,
+    total_nodes: usize,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    commit_votes: Arc<RwLock<usize>>,
 }
 
 impl Node {
-    fn new(id: usize) -> Self {
+    fn new(id: usize, total_nodes: usize) -> Self {
         Self {
             id,
+            total_nodes,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            commit_votes: Arc::new(RwLock::new(0)),
         }
     }
 
-    // Phase 1: Proposal Phase
-    // The sender node creates shares of the data to be broadcast using erasure coding
-    // and computes a Merkle tree root for the shares. Each share, along with the 
-    // corresponding Merkle branch, is sent to the respective recipient nodes in a 
-    // `propose` message. Nodes validate the size of the share to prevent malicious 
-    // oversized proposals. They also validate the Merkle branch against the root.
-    pub async fn handle_propose(
+    fn f(&self) -> usize {
+        (self.total_nodes - 1) / 3 // Fault tolerance based on total nodes
+    }
+
+    async fn handle_propose(
         &self,
+        sender: usize,
         root: Vec<u8>,
         proof: Vec<Vec<u8>>,
         shard: Vec<u8>,
-        max_transaction_size: usize,
+        transaction_size: usize,
+        data_shards: usize,
     ) {
-        info!("Node {} handling propose request", self.id);
+        info!("Node {}: Handling propose request from {}", self.id, sender);
 
-        // Step 1: Validate shard size
-        // Step 1: Validate shard size
-        let data_shards = 4; // Number of data shards used in erasure coding
-        let max_shard_size = (max_transaction_size + data_shards - 1) / data_shards; // Compute max shard size
+        let max_shard_size = (transaction_size + data_shards - 1) / data_shards;
 
-        // Validate shard size against max_shard_size
         if shard.len() > max_shard_size {
             info!(
-                "Node {} rejected proposal due to shard size: {} (max shard size: {}).",
-                self.id,
-                shard.len(),
-                max_shard_size
+                "Node {}: Proposal from Node {} rejected due to shard size. Shard size: {}, Max size: {}",
+                self.id, sender, shard.len(), max_shard_size
             );
             return;
         }
 
-        // Step 2: Validate Merkle branch against the root
         let computed_root = Self::validate_merkle_branch(&shard, &proof);
         if computed_root != root {
             info!(
-                "Node {} rejected proposal due to invalid Merkle proof. Provided root: {:?}, Computed root: {:?}",
-                self.id, root, computed_root
+                "Node {}: Invalid Merkle proof from Node {}. Provided root: {:?}, Computed root: {:?}",
+                self.id, sender, root, computed_root
             );
             return;
         }
 
-        // Step 3: Quorum vote logic
         let mut quorum_votes = self.quorum_votes.write().await;
         let counter = quorum_votes.entry(root.clone()).or_insert(0);
         *counter += 1;
 
         info!(
-            "Node {} successfully handled propose. Quorum votes for root {:?}: {}",
-            self.id, root, *counter
+            "Node {}: Proposal from Node {} accepted. Quorum votes for root {:?}: {}",
+            self.id, sender, root, *counter
         );
     }
 
-    // Helper function to validate the Merkle branch
     fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
-        let mut hash = Sha256::digest(shard).to_vec(); // Hash the shard
+        let mut hash = Sha256::digest(shard).to_vec();
         for sibling in proof {
             let combined = if hash < *sibling {
                 [hash.clone(), sibling.clone()].concat()
@@ -150,61 +132,92 @@ impl Node {
         hash
     }
 
-    // Phase 2: Prevote Phase
-    // Nodes validate the root from the propose phase and vote to move forward.
-    async fn handle_prevote(&self) {
-        info!("Node {} handling prevote request", self.id);
-        let mut commit_votes = self.commit_votes.write().await;
-        *commit_votes += 1;
+    async fn handle_prevote(&self, sender: usize, root: Vec<u8>) {
+        info!("Node {}: Handling prevote request from {}", self.id, sender);
+
+        let mut quorum_votes = self.quorum_votes.write().await;
+        if let Some(counter) = quorum_votes.get_mut(&root) {
+            *counter += 1;
+
+            if *counter >= 2 * self.f() + 1 {
+                info!(
+                    "Node {}: Quorum reached for root {:?} with {} votes",
+                    self.id, root, *counter
+                );
+            }
+        } else {
+            info!("Node {}: Prevote for unknown root {:?}", self.id, root);
+        }
     }
 
-    // Phase 3: Commit Phase
-    // Once a quorum of prevotes is reached, nodes finalize the transaction.
-    async fn handle_commit(&self) {
-        info!("Node {} handling commit request", self.id);
+    async fn handle_commit(&self, sender: usize, root: Vec<u8>) {
+        info!("Node {}: Handling commit request from {}", self.id, sender);
+
+        let quorum_votes = self.quorum_votes.read().await;
+        if let Some(counter) = quorum_votes.get(&root) {
+            if *counter >= 2 * self.f() + 1 {
+                info!("Node {}: Commit finalized for root {:?}", self.id, root);
+            } else {
+                info!(
+                    "Node {}: Insufficient votes for commit on root {:?}",
+                    self.id, root
+                );
+            }
+        } else {
+            info!("Node {}: Commit for unknown root {:?}", self.id, root);
+        }
     }
 }
 
-fn initialize_apis(node: Arc<Node>, config: &Config) -> Router {
-    let transaction_size = config.consensus.transaction_size;
-    let data_shards = 4; // Adjust this if needed, but it's typically constant.
-    let shard_size = (transaction_size + data_shards - 1) / data_shards;
-
+fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
     Router::new()
+        .route("/health", axum::routing::get(|| async {
+            Json(Response {
+                status: "alive".to_string(),
+            })
+        }))
         .route("/propose", post({
             let node = node.clone();
-            let config = config.clone();
-            let max_size: usize = config.consensus.transaction_size;
             move |Json(payload): Json<ProposeRequest>| {
                 let node = node.clone();
+                let transaction_size = config.consensus.transaction_size;
+                let data_shards = config.consensus.data_shards;
                 async move {
-                    node.handle_propose(payload.root, payload.proof, payload.shard, max_size).await;
+                    node.handle_propose(
+                        payload.sender,
+                        payload.root,
+                        payload.proof,
+                        payload.shard,
+                        transaction_size,
+                        data_shards,
+                    )
+                    .await;
                     Json(Response {
-                        status: "Propose accepted".to_string(),
+                        status: format!("Node {}: Propose accepted from {}", node.id, payload.sender),
                     })
                 }
             }
         }))
         .route("/prevote", post({
             let node = node.clone();
-            move |Json(_payload): Json<PrevoteRequest>| {
+            move |Json(payload): Json<PrevoteRequest>| {
                 let node = node.clone();
                 async move {
-                    node.handle_prevote().await;
+                    node.handle_prevote(payload.sender, payload.root).await;
                     Json(Response {
-                        status: "Prevote accepted".to_string(),
+                        status: format!("Node {}: Prevote accepted from {}", node.id, payload.sender),
                     })
                 }
             }
         }))
         .route("/commit", post({
             let node = node.clone();
-            move |Json(_payload): Json<CommitRequest>| {
+            move |Json(payload): Json<CommitRequest>| {
                 let node = node.clone();
                 async move {
-                    node.handle_commit().await;
+                    node.handle_commit(payload.sender, payload.root).await;
                     Json(Response {
-                        status: "Commit accepted".to_string(),
+                        status: format!("Node {}: Commit accepted from {}", node.id, payload.sender),
                     })
                 }
             }
@@ -218,17 +231,14 @@ fn load_config(file_path: &str) -> Config {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
+    tracing_subscriber::fmt().init();
 
-    // Load configuration
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     info!("Loaded configuration: {:?}", config);
 
-    let node = Arc::new(Node::new(config.node.id));
-    let app = initialize_apis(node, &config);
+    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
+    let app = initialize_apis(node, config);
 
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
