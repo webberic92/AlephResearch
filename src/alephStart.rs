@@ -6,6 +6,7 @@ use tracing::{info, error};
 use tracing_subscriber;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
+use std::time::Duration;
 
 // Configuration structure to parse the TOML file
 #[derive(Debug, Deserialize)]
@@ -83,68 +84,72 @@ async fn send_proposals(
     let total_shards = data_shards + parity_shards;
     let rs = ReedSolomon::new(data_shards, parity_shards).unwrap();
 
+    // Generate the batch of transactions as a single payload
+    let mut batch_data = String::new();
     for i in 0..batch_size {
-        let base_transaction = format!("Transaction {} from Node {}", i + 1, sender_id);
-        let transaction_data = generate_transaction(&base_transaction, transaction_size);
+        let transaction = format!("Transaction {} : from Node {}\n", i + 1, sender_id);
+        batch_data.push_str(&generate_transaction(&transaction, transaction_size));
+    }
 
-        // Prepare the shards
-        let shard_size = (transaction_data.len() + data_shards - 1) / data_shards; // Compute shard size
-        let mut shards: Vec<Vec<u8>> = vec![vec![0; shard_size]; total_shards];
+    // Prepare the shards
+    let shard_size = (batch_data.len() + data_shards - 1) / data_shards;
+    let mut shards: Vec<Vec<u8>> = vec![vec![0; shard_size]; total_shards];
 
-        // Fill data shards
-        for (i, chunk) in transaction_data.as_bytes().chunks(shard_size).enumerate() {
-            shards[i][..chunk.len()].copy_from_slice(chunk);
-        }
+    // Fill data shards
+    for (i, chunk) in batch_data.as_bytes().chunks(shard_size).enumerate() {
+        shards[i][..chunk.len()].copy_from_slice(chunk);
+    }
 
-        // Encode parity shards
-        rs.encode(&mut shards).unwrap();
+    // Encode parity shards
+    rs.encode(&mut shards).unwrap();
 
-        // Compute Merkle tree
-        let shard_hashes: Vec<Vec<u8>> = shards
-            .iter()
-            .map(|shard| Sha256::digest(shard).to_vec()) // Hash each shard
-            .collect();
-        let merkle_root = compute_merkle_root(&shard_hashes);
+    // Compute Merkle tree
+    let shard_hashes: Vec<Vec<u8>> = shards
+        .iter()
+        .map(|shard| Sha256::digest(shard).to_vec()) // Hash each shard
+        .collect();
+    let merkle_root = compute_merkle_root(&shard_hashes);
 
-        for (index, shard) in shards.into_iter().enumerate() {
-            let merkle_branch = compute_merkle_branch(&shard_hashes, index);
+    // Send exactly one propose message to each node
+    for (index, node) in config.network.nodes.iter().enumerate() {
+        let shard = &shards[index % shards.len()];
+        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
 
-            let payload = json!({
-                "sender": sender_id,
-                "shard": shard,           // The shard data
-                "proof": merkle_branch,   // Merkle branch for this shard
-                "root": merkle_root,      // Merkle root
-            });
+        let payload = json!({
+            "sender": sender_id,
+            "shard": shard,
+            "proof": merkle_branch,
+            "root": merkle_root,
+        });
 
-            // Log the payload and target URL
-            let node = &config.network.nodes[index % config.network.nodes.len()];
-            info!("Sending request to: http://{}/propose", node);
-            info!("Payload: {:?}", payload);
+        // Log the payload and target URL
+        info!("Node {} : Sending request to: http://{}/propose", sender_id, node);
+        info!("Payload: {:?}", payload);
 
-            let response = client
-                .post(format!("http://{}/propose", node))
-                .json(&payload)
-                .send()
-                .await;
+        let response = client
+            .post(format!("http://{}/propose", node))
+            .json(&payload)
+            .send()
+            .await;
 
-            match response {
-                Ok(res) => {
-                    if res.status().is_success() {
-                        info!("Response from {}: {:?}", node, res.text().await?);
-                    } else {
-                        error!(
-                            "Request failed to {} with status: {}",
-                            node,
-                            res.status()
-                        );
-                    }
-                }
-                Err(e) => {
+        match response {
+            Ok(res) => {
+                if res.status().is_success() {
+                    info!("Node {} : Response from {}: {:?}", node, sender_id, res.text().await?);
+                } else {
                     error!(
-                        "Request to {} failed with error: {:?}",
-                        node, e
+                        "Node {} : Request failed to {} with status: {}",
+                        sender_id,
+                        node,
+                        res.status()
                     );
                 }
+            }
+            Err(e) => {
+                error!(
+                    "Node {} : Request to {} failed with error: {:?}",
+                    sender_id, node, e
+                );
             }
         }
     }
@@ -197,6 +202,38 @@ fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
+async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
+    for node in nodes {
+        let url = format!("http://{}/health", node);
+        match client.get(&url).send().await {
+            Ok(response) => {
+                if !response.status().is_success() {
+                    info!("Node {} is not healthy. Retrying...", node);
+                    return false;
+                }
+            }
+            Err(e) => {
+                info!("Node {} health check failed with error: {:?}", node, e);
+                return false;
+            }
+        }
+    }
+    true
+}
+
+async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
+    loop {
+        info!("Checking health of all nodes...");
+        if check_all_nodes_health(client, nodes).await {
+            info!("All nodes are healthy!");
+            break;
+        }
+        info!("Some nodes are not healthy. Retrying in 5 seconds...");
+        tokio::time::sleep(Duration::from_secs(5)).await;
+    }
+}
+
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -209,6 +246,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // HTTP client
     let client = Client::new();
+
+    // Wait for all nodes to be healthy
+    wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
     // Send proposals using the extracted function
     send_proposals(&client, &config).await?;
