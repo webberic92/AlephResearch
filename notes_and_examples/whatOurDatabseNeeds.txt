@@ -10,3 +10,17 @@ Resource Utilization: CPU and memory usage across nodes during the RBC process.
 
 
 cargo build --release --target x86_64-unknown-linux-musl
+
+
+
+Suggested Updates to Your Implementation
+
+    Epoch Tracking:
+        Modify alephStart.rs to assign a unique epoch ID to each transaction.
+        Ensure transactions in the same epoch do not overlap until committed.
+
+    DAG Alignment Checks:
+        Implement a pre-check before broadcasting prevotes to ensure the DAG is ready for the round.
+
+    Concurrency Limit:
+        Introduce a concurrency limiter in alephRBC.rs to process only a few proposals simultaneously, based on available resources.
