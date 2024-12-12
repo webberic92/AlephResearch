@@ -1,10 +1,16 @@
 use axum::{routing::post, Json, Router};
-use std::{collections::HashMap, fs, net::SocketAddr, sync::Arc};
-use tokio::sync::RwLock;
-use tokio::net::TcpListener;
-use tracing::info;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::{
+    collections::{HashMap, HashSet},
+    fs,
+    net::SocketAddr,
+    sync::Arc,
+};
+use tokio::net::TcpListener;
+use tokio::sync::{Mutex, RwLock};
+use tracing::{error, info};
+use tracing_subscriber;
 
 // Configuration structures
 #[derive(Debug, Deserialize)]
@@ -38,8 +44,9 @@ struct NodeConfig {
 struct ProposeRequest {
     sender: usize,
     shard: Vec<u8>,
-    proof: Vec<Vec<u8>>, // Add proof (Merkle branch)
+    proof: Vec<Vec<u8>>,
     root: Vec<u8>,
+    epoch_id: u64,
 }
 
 #[derive(Deserialize)]
@@ -59,11 +66,13 @@ struct Response {
     status: String,
 }
 
+// Node structure
 #[derive(Debug, Clone)]
 struct Node {
     id: usize,
     total_nodes: usize,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
+    epoch_tracker: Arc<Mutex<HashSet<u64>>>,
 }
 
 impl Node {
@@ -72,11 +81,25 @@ impl Node {
             id,
             total_nodes,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
+            epoch_tracker: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
     fn f(&self) -> usize {
         (self.total_nodes - 1) / 3 // Fault tolerance based on total nodes
+    }
+
+    fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
+        let mut hash = Sha256::digest(shard).to_vec();
+        for sibling in proof {
+            let combined = if hash < *sibling {
+                [hash.clone(), sibling.clone()].concat()
+            } else {
+                [sibling.clone(), hash.clone()].concat()
+            };
+            hash = Sha256::digest(&combined).to_vec();
+        }
+        hash
     }
 
     async fn handle_propose(
@@ -85,10 +108,17 @@ impl Node {
         root: Vec<u8>,
         proof: Vec<Vec<u8>>,
         shard: Vec<u8>,
+        epoch_id: u64,
         transaction_size: usize,
         data_shards: usize,
     ) {
         info!("Node {}: Handling propose request from {}", self.id, sender);
+
+        // Ensure no epoch overlap
+        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
+            error!("Node {}: Epoch overlap detected for epoch {}: {}", self.id, epoch_id, e);
+            return;
+        }
 
         let max_shard_size = (transaction_size + data_shards - 1) / data_shards;
 
@@ -114,22 +144,9 @@ impl Node {
         *counter += 1;
 
         info!(
-            "Node {}: Proposal from Node {} accepted. Quorum votes for root {:?}: {}",
-            self.id, sender, root, *counter
+            "Node {}: Proposal from Node {} accepted for epoch {}. Quorum votes for root {:?}: {}",
+            self.id, sender, epoch_id, root, *counter
         );
-    }
-
-    fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
-        let mut hash = Sha256::digest(shard).to_vec();
-        for sibling in proof {
-            let combined = if hash < *sibling {
-                [hash.clone(), sibling.clone()].concat()
-            } else {
-                [sibling.clone(), hash.clone()].concat()
-            };
-            hash = Sha256::digest(&combined).to_vec();
-        }
-        hash
     }
 
     async fn handle_prevote(&self, sender: usize, root: Vec<u8>) {
@@ -167,14 +184,28 @@ impl Node {
             info!("Node {}: Commit for unknown root {:?}", self.id, root);
         }
     }
+
+    async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
+        let mut tracker = self.epoch_tracker.lock().await;
+        if tracker.contains(&epoch_id) {
+            Err("Epoch overlap detected")
+        } else {
+            tracker.insert(epoch_id);
+            Ok(())
+        }
+    }
 }
 
 fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
     Router::new()
-        .route("/health", axum::routing::get(|| async {
-            Json(Response {
-                status: "alive".to_string(),
-            })
+        .route("/health", axum::routing::get({
+            let node = node.clone();
+            move || async move {
+                let quorum_votes = node.quorum_votes.read().await;
+                Json(Response {
+                    status: format!("alive; quorum votes: {:?}", *quorum_votes),
+                })
+            }
         }))
         .route("/propose", post({
             let node = node.clone();
@@ -188,12 +219,16 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
                         payload.root,
                         payload.proof,
                         payload.shard,
+                        payload.epoch_id,
                         transaction_size,
                         data_shards,
                     )
                     .await;
                     Json(Response {
-                        status: format!("Node {}: Propose accepted from {}", node.id, payload.sender),
+                        status: format!(
+                            "Node {}: Propose accepted from Node {} for epoch {}",
+                            node.id, payload.sender, payload.epoch_id
+                        ),
                     })
                 }
             }
@@ -205,7 +240,10 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
                 async move {
                     node.handle_prevote(payload.sender, payload.root).await;
                     Json(Response {
-                        status: format!("Node {}: Prevote accepted from {}", node.id, payload.sender),
+                        status: format!(
+                            "Node {}: Prevote accepted from Node {}",
+                            node.id, payload.sender
+                        ),
                     })
                 }
             }
@@ -217,7 +255,10 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
                 async move {
                     node.handle_commit(payload.sender, payload.root).await;
                     Json(Response {
-                        status: format!("Node {}: Commit accepted from {}", node.id, payload.sender),
+                        status: format!(
+                            "Node {}: Commit accepted from Node {}",
+                            node.id, payload.sender
+                        ),
                     })
                 }
             }

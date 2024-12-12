@@ -1,39 +1,31 @@
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
-use std::fs;
-use tracing::{info, error};
-use tracing_subscriber;
-use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use std::time::Duration;
+use std::collections::{HashMap, HashSet};
+use std::{fs, sync::Arc, time::Duration};
+use tokio::sync::{Mutex, RwLock};
+use tokio::time::sleep;
+use tracing::{error, info};
+use tracing_subscriber;
 
-// Configuration structure to parse the TOML file
+// Configuration structures
 #[derive(Debug, Deserialize)]
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
-    logging: LoggingConfig,
     node: NodeConfig,
 }
 
 #[derive(Debug, Deserialize)]
 struct NetworkConfig {
-    listen_address: String,
     nodes: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
 struct ConsensusConfig {
-    batch_size: usize,
     transaction_size: usize,
-    round: usize,
-}
-
-#[derive(Debug, Deserialize)]
-struct LoggingConfig {
-    level: String,
-    transaction_metrics_log: String,
+    data_shards: usize,
 }
 
 #[derive(Debug, Deserialize)]
@@ -42,122 +34,34 @@ struct NodeConfig {
     total_nodes: usize,
 }
 
-// Function to load the configuration from the TOML file
-fn load_config(file_path: &str) -> Config {
-    let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
-    toml::from_str(&config_contents).expect("Failed to parse configuration.")
+// Data structure with epoch ID
+#[derive(Debug, Clone)]
+struct Data {
+    transaction: Vec<u8>,
+    epoch_id: u64,
 }
 
-// Helper function to generate a transaction of exactly the specified size
-fn generate_transaction(data: &str, size: usize) -> String {
-    if data.len() >= size {
-        data[..size].to_string() // Truncate if too long
-    } else {
-        let padding = "x".repeat(size - data.len());
-        format!("{}{}", data, padding) // Pad if too short
-    }
+// Node structure
+#[derive(Debug, Clone)]
+struct Node {
+    id: usize,
+    total_nodes: usize,
+    quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
 }
 
-
-// Implement the creation of shares using erasure coding.
-// Compute the Merkle tree root for the shares.
-// Include the actual computed Merkle branch and root in the propose message.
-
-// Phase 1: Proposal Phase
-// The sender node creates shares of the data to be broadcast using erasure coding
-// and computes a Merkle tree root for the shares. Each share, along with the 
-// corresponding Merkle branch, is sent to the respective recipient nodes in a 
-// `propose` message. Nodes validate the size of the share to prevent malicious 
-// oversized proposals.
-// Helper function to compute the Merkle root
-async fn send_proposals(
-    client: &Client,
-    config: &Config,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let sender_id = config.node.id;
-    let transaction_size = config.consensus.transaction_size;
-    let batch_size = config.consensus.batch_size;
-
-    // Erasure coding parameters
-    let data_shards = 4;
-    let parity_shards = 2;
-    let total_shards = data_shards + parity_shards;
-    let rs = ReedSolomon::new(data_shards, parity_shards).unwrap();
-
-    // Generate the batch of transactions as a single payload
-    let mut batch_data = String::new();
-    for i in 0..batch_size {
-        let transaction = format!("Transaction {} : from Node {}\n", i + 1, sender_id);
-        batch_data.push_str(&generate_transaction(&transaction, transaction_size));
-    }
-
-    // Prepare the shards
-    let shard_size = (batch_data.len() + data_shards - 1) / data_shards;
-    let mut shards: Vec<Vec<u8>> = vec![vec![0; shard_size]; total_shards];
-
-    // Fill data shards
-    for (i, chunk) in batch_data.as_bytes().chunks(shard_size).enumerate() {
-        shards[i][..chunk.len()].copy_from_slice(chunk);
-    }
-
-    // Encode parity shards
-    rs.encode(&mut shards).unwrap();
-
-    // Compute Merkle tree
-    let shard_hashes: Vec<Vec<u8>> = shards
-        .iter()
-        .map(|shard| Sha256::digest(shard).to_vec()) // Hash each shard
-        .collect();
-    let merkle_root = compute_merkle_root(&shard_hashes);
-
-    // Send exactly one propose message to each node
-    for (index, node) in config.network.nodes.iter().enumerate() {
-        let shard = &shards[index % shards.len()];
-        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
-
-        let payload = json!({
-            "sender": sender_id,
-            "shard": shard,
-            "proof": merkle_branch,
-            "root": merkle_root,
-        });
-
-        // Log the payload and target URL
-        info!("Node {} : Sending request to: http://{}/propose", sender_id, node);
-        info!("Payload: {:?}", payload);
-
-        let response = client
-            .post(format!("http://{}/propose", node))
-            .json(&payload)
-            .send()
-            .await;
-
-        match response {
-            Ok(res) => {
-                if res.status().is_success() {
-                    info!("Node {} : Response from {}: {:?}", node, sender_id, res.text().await?);
-                } else {
-                    error!(
-                        "Node {} : Request failed to {} with status: {}",
-                        sender_id,
-                        node,
-                        res.status()
-                    );
-                }
-            }
-            Err(e) => {
-                error!(
-                    "Node {} : Request to {} failed with error: {:?}",
-                    sender_id, node, e
-                );
-            }
+impl Node {
+    fn new(id: usize, total_nodes: usize) -> Self {
+        Self {
+            id,
+            total_nodes,
+            quorum_votes: Arc::new(RwLock::new(HashMap::new())),
         }
     }
-
-    Ok(())
 }
 
-// Helper function to compute Merkle root
+// Helper functions
+
+/// Compute Merkle root from shard hashes
 fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     if hashes.len() == 1 {
         return hashes[0].clone();
@@ -173,7 +77,7 @@ fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     compute_merkle_root(&next_level)
 }
 
-// Helper function to compute Merkle branch
+/// Compute Merkle branch for a specific index
 fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     let mut branch = vec![];
     let mut current_index = index;
@@ -202,6 +106,7 @@ fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
+/// Check the health of all nodes
 async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
     for node in nodes {
         let url = format!("http://{}/health", node);
@@ -221,6 +126,7 @@ async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
     true
 }
 
+/// Wait until all nodes are healthy
 async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
     loop {
         info!("Checking health of all nodes...");
@@ -229,29 +135,133 @@ async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
             break;
         }
         info!("Some nodes are not healthy. Retrying in 5 seconds...");
-        tokio::time::sleep(Duration::from_secs(5)).await;
+        sleep(Duration::from_secs(5)).await;
     }
 }
 
+/// Assign an epoch ID to a transaction
+async fn assign_epoch_id(transaction: &[u8], current_epoch: &mut u64) -> Data {
+    *current_epoch += 1;
+    Data {
+        transaction: transaction.to_vec(),
+        epoch_id: *current_epoch,
+    }
+}
 
+/// Ensure no overlap between epochs
+async fn ensure_no_overlap(epoch_tracker: &Arc<Mutex<HashSet<u64>>>, epoch_id: u64) -> Result<(), &'static str> {
+    let mut tracker = epoch_tracker.lock().await;
+    if tracker.contains(&epoch_id) {
+        Err("Epoch overlap detected")
+    } else {
+        tracker.insert(epoch_id);
+        Ok(())
+    }
+}
 
+/// Send proposals to nodes
+async fn send_proposals(
+    client: &Client,
+    config: &Config,
+    node: &Node,
+    current_epoch: &mut u64,
+    epoch_tracker: &Arc<Mutex<HashSet<u64>>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    let sender_id = config.node.id;
+    let transaction_size = config.consensus.transaction_size;
+    let data_shards = config.consensus.data_shards;
+
+    // Create dummy shard data
+    let shard_size = transaction_size / data_shards;
+    let shards: Vec<Vec<u8>> = (0..data_shards)
+        .map(|i| vec![i as u8; shard_size])
+        .collect();
+
+    // Assign epoch ID to the transaction
+    let data = assign_epoch_id(&shards.concat(), current_epoch).await;
+
+    // Ensure no overlap
+    ensure_no_overlap(epoch_tracker, data.epoch_id).await?;
+
+    // Compute Merkle root and branches
+    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    let merkle_root = compute_merkle_root(&shard_hashes);
+
+    info!("Merkle root for epoch {}: {:?}", data.epoch_id, merkle_root);
+    for (i, hash) in shard_hashes.iter().enumerate() {
+        info!("Shard {} hash: {:?}", i, hash);
+    }
+
+    // Send proposals
+    for (index, node_url) in config.network.nodes.iter().enumerate() {
+        sleep(Duration::from_millis(500)).await; // Throttling requests
+        let shard = &shards[index % shards.len()];
+        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
+        let payload = json!({
+            "sender": sender_id,
+            "shard": shard,
+            "proof": merkle_branch,
+            "root": merkle_root,
+            "epoch_id": data.epoch_id,
+        });
+        let response = client
+            .post(format!("http://{}/propose", node_url))
+            .json(&payload)
+            .send()
+            .await;
+
+        match response {
+            Ok(res) => {
+                if res.status().is_success() {
+                    info!(
+                        "Node {}: Successfully sent proposal for epoch {} to {}",
+                        sender_id, data.epoch_id, node_url
+                    );
+                } else {
+                    error!(
+                        "Failed to send proposal for epoch {} to {}: {}",
+                        data.epoch_id, node_url, res.status()
+                    );
+                }
+            }
+            Err(e) => error!(
+                "Error sending proposal for epoch {} to {}: {:?}",
+                data.epoch_id, node_url, e
+            ),
+        }
+    }
+
+    Ok(())
+}
+
+// Helper functions
+fn load_config(file_path: &str) -> Config {
+    let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
+    toml::from_str(&config_contents).expect("Failed to parse configuration.")
+}
+
+// Main function
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
+    tracing_subscriber::fmt().init();
 
-    // Load configuration from TOML
-    let config = load_config("/home/aleph-node/aleph-node-config.toml");
-
-    // HTTP client
+    // Load configuration
+    let config_path = "/home/aleph-node/aleph-node-config.toml";
+    let config = load_config(config_path);
     let client = Client::new();
+
+    // Initialize the Node instance
+    let node = Node::new(config.node.id, config.node.total_nodes);
+
+    // Shared epoch tracking state
+    let current_epoch = &mut 0u64;
+    let epoch_tracker = Arc::new(Mutex::new(HashSet::new()));
 
     // Wait for all nodes to be healthy
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
-    // Send proposals using the extracted function
-    send_proposals(&client, &config).await?;
+    // Send proposals with epoch tracking
+    send_proposals(&client, &config, &node, current_epoch, &epoch_tracker).await?;
 
     Ok(())
 }
