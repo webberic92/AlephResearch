@@ -1,109 +1,3 @@
-
-NODE 1
-sh-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/aleph-node/
-aleph-node-config.toml  alephRBC                alephStart              generate_keys           logs/
-sh-4.2$ cat /home/aleph-node/logs/
-node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/
-node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.173.200
-Node registration success.
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.172.19:30333", "10.0.176.220:30333"
-Starting alephRBC execution
-alephRBC binary is found at /home/aleph-node/alephRBC
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute alephRBC with configuration
-Waiting for alephRBC to be ready on port 30333
-2024-12-10T03:19:06.860714Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.172.19:30333", "10.0.176.220:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 1, total_nodes: 3 } }
-2024-12-10T03:19:06.860817Z  INFO alephRBC: API server running on 0.0.0.0:30333
-alephRBC is ready.
-Attempting to execute alephStart with configuration
-2024-12-10T03:19:06.894781Z  INFO alephStart: Checking health of all nodes...
-2024-12-10T03:19:06.895955Z  INFO alephStart: Node 10.0.172.19:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.172.19:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2024-12-10T03:19:06.895989Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
-2024-12-10T03:19:09.378582Z  INFO alephRBC: Node 1: Handling propose request from 3
-2024-12-10T03:19:09.378654Z  INFO alephRBC: Node 1: Invalid Merkle proof from Node 3. Provided root: [24, 206, 69, 175, 85, 15, 176, 27, 54, 91, 103, 23, 198, 89, 68, 150, 218, 132, 84, 101, 15, 245, 132, 8, 108, 133, 100, 39, 160, 86, 17, 236], Computed root: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51]
-2024-12-10T03:19:11.905146Z  INFO alephStart: Checking health of all nodes...
-2024-12-10T03:19:11.909993Z  INFO alephStart: All nodes are healthy!
-2024-12-10T03:19:11.910099Z  INFO alephStart: Node 1 : Sending request to: http://10.0.172.19:30333/propose
-2024-12-10T03:19:11.910107Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(124), Number(225), Number(0), Number(151), Number(31), Number(100), Number(231), Number(0), Number(30), Number(143), Number(229), Number(165), Number(25), Number(115), Number(236), Number(223), Number(225), Number(206), Number(212), Number(43), Number(239), Number(231), Number(238), Number(141), Number(95), Number(214), Number(33), Number(149), Number(6), Number(181), Number(57), Number(60)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(27), Number(93), Number(119), Number(175), Number(219), Number(138), Number(25), Number(87), Number(41), Number(238), Number(151), Number(97), Number(147), Number(218), Number(191), Number(30), Number(80), Number(194), Number(105), Number(53), Number(211), Number(147), Number(44), Number(189), Number(157), Number(130), Number(205), Number(62), Number(61), Number(101), Number(36), Number(15)]], "root": Array [Number(111), Number(167), Number(152), Number(203), Number(31), Number(26), Number(186), Number(16), Number(124), Number(113), Number(227), Number(9), Number(136), Number(41), Number(223), Number(76), Number(36), Number(230), Number(81), Number(214), Number(237), Number(230), Number(126), Number(213), Number(175), Number(109), Number(121), Number(137), Number(175), Number(110), Number(209), Number(170)], "sender": Number(1), "shard": Array [Number(84), Number(114), Number(97), Number(110), Number(115), Number(97), Number(99), Number(116), Number(105), Number(111), Number(110), Number(32), Number(49), Number(32), Number(58), Number(32), Number(102), Number(114), Number(111), Number(109), Number(32), Number(78), Number(111), Number(100), Number(101), Number(32), Number(49), Number(10), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:11.911631Z  INFO alephStart: Node 10.0.172.19:30333 : Response from 1: "{\"status\":\"Node 3: Propose accepted from 1\"}"
-2024-12-10T03:19:11.911682Z  INFO alephStart: Node 1 : Sending request to: http://10.0.176.220:30333/propose
-2024-12-10T03:19:11.911688Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(121), Number(113), Number(231), Number(35), Number(100), Number(188), Number(145), Number(34), Number(116), Number(32), Number(72), Number(209), Number(217), Number(239), Number(161), Number(145), Number(84), Number(192), Number(190), Number(230), Number(193), Number(104), Number(129), Number(254), Number(31), Number(123), Number(142), Number(135), Number(137), Number(222), Number(223), Number(210)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(27), Number(93), Number(119), Number(175), Number(219), Number(138), Number(25), Number(87), Number(41), Number(238), Number(151), Number(97), Number(147), Number(218), Number(191), Number(30), Number(80), Number(194), Number(105), Number(53), Number(211), Number(147), Number(44), Number(189), Number(157), Number(130), Number(205), Number(62), Number(61), Number(101), Number(36), Number(15)]], "root": Array [Number(111), Number(167), Number(152), Number(203), Number(31), Number(26), Number(186), Number(16), Number(124), Number(113), Number(227), Number(9), Number(136), Number(41), Number(223), Number(76), Number(36), Number(230), Number(81), Number(214), Number(237), Number(230), Number(126), Number(213), Number(175), Number(109), Number(121), Number(137), Number(175), Number(110), Number(209), Number(170)], "sender": Number(1), "shard": Array [Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:11.913167Z  INFO alephStart: Node 10.0.176.220:30333 : Response from 1: "{\"status\":\"Node 2: Propose accepted from 1\"}"
-2024-12-10T03:19:12.675784Z  INFO alephRBC: Node 1: Handling propose request from 2
-2024-12-10T03:19:12.675812Z  INFO alephRBC: Node 1: Proposal from Node 2 accepted. Quorum votes for root [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5]: 1
-sh-4.2$
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-NODE 2
-sh-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
-sh-4.2$ cat /home/aleph-node/logs/
-node_status          resource_usage       transaction_metrics
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.176.220
-Node registration success.
-IP Manager not ready, retrying...
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.172.19:30333", "10.0.173.200:30333"
-Starting alephRBC execution
-alephRBC binary is found at /home/aleph-node/alephRBC
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute alephRBC with configuration
-Waiting for alephRBC to be ready on port 30333
-2024-12-10T03:19:07.649595Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.172.19:30333", "10.0.173.200:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 2, total_nodes: 3 } }
-2024-12-10T03:19:07.649697Z  INFO alephRBC: API server running on 0.0.0.0:30333
-alephRBC is ready.
-Attempting to execute alephStart with configuration
-2024-12-10T03:19:07.669904Z  INFO alephStart: Checking health of all nodes...
-2024-12-10T03:19:07.670782Z  INFO alephStart: Node 10.0.172.19:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.172.19:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2024-12-10T03:19:07.670808Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
-2024-12-10T03:19:09.377914Z  INFO alephRBC: Node 2: Handling propose request from 3
-2024-12-10T03:19:09.377947Z  INFO alephRBC: Node 2: Invalid Merkle proof from Node 3. Provided root: [24, 206, 69, 175, 85, 15, 176, 27, 54, 91, 103, 23, 198, 89, 68, 150, 218, 132, 84, 101, 15, 245, 132, 8, 108, 133, 100, 39, 160, 86, 17, 236], Computed root: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51]
-2024-12-10T03:19:11.912007Z  INFO alephRBC: Node 2: Handling propose request from 1
-2024-12-10T03:19:11.912037Z  INFO alephRBC: Node 2: Invalid Merkle proof from Node 1. Provided root: [111, 167, 152, 203, 31, 26, 186, 16, 124, 113, 227, 9, 136, 41, 223, 76, 36, 230, 81, 214, 237, 230,126, 213, 175, 109, 121, 137, 175, 110, 209, 170], Computed root: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23,233]
-2024-12-10T03:19:12.672084Z  INFO alephStart: Checking health of all nodes...
-2024-12-10T03:19:12.674169Z  INFO alephStart: All nodes are healthy!
-2024-12-10T03:19:12.674243Z  INFO alephStart: Node 2 : Sending request to: http://10.0.172.19:30333/propose
-2024-12-10T03:19:12.674248Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(124), Number(225), Number(0), Number(151), Number(31), Number(100), Number(231), Number(0), Number(30), Number(143), Number(229), Number(165), Number(25), Number(115), Number(236), Number(223), Number(225), Number(206), Number(212), Number(43), Number(239), Number(231), Number(238), Number(141), Number(95), Number(214), Number(33), Number(149), Number(6), Number(181), Number(57), Number(60)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(213), Number(59), Number(200), Number(190), Number(118), Number(160), Number(184), Number(74), Number(172), Number(16), Number(224), Number(181), Number(156), Number(228), Number(107), Number(60), Number(170), Number(213), Number(137), Number(157), Number(15), Number(233), Number(132), Number(57), Number(32), Number(89), Number(149), Number(237), Number(244), Number(27), Number(121), Number(30)]], "root": Array [Number(97), Number(205), Number(235), Number(233), Number(163), Number(156), Number(208), Number(165), Number(78), Number(14), Number(125), Number(90), Number(232), Number(24), Number(54), Number(254), Number(123), Number(114), Number(78), Number(6), Number(20), Number(6), Number(225), Number(211), Number(65), Number(115), Number(187), Number(70), Number(115), Number(86), Number(30), Number(5)], "sender": Number(2), "shard": Array [Number(84), Number(114), Number(97), Number(110), Number(115), Number(97), Number(99), Number(116), Number(105), Number(111), Number(110), Number(32), Number(49), Number(32), Number(58), Number(32), Number(102), Number(114), Number(111), Number(109), Number(32), Number(78), Number(111), Number(100), Number(101), Number(32), Number(50), Number(10), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:12.675364Z  INFO alephStart: Node 10.0.172.19:30333 : Response from 2: "{\"status\":\"Node 3: Propose accepted from 2\"}"
-2024-12-10T03:19:12.675414Z  INFO alephStart: Node 2 : Sending request to: http://10.0.173.200:30333/propose
-2024-12-10T03:19:12.675419Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(61), Number(230), Number(184), Number(194), Number(77), Number(230), Number(15), Number(57), Number(194), Number(204), Number(0), Number(107), Number(145), Number(84), Number(240), Number(78), Number(101), Number(242), Number(89), Number(188), Number(131), Number(124), Number(82), Number(67), Number(213), Number(112), Number(30), Number(120), Number(55), Number(209), Number(215), Number(16)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(213), Number(59), Number(200), Number(190), Number(118), Number(160), Number(184), Number(74), Number(172), Number(16), Number(224), Number(181), Number(156), Number(228), Number(107), Number(60), Number(170), Number(213), Number(137), Number(157), Number(15), Number(233), Number(132), Number(57), Number(32), Number(89), Number(149), Number(237), Number(244), Number(27), Number(121), Number(30)]], "root": Array [Number(97), Number(205), Number(235), Number(233), Number(163), Number(156), Number(208), Number(165), Number(78), Number(14), Number(125), Number(90), Number(232), Number(24), Number(54), Number(254), Number(123), Number(114), Number(78), Number(6), Number(20), Number(6), Number(225), Number(211), Number(65), Number(115), Number(187), Number(70), Number(115), Number(86), Number(30), Number(5)], "sender": Number(2), "shard": Array [Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:12.676000Z  INFO alephStart: Node 10.0.173.200:30333 : Response from 2: "{\"status\":\"Node 1: Propose accepted from 2\"}"
-
-
-
-
-
-NODE 3
-
-h-4.2$ cat /home/
-aleph-node/ ec2-user/   ssm-user/
 sh-4.2$ cat /home/
 aleph-node/ ec2-user/   ssm-user/
 sh-4.2$ cat /home/aleph-node/
@@ -111,83 +5,128 @@ aleph-node-config.toml  alephRBC                alephStart              generate
 sh-4.2$ cat /home/aleph-node/logs/
 node_status          resource_usage       transaction_metrics
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.172.19
+PRIVATE_IP = 10.0.170.29
 Node registration success.
 IP Manager not ready, retrying...
 IP Manager not ready, retrying...
 IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.176.220:30333", "10.0.173.200:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.170.7:30333", "10.0.164.147:30333"
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
-2024-12-10T03:19:09.350773Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.176.220:30333", "10.0.173.200:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 3, total_nodes: 3 } }
-2024-12-10T03:19:09.350970Z  INFO alephRBC: API server running on 0.0.0.0:30333
+2024-12-11T02:19:19.808618Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.170.7:30333", "10.0.164.147:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 1, total_nodes: 3 } }
+2024-12-11T02:19:19.808730Z  INFO alephRBC: API server running on 0.0.0.0:30333
 alephRBC is ready.
 Attempting to execute alephStart with configuration
-2024-12-10T03:19:09.375349Z  INFO alephStart: Checking health of all nodes...
-2024-12-10T03:19:09.377597Z  INFO alephStart: All nodes are healthy!
-2024-12-10T03:19:09.377669Z  INFO alephStart: Node 3 : Sending request to: http://10.0.176.220:30333/propose
-2024-12-10T03:19:09.377675Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(124), Number(225), Number(0), Number(151), Number(31), Number(100), Number(231), Number(0), Number(30), Number(143), Number(229), Number(165), Number(25), Number(115), Number(236), Number(223), Number(225), Number(206), Number(212), Number(43), Number(239), Number(231), Number(238), Number(141), Number(95), Number(214), Number(33), Number(149), Number(6), Number(181), Number(57), Number(60)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(2), Number(252), Number(229), Number(88), Number(238), Number(219), Number(26), Number(6), Number(86), Number(131), Number(28), Number(254), Number(82), Number(182), Number(76), Number(48), Number(128), Number(6), Number(151), Number(252), Number(211), Number(49), Number(94), Number(33), Number(28), Number(130), Number(216), Number(12), Number(142), Number(2), Number(3), Number(231)]], "root": Array [Number(24), Number(206), Number(69), Number(175), Number(85), Number(15), Number(176), Number(27), Number(54), Number(91), Number(103), Number(23), Number(198), Number(89), Number(68), Number(150), Number(218), Number(132), Number(84), Number(101), Number(15), Number(245), Number(132), Number(8), Number(108), Number(133), Number(100), Number(39), Number(160), Number(86), Number(17), Number(236)], "sender": Number(3), "shard": Array [Number(84), Number(114), Number(97), Number(110), Number(115), Number(97), Number(99), Number(116), Number(105), Number(111), Number(110), Number(32), Number(49), Number(32), Number(58), Number(32), Number(102), Number(114), Number(111), Number(109), Number(32), Number(78), Number(111), Number(100), Number(101), Number(32), Number(51), Number(10), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:09.378148Z  INFO alephStart: Node 10.0.176.220:30333 : Response from 3: "{\"status\":\"Node 2: Propose accepted from 3\"}"
-2024-12-10T03:19:09.378189Z  INFO alephStart: Node 3 : Sending request to: http://10.0.173.200:30333/propose
-2024-12-10T03:19:09.378193Z  INFO alephStart: Payload: Object {"proof": Array [Array [Number(107), Number(48), Number(1), Number(27), Number(23), Number(128), Number(55), Number(186), Number(35), Number(203), Number(32), Number(69), Number(31), Number(206), Number(240), Number(146), Number(111), Number(126), Number(163), Number(211), Number(164), Number(166), Number(237), Number(208), Number(151), Number(141), Number(175), Number(206), Number(119), Number(5), Number(255), Number(236)], Array [Number(136), Number(136), Number(103), Number(141), Number(99), Number(249), Number(116), Number(163), Number(139), Number(96), Number(86), Number(241), Number(51), Number(254), Number(145), Number(88), Number(97), Number(17), Number(228), Number(173), Number(130), Number(183), Number(223), Number(232), Number(55), Number(76), Number(198), Number(186), Number(13), Number(83), Number(237), Number(212)], Array [Number(2), Number(252), Number(229), Number(88), Number(238), Number(219), Number(26), Number(6), Number(86), Number(131), Number(28), Number(254), Number(82), Number(182), Number(76), Number(48), Number(128), Number(6), Number(151), Number(252), Number(211), Number(49), Number(94), Number(33), Number(28), Number(130), Number(216), Number(12), Number(142), Number(2), Number(3), Number(231)]], "root": Array [Number(24), Number(206), Number(69), Number(175), Number(85), Number(15), Number(176), Number(27),Number(54), Number(91), Number(103), Number(23), Number(198), Number(89), Number(68), Number(150), Number(218), Number(132), Number(84), Number(101), Number(15), Number(245), Number(132), Number(8), Number(108), Number(133), Number(100), Number(39), Number(160), Number(86), Number(17), Number(236)], "sender": Number(3), "shard": Array [Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120), Number(120)]}
-2024-12-10T03:19:09.379030Z  INFO alephStart: Node 10.0.173.200:30333 : Response from 3: "{\"status\":\"Node 1: Propose accepted from 3\"}"
-2024-12-10T03:19:11.910450Z  INFO alephRBC: Node 3: Handling propose request from 1
-2024-12-10T03:19:11.910483Z  INFO alephRBC: Node 3: Invalid Merkle proof from Node 1. Provided root: [111, 167, 152, 203, 31, 26, 186, 16, 124, 113, 227, 9, 136, 41, 223, 76, 36, 230, 81, 214, 237, 230,126, 213, 175, 109, 121, 137, 175, 110, 209, 170], Computed root: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23,233]
-2024-12-10T03:19:12.675153Z  INFO alephRBC: Node 3: Handling propose request from 2
-2024-12-10T03:19:12.675183Z  INFO alephRBC: Node 3: Proposal from Node 2 accepted. Quorum votes for root [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5]: 1
-sh-4.2$
+2024-12-11T02:19:19.884585Z  INFO alephStart: Checking health of all nodes...
+2024-12-11T02:19:19.892369Z  INFO alephStart: Node 10.0.170.7:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.170.7:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2024-12-11T02:19:19.892416Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
+2024-12-11T02:19:22.171252Z  INFO alephRBC: Node 1: Received propose request from Node 2
+2024-12-11T02:19:22.171285Z  INFO alephRBC: Intermediate hash at step 0: [10, 248, 78, 140, 82, 103, 144, 135, 112, 31, 101, 250, 238, 25, 112, 176, 218, 147, 217, 73, 116, 143, 198, 113, 179, 247, 226,99, 126, 227, 208, 101] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 50, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57, 60])
+2024-12-11T02:19:22.171303Z  INFO alephRBC: Intermediate hash at step 1: [15, 244, 221, 147, 200, 104, 73, 252, 169, 145, 83, 37, 234, 240, 180, 207, 160, 129, 152, 5, 175, 72, 45, 123, 64, 128, 220, 164, 75, 255, 174, 121] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 50, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96, 86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:22.171316Z  INFO alephRBC: Intermediate hash at step 2: [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 50, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120,120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [213, 59, 200, 190, 118, 160, 184, 74, 172, 16, 224, 181, 156, 228,107, 60, 170, 213, 137, 157, 15, 233, 132, 57, 32, 89, 149, 237, 244, 27, 121, 30])
+2024-12-11T02:19:22.171330Z  INFO alephRBC: Node 1: Proposal from Node 2 accepted. Quorum votes for root [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5]: 1
+2024-12-11T02:19:24.505481Z  INFO alephRBC: Node 1: Received propose request from Node 3
+2024-12-11T02:19:24.505509Z  INFO alephRBC: Intermediate hash at step 0: [69, 195, 238, 130, 14, 144, 213, 141, 114, 184, 127, 252, 103, 141, 159, 37, 135, 192, 166, 220, 95, 130, 27, 217, 242, 207, 4, 5, 178, 117, 144, 117] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 51, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25,115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57, 60])
+2024-12-11T02:19:24.505524Z  INFO alephRBC: Intermediate hash at step 1: [40, 249, 105, 186, 225, 89, 233, 214, 53, 163, 182, 122, 221, 98, 223, 132, 242, 92, 232, 179, 52, 143, 56, 251, 87, 226, 57, 195, 176, 34, 161, 254] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 51, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96, 86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:24.505538Z  INFO alephRBC: Intermediate hash at step 2: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 51, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [2, 252, 229, 88, 238, 219, 26, 6, 86, 131, 28, 254, 82, 182, 76, 48, 128, 6, 151, 252, 211, 49, 94, 33, 28, 130, 216, 12, 142, 2, 3, 231])
+2024-12-11T02:19:24.505553Z ERROR alephRBC: Node 1: Invalid Merkle proof from Node 3. Provided root: [24, 206, 69, 175, 85, 15, 176, 27, 54, 91, 103, 23, 198, 89, 68, 150, 218, 132, 84, 101, 15, 245, 132, 8, 108, 133, 100, 39, 160, 86, 17, 236], Computed root: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51]
+2024-12-11T02:19:24.893695Z  INFO alephStart: Checking health of all nodes...
+2024-12-11T02:19:24.895782Z  INFO alephStart: All nodes are healthy!
+2024-12-11T02:19:24.895840Z  INFO alephStart: Merkle root for batch: [111, 167, 152, 203, 31, 26, 186, 16, 124, 113, 227, 9, 136, 41, 223, 76, 36, 230, 81, 214, 237, 230, 126, 213, 175, 109, 121, 137, 175, 110, 209, 170]
+2024-12-11T02:19:24.895848Z  INFO alephStart: Shard 0 hash: [121, 113, 231, 35, 100, 188, 145, 34, 116, 32, 72, 209, 217, 239, 161, 145, 84, 192, 190, 230, 193, 104, 129, 254, 31, 123, 142, 135, 137, 222, 223, 210]
+2024-12-11T02:19:24.895853Z  INFO alephStart: Shard 1 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.895858Z  INFO alephStart: Shard 2 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.895870Z  INFO alephStart: Shard 3 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.895875Z  INFO alephStart: Shard 4 hash: [253, 241, 214, 134, 222, 138, 178, 252, 225, 163, 181, 31, 182, 86, 244, 235, 194, 1, 195, 25, 51, 240, 191, 51, 129, 42, 84, 90, 60, 165, 182, 103]
+2024-12-11T02:19:24.895880Z  INFO alephStart: Shard 5 hash: [159, 63, 37, 248, 215, 65, 118, 160, 109, 157, 192, 240, 22, 107, 101, 68, 189, 95, 241, 126, 182, 39, 140, 173, 173, 128, 63, 150, 149, 239,199, 252]
+2024-12-11T02:19:24.896334Z  INFO alephStart: Node 1: Successfully sent proposal to Node 10.0.170.7:30333
+2024-12-11T02:19:24.896840Z  INFO alephStart: Node 1: Successfully sent proposal to Node 10.0.164.147:30333
 
 
 
+sh-4.2$ cat /home/
+aleph-node/ ec2-user/   ssm-user/
+sh-4.2$ cat /home/aleph-node/logs/
+node_status          resource_usage       transaction_metrics
+sh-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.170.7
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.170.29:30333", "10.0.164.147:30333"
+Starting alephRBC execution
+alephRBC binary is found at /home/aleph-node/alephRBC
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute alephRBC with configuration
+Waiting for alephRBC to be ready on port 30333
+2024-12-11T02:19:22.148710Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.170.29:30333", "10.0.164.147:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 2, total_nodes: 3 } }
+2024-12-11T02:19:22.148815Z  INFO alephRBC: API server running on 0.0.0.0:30333
+alephRBC is ready.
+Attempting to execute alephStart with configuration
+2024-12-11T02:19:22.168644Z  INFO alephStart: Checking health of all nodes...
+2024-12-11T02:19:22.170956Z  INFO alephStart: All nodes are healthy!
+2024-12-11T02:19:22.171007Z  INFO alephStart: Merkle root for batch: [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5]
+2024-12-11T02:19:22.171014Z  INFO alephStart: Shard 0 hash: [61, 230, 184, 194, 77, 230, 15, 57, 194, 204, 0, 107, 145, 84, 240, 78, 101, 242, 89, 188, 131, 124, 82, 67, 213, 112, 30, 120, 55, 209, 215,16]
+2024-12-11T02:19:22.171020Z  INFO alephStart: Shard 1 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:22.171025Z  INFO alephStart: Shard 2 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:22.171031Z  INFO alephStart: Shard 3 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:22.171036Z  INFO alephStart: Shard 4 hash: [26, 104, 106, 211, 9, 73, 210, 87, 86, 23, 45, 187, 180, 174, 133, 196, 121, 221, 255, 223, 52, 241, 136, 187, 24, 55, 58, 233, 78, 111, 126,33]
+2024-12-11T02:19:22.171041Z  INFO alephStart: Shard 5 hash: [100, 203, 226, 51, 240, 192, 242, 132, 140, 107, 242, 193, 61, 3, 163, 38, 3, 226, 166, 146, 11, 155, 50, 104, 2, 84, 168, 13, 147, 111, 39, 207]
+2024-12-11T02:19:22.171475Z  INFO alephStart: Node 2: Successfully sent proposal to Node 10.0.170.29:30333
+2024-12-11T02:19:22.172005Z  INFO alephStart: Node 2: Successfully sent proposal to Node 10.0.164.147:30333
+2024-12-11T02:19:24.506045Z  INFO alephRBC: Node 2: Received propose request from Node 3
+2024-12-11T02:19:24.506071Z  INFO alephRBC: Intermediate hash at step 0: [69, 195, 238, 130, 14, 144, 213, 141, 114, 184, 127, 252, 103, 141, 159, 37, 135, 192, 166, 220, 95, 130, 27, 217, 242, 207, 4, 5, 178, 117, 144, 117] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [107, 48, 1, 27, 23, 128, 55, 186, 35, 203, 32, 69, 31, 206, 240, 146, 111, 126, 163, 211, 164, 166, 237, 208, 151, 141, 175, 206, 119, 5, 255, 236])
+2024-12-11T02:19:24.506095Z  INFO alephRBC: Intermediate hash at step 1: [40, 249, 105, 186, 225, 89, 233, 214, 53, 163, 182, 122, 221, 98, 223, 132, 242, 92, 232, 179, 52, 143, 56, 251, 87, 226, 57, 195, 176, 34, 161, 254] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96, 86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:24.506108Z  INFO alephRBC: Intermediate hash at step 2: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [2, 252, 229, 88, 238, 219, 26, 6, 86, 131, 28, 254, 82, 182, 76, 48, 128, 6, 151, 252, 211, 49, 94, 33, 28, 130, 216, 12, 142, 2, 3, 231])
+2024-12-11T02:19:24.506122Z ERROR alephRBC: Node 2: Invalid Merkle proof from Node 3. Provided root: [24, 206, 69, 175, 85, 15, 176, 27, 54, 91, 103, 23, 198, 89, 68, 150, 218, 132, 84, 101, 15, 245, 132, 8, 108, 133, 100, 39, 160, 86, 17, 236], Computed root: [100, 97, 46, 144, 119, 0, 143, 178, 44, 84, 207, 84, 254, 201, 70, 213, 216, 116, 239, 180, 171, 112, 209, 134, 40, 39, 52, 76, 158, 17, 96, 51]
+2024-12-11T02:19:24.896153Z  INFO alephRBC: Node 2: Received propose request from Node 1
+2024-12-11T02:19:24.896180Z  INFO alephRBC: Intermediate hash at step 0: [121, 135, 40, 98, 97, 18, 125, 146, 87, 133, 1, 93, 23, 209, 83, 120, 124, 142, 216, 80, 134, 69, 85, 207, 28, 24, 97, 210, 7, 8, 228, 120] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 49, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57, 60])
+2024-12-11T02:19:24.896196Z  INFO alephRBC: Intermediate hash at step 1: [227, 96, 175, 105, 1, 217, 54, 159, 77, 224, 210, 153, 89, 6, 211, 190, 142, 219, 127, 168, 250, 42, 175, 102, 224, 54, 157, 134, 249, 80, 83, 33] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 49, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120,120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96, 86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:24.896210Z  INFO alephRBC: Intermediate hash at step 2: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23, 233] (Shard: [84, 114, 97, 110, 115, 97, 99, 116, 105, 111, 110, 32, 49, 32, 58, 32, 102, 114, 111, 109, 32, 78, 111, 100, 101, 32, 49, 10, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [27, 93, 119, 175, 219, 138, 25, 87, 41, 238, 151, 97, 147, 218, 191, 30, 80, 194, 105, 53, 211, 147, 44, 189, 157, 130, 205, 62, 61, 101, 36, 15])
+2024-12-11T02:19:24.896229Z ERROR alephRBC: Node 2: Invalid Merkle proof from Node 1. Provided root: [111, 167, 152, 203, 31, 26, 186, 16, 124, 113, 227, 9, 136, 41, 223, 76, 36, 230, 81, 214, 237, 230,126, 213, 175, 109, 121, 137, 175, 110, 209, 170], Computed root: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23,233]
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-From the detailed logs and the files provided, there are a few potential reasons why you might be seeing invalid Merkle proofs:
-
-    Concurrency Issues in Proposal Handling:
-        If multiple nodes are starting their proposal processes at the same time, the shards and their associated Merkle roots may not be computed correctly, leading to mismatches in the expected proofs. This is particularly problematic if the same shared data is being modified concurrently.
-
-    Premature Start of Transactions:
-        A node might begin processing or sending proposals before it has validated the readiness or synchronization of other nodes in the network. If a node is not fully initialized or the Merkle root is computed based on incomplete data, the proofs will not match.
-
-    Incorrect Merkle Proof Computation:
-        The function generating the Merkle root and proofs might be incorrect or inconsistent. For instance, if the order of shards or their hashes is altered during processing, the computed Merkle root will differ from what other nodes expect.
-
-    Data Inconsistencies Across Nodes:
-        If nodes are generating or encoding data differently (e.g., due to slight differences in configurations or implementation), the Merkle root will naturally differ.
-
-Suggested Fixes:
-
-    Synchronization Check Before Proposals:
-        Add logic to ensure that all nodes are fully healthy and synchronized before initiating the proposal phase. The health check should also validate that nodes are not concurrently processing conflicting transactions.
-
-    Serialized Proposal Handling:
-        Use locks or another mechanism to serialize access to shard generation and Merkle root computation.
-
-    Improved Logging for Proof Computation:
-        Add detailed logs showing intermediate steps in Merkle root computation and shard handling. This will help identify where discrepancies arise.
-
-    Centralized Initialization Barrier:
-        Introduce a "barrier" phase where nodes wait for all participants to confirm readiness before any node starts generating proposals.
-
-    Verify Merkle Computation Logic:
-        Ensure that the Merkle tree generation is deterministic and correctly implemented. Cross-verify this logic with test cases to confirm correctness.
-
-Action Items:
-
-If you'd like, I can modify the uploaded files (alephRBC.rs and alephStart.rs) to implement the above synchronization checks and serialized proposal handling. Would you like me to proceed with these updates?
+sh-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.164.147
+Node registration success.
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.170.29:30333", "10.0.170.7:30333"
+Starting alephRBC execution
+alephRBC binary is found at /home/aleph-node/alephRBC
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute alephRBC with configuration
+Waiting for alephRBC to be ready on port 30333
+2024-12-11T02:19:19.467807Z  INFO alephRBC: Loaded configuration: Config { network: NetworkConfig { listen_address: "0.0.0.0:30333", nodes: ["10.0.170.29:30333", "10.0.170.7:30333"] }, consensus: ConsensusConfig { batch_size: 1, transaction_size: 256, data_shards: 4 }, node: NodeConfig { id: 3, total_nodes: 3 } }
+2024-12-11T02:19:19.467912Z  INFO alephRBC: API server running on 0.0.0.0:30333
+alephRBC is ready.
+Attempting to execute alephStart with configuration
+2024-12-11T02:19:19.501496Z  INFO alephStart: Checking health of all nodes...
+2024-12-11T02:19:19.502528Z  INFO alephStart: Node 10.0.170.29:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.170.29:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2024-12-11T02:19:19.502564Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
+2024-12-11T02:19:22.171659Z  INFO alephRBC: Node 3: Received propose request from Node 2
+2024-12-11T02:19:22.171701Z  INFO alephRBC: Intermediate hash at step 0: [10, 248, 78, 140, 82, 103, 144, 135, 112, 31, 101, 250, 238, 25, 112, 176, 218, 147, 217, 73, 116, 143, 198, 113, 179, 247, 226,99, 126, 227, 208, 101] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120,120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [61, 230, 184, 194, 77, 230, 15, 57, 194, 204, 0, 107, 145, 84, 240, 78, 101, 242, 89, 188, 131, 124, 82, 67, 213, 112, 30, 120, 55, 209, 215, 16])
+2024-12-11T02:19:22.171726Z  INFO alephRBC: Intermediate hash at step 1: [15, 244, 221, 147, 200, 104, 73, 252, 169, 145, 83, 37, 234, 240, 180, 207, 160, 129, 152, 5, 175, 72, 45, 123, 64, 128, 220, 164, 75, 255, 174, 121] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96, 86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:22.171745Z  INFO alephRBC: Intermediate hash at step 2: [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [213, 59, 200, 190, 118, 160, 184, 74, 172, 16, 224, 181, 156, 228, 107, 60, 170, 213, 137, 157, 15, 233, 132, 57, 32, 89, 149, 237, 244, 27, 121, 30])
+2024-12-11T02:19:22.171766Z  INFO alephRBC: Node 3: Proposal from Node 2 accepted. Quorum votes for root [97, 205, 235, 233, 163, 156, 208, 165, 78, 14, 125, 90, 232, 24, 54, 254, 123, 114, 78, 6, 20, 6, 225, 211, 65, 115, 187, 70, 115, 86, 30, 5]: 1
+2024-12-11T02:19:24.503130Z  INFO alephStart: Checking health of all nodes...
+2024-12-11T02:19:24.504986Z  INFO alephStart: All nodes are healthy!
+2024-12-11T02:19:24.505043Z  INFO alephStart: Merkle root for batch: [24, 206, 69, 175, 85, 15, 176, 27, 54, 91, 103, 23, 198, 89, 68, 150, 218, 132, 84, 101, 15, 245, 132, 8, 108, 133, 100, 39, 160, 86, 17, 236]
+2024-12-11T02:19:24.505051Z  INFO alephStart: Shard 0 hash: [107, 48, 1, 27, 23, 128, 55, 186, 35, 203, 32, 69, 31, 206, 240, 146, 111, 126, 163, 211, 164, 166, 237, 208, 151, 141, 175, 206, 119, 5, 255, 236]
+2024-12-11T02:19:24.505056Z  INFO alephStart: Shard 1 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.505062Z  INFO alephStart: Shard 2 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.505067Z  INFO alephStart: Shard 3 hash: [124, 225, 0, 151, 31, 100, 231, 0, 30, 143, 229, 165, 25, 115, 236, 223, 225, 206, 212, 43, 239, 231, 238, 141, 95, 214, 33, 149, 6, 181, 57,60]
+2024-12-11T02:19:24.505072Z  INFO alephStart: Shard 4 hash: [122, 53, 84, 68, 159, 222, 255, 161, 174, 137, 135, 183, 72, 209, 239, 104, 214, 79, 70, 196, 223, 155, 231, 234, 67, 186, 195, 114, 14, 254,159, 49]
+2024-12-11T02:19:24.505077Z  INFO alephStart: Shard 5 hash: [221, 127, 52, 91, 51, 48, 53, 48, 213, 189, 189, 238, 169, 48, 239, 215, 133, 133, 62, 203, 138, 247, 68, 130, 143, 46, 155, 226, 244, 250, 170, 225]
+2024-12-11T02:19:24.505629Z  INFO alephStart: Node 3: Successfully sent proposal to Node 10.0.170.29:30333
+2024-12-11T02:19:24.506166Z  INFO alephStart: Node 3: Successfully sent proposal to Node 10.0.170.7:30333
+2024-12-11T02:19:24.896558Z  INFO alephRBC: Node 3: Received propose request from Node 1
+2024-12-11T02:19:24.896586Z  INFO alephRBC: Intermediate hash at step 0: [121, 135, 40, 98, 97, 18, 125, 146, 87, 133, 1, 93, 23, 209, 83, 120, 124, 142, 216, 80, 134, 69, 85, 207, 28, 24, 97, 210, 7, 8, 228, 120] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [121, 113, 231, 35, 100, 188, 145, 34, 116, 32, 72, 209, 217, 239, 161, 145, 84, 192, 190, 230, 193, 104, 129, 254, 31, 123, 142, 135, 137, 222, 223, 210])
+2024-12-11T02:19:24.896609Z  INFO alephRBC: Intermediate hash at step 1: [227, 96, 175, 105, 1, 217, 54, 159, 77, 224, 210, 153, 89, 6, 211, 190, 142, 219, 127, 168, 250, 42, 175, 102, 224, 54, 157, 134, 249, 80, 83, 33] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [136, 136, 103, 141, 99, 249, 116, 163, 139, 96,86, 241, 51, 254, 145, 88, 97, 17, 228, 173, 130, 183, 223, 232, 55, 76, 198, 186, 13, 83, 237, 212])
+2024-12-11T02:19:24.896623Z  INFO alephRBC: Intermediate hash at step 2: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23, 233] (Shard: [120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120, 120], Sibling: [27, 93, 119, 175, 219, 138, 25, 87, 41, 238, 151, 97,147, 218, 191, 30, 80, 194, 105, 53, 211, 147, 44, 189, 157, 130, 205, 62, 61, 101, 36, 15])
+2024-12-11T02:19:24.896644Z ERROR alephRBC: Node 3: Invalid Merkle proof from Node 1. Provided root: [111, 167, 152, 203, 31, 26, 186, 16, 124, 113, 227, 9, 136, 41, 223, 76, 36, 230, 81, 214, 237, 230,126, 213, 175, 109, 121, 137, 175, 110, 209, 170], Computed root: [211, 240, 57, 235, 218, 44, 22, 50, 192, 88, 31, 129, 109, 241, 118, 3, 45, 28, 13, 213, 193, 219, 87, 73, 44, 8, 8, 213, 236, 217, 23,233]

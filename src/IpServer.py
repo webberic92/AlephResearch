@@ -23,7 +23,6 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
-        
         elif self.path == "/get_all_nodes":
             # Return the list of all registered node IPs
             with lock:
@@ -32,7 +31,13 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
             self.send_header('Content-type', 'application/json')
             self.end_headers()
             self.wfile.write(json.dumps(response).encode())
-
+        elif self.path == "/validate_nodes":
+            with lock:
+                response = {"all_nodes": assigned_ips}
+            self.send_response(200)
+            self.send_header('Content-type', 'application/json')
+            self.end_headers()
+            self.wfile.write(json.dumps(response).encode())
         else:
             self.send_response(404)
             self.end_headers()
@@ -50,6 +55,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                         # Add the IP to the assigned_ips list if not already present
                         if node_ip not in assigned_ips:
                             assigned_ips.append(node_ip)
+                            assigned_ips.sort()  
                         node_status[node_ip] = True  # Mark the node as ready
                     response = {"status": "Node IP registered as ready"}
                     self.send_response(200)
