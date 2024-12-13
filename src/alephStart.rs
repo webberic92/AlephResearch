@@ -148,6 +148,130 @@ async fn synchronize_epoch_states(
     Ok(())
 }
 
+
+
+async fn generate_and_send_transactions(
+    client: &Client,
+    config: &Config,
+    node: &Node,
+    current_epoch: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Node {}: Generating transactions for epoch {}", node.id, current_epoch);
+
+    // Retrieve consensus parameters
+    let transaction_size = config.consensus.transaction_size;
+    let data_shards = config.consensus.data_shards;
+
+    // Generate dummy transaction data (you can replace this with real data later)
+    let shard_size = transaction_size / data_shards;
+    let shards: Vec<Vec<u8>> = (0..data_shards)
+        .map(|i| vec![i as u8; shard_size])
+        .collect();
+
+    // Compute Merkle root for the transaction
+    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    let merkle_root = compute_merkle_root(&shard_hashes);
+    info!("Node {}: Merkle root for epoch {}: {:?}", node.id, current_epoch, merkle_root);
+
+    // Log each shard hash
+    for (i, hash) in shard_hashes.iter().enumerate() {
+        info!("Node {}: Shard {} hash for epoch {}: {:?}", node.id, i, current_epoch, hash);
+    }
+
+    // Broadcast transaction to all nodes
+    for (index, node_url) in config.network.nodes.iter().enumerate() {
+        // Ensure each node gets a unique shard
+        let shard = &shards[index % shards.len()];
+        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
+
+        // Construct transaction payload
+        let payload = json!({
+            "sender": node.id,
+            "shard": shard,
+            "proof": merkle_branch,
+            "root": merkle_root,
+            "epoch_id": current_epoch,
+        });
+
+        // Send transaction proposal
+        let response = client
+            .post(format!("http://{}/propose", node_url))
+            .json(&payload)
+            .send()
+            .await;
+
+        // Handle response
+        match response {
+            Ok(res) => {
+                if res.status().is_success() {
+                    info!(
+                        "Node {}: Successfully sent transaction for epoch {} to {}",
+                        node.id, current_epoch, node_url
+                    );
+                } else {
+                    error!(
+                        "Node {}: Failed to send transaction for epoch {} to {}. Status: {}",
+                        node.id, current_epoch, node_url, res.status()
+                    );
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Node {}: Error sending transaction for epoch {} to {}: {:?}",
+                    node.id, current_epoch, node_url, e
+                );
+            }
+        }
+    }
+
+
+    /// Compute the Merkle branch for a given index in the Merkle tree
+fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
+    let mut branch = vec![];
+    let mut current_index = index;
+    let mut current_level = hashes.to_vec();
+
+    // Traverse up the Merkle tree to construct the branch
+    while current_level.len() > 1 {
+        // Determine the sibling index
+        let sibling_index = if current_index % 2 == 0 {
+            current_index + 1
+        } else {
+            current_index - 1
+        };
+
+        // Add the sibling hash to the branch if it exists
+        if sibling_index < current_level.len() {
+            branch.push(current_level[sibling_index].clone());
+        }
+
+        // Move up one level
+        current_index /= 2;
+        current_level = current_level
+            .chunks(2)
+            .map(|pair| {
+                let mut combined = pair[0].clone();
+                if pair.len() > 1 {
+                    combined.extend(&pair[1]);
+                }
+                Sha256::digest(&combined).to_vec()
+            })
+            .collect();
+    }
+
+    branch
+}
+
+
+    info!(
+        "Node {}: Transactions for epoch {} broadcasted successfully",
+        node.id, current_epoch
+    );
+    Ok(())
+}
+
+
+
 /// Load configuration
 fn load_config(file_path: &str) -> Config {
     let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
@@ -162,7 +286,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Client::new();
     let current_epoch = 1;
 
-    let _node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
+    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
 
     // Ensure all nodes are healthy
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
@@ -174,5 +298,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     info!("Epoch {} synchronized successfully", current_epoch);
 
-    Ok(())
+
+// Trigger transaction generation and broadcasting
+    if let Err(e) = generate_and_send_transactions(&client, &config, &node, current_epoch).await {
+        error!("Failed to generate or send transactions for epoch {}: {}", current_epoch, e);
+        return Err(e);
+    }
+    info!("Transactions for epoch {} generated and broadcasted successfully", current_epoch);
+
+
+        Ok(())
 }

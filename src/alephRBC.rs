@@ -55,6 +55,7 @@ struct ProposeRequest {
 struct PrevoteRequest {
     sender: usize,
     root: Vec<u8>,
+    epoch_id: u64,
 }
 
 #[derive(Deserialize)]
@@ -164,8 +165,17 @@ impl Node {
         );
     }
 
-    async fn handle_prevote(&self, sender: usize, root: Vec<u8>) {
+    async fn handle_prevote(&self, sender: usize, root: Vec<u8>, epoch_id : u64) {
         info!("Node {}: Handling prevote request from Node {}", self.id, sender);
+
+        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
+            info!(
+                "Node {}: Dropping proposal for epoch {} from {} due to overlap: {}",
+                self.id, epoch_id, sender, e
+            );
+            return; // Drop duplicate proposals
+        }
+
 
         let mut quorum_votes = self.quorum_votes.write().await;
         let counter = quorum_votes.entry(root.clone()).or_insert(0);
@@ -280,7 +290,7 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
             move |Json(payload): Json<PrevoteRequest>| {
                 let node = node.clone();
                 async move {
-                    node.handle_prevote(payload.sender, payload.root).await;
+                    node.handle_prevote(payload.sender, payload.root, payload.epoch_id).await;
                     Json(Response {
                         status: format!(
                             "Node {}: Prevote accepted from Node {}",
