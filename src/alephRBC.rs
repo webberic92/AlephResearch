@@ -1,5 +1,7 @@
 use axum::{routing::post, Json, Router};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{
     collections::{HashMap, HashSet},
@@ -61,6 +63,11 @@ struct CommitRequest {
     root: Vec<u8>,
 }
 
+#[derive(Deserialize)]
+struct SyncEpochRequest {
+    epoch_id: u64,
+}
+
 #[derive(Serialize)]
 struct Response {
     status: String,
@@ -86,7 +93,7 @@ impl Node {
     }
 
     fn f(&self) -> usize {
-        (self.total_nodes - 1) / 3 // Fault tolerance based on total nodes
+        (self.total_nodes - 1) / 3 // Fault tolerance
     }
 
     fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
@@ -102,6 +109,16 @@ impl Node {
         hash
     }
 
+    async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
+        let mut tracker = self.epoch_tracker.lock().await;
+        if tracker.contains(&epoch_id) {
+            Err("Epoch overlap detected")
+        } else {
+            tracker.insert(epoch_id);
+            Ok(())
+        }
+    }
+
     async fn handle_propose(
         &self,
         sender: usize,
@@ -112,29 +129,27 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
     ) {
-        info!("Node {}: Handling propose request from {}", self.id, sender);
+        info!("Node {}: Handling propose request from Node {}", self.id, sender);
 
-        // Ensure no epoch overlap
         if let Err(e) = self.ensure_no_overlap(epoch_id).await {
             error!("Node {}: Epoch overlap detected for epoch {}: {}", self.id, epoch_id, e);
             return;
         }
 
         let max_shard_size = (transaction_size + data_shards - 1) / data_shards;
-
         if shard.len() > max_shard_size {
-            info!(
-                "Node {}: Proposal from Node {} rejected due to shard size. Shard size: {}, Max size: {}",
-                self.id, sender, shard.len(), max_shard_size
+            error!(
+                "Node {}: Shard size {} exceeds max size {} for epoch {}",
+                self.id, shard.len(), max_shard_size, epoch_id
             );
             return;
         }
 
-        let computed_root = Self::validate_merkle_branch(&shard, &proof);
+        let computed_root = Node::validate_merkle_branch(&shard, &proof);
         if computed_root != root {
-            info!(
-                "Node {}: Invalid Merkle proof from Node {}. Provided root: {:?}, Computed root: {:?}",
-                self.id, sender, root, computed_root
+            error!(
+                "Node {}: Merkle proof invalid for epoch {}. Computed root: {:?}, Provided root: {:?}",
+                self.id, epoch_id, computed_root, root
             );
             return;
         }
@@ -144,31 +159,33 @@ impl Node {
         *counter += 1;
 
         info!(
-            "Node {}: Proposal from Node {} accepted for epoch {}. Quorum votes for root {:?}: {}",
-            self.id, sender, epoch_id, root, *counter
+            "Node {}: Proposal accepted for epoch {}. Quorum votes for root {:?}: {}",
+            self.id, epoch_id, root, *counter
         );
     }
 
     async fn handle_prevote(&self, sender: usize, root: Vec<u8>) {
-        info!("Node {}: Handling prevote request from {}", self.id, sender);
+        info!("Node {}: Handling prevote request from Node {}", self.id, sender);
 
         let mut quorum_votes = self.quorum_votes.write().await;
-        if let Some(counter) = quorum_votes.get_mut(&root) {
-            *counter += 1;
+        let counter = quorum_votes.entry(root.clone()).or_insert(0);
+        *counter += 1;
 
-            if *counter >= 2 * self.f() + 1 {
-                info!(
-                    "Node {}: Quorum reached for root {:?} with {} votes",
-                    self.id, root, *counter
-                );
-            }
+        if *counter >= 2 * self.f() + 1 {
+            info!(
+                "Node {}: Quorum reached for root {:?} with {} votes",
+                self.id, root, *counter
+            );
         } else {
-            info!("Node {}: Prevote for unknown root {:?}", self.id, root);
+            info!(
+                "Node {}: Prevote accepted for root {:?}, current votes: {}",
+                self.id, root, *counter
+            );
         }
     }
 
     async fn handle_commit(&self, sender: usize, root: Vec<u8>) {
-        info!("Node {}: Handling commit request from {}", self.id, sender);
+        info!("Node {}: Handling commit request from Node {}", self.id, sender);
 
         let quorum_votes = self.quorum_votes.read().await;
         if let Some(counter) = quorum_votes.get(&root) {
@@ -185,12 +202,15 @@ impl Node {
         }
     }
 
-    async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
+    async fn handle_sync_epoch(&self, epoch_id: u64) -> Result<(), &'static str> {
+        info!("Node {}: Synchronizing epoch {}", self.id, epoch_id);
+
         let mut tracker = self.epoch_tracker.lock().await;
         if tracker.contains(&epoch_id) {
-            Err("Epoch overlap detected")
+            Err("Epoch already synchronized")
         } else {
             tracker.insert(epoch_id);
+            info!("Node {}: Epoch {} synchronized successfully", self.id, epoch_id);
             Ok(())
         }
     }
@@ -205,6 +225,28 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
                 Json(Response {
                     status: format!("alive; quorum votes: {:?}", *quorum_votes),
                 })
+            }
+        }))
+        .route("/sync_epoch", post({
+            let node = node.clone();
+            move |Json(payload): Json<SyncEpochRequest>| {
+                let node = node.clone();
+                async move {
+                    match node.handle_sync_epoch(payload.epoch_id).await {
+                        Ok(_) => Json(Response {
+                            status: format!(
+                                "Node {}: Epoch {} synchronized successfully",
+                                node.id, payload.epoch_id
+                            ),
+                        }),
+                        Err(e) => Json(Response {
+                            status: format!(
+                                "Node {}: Failed to synchronize epoch {}: {}",
+                                node.id, payload.epoch_id, e
+                            ),
+                        }),
+                    }
+                }
             }
         }))
         .route("/propose", post({
