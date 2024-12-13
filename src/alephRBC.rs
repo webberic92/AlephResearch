@@ -1,7 +1,6 @@
 use axum::{routing::post, Json, Router};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{
     collections::{HashMap, HashSet},
@@ -51,7 +50,7 @@ struct ProposeRequest {
     epoch_id: u64,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct PrevoteRequest {
     sender: usize,
     root: Vec<u8>,
@@ -97,7 +96,7 @@ impl Node {
         (self.total_nodes - 1) / 3 // Fault tolerance
     }
 
-    fn validate_merkle_branch(shard: &Vec<u8>, proof: &Vec<Vec<u8>>) -> Vec<u8> {
+    fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
         let mut hash = Sha256::digest(shard).to_vec();
         for sibling in proof {
             let combined = if hash < *sibling {
@@ -122,27 +121,26 @@ impl Node {
 
     async fn handle_propose(
         &self,
+        client: &Client,
+        config: &Config,
         sender: usize,
         root: Vec<u8>,
         proof: Vec<Vec<u8>>,
         shard: Vec<u8>,
         epoch_id: u64,
-        transaction_size: usize,
-        data_shards: usize,
     ) {
         info!("Node {}: Handling propose request from Node {}", self.id, sender);
 
-        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
-            error!("Node {}: Epoch overlap detected for epoch {}: {}", self.id, epoch_id, e);
+        if let Err(e) = self.handle_sync_epoch(epoch_id).await {
+            error!(
+                "Node {}: Failed to synchronize epoch {}. Error: {}",
+                self.id, epoch_id, e
+            );
             return;
         }
 
-        let max_shard_size = (transaction_size + data_shards - 1) / data_shards;
-        if shard.len() > max_shard_size {
-            error!(
-                "Node {}: Shard size {} exceeds max size {} for epoch {}",
-                self.id, shard.len(), max_shard_size, epoch_id
-            );
+        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
+            error!("Node {}: Epoch overlap detected for epoch {}: {}", self.id, epoch_id, e);
             return;
         }
 
@@ -155,27 +153,31 @@ impl Node {
             return;
         }
 
-        let mut quorum_votes = self.quorum_votes.write().await;
-        let counter = quorum_votes.entry(root.clone()).or_insert(0);
-        *counter += 1;
+        // Trigger local prevote logic
+        self.handle_prevote(sender, root.clone(), epoch_id).await;
 
-        info!(
-            "Node {}: Proposal accepted for epoch {}. Quorum votes for root {:?}: {}",
-            self.id, epoch_id, root, *counter
-        );
+        // Broadcast prevote to other nodes
+        for node_url in &config.network.nodes {
+            let payload = PrevoteRequest {
+                sender: self.id,
+                root: root.clone(),
+                epoch_id,
+            };
+            if let Err(e) = client
+                .post(format!("http://{}/prevote", node_url))
+                .json(&payload)
+                .send()
+                .await
+            {
+                error!("Failed to send prevote to node {}: {:?}", node_url, e);
+            } else {
+                info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
+            }
+        }
     }
 
-    async fn handle_prevote(&self, sender: usize, root: Vec<u8>, epoch_id : u64) {
+    async fn handle_prevote(&self, sender: usize, root: Vec<u8>, epoch_id: u64) {
         info!("Node {}: Handling prevote request from Node {}", self.id, sender);
-
-        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
-            info!(
-                "Node {}: Dropping proposal for epoch {} from {} due to overlap: {}",
-                self.id, epoch_id, sender, e
-            );
-            return; // Drop duplicate proposals
-        }
-
 
         let mut quorum_votes = self.quorum_votes.write().await;
         let counter = quorum_votes.entry(root.clone()).or_insert(0);
@@ -186,6 +188,7 @@ impl Node {
                 "Node {}: Quorum reached for root {:?} with {} votes",
                 self.id, root, *counter
             );
+            self.handle_commit(sender, root).await;
         } else {
             info!(
                 "Node {}: Prevote accepted for root {:?}, current votes: {}",
@@ -226,54 +229,25 @@ impl Node {
     }
 }
 
-fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
+fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Router {
     Router::new()
-        .route("/health", axum::routing::get({
-            let node = node.clone();
-            move || async move {
-                let quorum_votes = node.quorum_votes.read().await;
-                Json(Response {
-                    status: format!("alive; quorum votes: {:?}", *quorum_votes),
-                })
-            }
-        }))
-        .route("/sync_epoch", post({
-            let node = node.clone();
-            move |Json(payload): Json<SyncEpochRequest>| {
-                let node = node.clone();
-                async move {
-                    match node.handle_sync_epoch(payload.epoch_id).await {
-                        Ok(_) => Json(Response {
-                            status: format!(
-                                "Node {}: Epoch {} synchronized successfully",
-                                node.id, payload.epoch_id
-                            ),
-                        }),
-                        Err(e) => Json(Response {
-                            status: format!(
-                                "Node {}: Failed to synchronize epoch {}: {}",
-                                node.id, payload.epoch_id, e
-                            ),
-                        }),
-                    }
-                }
-            }
-        }))
         .route("/propose", post({
             let node = node.clone();
+            let client = client.clone();
+            let config = Arc::new(config);
             move |Json(payload): Json<ProposeRequest>| {
                 let node = node.clone();
-                let transaction_size = config.consensus.transaction_size;
-                let data_shards = config.consensus.data_shards;
+                let client = client.clone();
+                let config = config.clone();
                 async move {
                     node.handle_propose(
+                        &client,
+                        &config,
                         payload.sender,
                         payload.root,
                         payload.proof,
                         payload.shard,
                         payload.epoch_id,
-                        transaction_size,
-                        data_shards,
                     )
                     .await;
                     Json(Response {
@@ -315,6 +289,42 @@ fn initialize_apis(node: Arc<Node>, config: Config) -> Router {
                 }
             }
         }))
+        .route("/sync_epoch", post({
+            let node = node.clone();
+            move |Json(payload): Json<SyncEpochRequest>| {
+                let node = node.clone();
+                async move {
+                    match node.handle_sync_epoch(payload.epoch_id).await {
+                        Ok(_) => Json(Response {
+                            status: format!(
+                                "Node {}: Epoch {} synchronized successfully",
+                                node.id, payload.epoch_id
+                            ),
+                        }),
+                        Err(e) => Json(Response {
+                            status: format!(
+                                "Node {}: Failed to synchronize epoch {}: {}",
+                                node.id, payload.epoch_id, e
+                            ),
+                        }),
+                    }
+                }
+            }
+        }))
+        .route("/health", axum::routing::get({
+            let node = node.clone();
+            move || async move {
+                let quorum_votes = node.quorum_votes.read().await;
+                let epoch_tracker = node.epoch_tracker.lock().await;
+
+                Json(Response {
+                    status: format!(
+                        "Node {} is healthy. Quorum votes: {:?}, Epochs: {:?}",
+                        node.id, *quorum_votes, *epoch_tracker
+                    ),
+                })
+            }
+        }))
 }
 
 fn load_config(file_path: &str) -> Config {
@@ -328,10 +338,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
-    info!("Loaded configuration: {:?}", config);
+    let client = Arc::new(Client::new());
 
     let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
-    let app = initialize_apis(node, config);
+    let app = initialize_apis(node, config, client);
 
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
