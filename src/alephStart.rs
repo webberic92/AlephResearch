@@ -19,6 +19,7 @@ struct Config {
 
 #[derive(Debug, Deserialize)]
 struct NetworkConfig {
+    listen_address: String,
     nodes: Vec<String>,
 }
 
@@ -77,34 +78,6 @@ fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     compute_merkle_root(&next_level)
 }
 
-/// Compute Merkle branch for a specific index
-fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
-    let mut branch = vec![];
-    let mut current_index = index;
-    let mut current_level = hashes.to_vec();
-    while current_level.len() > 1 {
-        let sibling_index = if current_index % 2 == 0 {
-            current_index + 1
-        } else {
-            current_index - 1
-        };
-        if sibling_index < current_level.len() {
-            branch.push(current_level[sibling_index].clone());
-        }
-        current_index /= 2;
-        current_level = current_level
-            .chunks(2)
-            .map(|pair| {
-                let mut combined = pair[0].clone();
-                if pair.len() > 1 {
-                    combined.extend(&pair[1]);
-                }
-                Sha256::digest(&combined).to_vec()
-            })
-            .collect();
-    }
-    branch
-}
 
 /// Check the health of all nodes
 async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
@@ -139,129 +112,67 @@ async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
     }
 }
 
-/// Assign an epoch ID to a transaction
-async fn assign_epoch_id(transaction: &[u8], current_epoch: &mut u64) -> Data {
-    *current_epoch += 1;
-    Data {
-        transaction: transaction.to_vec(),
-        epoch_id: *current_epoch,
-    }
-}
-
-/// Ensure no overlap between epochs
-async fn ensure_no_overlap(epoch_tracker: &Arc<Mutex<HashSet<u64>>>, epoch_id: u64) -> Result<(), &'static str> {
-    let mut tracker = epoch_tracker.lock().await;
-    if tracker.contains(&epoch_id) {
-        Err("Epoch overlap detected")
-    } else {
-        tracker.insert(epoch_id);
-        Ok(())
-    }
-}
-
-/// Send proposals to nodes
-async fn send_proposals(
+/// Synchronize epoch states
+async fn synchronize_epoch_states(
+    nodes: &[String],
     client: &Client,
-    config: &Config,
-    node: &Node,
-    current_epoch: &mut u64,
-    epoch_tracker: &Arc<Mutex<HashSet<u64>>>,
+    epoch_id: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let sender_id = config.node.id;
-    let transaction_size = config.consensus.transaction_size;
-    let data_shards = config.consensus.data_shards;
-
-    // Create dummy shard data
-    let shard_size = transaction_size / data_shards;
-    let shards: Vec<Vec<u8>> = (0..data_shards)
-        .map(|i| vec![i as u8; shard_size])
-        .collect();
-
-    // Assign epoch ID to the transaction
-    let data = assign_epoch_id(&shards.concat(), current_epoch).await;
-
-    // Ensure no overlap
-    ensure_no_overlap(epoch_tracker, data.epoch_id).await?;
-
-    // Compute Merkle root and branches
-    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
-    let merkle_root = compute_merkle_root(&shard_hashes);
-
-    info!("Merkle root for epoch {}: {:?}", data.epoch_id, merkle_root);
-    for (i, hash) in shard_hashes.iter().enumerate() {
-        info!("Shard {} hash: {:?}", i, hash);
-    }
-
-    // Send proposals
-    for (index, node_url) in config.network.nodes.iter().enumerate() {
-        sleep(Duration::from_millis(500)).await; // Throttling requests
-        let shard = &shards[index % shards.len()];
-        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
-        let payload = json!({
-            "sender": sender_id,
-            "shard": shard,
-            "proof": merkle_branch,
-            "root": merkle_root,
-            "epoch_id": data.epoch_id,
-        });
+    for node_url in nodes {
+        let url = format!("http://{}/sync_epoch", node_url);
         let response = client
-            .post(format!("http://{}/propose", node_url))
-            .json(&payload)
+            .post(&url)
+            .json(&json!({ "epoch_id": epoch_id }))
             .send()
             .await;
 
         match response {
             Ok(res) => {
-                if res.status().is_success() {
-                    info!(
-                        "Node {}: Successfully sent proposal for epoch {} to {}",
-                        sender_id, data.epoch_id, node_url
-                    );
-                } else {
-                    error!(
-                        "Failed to send proposal for epoch {} to {}: {}",
-                        data.epoch_id, node_url, res.status()
-                    );
+                if !res.status().is_success() {
+                    return Err(format!(
+                        "Failed to synchronize epoch {} with node {}: {}",
+                        epoch_id, node_url, res.status()
+                    )
+                    .into());
                 }
             }
-            Err(e) => error!(
-                "Error sending proposal for epoch {} to {}: {:?}",
-                data.epoch_id, node_url, e
-            ),
+            Err(e) => {
+                return Err(format!(
+                    "Error synchronizing epoch {} with node {}: {:?}",
+                    epoch_id, node_url, e
+                )
+                .into());
+            }
         }
     }
-
     Ok(())
 }
 
-// Helper functions
+/// Load configuration
 fn load_config(file_path: &str) -> Config {
     let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
     toml::from_str(&config_contents).expect("Failed to parse configuration.")
 }
 
-// Main function
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    // Load configuration
-    let config_path = "/home/aleph-node/aleph-node-config.toml";
-    let config = load_config(config_path);
+    let config = load_config("/home/aleph-node/aleph-node-config.toml");
     let client = Client::new();
+    let current_epoch = 1;
 
-    // Initialize the Node instance
-    let node = Node::new(config.node.id, config.node.total_nodes);
+    let _node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
 
-    // Shared epoch tracking state
-    let current_epoch = &mut 0u64;
-    let epoch_tracker = Arc::new(Mutex::new(HashSet::new()));
-
-    // Wait for all nodes to be healthy
+    // Ensure all nodes are healthy
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
-    // Send proposals with epoch tracking
-    send_proposals(&client, &config, &node, current_epoch, &epoch_tracker).await?;
+    // Synchronize epoch states before starting proposals
+    if let Err(e) = synchronize_epoch_states(&config.network.nodes, &client, current_epoch).await {
+        error!("Failed to synchronize epoch {}: {}", current_epoch, e);
+        return Err(e);
+    }
+    info!("Epoch {} synchronized successfully", current_epoch);
 
     Ok(())
 }
