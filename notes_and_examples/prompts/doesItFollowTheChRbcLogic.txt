@@ -1,0 +1,42 @@
+Does It Follow the Ch-RBC Logic?
+
+Yes, the code follows the Ch-RBC principles by implementing the essential stages of reliable broadcast:
+
+    Propose Phase:
+        A node proposes a transaction by sending it to others.
+        Nodes validate the proposal (e.g., checking Merkle proof, shard integrity) and then vote (prevote).
+
+    Prevote Phase:
+        Each node collects votes for the proposal.
+        Once a quorum (e.g., 2f+1) is reached, nodes move to the commit phase.
+
+    Commit Phase:
+        Nodes agree on the proposal and mark it as finalized once a quorum of prevotes is achieved.
+
+Key Observations:
+
+    Each phase is independently validated by every node, ensuring fault tolerance.
+    Quorum-based transitions (e.g., from prevote to commit) align with the Ch-RBC consensus requirements.
+
+Potential Issues or Improvements
+
+    Epoch Overlap Detection:
+        The error Epoch overlap detected indicates a duplicate epoch is being processed.
+        If this happens during the prevote or commit phase, the logic might need improvement to handle overlapping proposals gracefully.
+        Consider dropping these epochs explicitly or tracking which phases were completed for each epoch.
+
+    Progression to the Next Transaction:
+        Ensure that once the commit phase is finalized for a transaction, the system resets and moves to the next transaction seamlessly.
+
+    Broadcasting APIs:
+        Validate that all broadcasts (/prevote and /commit) are received and processed correctly by other nodes.
+
+Next Steps
+
+If you confirm the code aligns with your goals but are experiencing issues during deployment:
+
+    Test each phase (propose, prevote, commit) independently for correctness.
+    Ensure no deadlocks occur due to overlapping epochs or incomplete quorum handling.
+    Monitor logs to ensure transitions between phases happen as expected.
+
+Let me know if you'd like to add improvements or debug specific issues!

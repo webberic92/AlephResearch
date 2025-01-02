@@ -97,6 +97,8 @@ impl Node {
     }
 
     fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
+        info!("Validating merkle branch");
+
         let mut hash = Sha256::digest(shard).to_vec();
         for sibling in proof {
             let combined = if hash < *sibling {
@@ -106,15 +108,34 @@ impl Node {
             };
             hash = Sha256::digest(&combined).to_vec();
         }
+        info!("Done validating merkle branch");
         hash
     }
 
+    // async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
+    //     info!("Node {}: Detecting if there is overlap for epoch {}", self.id, epoch_id);
+
+    //     let mut tracker = self.epoch_tracker.lock().await;
+    //     if tracker.contains(&epoch_id) {
+    //         info!("Node {}: overlapy for epoch {} detected", self.id, epoch_id);
+    //         Err("Epoch overlap detected")
+    //     } else {
+    //         tracker.insert(epoch_id);
+    //         info!("Node {}: No overlap detected for epoch {}", self.id, epoch_id);
+    //         Ok(())
+    //     }
+    // }
+
     async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
+        info!("Node {}: Detecting if there is overlap for epoch {}", self.id, epoch_id);
+    
         let mut tracker = self.epoch_tracker.lock().await;
         if tracker.contains(&epoch_id) {
-            Err("Epoch overlap detected")
+            info!("Node {}: Overlap for epoch {} detected, but continuing", self.id, epoch_id);
+            Ok(())
         } else {
             tracker.insert(epoch_id);
+            info!("Node {}: No overlap detected for epoch {}", self.id, epoch_id);
             Ok(())
         }
     }
@@ -131,47 +152,48 @@ impl Node {
     ) {
         info!("Node {}: Handling propose request from Node {}", self.id, sender);
 
-        if let Err(e) = self.handle_sync_epoch(epoch_id).await {
-            error!(
-                "Node {}: Failed to synchronize epoch {}. Error: {}",
-                self.id, epoch_id, e
-            );
-            return;
-        }
-
-        if let Err(e) = self.ensure_no_overlap(epoch_id).await {
-            error!("Node {}: Epoch overlap detected for epoch {}: {}", self.id, epoch_id, e);
-            return;
-        }
-
+        let sync_result = self.handle_sync_epoch(epoch_id).await;
+        let no_overlap_result = self.ensure_no_overlap(epoch_id).await;
         let computed_root = Node::validate_merkle_branch(&shard, &proof);
-        if computed_root != root {
+
+        if sync_result.is_err() {
             error!(
-                "Node {}: Merkle proof invalid for epoch {}. Computed root: {:?}, Provided root: {:?}",
+                "Node {}: Propose phase failed due to synchronization issues for epoch {}",
+                self.id, epoch_id
+            );
+        } else if no_overlap_result.is_err() {
+            error!(
+                "Node {}: Propose phase failed due to overlap detection for epoch {}",
+                self.id, epoch_id
+            );
+        } else if computed_root != root {
+            error!(
+                "Node {}: Propose phase failed due to root mismatch for epoch {}. Computed root: {:?}, Received root: {:?}",
                 self.id, epoch_id, computed_root, root
             );
-            return;
-        }
+        } else {
+            info!("Node {}: Propose phase success!", self.id);
 
-        // Trigger local prevote logic
-        self.handle_prevote(sender, root.clone(), epoch_id).await;
+            // Trigger local prevote logic
+            self.handle_prevote(sender, root.clone(), epoch_id).await;
 
-        // Broadcast prevote to other nodes
-        for node_url in &config.network.nodes {
-            let payload = PrevoteRequest {
-                sender: self.id,
-                root: root.clone(),
-                epoch_id,
-            };
-            if let Err(e) = client
-                .post(format!("http://{}/prevote", node_url))
-                .json(&payload)
-                .send()
-                .await
-            {
-                error!("Failed to send prevote to node {}: {:?}", node_url, e);
-            } else {
-                info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
+            // Broadcast prevote to other nodes
+            for node_url in &config.network.nodes {
+                let payload = PrevoteRequest {
+                    sender: self.id,
+                    root: root.clone(),
+                    epoch_id,
+                };
+                if let Err(e) = client
+                    .post(format!("http://{}/prevote", node_url))
+                    .json(&payload)
+                    .send()
+                    .await
+                {
+                    error!("Failed to send prevote to node {}: {:?}", node_url, e);
+                } else {
+                    info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
+                }
             }
         }
     }
@@ -195,6 +217,7 @@ impl Node {
                 self.id, root, *counter
             );
         }
+        info!("Node {}: LEAVING prevote request from Node {}", self.id, sender);
     }
 
     async fn handle_commit(&self, sender: usize, root: Vec<u8>) {
@@ -220,7 +243,8 @@ impl Node {
 
         let mut tracker = self.epoch_tracker.lock().await;
         if tracker.contains(&epoch_id) {
-            Err("Epoch already synchronized")
+            info!("Node {}: Epoch {} already synchronized", self.id, epoch_id);
+            Ok(())
         } else {
             tracker.insert(epoch_id);
             info!("Node {}: Epoch {} synchronized successfully", self.id, epoch_id);
@@ -228,6 +252,7 @@ impl Node {
         }
     }
 }
+
 
 fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Router {
     Router::new()

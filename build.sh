@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Define variables
+TARGET="x86_64-unknown-linux-musl"
+S3_BUCKET="aleph-research"
+BINARY_1="alephRBC"
+BINARY_2="alephStart"
+
+# Step 1: Build the project
+echo "Building the project in release mode for target $TARGET..."
+cargo build --release --target $TARGET
+if [ $? -ne 0 ]; then
+    echo "Build failed. Exiting."
+    exit 1
+fi
+
+# Step 2: Upload binaries to S3
+echo "Uploading $BINARY_1 to S3 bucket $S3_BUCKET..."
+aws s3 cp "target/$TARGET/release/$BINARY_1" "s3://$S3_BUCKET/"
+if [ $? -ne 0 ]; then
+    echo "Failed to upload $BINARY_1. Exiting."
+    exit 1
+fi
+
+echo "Uploading $BINARY_2 to S3 bucket $S3_BUCKET..."
+aws s3 cp "target/$TARGET/release/$BINARY_2" "s3://$S3_BUCKET/"
+if [ $? -ne 0 ]; then
+    echo "Failed to upload $BINARY_2. Exiting."
+    exit 1
+fi
+
+# # Step 3: Deploy CDK stack
+# echo "Deploying the CDK stack..."
+# cdk deploy
+# if [ $? -ne 0 ]; then
+#     echo "CDK deployment failed. Exiting."
+#     exit 1
+# fi
+
+echo "Deployment completed successfully! Run 'cdk deploy'"
