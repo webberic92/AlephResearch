@@ -199,11 +199,11 @@ async fn generate_and_send_transactions(
 
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
     let merkle_root = compute_merkle_root(&shard_hashes);
-    info!("Node {}: Merkle root for epoch {}: {:?}", node.id, current_epoch, merkle_root);
+    // info!("Node {}: Merkle root for epoch {}: {:?}", node.id, current_epoch, merkle_root);
 
-    for (i, hash) in shard_hashes.iter().enumerate() {
-        info!("Node {}: Shard {} hash for epoch {}: {:?}", node.id, i, current_epoch, hash);
-    }
+    // for (i, hash) in shard_hashes.iter().enumerate() {
+    //     info!("Node {}: Shard {} hash for epoch {}: {:?}", node.id, i, current_epoch, hash);
+    // }
 
     for (index, node_url) in config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
