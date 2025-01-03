@@ -1,133 +1,184 @@
-IP Manager not ready, retrying...
-IP Manager not ready, retrying...
+sh-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.190.78
+Node registration success.
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.151.26:30333", "10.0.173.35:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.168.122:30333", "10.0.170.211:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+nodes = ["10.0.168.122:30333", "10.0.170.211:30333"]
+
+[consensus]
+batch_size = 1
+transaction_size = 256 # bytes
+round = 1 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 1
+total_nodes = 3
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-02T03:50:52.519052Z  INFO alephRBC: API server running on 0.0.0.0:30333
-2025-01-02T03:50:53.180963Z  INFO alephRBC: Node 1: Synchronizing epoch 1
-2025-01-02T03:50:53.180991Z  INFO alephRBC: Node 1: Epoch 1 synchronized successfully
-2025-01-02T03:50:53.182511Z  INFO alephRBC: Node 1: Handling propose request from Node 3
-2025-01-02T03:50:53.182524Z  INFO alephRBC: Node 1: Synchronizing epoch 1
-2025-01-02T03:50:53.182528Z  INFO alephRBC: Node 1: Epoch 1 already synchronized
-2025-01-02T03:50:53.182532Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:53.182535Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:53.182540Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:53.182551Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:53.182556Z ERROR alephRBC: Node 1: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
-2025-01-02T03:50:53.603144Z  INFO alephRBC: Node 1: Synchronizing epoch 1
-2025-01-02T03:50:53.603191Z  INFO alephRBC: Node 1: Epoch 1 already synchronized
-2025-01-02T03:50:53.604445Z  INFO alephRBC: Node 1: Handling propose request from Node 2
-2025-01-02T03:50:53.604461Z  INFO alephRBC: Node 1: Synchronizing epoch 1
-2025-01-02T03:50:53.604466Z  INFO alephRBC: Node 1: Epoch 1 already synchronized
-2025-01-02T03:50:53.604469Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:53.604473Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:53.604476Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:53.604589Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:53.604597Z ERROR alephRBC: Node 1: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
-alephRBC is ready.
+2025-01-03T03:10:03.199462Z  INFO alephRBC: API server running on 0.0.0.0:30333
+alephRBC APIs are ready.
+Done with alephRBC loop for node 1
 Attempting to execute alephStart with configuration
-2025-01-02T03:50:57.530606Z  INFO alephStart: Checking health of all nodes...
-2025-01-02T03:50:57.532604Z  INFO alephStart: All nodes are healthy!
-2025-01-02T03:50:57.533448Z  INFO alephStart: Epoch 1 synchronized successfully
-2025-01-02T03:50:57.533465Z  INFO alephStart: Node 1: Generating transactions for epoch 1
-2025-01-02T03:50:57.534102Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.151.26:30333
-2025-01-02T03:50:57.534606Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.173.35:30333
-2025-01-02T03:50:57.534629Z  INFO alephStart: Node 1: Transactions for epoch 1 broadcasted successfully
-2025-01-02T03:50:57.534636Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
+2025-01-03T03:10:04.223601Z  INFO alephStart: Checking health of all nodes...
+2025-01-03T03:10:04.225128Z  INFO alephStart: Node 10.0.168.122:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.168.122:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-03T03:10:04.225169Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
+2025-01-03T03:10:08.686000Z  INFO alephRBC: Node 1: Handling propose request from Node 2
+2025-01-03T03:10:08.686025Z  INFO alephRBC: Node 1: Synchronizing epoch 1
+2025-01-03T03:10:08.686030Z  INFO alephRBC: Node 1: Epoch 1 synchronized successfully
+2025-01-03T03:10:08.686038Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:08.686070Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:08.686076Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:08.686088Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:08.686093Z ERROR alephRBC: Node 1: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+2025-01-03T03:10:08.918083Z  INFO alephRBC: Node 1: Handling propose request from Node 3
+2025-01-03T03:10:08.918107Z  INFO alephRBC: Node 1: Synchronizing epoch 1
+2025-01-03T03:10:08.918113Z  INFO alephRBC: Node 1: Epoch 1 already synchronized
+2025-01-03T03:10:08.918117Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:08.918120Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:08.918124Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:08.918133Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:08.918136Z ERROR alephRBC: Node 1: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+2025-01-03T03:10:09.226414Z  INFO alephStart: Checking health of all nodes...
+2025-01-03T03:10:09.228401Z  INFO alephStart: All nodes are healthy!
+2025-01-03T03:10:09.228415Z  INFO alephStart: Node 1: Generating transactions for epoch 1
+2025-01-03T03:10:09.228960Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.168.122:30333
+2025-01-03T03:10:09.229545Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.170.211:30333
+2025-01-03T03:10:09.229573Z  INFO alephStart: Node 1: Transactions for epoch 1 broadcasted successfully
+2025-01-03T03:10:09.229580Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
 
 
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.151.26
+PRIVATE_IP = 10.0.170.211
 Node registration success.
 IP Manager not ready, retrying...
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.132.6:30333", "10.0.173.35:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.168.122:30333", "10.0.190.78:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+nodes = ["10.0.168.122:30333", "10.0.190.78:30333"]
+
+[consensus]
+batch_size = 1
+transaction_size = 256 # bytes
+round = 1 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 2
+total_nodes = 3
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-02T03:50:48.595901Z  INFO alephRBC: API server running on 0.0.0.0:30333
-2025-01-02T03:50:53.181791Z  INFO alephRBC: Node 2: Synchronizing epoch 1
-2025-01-02T03:50:53.181819Z  INFO alephRBC: Node 2: Epoch 1 synchronized successfully
-2025-01-02T03:50:53.185436Z  INFO alephRBC: Node 2: Handling propose request from Node 3
-2025-01-02T03:50:53.185455Z  INFO alephRBC: Node 2: Synchronizing epoch 1
-2025-01-02T03:50:53.185460Z  INFO alephRBC: Node 2: Epoch 1 already synchronized
-2025-01-02T03:50:53.185464Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:53.185467Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:53.185472Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:53.185501Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:53.185506Z ERROR alephRBC: Node 2: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
-alephRBC is ready.
+2025-01-03T03:10:07.675205Z  INFO alephRBC: API server running on 0.0.0.0:30333
+alephRBC APIs are ready.
+Done with alephRBC loop for node 2
 Attempting to execute alephStart with configuration
-2025-01-02T03:50:53.594585Z  INFO alephStart: Checking health of all nodes...
-2025-01-02T03:50:53.602677Z  INFO alephStart: All nodes are healthy!
-2025-01-02T03:50:53.604183Z  INFO alephStart: Epoch 1 synchronized successfully
-2025-01-02T03:50:53.604199Z  INFO alephStart: Node 2: Generating transactions for epoch 1
-2025-01-02T03:50:53.604968Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.132.6:30333
-2025-01-02T03:50:53.609653Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.173.35:30333
-2025-01-02T03:50:53.609702Z  INFO alephStart: Node 2: Transactions for epoch 1 broadcasted successfully
-2025-01-02T03:50:53.609711Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
-2025-01-02T03:50:57.532980Z  INFO alephRBC: Node 2: Synchronizing epoch 1
-2025-01-02T03:50:57.533005Z  INFO alephRBC: Node 2: Epoch 1 already synchronized
-2025-01-02T03:50:57.533913Z  INFO alephRBC: Node 2: Handling propose request from Node 1
-2025-01-02T03:50:57.533926Z  INFO alephRBC: Node 2: Synchronizing epoch 1
-2025-01-02T03:50:57.533930Z  INFO alephRBC: Node 2: Epoch 1 already synchronized
-2025-01-02T03:50:57.533933Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:57.533937Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:57.533999Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:57.534018Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:57.534022Z ERROR alephRBC: Node 2: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+2025-01-03T03:10:08.681872Z  INFO alephStart: Checking health of all nodes...
+2025-01-03T03:10:08.685059Z  INFO alephStart: All nodes are healthy!
+2025-01-03T03:10:08.685079Z  INFO alephStart: Node 2: Generating transactions for epoch 1
+2025-01-03T03:10:08.685629Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.168.122:30333
+2025-01-03T03:10:08.686292Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.190.78:30333
+2025-01-03T03:10:08.686321Z  INFO alephStart: Node 2: Transactions for epoch 1 broadcasted successfully
+2025-01-03T03:10:08.686328Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
+2025-01-03T03:10:08.915940Z  INFO alephRBC: Node 2: Handling propose request from Node 3
+2025-01-03T03:10:08.915965Z  INFO alephRBC: Node 2: Synchronizing epoch 1
+2025-01-03T03:10:08.915971Z  INFO alephRBC: Node 2: Epoch 1 synchronized successfully
+2025-01-03T03:10:08.915974Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:08.915978Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:08.915982Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:08.915993Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:08.915998Z ERROR alephRBC: Node 2: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+2025-01-03T03:10:09.229297Z  INFO alephRBC: Node 2: Handling propose request from Node 1
+2025-01-03T03:10:09.229320Z  INFO alephRBC: Node 2: Synchronizing epoch 1
+2025-01-03T03:10:09.229326Z  INFO alephRBC: Node 2: Epoch 1 already synchronized
+2025-01-03T03:10:09.229335Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:09.229340Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:09.229344Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:09.229356Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:09.229367Z ERROR alephRBC: Node 2: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
 sh-4.2$
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.173.35
+PRIVATE_IP = 10.0.168.122
 Node registration success.
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.132.6:30333", "10.0.151.26:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.170.211:30333", "10.0.190.78:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+nodes = ["10.0.170.211:30333", "10.0.190.78:30333"]
+
+[consensus]
+batch_size = 1
+transaction_size = 256 # bytes
+round = 1 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+[node]id = 3
+total_nodes = 3
 Starting alephRBC execution
 alephRBC binary is found at /home/aleph-node/alephRBC
 Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-02T03:50:48.114278Z  INFO alephRBC: API server running on 0.0.0.0:30333
-alephRBC is ready.
+2025-01-03T03:10:07.906182Z  INFO alephRBC: API server running on 0.0.0.0:30333
+2025-01-03T03:10:08.685251Z  INFO alephRBC: Node 3: Handling propose request from Node 2
+2025-01-03T03:10:08.685276Z  INFO alephRBC: Node 3: Synchronizing epoch 1
+2025-01-03T03:10:08.685281Z  INFO alephRBC: Node 3: Epoch 1 synchronized successfully
+2025-01-03T03:10:08.685285Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:08.685288Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:08.685293Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:08.685306Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:08.685310Z ERROR alephRBC: Node 3: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+alephRBC APIs are ready.
+Done with alephRBC loop for node 3
 Attempting to execute alephStart with configuration
-2025-01-02T03:50:53.170711Z  INFO alephStart: Checking health of all nodes...
-2025-01-02T03:50:53.180769Z  INFO alephStart: All nodes are healthy!
-2025-01-02T03:50:53.182236Z  INFO alephStart: Epoch 1 synchronized successfully
-2025-01-02T03:50:53.182256Z  INFO alephStart: Node 3: Generating transactions for epoch 1
-2025-01-02T03:50:53.184950Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.132.6:30333
-2025-01-02T03:50:53.185727Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.151.26:30333
-2025-01-02T03:50:53.185768Z  INFO alephStart: Node 3: Transactions for epoch 1 broadcasted successfully
-2025-01-02T03:50:53.185777Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
-2025-01-02T03:50:53.603998Z  INFO alephRBC: Node 3: Synchronizing epoch 1
-2025-01-02T03:50:53.604031Z  INFO alephRBC: Node 3: Epoch 1 synchronized successfully
-2025-01-02T03:50:53.609154Z  INFO alephRBC: Node 3: Handling propose request from Node 2
-2025-01-02T03:50:53.609186Z  INFO alephRBC: Node 3: Synchronizing epoch 1
-2025-01-02T03:50:53.609193Z  INFO alephRBC: Node 3: Epoch 1 already synchronized
-2025-01-02T03:50:53.609200Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:53.609206Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:53.609212Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:53.609234Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:53.609240Z ERROR alephRBC: Node 3: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
-2025-01-02T03:50:57.533398Z  INFO alephRBC: Node 3: Synchronizing epoch 1
-2025-01-02T03:50:57.533424Z  INFO alephRBC: Node 3: Epoch 1 already synchronized
-2025-01-02T03:50:57.534540Z  INFO alephRBC: Node 3: Handling propose request from Node 1
-2025-01-02T03:50:57.534555Z  INFO alephRBC: Node 3: Synchronizing epoch 1
-2025-01-02T03:50:57.534559Z  INFO alephRBC: Node 3: Epoch 1 already synchronized
-2025-01-02T03:50:57.534563Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
-2025-01-02T03:50:57.534566Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
-2025-01-02T03:50:57.534571Z  INFO alephRBC: Validating merkle branch
-2025-01-02T03:50:57.534587Z  INFO alephRBC: Done validating merkle branch
-2025-01-02T03:50:57.534591Z ERROR alephRBC: Node 3: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+2025-01-03T03:10:08.913022Z  INFO alephStart: Checking health of all nodes...
+2025-01-03T03:10:08.915482Z  INFO alephStart: All nodes are healthy!
+2025-01-03T03:10:08.915503Z  INFO alephStart: Node 3: Generating transactions for epoch 1
+2025-01-03T03:10:08.916122Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.170.211:30333
+2025-01-03T03:10:08.918266Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.190.78:30333
+2025-01-03T03:10:08.918306Z  INFO alephStart: Node 3: Transactions for epoch 1 broadcasted successfully
+2025-01-03T03:10:08.918314Z  INFO alephStart: Transactions for epoch 1 generated and broadcasted successfully
+2025-01-03T03:10:09.228563Z  INFO alephRBC: Node 3: Handling propose request from Node 1
+2025-01-03T03:10:09.228587Z  INFO alephRBC: Node 3: Synchronizing epoch 1
+2025-01-03T03:10:09.228592Z  INFO alephRBC: Node 3: Epoch 1 already synchronized
+2025-01-03T03:10:09.228596Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
+2025-01-03T03:10:09.228600Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
+2025-01-03T03:10:09.228603Z  INFO alephRBC: Validating merkle branch
+2025-01-03T03:10:09.228611Z  INFO alephRBC: Done validating merkle branch
+2025-01-03T03:10:09.228621Z ERROR alephRBC: Node 3: Propose phase failed due to root mismatch for epoch 1. Computed root: [166, 254, 225, 154, 242, 225, 131, 52, 127, 34, 155, 25, 130, 203, 60, 44, 60, 142, 172, 203, 244, 160, 128, 188, 125, 40, 238, 95, 50, 20, 250, 133], Received root: [228, 17, 123, 180, 144, 98, 102, 244, 105, 119, 24, 124, 164, 58, 145, 81, 184, 137, 40, 171, 26, 160, 50, 131, 221, 245, 234, 212, 179, 60, 62, 120]
+
+
+
+
+
+
+
+
