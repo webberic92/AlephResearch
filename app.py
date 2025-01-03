@@ -146,11 +146,13 @@ class TestAleph(Stack):
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[node]' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml"
+                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
+                "cat /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status"
+
             )
 
 
-            # Part 3: Start Aleph Node and Monitor Logs
+            # Part 3: Start AlephRBC
             ec2_instance.user_data.add_commands(
                 "echo 'Starting alephRBC execution' >> /home/aleph-node/logs/node_status",
 
@@ -175,33 +177,31 @@ class TestAleph(Stack):
 
                 # Wait for the alephRBC server to be ready (simple retry logic)
                 "echo 'Waiting for alephRBC to be ready on port 30333' >> /home/aleph-node/logs/node_status;",
-                """
-                for i in {1..30}; do
-                    if netstat -tuln | grep -q ':30333'; then
-                        echo 'alephRBC is ready.' >> /home/aleph-node/logs/node_status;
-                        break;
-                    fi
-                    echo 'alephRBC not ready, retrying...' >> /home/aleph-node/logs/node_status;
-                    sleep 5;
-                done
-                """,
+                    # Wait for the alephRBC server to be ready (simple retry logic)
+                "for i in {1..30}; do",
+                "    if netstat -tuln | grep -q ':30333'; then",
+                "        echo 'alephRBC APIs are ready.' >> /home/aleph-node/logs/node_status;",
+                "        break;",
+                "    fi",
+                "    echo 'alephRBC not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    sleep 1;",
+                "done",
                 
+                "if ! netstat -tuln | grep -q ':30333'; then",
+                "    echo 'ERROR: alephRBC failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    exit 1;",
+                "fi",
+                f"echo 'Done with alephRBC loop for node {i + 1}' >> /home/aleph-node/logs/node_status;",
+
+            )
+
+
+
+            # Part 4: Start Aleph Node and Monitor Logs
+            ec2_instance.user_data.add_commands(                
                 # Start the Aleph testing
                 "echo 'Attempting to execute alephStart with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status",
-
-                # Sync logs to S3 after the test
-                # f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet",
-
-                # Log resource usage every 5 seconds
-                # "while true; do",
-                # "  top -b -n1 | grep 'Cpu(s)' >> /home/aleph-node/logs/resource_usage",
-                # "  free -m >> /home/aleph-node/logs/resource_usage",
-                # "  sleep 60;",  # Log every 5 seconds
-                # "done &",
-
-                # Sync logs to S3 after the test
-                # f"aws s3 sync /home/aleph-node/logs s3://aleph-research/{INSTANCES_NUMBER}nodes_{BATCH_SIZE}transactions/instance-{i+1}/ --quiet"
+                "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
             )
 
             # Output the instance ID for debugging
