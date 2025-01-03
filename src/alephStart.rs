@@ -144,42 +144,6 @@ async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
     }
 }
 
-/// Synchronize epoch states
-async fn synchronize_epoch_states(
-    nodes: &[String],
-    client: &Client,
-    epoch_id: u64,
-) -> Result<(), Box<dyn std::error::Error>> {
-    for node_url in nodes {
-        let url = format!("http://{}/sync_epoch", node_url);
-        let response = client
-            .post(&url)
-            .json(&json!({ "epoch_id": epoch_id }))
-            .send()
-            .await;
-
-        match response {
-            Ok(res) => {
-                if !res.status().is_success() {
-                    return Err(format!(
-                        "Failed to synchronize epoch {} with node {}: {}",
-                        epoch_id, node_url, res.status()
-                    )
-                    .into());
-                }
-            }
-            Err(e) => {
-                return Err(format!(
-                    "Error synchronizing epoch {} with node {}: {:?}",
-                    epoch_id, node_url, e
-                )
-                .into());
-            }
-        }
-    }
-    Ok(())
-}
-
 /// Generate and send transactions
 async fn generate_and_send_transactions(
     client: &Client,
@@ -271,11 +235,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
-    if let Err(e) = synchronize_epoch_states(&config.network.nodes, &client, current_epoch).await {
-        error!("Failed to synchronize epoch {}: {}", current_epoch, e);
-        return Err(e);
-    }
-    info!("Epoch {} synchronized successfully", current_epoch);
+    //I dont think we need this sense its already happening in the API
+    // if let Err(e) = synchronize_epoch_states(&config.network.nodes, &client, current_epoch).await {
+    //     error!("Failed to synchronize epoch {}: {}", current_epoch, e);
+    //     return Err(e);
+    // }
+    // info!("Epoch {} synchronized successfully", current_epoch);
 
     if let Err(e) = generate_and_send_transactions(&client, &config, &node, current_epoch).await {
         error!("Failed to generate or send transactions for epoch {}: {}", current_epoch, e);
