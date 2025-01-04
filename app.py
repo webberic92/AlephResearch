@@ -132,6 +132,7 @@ class TestAleph(Stack):
                 # Write the config.toml file line by line
                 "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
                 "echo 'listen_address = \"0.0.0.0:30333\"' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /home/aleph-node/aleph-node-config.toml",
                 "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
@@ -194,8 +195,6 @@ class TestAleph(Stack):
                 f"echo 'Done with alephRBC loop for node {i + 1}' >> /home/aleph-node/logs/node_status;",
 
             )
-
-
 
             # Part 4: Start Aleph Node and Monitor Logs
             ec2_instance.user_data.add_commands(                

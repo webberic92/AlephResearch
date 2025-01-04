@@ -1,3 +1,4 @@
+
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
@@ -19,8 +20,8 @@ struct Config {
 
 #[derive(Debug, Deserialize)]
 struct NetworkConfig {
-    listen_address: String,
     nodes: Vec<String>,
+    ip_manager_address: String, // Added for GTC APIs
 }
 
 #[derive(Debug, Deserialize)]
@@ -61,6 +62,37 @@ impl Node {
 }
 
 // Helper functions
+async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
+    for node in nodes {
+        let url = format!("http://{}/health", node);
+        match client.get(&url).send().await {
+            Ok(response) => {
+                if !response.status().is_success() {
+                    info!("Node {} is not healthy. Retrying...", node);
+                    return false;
+                }
+            }
+            Err(e) => {
+                info!("Node {} health check failed with error: {:?}", node, e);
+                return false;
+            }
+        }
+    }
+    true
+}
+
+// Helper functions
+async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
+    loop {
+        info!("Checking health of all nodes...");
+        if check_all_nodes_health(client, nodes).await {
+            info!("All nodes are healthy!");
+            break;
+        }
+        info!("Some nodes are not healthy. Retrying in 5 seconds...");
+        sleep(Duration::from_secs(5)).await;
+    }
+}
 
 /// Compute Merkle root from shard hashes
 fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
@@ -110,48 +142,62 @@ fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
 
     branch
 }
-
-/// Check the health of all nodes
-async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
-    for node in nodes {
-        let url = format!("http://{}/health", node);
-        match client.get(&url).send().await {
-            Ok(response) => {
-                if !response.status().is_success() {
-                    info!("Node {} is not healthy. Retrying...", node);
-                    return false;
-                }
-            }
-            Err(e) => {
-                info!("Node {} health check failed with error: {:?}", node, e);
-                return false;
+/// Check if it's this node's turn to submit a transaction
+async fn is_node_turn(client: &Client, config: &Config, current_epoch: u64) -> bool {
+    let url = format!(
+        "http://{}:8080/is_turn?node_id={}&epoch_id={}",
+        config.network.ip_manager_address, config.node.id, current_epoch
+    );
+    match client.get(&url).send().await {
+        Ok(response) => {
+            if response.status().is_success() {
+                let body: serde_json::Value = response.json().await.unwrap();
+                body["is_turn"].as_bool().unwrap_or(false)
+            } else {
+                false
             }
         }
-    }
-    true
-}
-
-/// Wait until all nodes are healthy
-async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
-    loop {
-        info!("Checking health of all nodes...");
-        if check_all_nodes_health(client, nodes).await {
-            info!("All nodes are healthy!");
-            break;
+        Err(e) => {
+            error!("Error checking turn for node {}: {:?}", config.node.id, e);
+            false
         }
-        info!("Some nodes are not healthy. Retrying in 5 seconds...");
-        sleep(Duration::from_secs(5)).await;
     }
 }
 
-/// Generate and send transactions
-async fn generate_and_send_transactions(
+/// Notify GTC that the current node has completed its transaction
+async fn notify_done(client: &Client, config: &Config, current_epoch: u64) {
+    let url = format!("http://{}:8080/notify_done", config.network.ip_manager_address);
+    let payload = json!({
+        "node_id": config.node.id,
+        "epoch_id": current_epoch,
+    });
+    if let Err(e) = client.post(&url).json(&payload).send().await {
+        error!("Failed to notify done for node {}: {:?}", config.node.id, e);
+    } else {
+        info!("Node {} notified GTC of completion for epoch {}", config.node.id, current_epoch);
+    }
+}
+
+/// Generate and send transactions in order
+async fn generate_and_send_transactions_in_order(
     client: &Client,
     config: &Config,
     node: &Node,
     current_epoch: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    info!("Node {}: Generating transactions for epoch {}", node.id, current_epoch);
+    info!(
+        "Node {}: Waiting for its turn to submit transaction for epoch {}",
+        node.id, current_epoch
+    );
+
+    loop {
+        if is_node_turn(client, config, current_epoch).await {
+            break;
+        }
+        sleep(Duration::from_secs(1)).await; // Poll every 1 second
+    }
+
+    info!("Node {}: It's my turn. Generating transactions for epoch {}", node.id, current_epoch);
 
     let transaction_size = config.consensus.transaction_size;
     let data_shards = config.consensus.data_shards;
@@ -163,11 +209,6 @@ async fn generate_and_send_transactions(
 
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
     let merkle_root = compute_merkle_root(&shard_hashes);
-    // info!("Node {}: Merkle root for epoch {}: {:?}", node.id, current_epoch, merkle_root);
-
-    // for (i, hash) in shard_hashes.iter().enumerate() {
-    //     info!("Node {}: Shard {} hash for epoch {}: {:?}", node.id, i, current_epoch, hash);
-    // }
 
     for (index, node_url) in config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
@@ -210,8 +251,10 @@ async fn generate_and_send_transactions(
         }
     }
 
+    notify_done(client, config, current_epoch).await;
+
     info!(
-        "Node {}: Transactions for epoch {} broadcasted successfully",
+        "Node {}: Transactions for epoch {} completed",
         node.id, current_epoch
     );
     Ok(())
@@ -235,18 +278,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
-    //I dont think we need this sense its already happening in the API
-    // if let Err(e) = synchronize_epoch_states(&config.network.nodes, &client, current_epoch).await {
-    //     error!("Failed to synchronize epoch {}: {}", current_epoch, e);
-    //     return Err(e);
-    // }
-    // info!("Epoch {} synchronized successfully", current_epoch);
-
-    if let Err(e) = generate_and_send_transactions(&client, &config, &node, current_epoch).await {
-        error!("Failed to generate or send transactions for epoch {}: {}", current_epoch, e);
-        return Err(e);
-    }
-    info!("Transactions for epoch {} generated and broadcasted successfully", current_epoch);
+    generate_and_send_transactions_in_order(&client, &config, &node, current_epoch).await?;
 
     Ok(())
 }
+
+
+
+
+
+
