@@ -5,6 +5,7 @@ TARGET="x86_64-unknown-linux-musl"
 S3_BUCKET="aleph-research"
 BINARY_1="alephRBC"
 BINARY_2="alephStart"
+IP_SERVER_SCRIPT="IpServer.py"
 
 # Step 1: Build the project
 echo "Building the project in release mode for target $TARGET..."
@@ -29,12 +30,13 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-# # Step 3: Deploy CDK stack
-# echo "Deploying the CDK stack..."
-# cdk deploy
-# if [ $? -ne 0 ]; then
-#     echo "CDK deployment failed. Exiting."
-#     exit 1
-# fi
+
+# Step 3: Upload IpServer.py to S3
+echo "Uploading $IP_SERVER_SCRIPT to S3 bucket $S3_BUCKET..."
+aws s3 cp "src/$IP_SERVER_SCRIPT" "s3://$S3_BUCKET/"
+if [ $? -ne 0 ]; then
+    echo "Failed to upload $IP_SERVER_SCRIPT. Exiting."
+    exit 1
+fi
 
 echo "Deployment completed successfully! Run 'cdk deploy'"

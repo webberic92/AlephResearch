@@ -1,6 +1,7 @@
 use axum::{routing::post, Json, Router};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::{
     collections::{HashMap, HashSet},
@@ -25,6 +26,7 @@ struct Config {
 struct NetworkConfig {
     listen_address: String,
     nodes: Vec<String>,
+    ip_manager_address: String,
 }
 
 #[derive(Debug, Deserialize)]
@@ -112,20 +114,6 @@ impl Node {
         hash
     }
 
-    // async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
-    //     info!("Node {}: Detecting if there is overlap for epoch {}", self.id, epoch_id);
-
-    //     let mut tracker = self.epoch_tracker.lock().await;
-    //     if tracker.contains(&epoch_id) {
-    //         info!("Node {}: overlapy for epoch {} detected", self.id, epoch_id);
-    //         Err("Epoch overlap detected")
-    //     } else {
-    //         tracker.insert(epoch_id);
-    //         info!("Node {}: No overlap detected for epoch {}", self.id, epoch_id);
-    //         Ok(())
-    //     }
-    // }
-
     async fn ensure_no_overlap(&self, epoch_id: u64) -> Result<(), &'static str> {
         info!("Node {}: Detecting if there is overlap for epoch {}", self.id, epoch_id);
     
@@ -150,12 +138,34 @@ impl Node {
         shard: Vec<u8>,
         epoch_id: u64,
     ) {
+        // Check if it's the node's turn to propose
+        let url = format!(
+            "http://{}:8080/is_turn?node_id={}&epoch_id={}",
+            config.network.ip_manager_address, self.id, epoch_id
+        );
+        let is_turn = match client.get(&url).send().await {
+            Ok(response) => response.json::<serde_json::Value>().await.unwrap_or_default()["is_turn"]
+                .as_bool()
+                .unwrap_or(false),
+            Err(e) => {
+                error!("Failed to query GTC for is_turn: {:?}", e);
+                false
+            }
+        };
+    
+        //TODO: not sure this needs to be here...
+        if !is_turn {
+            error!("Node {}: Not my turn to propose for epoch {}", self.id, epoch_id);
+            return;
+        }
+    
+        // Existing logic
         info!("Node {}: Handling propose request from Node {}", self.id, sender);
-
+    
         let sync_result = self.handle_sync_epoch(epoch_id).await;
         let no_overlap_result = self.ensure_no_overlap(epoch_id).await;
         let computed_root = Node::validate_merkle_branch(&shard, &proof);
-
+    
         if sync_result.is_err() {
             error!(
                 "Node {}: Propose phase failed due to synchronization issues for epoch {}",
@@ -173,10 +183,10 @@ impl Node {
             );
         } else {
             info!("Node {}: Propose phase success!", self.id);
-
+    
             // Trigger local prevote logic
             self.handle_prevote(sender, root.clone(), epoch_id).await;
-
+    
             // Broadcast prevote to other nodes
             for node_url in &config.network.nodes {
                 let payload = PrevoteRequest {
@@ -194,6 +204,21 @@ impl Node {
                 } else {
                     info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
                 }
+            }
+    
+            // Notify GTC of completion
+            let notify_url = format!("http://{}/notify_done", config.network.ip_manager_address);
+            let payload = json!({
+                "node_id": self.id,
+                "epoch_id": epoch_id,
+            });
+            if let Err(e) = client.post(&notify_url).json(&payload).send().await {
+                error!(
+                    "Node {}: Failed to notify GTC of completion for epoch {}: {:?}",
+                    self.id, epoch_id, e
+                );
+            } else {
+                info!("Node {}: Notified GTC of completion for epoch {}", self.id, epoch_id);
             }
         }
     }
