@@ -15,28 +15,29 @@ use tracing::{error, info};
 use tracing_subscriber;
 
 // Configuration structures
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
     node: NodeConfig,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct NetworkConfig {
     listen_address: String,
     nodes: Vec<String>,
     ip_manager_address: String,
+    proposals: HashSet<usize>,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct ConsensusConfig {
     batch_size: usize,
     transaction_size: usize,
     data_shards: usize,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct NodeConfig {
     id: usize,
     total_nodes: usize,
@@ -134,7 +135,6 @@ impl Node {
     async fn handle_propose(
         &self,
         client: &Client,
-        config: &Config,
         sender: usize,
         root: Vec<u8>,
         proof: Vec<Vec<u8>>,
@@ -171,19 +171,15 @@ impl Node {
             );
         }
 
-        // // Add own proposal to tracker if not already added
-        // let mut proposal_tracker = self.proposal_tracker.lock().await;
-        // if !proposal_tracker.contains(&self.id) {
-        //     proposal_tracker.insert(self.id);
-        //     info!("Node {}: Added its own proposal to proposal_tracker: {:?}", self.id, *proposal_tracker);
-        // }
-
-        
         // If everything is successful
         info!("Node {}: Propose phase successful for epoch {} from {}", self.id, epoch_id, sender);
     
+
+        //load config
+        let mut config = load_config("/home/aleph-node/aleph-node-config.toml");
+
         // Store the proposal for this epoch
-        let mut proposal_tracker = self.proposal_tracker.lock().await;
+        let mut proposal_tracker = config.network.proposals;
         info!("Node {}: Inserting sender {} into proposal_tracker {:?}", self.id, sender, proposal_tracker);
 
         proposal_tracker.insert(sender);
@@ -253,6 +249,9 @@ impl Node {
                     self.id, epoch_id, proposal_tracker.len()
                 );
             }
+            //Either is cleared or node is appended too proposal_tracker
+            config.network.proposals=proposal_tracker;
+            save_config("/home/aleph-node/aleph-node-config.toml", &config).unwrap();
     }
     
     
@@ -314,20 +313,17 @@ impl Node {
 }
 
 
-fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Router {
+fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
         .route("/propose", post({
             let node = node.clone();
             let client = client.clone();
-            let config = Arc::new(config);
             move |Json(payload): Json<ProposeRequest>| {
                 let node = node.clone();
                 let client = client.clone();
-                let config = config.clone();
                 async move {
                     node.handle_propose(
                         &client,
-                        &config,
                         payload.sender,
                         payload.root,
                         payload.proof,
@@ -413,9 +409,17 @@ fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Rout
         }))
 }
 
+/// Load configuration
 fn load_config(file_path: &str) -> Config {
     let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
     toml::from_str(&config_contents).expect("Failed to parse configuration.")
+}
+fn save_config(file_path: &str, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    let config_contents = toml::to_string(&config)
+        .expect("Failed to serialize configuration.");
+    fs::write(file_path, config_contents)
+        .expect("Failed to write configuration file.");
+    Ok(())
 }
 
 #[tokio::main]
@@ -427,7 +431,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let client = Arc::new(Client::new());
 
     let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
-    let app = initialize_apis(node, config, client);
+    let app = initialize_apis(node, client);
 
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);

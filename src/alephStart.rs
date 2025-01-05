@@ -10,26 +10,29 @@ use tracing::{error, info};
 use tracing_subscriber;
 
 // Configuration structures
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct Config {
     network: NetworkConfig,
     consensus: ConsensusConfig,
     node: NodeConfig,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct NetworkConfig {
+    listen_address: String,
     nodes: Vec<String>,
     ip_manager_address: String, // Added for GTC APIs
+    proposals: Vec<usize>, // Add this line
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct ConsensusConfig {
     transaction_size: usize,
     data_shards: usize,
+    batch_size: usize,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, serde::Serialize)]
 struct NodeConfig {
     id: usize,
     total_nodes: usize,
@@ -183,9 +186,9 @@ async fn notify_transaction_submitted(client: &Client, config: &Config, node_id:
     
     let response = client.post(&url).json(&payload).send().await?;
     if response.status().is_success() {
-        info!("Node {}: Successfully notified transaction submission.", node_id);
+        info!("Node {}: Successfully notified python server transaction submission.", node_id);
     } else {
-        error!("Node {}: Failed to notify transaction submission. Status: {}", node_id, response.status());
+        error!("Node {}: Failed to notify python server transaction submission. Status: {}", node_id, response.status());
     }
     Ok(())
 }
@@ -279,7 +282,7 @@ async fn generate_and_send_transactions_in_order(
     }
 
     info!(
-        "Node {}: Transaction proposals for epoch {} completed",
+        "Node {}: SENT Transaction proposals for epoch {}.",
         node.id, current_epoch
     );
     Ok(())
@@ -290,12 +293,18 @@ fn load_config(file_path: &str) -> Config {
     let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
     toml::from_str(&config_contents).expect("Failed to parse configuration.")
 }
-
+fn save_config(file_path: &str, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
+    let config_contents = toml::to_string(&config)
+        .expect("Failed to serialize configuration.");
+    fs::write(file_path, config_contents)
+        .expect("Failed to write configuration file.");
+    Ok(())
+}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    let config = load_config("/home/aleph-node/aleph-node-config.toml");
+    let mut config = load_config("/home/aleph-node/aleph-node-config.toml");
     let client = Client::new();
     let current_epoch = 1;
 
@@ -309,7 +318,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     generate_and_send_transactions_in_order(&client, &config, &node, current_epoch).await?;
-   
+
+
+    // Update the proposals field
+    if !config.network.proposals.contains(&node.id) {
+        config.network.proposals.push(node.id);
+        save_config("/home/aleph-node/aleph-node-config.toml", &config)?;
+        info!("Node {}: Added to proposals in toml.", node.id);
+    } else {
+        info!("Node {}: Already added to proposals in toml.", node.id);
+    }
+ 
     // Notify the Python server
     notify_transaction_submitted(&client, &config, node.id).await?;
     Ok(())
