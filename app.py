@@ -134,6 +134,7 @@ class TestAleph(Stack):
                 "echo 'listen_address = \"0.0.0.0:30333\"' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /home/aleph-node/aleph-node-config.toml",
                 "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
+                "echo \"proposals = []\" >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
@@ -149,7 +150,6 @@ class TestAleph(Stack):
                 f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
                 "cat /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status"
-
             )
 
 
