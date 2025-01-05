@@ -1,4 +1,3 @@
-
 use reqwest::Client;
 use serde::Deserialize;
 use serde_json::json;
@@ -81,7 +80,6 @@ async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
     true
 }
 
-// Helper functions
 async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
     loop {
         info!("Checking health of all nodes...");
@@ -142,6 +140,21 @@ fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
 
     branch
 }
+
+/// Ensure epoch synchronization across nodes
+async fn ensure_epoch_sync(client: &Client, config: &Config, current_epoch: u64) -> bool {
+    for node_url in &config.network.nodes {
+        let url = format!("http://{}/sync_epoch", node_url);
+        let payload = json!({ "epoch_id": current_epoch, "sender": &config.node.id });
+        if let Err(e) = client.post(&url).json(&payload).send().await {
+            error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
+            return false;
+        }
+    }
+    info!("Epoch {} synchronized across all nodes.", current_epoch);
+    true
+}
+
 /// Check if it's this node's turn to submit a transaction
 async fn is_node_turn(client: &Client, config: &Config, current_epoch: u64) -> bool {
     let url = format!(
@@ -164,6 +177,19 @@ async fn is_node_turn(client: &Client, config: &Config, current_epoch: u64) -> b
     }
 }
 
+async fn notify_transaction_submitted(client: &Client, config: &Config, node_id: usize) -> Result<(), Box<dyn std::error::Error>> {
+    let url = format!("http://{}:8080/submit_transaction", config.network.ip_manager_address);
+    let payload = json!({ "node_id": node_id });
+    
+    let response = client.post(&url).json(&payload).send().await?;
+    if response.status().is_success() {
+        info!("Node {}: Successfully notified transaction submission.", node_id);
+    } else {
+        error!("Node {}: Failed to notify transaction submission. Status: {}", node_id, response.status());
+    }
+    Ok(())
+}
+
 /// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
@@ -180,8 +206,15 @@ async fn generate_and_send_transactions_in_order(
         if is_node_turn(client, config, current_epoch).await {
             break;
         }
+
+        // Call ensure_epoch_sync if transaction submission is stuck
+        ensure_epoch_sync(client, config, current_epoch).await;
+
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
-        info!("Node {}: Retrying transaction submission for epoch {}", config.node.id, current_epoch);
+        info!(
+            "Node {}: Retrying transaction submission for epoch {}",
+            config.node.id, current_epoch
+        );
     }
 
     info!("Node {}: It's my turn. Generating transactions for epoch {}", node.id, current_epoch);
@@ -199,7 +232,6 @@ async fn generate_and_send_transactions_in_order(
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
     let merkle_root = compute_merkle_root(&shard_hashes);
 
-    // Add this log for debugging
     info!(
         "Node {}: Shards: {:?}, Shard hashes: {:?}, Computed Merkle root: {:?}",
         node.id, shards, shard_hashes, merkle_root
@@ -253,9 +285,6 @@ async fn generate_and_send_transactions_in_order(
     Ok(())
 }
 
-
-
-
 /// Load configuration
 fn load_config(file_path: &str) -> Config {
     let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
@@ -274,33 +303,14 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
 
-    async fn ensure_epoch_sync(client: &Client, config: &Config, current_epoch: u64) -> bool {
-        for node_url in &config.network.nodes {
-            let url = format!("http://{}/sync_epoch", node_url);
-            let payload = json!({ "epoch_id": current_epoch, "sender": &config.node.id });
-            if let Err(e) = client.post(&url).json(&payload).send().await {
-                error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
-                return false;
-            }
-        }
-        info!("Epoch {} synchronized across all nodes. So it node should know if it is its turn to sent transaction...", current_epoch);
-        true
-    }
-    
-    // Call this in your `main` function before generating transactions
     if !ensure_epoch_sync(&client, &config, current_epoch).await {
         error!("Epoch synchronization failed. Exiting...");
         return Err("Epoch synchronization failed".into());
     }
 
-
     generate_and_send_transactions_in_order(&client, &config, &node, current_epoch).await?;
-
+   
+    // Notify the Python server
+    notify_transaction_submitted(&client, &config, node.id).await?;
     Ok(())
 }
-
-
-
-
-
-
