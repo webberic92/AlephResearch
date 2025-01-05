@@ -179,7 +179,7 @@ impl Node {
         proposal_tracker.insert(sender);
     
         // Check if all proposals are received
-        if proposal_tracker.len() == config.node.total_nodes {
+        if proposal_tracker.len() == config.node.total_nodes -1 {
             info!("Node {}: All proposals received for epoch {}", self.id, epoch_id);
 
         // Synchronize epoch
