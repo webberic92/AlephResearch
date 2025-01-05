@@ -46,8 +46,8 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
     def do_POST(self):
         if self.path == "/node_ready":
             self._handle_node_ready()
-        elif self.path == "/notify_done":
-            self._handle_notify_done()
+        elif self.path == "/submit_transaction":
+            self._handle_submit_transaction()
         else:
             self._send_response(404, {})
 
@@ -69,22 +69,18 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
         except json.JSONDecodeError:
             self._send_response(400, {"error": "Invalid JSON"})
 
-    def _handle_notify_done(self):
+    def _handle_submit_transaction(self):
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
         try:
             data = json.loads(post_data)
             node_id = data.get("node_id")
-            epoch_id = data.get("epoch_id")
             with lock:
-                if (epoch_id == global_state["current_epoch_id"] and
-                        node_id == global_state["current_node_id"]):
+                if global_state["current_node_id"] == node_id:
                     global_state["current_node_id"] = (global_state["current_node_id"] % global_state["total_nodes"]) + 1
-                    if global_state["current_node_id"] == 1:
-                        global_state["current_epoch_id"] += 1
-                    self._send_response(200, {"status": "success"})
+                    self._send_response(200, {"status": "Transaction submitted successfully"})
                 else:
-                    self._send_response(400, {"status": "error", "message": "Invalid node or epoch"})
+                    self._send_response(403, {"error": "Not your turn"})
         except json.JSONDecodeError:
             self._send_response(400, {"error": "Invalid JSON"})
 

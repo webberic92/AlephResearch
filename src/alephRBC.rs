@@ -68,6 +68,7 @@ struct CommitRequest {
 #[derive(Deserialize)]
 struct SyncEpochRequest {
     epoch_id: u64,
+    sender: usize,
 }
 
 #[derive(Serialize)]
@@ -82,6 +83,7 @@ struct Node {
     total_nodes: usize,
     quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     epoch_tracker: Arc<Mutex<HashSet<u64>>>,
+    proposal_tracker: Arc<Mutex<HashSet<usize>>>,
 }
 
 impl Node {
@@ -91,6 +93,7 @@ impl Node {
             total_nodes,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             epoch_tracker: Arc::new(Mutex::new(HashSet::new())),
+            proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
         }
     }
 
@@ -138,64 +141,77 @@ impl Node {
         shard: Vec<u8>,
         epoch_id: u64,
     ) {
-        // Check if it's the node's turn to propose
-        let url = format!(
-            "http://{}:8080/is_turn?node_id={}&epoch_id={}",
-            config.network.ip_manager_address, self.id, epoch_id
-        );
-        let is_turn = match client.get(&url).send().await {
-            Ok(response) => response.json::<serde_json::Value>().await.unwrap_or_default()["is_turn"]
-                .as_bool()
-                .unwrap_or(false),
-            Err(e) => {
-                error!("Failed to query GTC for is_turn: {:?}", e);
-                false
-            }
-        };
-    
-        //TODO: not sure this needs to be here...
-        if !is_turn {
-            error!("Node {}: Not my turn to propose for epoch {}", self.id, epoch_id);
-            return;
-        }
-    
-        // Existing logic
-        info!("Node {}: Handling propose request from Node {}", self.id, sender);
-    
-        let sync_result = self.handle_sync_epoch(epoch_id).await;
+        info!("Node {}: ==== Handling propose request from Node {} ====", self.id, sender);
+        
+        let sync_result = self.handle_sync_epoch(epoch_id, sender).await;
         let no_overlap_result = self.ensure_no_overlap(epoch_id).await;
         let computed_root = Node::validate_merkle_branch(&shard, &proof);
-    
+        
+        // Log individual failures explicitly
         if sync_result.is_err() {
             error!(
-                "Node {}: Propose phase failed due to synchronization issues for epoch {}",
-                self.id, epoch_id
+                "Node {}: Propose phase failed for epoch {} due to synchronization error: {:?}",
+                self.id, epoch_id, sync_result.err().unwrap()
             );
-        } else if no_overlap_result.is_err() {
+            return;
+        }
+        
+        if no_overlap_result.is_err() {
             error!(
-                "Node {}: Propose phase failed due to overlap detection for epoch {}",
-                self.id, epoch_id
+                "Node {}: Propose phase failed for epoch {} due to overlap detection: {:?}",
+                self.id, epoch_id, no_overlap_result.err().unwrap()
             );
-        } else if computed_root != root {
+            return;
+        }
+        
+        if computed_root != root {
             error!(
-                "Node {}: Propose phase failed due to root mismatch for epoch {}. Computed root: {:?}, Received root: {:?}",
+                "Node {}: Propose phase failed for epoch {} due to Merkle root mismatch. Computed: {:?}, Expected: {:?}",
                 self.id, epoch_id, computed_root, root
             );
-        } else {
-            info!("Node {}: Propose phase success!", self.id);
+        }
+        
+        // If everything is successful
+        info!("Node {}: Propose phase successful for epoch {} from {}", self.id, epoch_id, sender);
     
-            // Trigger local prevote logic
+        // Store the proposal for this epoch
+        let mut proposal_tracker = self.proposal_tracker.lock().await;
+        proposal_tracker.insert(sender);
+    
+        // Check if all proposals are received
+        if proposal_tracker.len() == config.node.total_nodes {
+            info!("Node {}: All proposals received for epoch {}", self.id, epoch_id);
+
+        // Synchronize epoch
+        for node_url in &config.network.nodes {
+            let payload = json!({ "epoch_id": epoch_id + 1 });
+            if let Err(e) = client
+                .post(format!("http://{}/sync_epoch", node_url))
+                .json(&payload)
+                .send()
+                .await
+            {
+                error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
+            } else {
+                info!("Node {}: Synchronized epoch {} with {}", self.id, epoch_id + 1, node_url);
+            }
+        }
+
+            let mut tracker = self.epoch_tracker.lock().await;
+            tracker.insert(epoch_id + 1);  // Move to next epoch
+            
+            proposal_tracker.clear();
+            // Transition to prevote phase
             self.handle_prevote(sender, root.clone(), epoch_id).await;
     
-            // Broadcast prevote to other nodes
+            // Broadcast prevote
             for node_url in &config.network.nodes {
                 let payload = PrevoteRequest {
                     sender: self.id,
                     root: root.clone(),
                     epoch_id,
                 };
-                if let Err(e) = client
-                    .post(format!("http://{}/prevote", node_url))
+                if let Err(e) = client.post(format!("http://{}/prevote", node_url))
                     .json(&payload)
                     .send()
                     .await
@@ -206,25 +222,20 @@ impl Node {
                 }
             }
     
-            // Notify GTC of completion
-            let notify_url = format!("http://{}/notify_done", config.network.ip_manager_address);
-            let payload = json!({
-                "node_id": self.id,
-                "epoch_id": epoch_id,
-            });
-            if let Err(e) = client.post(&notify_url).json(&payload).send().await {
-                error!(
-                    "Node {}: Failed to notify GTC of completion for epoch {}: {:?}",
-                    self.id, epoch_id, e
-                );
-            } else {
-                info!("Node {}: Notified GTC of completion for epoch {}", self.id, epoch_id);
-            }
+            // Clear tracker for next epoch
+            proposal_tracker.clear();
+        } else {
+            info!(
+                "Node {}: Waiting for more proposals for epoch {}. Received: {}",
+                self.id, epoch_id, proposal_tracker.len()
+            );
         }
     }
+    
+    
 
     async fn handle_prevote(&self, sender: usize, root: Vec<u8>, epoch_id: u64) {
-        info!("Node {}: Handling prevote request from Node {}", self.id, sender);
+        info!("Node {}: ==Handling== prevote request from Node {}", self.id, sender);
 
         let mut quorum_votes = self.quorum_votes.write().await;
         let counter = quorum_votes.entry(root.clone()).or_insert(0);
@@ -246,7 +257,7 @@ impl Node {
     }
 
     async fn handle_commit(&self, sender: usize, root: Vec<u8>) {
-        info!("Node {}: Handling commit request from Node {}", self.id, sender);
+        info!("Node {}: ==Handling== commit request from Node {}", self.id, sender);
 
         let quorum_votes = self.quorum_votes.read().await;
         if let Some(counter) = quorum_votes.get(&root) {
@@ -263,19 +274,20 @@ impl Node {
         }
     }
 
-    async fn handle_sync_epoch(&self, epoch_id: u64) -> Result<(), &'static str> {
-        info!("Node {}: Synchronizing epoch {}", self.id, epoch_id);
+    async fn handle_sync_epoch(&self, epoch_id: u64, sender: usize) -> Result<(), &'static str> {
+        info!("Node {}: Synchronizing epoch {} from {}", self.id, epoch_id,sender);
 
         let mut tracker = self.epoch_tracker.lock().await;
         if tracker.contains(&epoch_id) {
-            info!("Node {}: Epoch {} already synchronized", self.id, epoch_id);
+            info!("Node {}: Epoch {} already synchronized with {}", self.id, epoch_id, sender);
             Ok(())
         } else {
             tracker.insert(epoch_id);
-            info!("Node {}: Epoch {} synchronized successfully", self.id, epoch_id);
+            info!("Node {}: Epoch {} synchronized successfully with node {}", self.id, epoch_id,sender);
             Ok(())
         }
     }
+
 }
 
 
@@ -343,18 +355,19 @@ fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Rout
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {
                 let node = node.clone();
+                info!("Node {}: ==== Handling synch epoch request from Node {} ====", node.id, payload.sender);
                 async move {
-                    match node.handle_sync_epoch(payload.epoch_id).await {
+                    match node.handle_sync_epoch(payload.epoch_id, payload.sender).await {
                         Ok(_) => Json(Response {
                             status: format!(
-                                "Node {}: Epoch {} synchronized successfully",
-                                node.id, payload.epoch_id
+                                "Node {}: Epoch {} synchronized successfully from {}",
+                                node.id, payload.epoch_id , payload.sender
                             ),
                         }),
                         Err(e) => Json(Response {
                             status: format!(
-                                "Node {}: Failed to synchronize epoch {}: {}",
-                                node.id, payload.epoch_id, e
+                                "Node {}: Failed to synchronize epoch {} from {}: {}",
+                                node.id, payload.epoch_id,payload.sender,e
                             ),
                         }),
                     }

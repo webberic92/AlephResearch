@@ -1,13 +1,13 @@
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.134.158
+PRIVATE_IP = 10.0.161.147
 Node registration success.
 IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.141.165:30333", "10.0.168.158:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.153.169:30333", "10.0.177.117:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.151.182"
-nodes = ["10.0.141.165:30333", "10.0.168.158:30333"]
+ip_manager_address = "10.0.189.109"
+nodes = ["10.0.153.169:30333", "10.0.177.117:30333"]
 
 [consensus]
 batch_size = 1
@@ -28,32 +28,48 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-04T03:44:05.566949Z  INFO alephRBC: API server running on 0.0.0.0:30333
+2025-01-05T01:53:30.488834Z  INFO alephRBC: API server running on 0.0.0.0:30333
+2025-01-05T01:53:31.000400Z  INFO alephRBC: Node 1: ==== Handling synch epoch request from Node 2 ====
+2025-01-05T01:53:31.000431Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 2
+2025-01-05T01:53:31.000438Z  INFO alephRBC: Node 1: Epoch 1 synchronized successfully with node 2
+2025-01-05T01:53:31.163158Z  INFO alephRBC: Node 1: ==== Handling synch epoch request from Node 3 ====
+2025-01-05T01:53:31.163182Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 3
+2025-01-05T01:53:31.163187Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 3
 alephRBC APIs are ready.
-Done with alephRBC loop for node 1
+Waiting for alephRBC API readiness...
+alephRBC API is ready.
+Done with alephRBC loop for node 1 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
 Attempting to execute alephStart with configuration
-2025-01-04T03:44:06.564189Z  INFO alephStart: Checking health of all nodes...
-2025-01-04T03:44:06.566040Z  INFO alephStart: All nodes are healthy!
-2025-01-04T03:44:06.566053Z  INFO alephStart: Node 1: Waiting for its turn to submit transaction for epoch 1
-2025-01-04T03:44:06.567322Z  INFO alephStart: Node 1: It's my turn. Generating transactions for epoch 1
-2025-01-04T03:44:06.568637Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.141.165:30333
-2025-01-04T03:44:06.570570Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.168.158:30333
-2025-01-04T03:44:06.571967Z  INFO alephStart: Node 1 notified GTC of completion for epoch 1
-2025-01-04T03:44:06.571985Z  INFO alephStart: Node 1: Transactions for epoch 1 completed
-2025-01-04T03:44:10.210584Z ERROR alephRBC: Node 1: Not my turn to propose for epoch 1
-2025-01-04T03:44:10.396207Z ERROR alephRBC: Node 1: Not my turn to propose for epoch 1
+2025-01-05T01:53:31.503483Z  INFO alephStart: Checking health of all nodes...
+2025-01-05T01:53:31.506125Z  INFO alephStart: All nodes are healthy!
+2025-01-05T01:53:31.507502Z  INFO alephStart: Epoch 1 synchronized across all nodes. So it node should know if it is its turn to sent transaction...
+2025-01-05T01:53:31.507516Z  INFO alephStart: Node 1: Waiting for its turn to submit transaction for epoch 1
+2025-01-05T01:53:31.509112Z  INFO alephStart: Node 1: It's my turn. Generating transactions for epoch 1
+2025-01-05T01:53:31.509151Z  INFO alephStart: Node 1: Shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], Shard hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]], Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159,33]
+2025-01-05T01:53:31.509925Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.153.169:30333
+2025-01-05T01:53:31.510576Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.177.117:30333
+2025-01-05T01:53:31.510605Z  INFO alephStart: Node 1: Transaction proposals for epoch 1 completed
+
+
+
+
+
+
+
+
+
 
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.168.158
+PRIVATE_IP = 10.0.153.169
 Node registration success.
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.134.158:30333", "10.0.141.165:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.161.147:30333", "10.0.177.117:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.151.182"
-nodes = ["10.0.134.158:30333", "10.0.141.165:30333"]
+ip_manager_address = "10.0.189.109"
+nodes = ["10.0.161.147:30333", "10.0.177.117:30333"]
 
 [consensus]
 batch_size = 1
@@ -74,35 +90,384 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-04T03:44:04.168141Z  INFO alephRBC: API server running on 0.0.0.0:30333
+2025-01-05T01:53:28.946748Z  INFO alephRBC: API server running on 0.0.0.0:30333
 alephRBC APIs are ready.
-Done with alephRBC loop for node 2Attempting to execute alephStart with configuration
-2025-01-04T03:44:05.200950Z  INFO alephStart: Checking health of all nodes...
-2025-01-04T03:44:05.202101Z  INFO alephStart: Node 10.0.134.158:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.134.158:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-04T03:44:05.202137Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
-2025-01-04T03:44:06.570274Z ERROR alephRBC: Node 2: Not my turn to propose for epoch 1
-2025-01-04T03:44:10.203749Z  INFO alephStart: Checking health of all nodes...
-2025-01-04T03:44:10.206384Z  INFO alephStart: All nodes are healthy!
-2025-01-04T03:44:10.206401Z  INFO alephStart: Node 2: Waiting for its turn to submit transaction for epoch 1
-2025-01-04T03:44:10.208428Z  INFO alephStart: Node 2: It's my turn. Generating transactions for epoch 1
-2025-01-04T03:44:10.210679Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.134.158:30333
-2025-01-04T03:44:10.213139Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.141.165:30333
-2025-01-04T03:44:10.214587Z  INFO alephStart: Node 2 notified GTC of completion for epoch 1
-2025-01-04T03:44:10.214608Z  INFO alephStart: Node 2: Transactions for epoch 1 completed
-2025-01-04T03:44:10.398994Z ERROR alephRBC: Node 2: Not my turn to propose for epoch 1
+Waiting for alephRBC API readiness...
+alephRBC API is ready.
+Done with alephRBC loop for node 2 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
+Attempting to execute alephStart with configuration
+2025-01-05T01:53:29.994766Z  INFO alephStart: Checking health of all nodes...
+2025-01-05T01:53:29.995994Z  INFO alephStart: Node 10.0.161.147:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.161.147:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-05T01:53:29.996710Z  INFO alephStart: Some nodes are not healthy. Retrying in 1 second...
+2025-01-05T01:53:30.997928Z  INFO alephStart: Checking health of all nodes...
+2025-01-05T01:53:31.000134Z  INFO alephStart: All nodes are healthy!
+2025-01-05T01:53:31.001108Z  INFO alephStart: Epoch 1 synchronized across all nodes. So it node should know if it is its turn to sent transaction...
+2025-01-05T01:53:31.001122Z  INFO alephStart: Node 2: Waiting for its turn to submit transaction for epoch 1
+2025-01-05T01:53:31.161879Z  INFO alephRBC: Node 2: ==== Handling synch epoch request from Node 3 ====
+2025-01-05T01:53:31.162610Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 3
+2025-01-05T01:53:31.162623Z  INFO alephRBC: Node 2: Epoch 1 synchronized successfully with node 3
+2025-01-05T01:53:31.506479Z  INFO alephRBC: Node 2: ==== Handling synch epoch request from Node 1 ====
+2025-01-05T01:53:31.506518Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 1
+2025-01-05T01:53:31.506526Z  INFO alephRBC: Node 2: Epoch 1 already synchronized with 1
+2025-01-05T01:53:31.509599Z  INFO alephRBC: Node 2: ==== Handling propose request from Node 1 ====
+2025-01-05T01:53:31.509626Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 1
+2025-01-05T01:53:31.509632Z  INFO alephRBC: Node 2: Epoch 1 already synchronized with 1
+2025-01-05T01:53:31.509637Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
+2025-01-05T01:53:31.509642Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
+2025-01-05T01:53:31.509646Z  INFO alephRBC: Validating merkle branch
+2025-01-05T01:53:31.509664Z  INFO alephRBC: Done validating merkle branch
+2025-01-05T01:53:31.509670Z  INFO alephRBC: Node 2: Propose phase successful for epoch 1 from 1
+2025-01-05T01:53:31.509676Z  INFO alephRBC: Node 2: Waiting for more proposals for epoch 1. Received: 1
+2025-01-05T01:53:32.003388Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:33.005890Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:34.008736Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:35.011780Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:36.014936Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:37.017435Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:38.020453Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:39.023082Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:40.025589Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:41.028062Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:42.031012Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:43.033523Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:44.037444Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:45.040036Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:46.042931Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:47.045671Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:48.048969Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:49.051930Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:50.054679Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:51.057855Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:52.062394Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:53.067326Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:54.071735Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:55.074556Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:56.077515Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:57.080340Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:58.082982Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:53:59.085731Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:00.088194Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:01.092017Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:02.095367Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:03.098668Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:04.102887Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:05.106250Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:06.109011Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:07.112264Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:08.114867Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:09.117804Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:10.120802Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:11.123026Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:12.125953Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:13.128419Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:14.130861Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:15.134187Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:16.140103Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:17.143343Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:18.146016Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:19.148129Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:20.151406Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:21.153824Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:22.156589Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:23.158060Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:24.160057Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:25.162692Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:26.165687Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:27.168529Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:28.171864Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:29.175041Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:30.178309Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:31.180845Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:32.184079Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:33.186692Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:34.189351Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:35.191986Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:36.194994Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:37.197957Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:38.200746Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:39.203295Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:40.206027Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:41.209844Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:42.212703Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:43.216206Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:44.219211Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:45.222439Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:46.225351Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:47.228174Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:48.232306Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:49.235730Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:50.239374Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:51.241940Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:52.245262Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:53.248273Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:54.251596Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:55.254014Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:56.257870Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:57.265417Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:58.268153Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:54:59.271216Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:00.274828Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:01.277230Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:02.280444Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:03.283520Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:04.286808Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:05.289323Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:06.292237Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:07.295222Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:08.297997Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:09.300595Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:10.303732Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:11.306510Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:12.309134Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:13.311741Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:14.314706Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:15.317384Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:16.320094Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:17.323198Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:18.325068Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:19.329276Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:20.332632Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:21.336051Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:22.339254Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:23.342163Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:24.345128Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:25.347752Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:26.350860Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:27.354094Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:28.357744Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:29.361682Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:30.364863Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:31.367521Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:32.370866Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:33.373726Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:34.376369Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:35.379656Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:36.383483Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:37.386966Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:38.390320Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:39.393537Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:40.396904Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:41.399669Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:42.402415Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:43.405476Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:44.408686Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:45.411538Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:46.414849Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:47.417328Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:48.420362Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:49.422116Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:50.425918Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:51.430635Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:52.433534Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:53.435154Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:54.438032Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:55.442262Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:56.445062Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:57.447645Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:58.450824Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:55:59.453676Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:00.458027Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:01.461215Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:02.464557Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:03.467457Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:04.471278Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:05.474223Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:06.476871Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:07.479107Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:08.481931Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:09.484891Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:10.488335Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:11.491456Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:12.494326Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:13.498144Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:14.500835Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:15.504168Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:16.506658Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:17.509345Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:18.512207Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:19.514860Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:20.517570Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:21.521471Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:22.524818Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:23.527368Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:24.529941Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:25.532834Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:26.536523Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:27.539311Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:28.557460Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:29.559951Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:30.562568Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:31.565075Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:32.567745Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:33.570573Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:34.573710Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:35.576486Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:36.579710Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:37.582461Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:38.585510Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:39.588048Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:40.591632Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:41.595111Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:42.598335Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:43.601602Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:44.604706Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:45.607382Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:46.610276Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:47.612062Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:48.615000Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:49.617972Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:50.621132Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:51.624126Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:52.626532Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:53.629250Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:54.632319Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:55.635064Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:56.639003Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:57.641581Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:58.644208Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:56:59.647365Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:00.650015Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:01.653193Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:02.656027Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:03.658877Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:04.662743Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:05.665251Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:06.667709Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:07.670016Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:08.672726Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:09.675292Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:10.678345Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:11.682038Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:12.685563Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:13.688610Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:14.691423Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:15.693889Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:16.696397Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:17.699523Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:18.702524Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:19.705386Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:20.708047Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:21.710609Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:22.714531Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:23.717259Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:24.720408Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:25.723335Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:26.726336Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:27.729002Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:28.732351Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:29.735099Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:30.738625Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:31.743016Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:32.745845Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:33.748873Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:34.752037Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:35.754935Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:36.757178Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:37.759942Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:38.762058Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:39.765165Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:40.768141Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:41.770758Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:42.773295Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:43.776474Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:44.779673Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:45.782111Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:46.785605Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:47.788330Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:48.791251Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:49.794453Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:50.797304Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:51.799060Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:52.801600Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:53.804703Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:54.807924Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:55.810947Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:56.814730Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:57.817697Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:58.821025Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:57:59.825715Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:00.828807Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:01.831831Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:02.834945Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:03.837605Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:04.840749Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:05.844383Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:06.847533Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:07.851998Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:08.855218Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:09.858091Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:10.859976Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:11.862469Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:12.866927Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:13.869453Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:14.872339Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:15.875062Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:16.877999Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:17.880914Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:18.884299Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:19.886867Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:20.890110Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:21.893080Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:22.895819Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:23.899974Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:24.902827Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:25.905645Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:26.908603Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:27.911360Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:28.914511Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:29.917419Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:30.920167Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:31.923057Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:32.926550Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:33.929929Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:34.932460Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:35.935358Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:36.938959Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:37.942418Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:38.946445Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:39.949457Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:40.952583Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:41.956149Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:42.958699Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:43.961139Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:44.964141Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:45.967826Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:46.970278Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:47.972867Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:48.975637Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:49.978185Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:50.981226Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:51.984501Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:52.987104Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:53.989900Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:54.992299Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:55.995994Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:56.998631Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:58.001797Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:58:59.004307Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:00.010135Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:01.017565Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:02.019109Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:03.022481Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:04.028152Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:05.031063Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+2025-01-05T01:59:06.034328Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
+
+
+
+
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.141.165
+PRIVATE_IP = 10.0.177.117
 Node registration success.
 IP Manager not ready, retrying...
-IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.134.158:30333", "10.0.168.158:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.153.169:30333", "10.0.161.147:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.151.182"
-nodes = ["10.0.134.158:30333", "10.0.168.158:30333"]
+ip_manager_address = "10.0.189.109"
+nodes = ["10.0.153.169:30333", "10.0.161.147:30333"]
 
 [consensus]
 batch_size = 1
@@ -123,19 +488,405 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute alephRBC with configuration
 Waiting for alephRBC to be ready on port 30333
 alephRBC not ready, retrying...
-2025-01-04T03:44:04.340814Z  INFO alephRBC: API server running on 0.0.0.0:30333alephRBC APIs are ready.
-Done with alephRBC loop for node 3
+2025-01-05T01:53:29.114243Z  INFO alephRBC: API server running on 0.0.0.0:30333
+alephRBC APIs are ready.
+Waiting for alephRBC API readiness...
+alephRBC API is ready.
+Done with alephRBC loop for node 3 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
 Attempting to execute alephStart with configuration
-2025-01-04T03:44:05.389094Z  INFO alephStart: Checking health of all nodes...
-2025-01-04T03:44:05.390425Z  INFO alephStart: Node 10.0.134.158:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.134.158:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-04T03:44:05.390453Z  INFO alephStart: Some nodes are not healthy. Retrying in 5 seconds...
-2025-01-04T03:44:06.568586Z ERROR alephRBC: Node 3: Not my turn to propose for epoch 1
-2025-01-04T03:44:10.213094Z ERROR alephRBC: Node 3: Not my turn to propose for epoch 1
-2025-01-04T03:44:10.391618Z  INFO alephStart: Checking health of all nodes...
-2025-01-04T03:44:10.393189Z  INFO alephStart: All nodes are healthy!
-2025-01-04T03:44:10.393201Z  INFO alephStart: Node 3: Waiting for its turn to submit transaction for epoch 1
-2025-01-04T03:44:10.394747Z  INFO alephStart: Node 3: It's my turn. Generating transactions for epoch 1
-2025-01-04T03:44:10.396405Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.134.158:30333
-2025-01-04T03:44:10.399385Z  INFO alephStart: Node 3: Successfully sent transaction for epoch 1 to 10.0.168.158:30333
-2025-01-04T03:44:10.400110Z  INFO alephStart: Node 3 notified GTC of completion for epoch 1
-2025-01-04T03:44:10.400128Z  INFO alephStart: Node 3: Transactions for epoch 1 completed
+2025-01-05T01:53:30.155193Z  INFO alephStart: Checking health of all nodes...
+2025-01-05T01:53:30.158472Z  INFO alephStart: Node 10.0.161.147:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.161.147:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-05T01:53:30.158502Z  INFO alephStart: Some nodes are not healthy. Retrying in 1 second...
+2025-01-05T01:53:31.000889Z  INFO alephRBC: Node 3: ==== Handling synch epoch request from Node 2 ====
+2025-01-05T01:53:31.000915Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 2
+2025-01-05T01:53:31.000921Z  INFO alephRBC: Node 3: Epoch 1 synchronized successfully with node 2
+2025-01-05T01:53:31.159804Z  INFO alephStart: Checking health of all nodes...
+2025-01-05T01:53:31.161552Z  INFO alephStart: All nodes are healthy!
+2025-01-05T01:53:31.163361Z  INFO alephStart: Epoch 1 synchronized across all nodes. So it node should know if it is its turn to sent transaction...
+2025-01-05T01:53:31.163384Z  INFO alephStart: Node 3: Waiting for its turn to submit transaction for epoch 1
+2025-01-05T01:53:31.507220Z  INFO alephRBC: Node 3: ==== Handling synch epoch request from Node 1 ====
+2025-01-05T01:53:31.507243Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 1
+2025-01-05T01:53:31.507249Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 1
+2025-01-05T01:53:31.510267Z  INFO alephRBC: Node 3: ==== Handling propose request from Node 1 ====
+2025-01-05T01:53:31.510283Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 1
+2025-01-05T01:53:31.510289Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 1
+2025-01-05T01:53:31.510293Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
+2025-01-05T01:53:31.510297Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
+2025-01-05T01:53:31.510300Z  INFO alephRBC: Validating merkle branch
+2025-01-05T01:53:31.510315Z  INFO alephRBC: Done validating merkle branch
+2025-01-05T01:53:31.510319Z  INFO alephRBC: Node 3: Propose phase successful for epoch 1 from 1
+2025-01-05T01:53:31.510324Z  INFO alephRBC: Node 3: Waiting for more proposals for epoch 1. Received: 1
+2025-01-05T01:53:32.167410Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:33.170233Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:34.173408Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:35.176305Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:36.179372Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:37.182093Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:38.184744Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:39.187559Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:40.191272Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:41.194404Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:42.197892Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:43.201432Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:44.204619Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:45.207107Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:46.210692Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:47.213764Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:48.216865Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:49.219782Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:50.225946Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:51.229359Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:52.232243Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:53.236063Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:54.238788Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:55.241734Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:56.244351Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:57.247576Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:58.250109Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:53:59.252942Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:00.256098Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:01.258999Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:02.262645Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:03.264715Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:04.267712Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:05.270210Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:06.272684Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:07.275869Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:08.278945Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:09.281924Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:10.285749Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:11.301816Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:12.305048Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:13.308294Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:14.310992Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:15.313705Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:16.317156Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:17.320505Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:18.324011Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:19.326620Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:20.330072Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:21.334078Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:22.337054Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:23.339788Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:24.343036Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:25.345906Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:26.348504Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:27.351906Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:28.354686Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:29.356548Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:30.360706Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:31.363402Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:32.366783Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:33.369721Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:34.372447Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:35.375841Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:36.378425Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:37.381179Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:38.383741Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:39.387027Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:40.389995Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:41.392535Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:42.395331Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:43.398163Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:44.400497Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:45.404275Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:46.407641Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:47.410438Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:48.413103Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:49.416283Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:50.419730Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:51.422642Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:52.426065Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:53.428816Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:54.431679Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:55.435187Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:56.438150Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:57.443487Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:58.446587Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:54:59.449938Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:00.453492Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:01.456123Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:02.458821Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:03.461787Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:04.464445Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:05.467617Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:06.469451Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:07.471471Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:08.473931Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:09.476619Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:10.480317Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:11.483222Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:12.486427Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:13.489377Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:14.493102Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:15.496583Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:16.499740Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:17.502549Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:18.505843Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:19.508857Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:20.511636Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:21.514720Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:22.517373Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:23.521172Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:24.524903Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:25.527796Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:26.531514Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:27.534545Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:28.537690Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:29.541325Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:30.544524Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:31.546449Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:32.549777Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:33.551445Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:34.553464Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:35.556213Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:36.559185Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:37.563112Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:38.566069Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:39.569032Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:40.571988Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:41.574811Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:42.581065Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:43.583960Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:44.587095Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:45.591238Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:46.594915Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:47.598362Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:48.602192Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:49.605088Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:50.608387Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:51.611715Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:52.615654Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:53.618561Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:54.622074Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:55.625174Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:56.628303Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:57.631583Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:58.635037Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:55:59.639229Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:00.642042Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:01.644483Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:02.648068Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:03.650816Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:04.653284Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:05.658009Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:06.661979Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:07.664474Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:08.667360Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:09.670094Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:10.672920Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:11.675602Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:12.678166Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:13.681787Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:14.685000Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:15.688510Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:16.692194Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:17.695323Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:18.699112Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:19.702625Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:20.705377Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:21.708361Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:22.711976Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:23.714765Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:24.717566Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:25.720161Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:26.722800Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:27.725375Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:28.728028Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:29.739120Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:30.741757Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:31.745054Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:32.748158Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:33.752179Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:34.754885Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:35.757618Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:36.760395Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:37.763277Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:38.767149Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:39.770148Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:40.772850Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:41.774463Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:42.777725Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:43.781826Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:44.784672Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:45.787057Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:46.789908Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:47.792951Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:48.795725Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:49.798527Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:50.801950Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:51.804961Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:52.807974Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:53.811064Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:54.814254Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:55.816869Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:56.819659Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:57.823026Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:58.826175Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:56:59.829696Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:00.832621Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:01.835122Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:02.839120Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:03.842552Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:04.845738Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:05.848832Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:06.852088Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:07.854834Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:08.857768Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:09.860382Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:10.863940Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:11.867309Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:12.870173Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:13.877270Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:14.880246Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:15.883130Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:16.885925Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:17.889110Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:18.891996Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:19.895092Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:20.898638Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:21.901187Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:22.903900Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:23.906903Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:24.910120Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:25.913237Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:26.916077Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:27.920072Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:28.923519Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:29.925435Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:30.931653Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:31.933616Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:32.936166Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:33.939624Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:34.943013Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:35.946325Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:36.949101Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:37.952668Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:38.955200Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:39.957952Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:40.960749Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:41.963682Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:42.966540Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:43.970915Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:44.973824Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:45.976388Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:46.979354Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:47.982169Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:48.985295Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:49.988072Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:50.990946Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:51.994289Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:52.997842Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:54.001960Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:55.004697Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:56.007560Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:57.011906Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:58.014883Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:57:59.017615Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:00.020302Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:01.023228Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:02.026317Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:03.029401Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:04.032134Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:05.034980Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:06.038067Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:07.042421Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:08.045303Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:09.048092Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:10.051375Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:11.055370Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:12.058141Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:13.062390Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:14.065680Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:15.068466Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:16.071353Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:17.074246Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:18.077711Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:19.082009Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:20.086180Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:21.089834Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:22.092670Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:23.095173Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:24.098232Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:25.101067Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:26.104399Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:27.106496Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:28.109033Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:29.111534Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:30.114976Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:31.117805Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:32.120828Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:33.124052Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:34.126942Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:35.129930Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:36.133226Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:37.136123Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:38.139216Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:39.141748Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:40.144632Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:41.146467Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:42.149630Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:43.153232Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:44.156546Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:45.165002Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:46.168653Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:47.171314Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:48.175515Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:49.178653Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:50.181976Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:51.184845Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:52.187627Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:53.191110Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:54.193676Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:55.196419Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:56.199117Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:57.202171Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:58.205207Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:58:59.208007Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:00.210972Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:01.214059Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:02.216664Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:03.219704Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:04.222722Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:05.225400Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:06.228620Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:07.231309Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:08.233541Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:09.236406Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:10.239037Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:11.241468Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:12.244196Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:13.246700Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:14.248409Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:15.251056Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:16.253813Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:17.256806Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:18.260038Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:19.262971Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:20.266288Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:21.268877Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:22.271931Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:23.274695Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:24.277714Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:25.280779Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:26.283994Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:27.286540Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:28.289348Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:29.292118Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:30.295279Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:31.297495Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:32.301688Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:33.305097Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+2025-01-05T01:59:34.308126Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
+
+
+
+
+
+
+
+
+
+I TIHNK needs to sync before retrying trnasaction submission..
+
+TODO more sync out of main into own function and then have retry sync...

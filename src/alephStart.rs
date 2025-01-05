@@ -89,8 +89,8 @@ async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
             info!("All nodes are healthy!");
             break;
         }
-        info!("Some nodes are not healthy. Retrying in 5 seconds...");
-        sleep(Duration::from_secs(5)).await;
+        info!("Some nodes are not healthy. Retrying in 1 second...");
+        sleep(Duration::from_secs(1)).await;
     }
 }
 
@@ -164,20 +164,6 @@ async fn is_node_turn(client: &Client, config: &Config, current_epoch: u64) -> b
     }
 }
 
-/// Notify GTC that the current node has completed its transaction
-async fn notify_done(client: &Client, config: &Config, current_epoch: u64) {
-    let url = format!("http://{}:8080/notify_done", config.network.ip_manager_address);
-    let payload = json!({
-        "node_id": config.node.id,
-        "epoch_id": current_epoch,
-    });
-    if let Err(e) = client.post(&url).json(&payload).send().await {
-        error!("Failed to notify done for node {}: {:?}", config.node.id, e);
-    } else {
-        info!("Node {} notified GTC of completion for epoch {}", config.node.id, current_epoch);
-    }
-}
-
 /// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
@@ -195,6 +181,7 @@ async fn generate_and_send_transactions_in_order(
             break;
         }
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
+        info!("Node {}: Retrying transaction submission for epoch {}", config.node.id, current_epoch);
     }
 
     info!("Node {}: It's my turn. Generating transactions for epoch {}", node.id, current_epoch);
@@ -202,13 +189,21 @@ async fn generate_and_send_transactions_in_order(
     let transaction_size = config.consensus.transaction_size;
     let data_shards = config.consensus.data_shards;
 
+    let transaction_data = vec![1; transaction_size]; // Use deterministic data for consistency
     let shard_size = transaction_size / data_shards;
-    let shards: Vec<Vec<u8>> = (0..data_shards)
-        .map(|i| vec![i as u8; shard_size])
+    let shards: Vec<Vec<u8>> = transaction_data
+        .chunks(shard_size)
+        .map(|chunk| chunk.to_vec())
         .collect();
 
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
     let merkle_root = compute_merkle_root(&shard_hashes);
+
+    // Add this log for debugging
+    info!(
+        "Node {}: Shards: {:?}, Shard hashes: {:?}, Computed Merkle root: {:?}",
+        node.id, shards, shard_hashes, merkle_root
+    );
 
     for (index, node_url) in config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
@@ -251,14 +246,15 @@ async fn generate_and_send_transactions_in_order(
         }
     }
 
-    notify_done(client, config, current_epoch).await;
-
     info!(
-        "Node {}: Transactions for epoch {} completed",
+        "Node {}: Transaction proposals for epoch {} completed",
         node.id, current_epoch
     );
     Ok(())
 }
+
+
+
 
 /// Load configuration
 fn load_config(file_path: &str) -> Config {
@@ -277,6 +273,26 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
 
     wait_for_all_nodes_health(&client, &config.network.nodes).await;
+
+    async fn ensure_epoch_sync(client: &Client, config: &Config, current_epoch: u64) -> bool {
+        for node_url in &config.network.nodes {
+            let url = format!("http://{}/sync_epoch", node_url);
+            let payload = json!({ "epoch_id": current_epoch, "sender": &config.node.id });
+            if let Err(e) = client.post(&url).json(&payload).send().await {
+                error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
+                return false;
+            }
+        }
+        info!("Epoch {} synchronized across all nodes. So it node should know if it is its turn to sent transaction...", current_epoch);
+        true
+    }
+    
+    // Call this in your `main` function before generating transactions
+    if !ensure_epoch_sync(&client, &config, current_epoch).await {
+        error!("Epoch synchronization failed. Exiting...");
+        return Err("Epoch synchronization failed".into());
+    }
+
 
     generate_and_send_transactions_in_order(&client, &config, &node, current_epoch).await?;
 
