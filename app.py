@@ -192,7 +192,24 @@ class TestAleph(Stack):
                 "    echo 'ERROR: alephRBC failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
                 "    exit 1;",
                 "fi",
-                f"echo 'Done with alephRBC loop for node {i + 1}' >> /home/aleph-node/logs/node_status;",
+
+                # Wait for the alephRBC server to confirm readiness via its API"
+                "echo 'Waiting for alephRBC API readiness...' >> /home/aleph-node/logs/node_status;",
+                "for i in {1..30}; do",
+                "    if curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
+                "        echo 'alephRBC API is ready.' >> /home/aleph-node/logs/node_status;",
+                "        break;",
+                "    fi",
+                "    echo 'alephRBC API not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    sleep 1;",
+                "done",
+                "",
+                "if ! curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
+                "    echo 'ERROR: alephRBC API failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    exit 1;",
+                "fi",
+
+                f"echo 'Done with alephRBC loop for node {i + 1} IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET' >> /home/aleph-node/logs/node_status;",
 
             )
 
