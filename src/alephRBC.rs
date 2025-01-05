@@ -141,7 +141,7 @@ impl Node {
         shard: Vec<u8>,
         epoch_id: u64,
     ) {
-        info!("Node {}: ==== Handling propose request from Node {} ====", self.id, sender);
+        info!("Node {}: ==== Handling PROPOSE REQUEST from Node {} ====", self.id, sender);
         
         let sync_result = self.handle_sync_epoch(epoch_id, sender).await;
         let no_overlap_result = self.ensure_no_overlap(epoch_id).await;
@@ -170,66 +170,89 @@ impl Node {
                 self.id, epoch_id, computed_root, root
             );
         }
+
+        // // Add own proposal to tracker if not already added
+        // let mut proposal_tracker = self.proposal_tracker.lock().await;
+        // if !proposal_tracker.contains(&self.id) {
+        //     proposal_tracker.insert(self.id);
+        //     info!("Node {}: Added its own proposal to proposal_tracker: {:?}", self.id, *proposal_tracker);
+        // }
+
         
         // If everything is successful
         info!("Node {}: Propose phase successful for epoch {} from {}", self.id, epoch_id, sender);
     
         // Store the proposal for this epoch
         let mut proposal_tracker = self.proposal_tracker.lock().await;
+        info!("Node {}: Inserting sender {} into proposal_tracker {:?}", self.id, sender, proposal_tracker);
+
         proposal_tracker.insert(sender);
-    
+        info!("Node {}: Inserted sender {} into proposal_tracker {:?}", self.id, sender, proposal_tracker);
+
+        
         // Check if all proposals are received
-        if proposal_tracker.len() == config.node.total_nodes -1 {
-            info!("Node {}: All proposals received for epoch {}", self.id, epoch_id);
+        info!(
+            "Node {}: config.node.total_nodes = {} config.totalnodes minus 1 (Removed logic) = {}. Received: {}",
+            self.id, config.node.total_nodes, config.node.total_nodes-1, proposal_tracker.len());
 
-        // Synchronize epoch
-        for node_url in &config.network.nodes {
-            let payload = json!({ "epoch_id": epoch_id + 1 });
-            if let Err(e) = client
-                .post(format!("http://{}/sync_epoch", node_url))
-                .json(&payload)
-                .send()
-                .await
-            {
-                error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
-            } else {
-                info!("Node {}: Synchronized epoch {} with {}", self.id, epoch_id + 1, node_url);
-            }
-        }
+            if proposal_tracker.len() == config.node.total_nodes {
+                info!("Node {}: All proposals received for epoch {}", self.id, epoch_id);
 
-            let mut tracker = self.epoch_tracker.lock().await;
-            tracker.insert(epoch_id + 1);  // Move to next epoch
-            
-            proposal_tracker.clear();
-            // Transition to prevote phase
-            self.handle_prevote(sender, root.clone(), epoch_id).await;
-    
-            // Broadcast prevote
-            for node_url in &config.network.nodes {
-                let payload = PrevoteRequest {
-                    sender: self.id,
-                    root: root.clone(),
-                    epoch_id,
-                };
-                if let Err(e) = client.post(format!("http://{}/prevote", node_url))
-                    .json(&payload)
-                    .send()
-                    .await
-                {
-                    error!("Failed to send prevote to node {}: {:?}", node_url, e);
-                } else {
-                    info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
+                // Synchronize epoch
+                for node_url in &config.network.nodes {
+                    let payload = json!({ "epoch_id": epoch_id + 1 });
+                    if let Err(e) = client
+                        .post(format!("http://{}/sync_epoch", node_url))
+                        .json(&payload)
+                        .send()
+                        .await
+                    {
+                        error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
+                    } else {
+                        info!("Node {}: Synchronized epoch {} with {}", self.id, epoch_id + 1, node_url);
+                    }
                 }
+
+                let mut tracker = self.epoch_tracker.lock().await;
+                info!(
+                    "Node {}: epoch_tracker = {:?} inserting epoch_id = {}",
+                    self.id, tracker, epoch_id + 1);
+                tracker.insert(epoch_id + 1);  // Move to next epoch
+                
+                info!(
+                    "Node {}: Clearing proposal_tracker {:?}",
+                    self.id, proposal_tracker);
+
+                proposal_tracker.clear();
+                // Transition to prevote phase
+                self.handle_prevote(sender, root.clone(), epoch_id).await;
+        
+                // Broadcast prevote
+                for node_url in &config.network.nodes {
+                    let payload = PrevoteRequest {
+                        sender: self.id,
+                        root: root.clone(),
+                        epoch_id,
+                    };
+                    if let Err(e) = client.post(format!("http://{}/prevote", node_url))
+                        .json(&payload)
+                        .send()
+                        .await
+                    {
+                        error!("Failed to send prevote to node {}: {:?}", node_url, e);
+                    } else {
+                        info!("Node {}: Prevote broadcasted to {}", self.id, node_url);
+                    }
+                }
+        
+                // Clear tracker for next epoch
+                proposal_tracker.clear();
+            } else {
+                info!(
+                    "Node {}: Waiting for more proposals for epoch {}. Received: {}",
+                    self.id, epoch_id, proposal_tracker.len()
+                );
             }
-    
-            // Clear tracker for next epoch
-            proposal_tracker.clear();
-        } else {
-            info!(
-                "Node {}: Waiting for more proposals for epoch {}. Received: {}",
-                self.id, epoch_id, proposal_tracker.len()
-            );
-        }
     }
     
     
@@ -355,7 +378,7 @@ fn initialize_apis(node: Arc<Node>, config: Config, client: Arc<Client>) -> Rout
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {
                 let node = node.clone();
-                info!("Node {}: ==== Handling synch epoch request from Node {} ====", node.id, payload.sender);
+                info!("Node {}: ==== Handling SNYC EPOCH request from Node {} ====", node.id, payload.sender);
                 async move {
                     match node.handle_sync_epoch(payload.epoch_id, payload.sender).await {
                         Ok(_) => Json(Response {
