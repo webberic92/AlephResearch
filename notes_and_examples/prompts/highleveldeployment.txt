@@ -19,7 +19,7 @@ A. Infrastructure Setup
 
     Install Required Software:
         On each instance, install:
-            Rust (for running alephRBC and alephStart).
+            Rust (for running aleph_rbc and aleph_start).
             AWS CLI (for log management).
             Networking tools (e.g., net-tools, curl).
 
@@ -49,8 +49,8 @@ A. Infrastructure Setup
 
 B. Node Initialization
 
-    Start alephRBC:
-        Each node runs alephRBC to handle proposals, prevotes, and commits.
+    Start aleph_rbc:
+        Each node runs aleph_rbc to handle proposals, prevotes, and commits.
 
     Health Check:
         Nodes periodically query the IP Manager to check if all nodes are healthy before proceeding.
@@ -64,7 +64,7 @@ C. Transaction Coordination
             Node 3 submits Transaction 1.
             Repeat for Transaction 2, and so on.
 
-    Modify alephStart to Enforce Ordering:
+    Modify aleph_start to Enforce Ordering:
         Use a shared epoch_id to determine the current transaction round.
         Ensure each node waits for the previous node’s transaction before submitting its own.
 
@@ -105,6 +105,6 @@ D. Testing and Verification
 
     Optimize Performance:
         Reduce latency by fine-tuning network and disk I/O.
-        Improve message handling efficiency in alephRBC.
+        Improve message handling efficiency in aleph_rbc.
 
 Let me know if you'd like a more detailed implementation plan for any specific part!

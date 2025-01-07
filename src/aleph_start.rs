@@ -1,148 +1,17 @@
 use reqwest::Client;
-use serde::Deserialize;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use std::collections::{HashMap, HashSet};
-use std::{fs, sync::Arc, time::Duration};
-use tokio::sync::{Mutex, RwLock};
+use aleph_research::aleph_start;
+use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
 
-// Configuration structures
-#[derive(Debug, Deserialize, serde::Serialize)]
-struct Config {
-    network: NetworkConfig,
-    consensus: ConsensusConfig,
-    node: NodeConfig,
-}
+use aleph_start::structs::{Config, Node};
+use aleph_start::config_util::{load_config, save_config};
+use aleph_start::merkle_util::{compute_merkle_branch, compute_merkle_root};
+use aleph_start::node_health_util::wait_for_all_nodes_health;
 
-#[derive(Debug, Deserialize, serde::Serialize)]
-struct NetworkConfig {
-    listen_address: String,
-    nodes: Vec<String>,
-    ip_manager_address: String, // Added for GTC APIs
-    proposals: Vec<usize>, // Add this line
-}
-
-#[derive(Debug, Deserialize, serde::Serialize)]
-struct ConsensusConfig {
-    transaction_size: usize,
-    data_shards: usize,
-    batch_size: usize,
-}
-
-#[derive(Debug, Deserialize, serde::Serialize)]
-struct NodeConfig {
-    id: usize,
-    total_nodes: usize,
-}
-
-// Data structure with epoch ID
-#[derive(Debug, Clone)]
-struct Data {
-    transaction: Vec<u8>,
-    epoch_id: u64,
-}
-
-// Node structure
-#[derive(Debug, Clone)]
-struct Node {
-    id: usize,
-    total_nodes: usize,
-    quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-}
-
-impl Node {
-    fn new(id: usize, total_nodes: usize) -> Self {
-        Self {
-            id,
-            total_nodes,
-            quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-        }
-    }
-}
-
-// Helper functions
-async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
-    for node in nodes {
-        let url = format!("http://{}/health", node);
-        match client.get(&url).send().await {
-            Ok(response) => {
-                if !response.status().is_success() {
-                    info!("Node {} is not healthy. Retrying...", node);
-                    return false;
-                }
-            }
-            Err(e) => {
-                info!("Node {} health check failed with error: {:?}", node, e);
-                return false;
-            }
-        }
-    }
-    true
-}
-
-async fn wait_for_all_nodes_health(client: &Client, nodes: &[String]) {
-    loop {
-        info!("Checking health of all nodes...");
-        if check_all_nodes_health(client, nodes).await {
-            info!("All nodes are healthy!");
-            break;
-        }
-        info!("Some nodes are not healthy. Retrying in 1 second...");
-        sleep(Duration::from_secs(1)).await;
-    }
-}
-
-/// Compute Merkle root from shard hashes
-fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
-    if hashes.len() == 1 {
-        return hashes[0].clone();
-    }
-    let mut next_level = vec![];
-    for pair in hashes.chunks(2) {
-        let mut combined = pair[0].clone();
-        if pair.len() > 1 {
-            combined.extend(&pair[1]);
-        }
-        next_level.push(Sha256::digest(&combined).to_vec());
-    }
-    compute_merkle_root(&next_level)
-}
-
-/// Compute the Merkle branch for a given index in the Merkle tree
-fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
-    let mut branch = vec![];
-    let mut current_index = index;
-    let mut current_level = hashes.to_vec();
-
-    while current_level.len() > 1 {
-        let sibling_index = if current_index % 2 == 0 {
-            current_index + 1
-        } else {
-            current_index - 1
-        };
-
-        if sibling_index < current_level.len() {
-            branch.push(current_level[sibling_index].clone());
-        }
-
-        current_index /= 2;
-        current_level = current_level
-            .chunks(2)
-            .map(|pair| {
-                let mut combined = pair[0].clone();
-                if pair.len() > 1 {
-                    combined.extend(&pair[1]);
-                }
-                Sha256::digest(&combined).to_vec()
-            })
-            .collect();
-    }
-
-    branch
-}
 
 /// Ensure epoch synchronization across nodes
 async fn ensure_epoch_sync(client: &Client, config: &Config, current_epoch: u64) -> bool {
@@ -288,18 +157,6 @@ async fn generate_and_send_transactions_in_order(
     Ok(())
 }
 
-/// Load configuration
-fn load_config(file_path: &str) -> Config {
-    let config_contents = fs::read_to_string(file_path).expect("Failed to read configuration file.");
-    toml::from_str(&config_contents).expect("Failed to parse configuration.")
-}
-fn save_config(file_path: &str, config: &Config) -> Result<(), Box<dyn std::error::Error>> {
-    let config_contents = toml::to_string(&config)
-        .expect("Failed to serialize configuration.");
-    fs::write(file_path, config_contents)
-        .expect("Failed to write configuration file.");
-    Ok(())
-}
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
