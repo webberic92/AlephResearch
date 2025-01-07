@@ -3,24 +3,6 @@
 version = 3
 
 [[package]]
-name = "AlephResearch-Original"
-version = "0.1.0"
-dependencies = [
- "axum",
- "openssl",
- "reed-solomon-erasure",
- "reqwest",
- "ring",
- "serde",
- "serde_json",
- "sha2",
- "tokio",
- "toml",
- "tracing",
- "tracing-subscriber",
-]
-
-[[package]]
 name = "addr2line"
 version = "0.24.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -44,6 +26,24 @@ dependencies = [
  "getrandom",
  "once_cell",
  "version_check",
+]
+
+[[package]]
+name = "aleph_research"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "openssl",
+ "reed-solomon-erasure",
+ "reqwest",
+ "ring",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tokio",
+ "toml",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]

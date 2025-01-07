@@ -3,8 +3,8 @@
 # Define variables
 TARGET="x86_64-unknown-linux-musl"
 S3_BUCKET="aleph-research"
-BINARY_1="alephRBC"
-BINARY_2="alephStart"
+BINARY_1="aleph_rbc"
+BINARY_2="aleph_start"
 IP_SERVER_SCRIPT="IpServer.py"
 
 # Step 1: Build the project
