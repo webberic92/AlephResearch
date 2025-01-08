@@ -23,7 +23,7 @@ For more information on the overall project and other branches, refer to the mai
 - cargo build --release --target x86_64-unknown-linux-musl
 
 ## How To Push to AWS
-- aws s3 cp target/x86_64-unknown-linux-musl/release/alephRBC s3://aleph-research/
+- aws s3 cp target/x86_64-unknown-linux-musl/release/aleph_rbc s3://aleph-research/
 
 ## How to Deploy to AWS
 - cdk deploy

@@ -1,5 +1,5 @@
 [package]
-name = "AlephResearch-Original"
+name = "aleph_research"
 version = "0.1.0"
 authors = ["Eric Webb <webberic92@yahoo.com>"]
 edition = "2021"
@@ -19,12 +19,12 @@ axum = { version = "0.7.9", features = ["http1", "http2"] }
 sha2 = "0.10"
 
 [[bin]]
-name = "alephRBC"
-path = "src/alephRBC.rs"
+name = "aleph_rbc"
+path = "src/aleph_rbc.rs"
 
 [[bin]]
-name = "alephStart"
-path = "src/alephStart.rs"
+name = "aleph_start"
+path = "src/aleph_start.rs"
 
 [[bin]]
 name = "generate_keys"
