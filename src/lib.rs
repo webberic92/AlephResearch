@@ -20,3 +20,7 @@ pub mod handlers{
     pub mod handle_prevote;
     pub mod handle_commit;
 }
+
+pub mod controllers{
+    pub mod api_routes;
+}
