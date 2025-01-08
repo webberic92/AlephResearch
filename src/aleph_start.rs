@@ -1,71 +1,25 @@
 use reqwest::Client;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use aleph_research::aleph_start;
 use std::{sync::Arc, time::Duration};
 use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
 
-use aleph_start::structs::{Config, Node};
-use aleph_start::config_util::{load_config, save_config};
-use aleph_start::merkle_util::{compute_merkle_branch, compute_merkle_root};
-use aleph_start::node_health_util::wait_for_all_nodes_health;
+use aleph_research::structs;
+use crate::structs::toml_config::TomlConfig;
+use crate::structs::node::Node;
 
+use aleph_research::utils::config_util::{load_config, save_config};
+use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_submitted};
+use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
+use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root};
 
-/// Ensure epoch synchronization across nodes
-async fn ensure_epoch_sync(client: &Client, config: &Config, current_epoch: u64) -> bool {
-    for node_url in &config.network.nodes {
-        let url = format!("http://{}/sync_epoch", node_url);
-        let payload = json!({ "epoch_id": current_epoch, "sender": &config.node.id });
-        if let Err(e) = client.post(&url).json(&payload).send().await {
-            error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
-            return false;
-        }
-    }
-    info!("Epoch {} synchronized across all nodes.", current_epoch);
-    true
-}
-
-/// Check if it's this node's turn to submit a transaction
-async fn is_node_turn(client: &Client, config: &Config, current_epoch: u64) -> bool {
-    let url = format!(
-        "http://{}:8080/is_turn?node_id={}&epoch_id={}",
-        config.network.ip_manager_address, config.node.id, current_epoch
-    );
-    match client.get(&url).send().await {
-        Ok(response) => {
-            if response.status().is_success() {
-                let body: serde_json::Value = response.json().await.unwrap();
-                body["is_turn"].as_bool().unwrap_or(false)
-            } else {
-                false
-            }
-        }
-        Err(e) => {
-            error!("Error checking turn for node {}: {:?}", config.node.id, e);
-            false
-        }
-    }
-}
-
-async fn notify_transaction_submitted(client: &Client, config: &Config, node_id: usize) -> Result<(), Box<dyn std::error::Error>> {
-    let url = format!("http://{}:8080/submit_transaction", config.network.ip_manager_address);
-    let payload = json!({ "node_id": node_id });
-    
-    let response = client.post(&url).json(&payload).send().await?;
-    if response.status().is_success() {
-        info!("Node {}: Successfully notified python server transaction submission.", node_id);
-    } else {
-        error!("Node {}: Failed to notify python server transaction submission. Status: {}", node_id, response.status());
-    }
-    Ok(())
-}
 
 /// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
-    config: &Config,
+    toml_config: &TomlConfig,
     node: &Node,
     current_epoch: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
@@ -75,24 +29,24 @@ async fn generate_and_send_transactions_in_order(
     );
 
     loop {
-        if is_node_turn(client, config, current_epoch).await {
+        if is_node_turn(client, toml_config, current_epoch).await {
             break;
         }
 
         // Call ensure_epoch_sync if transaction submission is stuck
-        ensure_epoch_sync(client, config, current_epoch).await;
+        ensure_epoch_sync(client, toml_config, current_epoch).await;
 
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
         info!(
             "Node {}: Retrying transaction submission for epoch {}",
-            config.node.id, current_epoch
+            toml_config.node.id, current_epoch
         );
     }
 
     info!("Node {}: It's my turn. Generating transactions for epoch {}", node.id, current_epoch);
 
-    let transaction_size = config.consensus.transaction_size;
-    let data_shards = config.consensus.data_shards;
+    let transaction_size = toml_config.consensus.transaction_size;
+    let data_shards = toml_config.consensus.data_shards;
 
     let transaction_data = vec![1; transaction_size]; // Use deterministic data for consistency
     let shard_size = transaction_size / data_shards;
@@ -109,7 +63,7 @@ async fn generate_and_send_transactions_in_order(
         node.id, shards, shard_hashes, merkle_root
     );
 
-    for (index, node_url) in config.network.nodes.iter().enumerate() {
+    for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
         let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
 
@@ -161,32 +115,32 @@ async fn generate_and_send_transactions_in_order(
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    let mut config = load_config("/home/aleph-node/aleph-node-config.toml");
+    let mut toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
     let client = Client::new();
     let current_epoch = 1;
 
-    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
+    let node = Arc::new(Node::new(toml_config.node.id, toml_config.node.total_nodes));
 
-    wait_for_all_nodes_health(&client, &config.network.nodes).await;
+    wait_for_all_nodes_health(&client, &toml_config.network.nodes).await;
 
-    if !ensure_epoch_sync(&client, &config, current_epoch).await {
+    if !ensure_epoch_sync(&client, &toml_config, current_epoch).await {
         error!("Epoch synchronization failed. Exiting...");
         return Err("Epoch synchronization failed".into());
     }
 
-    generate_and_send_transactions_in_order(&client, &config, &node, current_epoch).await?;
+    generate_and_send_transactions_in_order(&client, &toml_config, &node, current_epoch).await?;
 
 
     // Update the proposals field
-    if !config.network.proposals.contains(&node.id) {
-        config.network.proposals.push(node.id);
-        save_config("/home/aleph-node/aleph-node-config.toml", &config)?;
+    if !toml_config.network.proposals.contains(&node.id) {
+        toml_config.network.proposals.push(node.id);
+        save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;
         info!("Node {}: Added to proposals in toml.", node.id);
     } else {
         info!("Node {}: Already added to proposals in toml.", node.id);
     }
  
     // Notify the Python server
-    notify_transaction_submitted(&client, &config, node.id).await?;
+    notify_transaction_submitted(&client, &toml_config, node.id).await?;
     Ok(())
 }

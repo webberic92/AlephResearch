@@ -1,4 +1,5 @@
 use sha2::{Digest, Sha256};
+use tracing::info;
 
 
 /// Compute Merkle root from shard hashes
@@ -48,4 +49,20 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     }
 
     branch
+}
+
+pub fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
+    info!("Validating merkle branch");
+
+    let mut hash = Sha256::digest(shard).to_vec();
+    for sibling in proof {
+        let combined = if hash < *sibling {
+            [hash.clone(), sibling.clone()].concat()
+        } else {
+            [sibling.clone(), hash.clone()].concat()
+        };
+        hash = Sha256::digest(&combined).to_vec();
+    }
+    info!("Done validating merkle branch");
+    hash
 }
