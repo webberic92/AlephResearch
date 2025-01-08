@@ -1,0 +1,110 @@
+High-Level Deployment and Implementation Plan for the ch-RBC Project
+1. Overview of the Goals
+
+    Deploy a distributed network with 3 nodes.
+    Ensure transactions are ordered according to ch-RBC logic:
+        Node 1 submits Transaction 1.
+        Node 2 submits Transaction 1.
+        Node 3 submits Transaction 1.
+        Node 1 submits Transaction 2, and so on.
+
+The ch-RBC protocol enforces reliable broadcast, ensuring all nodes process the same transactions in the same order.
+2. Deployment and Implementation Steps
+A. Infrastructure Setup
+
+    Provision 3 EC2 Instances:
+        Use AWS CDK or a similar tool to provision 3 EC2 instances.
+        Assign each instance a unique node ID (node_id).
+        Ensure they are in the same VPC to facilitate communication.
+
+    Install Required Software:
+        On each instance, install:
+            Rust (for running aleph_rbc and aleph_start).
+            AWS CLI (for log management).
+            Networking tools (e.g., net-tools, curl).
+
+    Prepare the Configuration Files:
+        Generate a unique aleph-node-config.toml for each node:
+
+        [network]
+        listen_address = "0.0.0.0:30333"
+        nodes = ["<node1_ip>:30333", "<node2_ip>:30333", "<node3_ip>:30333"]
+        ip_manager_address = "<ip_manager_ip>"
+
+        [consensus]
+        batch_size = 1
+        transaction_size = 256
+        round = 1
+        data_shards = 4
+
+        [logging]
+        level = "info"
+
+        [node]
+        id = <node_id>
+        total_nodes = 3
+
+    Deploy an IP Manager:
+        Use a simple Flask or FastAPI application (IpServer.py) to register and track node IPs and readiness.
+
+B. Node Initialization
+
+    Start aleph_rbc:
+        Each node runs aleph_rbc to handle proposals, prevotes, and commits.
+
+    Health Check:
+        Nodes periodically query the IP Manager to check if all nodes are healthy before proceeding.
+
+C. Transaction Coordination
+
+    Transaction Queue Logic:
+        Implement a centralized or distributed transaction coordination mechanism to enforce ordering:
+            Node 1 submits Transaction 1.
+            Node 2 submits Transaction 1.
+            Node 3 submits Transaction 1.
+            Repeat for Transaction 2, and so on.
+
+    Modify aleph_start to Enforce Ordering:
+        Use a shared epoch_id to determine the current transaction round.
+        Ensure each node waits for the previous node’s transaction before submitting its own.
+
+D. Testing and Verification
+
+    Run Local Tests:
+        Use a local testing environment (e.g., Docker Compose) to simulate the 3 nodes.
+        Verify that transactions are ordered correctly and that the protocol adheres to ch-RBC logic.
+
+    Deploy to AWS:
+        Once tests pass, deploy to the EC2 instances.
+        Monitor logs for errors, such as root mismatches or synchronization failures.
+
+3. Resolving Transaction Ordering
+
+    Root Cause of Out-of-Order Transactions:
+        Transactions might be submitted out of order if nodes are not synchronized or do not wait for the previous node.
+
+    Solution:
+        Use a global transaction coordinator:
+            Before submitting a transaction, each node queries the coordinator to ensure the current transaction round is correct.
+        Ensure synchronization:
+            Each node waits for confirmation that the previous node has completed its transaction before proceeding.
+
+4. Monitoring and Logging
+
+    Use a centralized logging system (e.g., AWS CloudWatch or an S3 bucket) to collect and analyze logs.
+    Key metrics to monitor:
+        Transaction order.
+        Proposal, prevote, and commit phases.
+        Communication overhead and latency.
+
+5. Iterative Improvements
+
+    Start Small:
+        Begin with 3 nodes and 1 transaction per round.
+        Scale to more nodes and transactions once the ordering is verified.
+
+    Optimize Performance:
+        Reduce latency by fine-tuning network and disk I/O.
+        Improve message handling efficiency in aleph_rbc.
+
+Let me know if you'd like a more detailed implementation plan for any specific part!
