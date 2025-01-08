@@ -2,7 +2,24 @@ use reqwest::Client;
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::info;
+use tracing::error;
+use serde_json::json;
+use crate::structs::toml_config::TomlConfig;
 
+
+/// Ensure epoch synchronization across nodes
+pub async fn ensure_epoch_sync(client: &Client, toml_config: &TomlConfig, current_epoch: u64) -> bool {
+    for node_url in &toml_config.network.nodes {
+        let url = format!("http://{}/sync_epoch", node_url);
+        let payload = json!({ "epoch_id": current_epoch, "sender": &toml_config.node.id });
+        if let Err(e) = client.post(&url).json(&payload).send().await {
+            error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
+            return false;
+        }
+    }
+    info!("Epoch {} synchronized across all nodes.", current_epoch);
+    true
+}
 
 // Helper functions
 pub async fn check_all_nodes_health(client: &Client, nodes: &[String]) -> bool {
