@@ -16,8 +16,28 @@ use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_s
 use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root};
 
 
-/// Generate and send transactions in order
+/// Main function to generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
+    client: &Client,
+    toml_config: &TomlConfig,
+    node: &Node,
+    current_epoch: u64,
+) -> Result<(), Box<dyn std::error::Error>> {
+    wait_for_turn(client, toml_config, node, current_epoch).await?;
+
+    let (shards, shard_hashes, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
+
+    send_transactions(client, toml_config, node, current_epoch, &shards, &shard_hashes, &merkle_root).await?;
+
+    info!(
+        "Node {}: SENT Transaction proposals for epoch {}.",
+        node.id, current_epoch
+    );
+    Ok(())
+}
+
+/// Wait for the node's turn to submit a transaction
+async fn wait_for_turn(
     client: &Client,
     toml_config: &TomlConfig,
     node: &Node,
@@ -33,9 +53,7 @@ async fn generate_and_send_transactions_in_order(
             break;
         }
 
-        // Call ensure_epoch_sync if transaction submission is stuck
         ensure_epoch_sync(client, toml_config, current_epoch).await;
-
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
         info!(
             "Node {}: Retrying transaction submission for epoch {}",
@@ -43,12 +61,18 @@ async fn generate_and_send_transactions_in_order(
         );
     }
 
-    info!("Node {}: It's my turn. Generating transactions for epoch {}", node.id, current_epoch);
+    info!("Node {}: It's my turn for epoch {}", node.id, current_epoch);
+    Ok(())
+}
 
+/// Generate shards and Merkle root
+async fn generate_shards_and_merkle_root(
+    toml_config: &TomlConfig,
+) -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<u8>) {
     let transaction_size = toml_config.consensus.transaction_size;
     let data_shards = toml_config.consensus.data_shards;
 
-    let transaction_data = vec![1; transaction_size]; // Use deterministic data for consistency
+    let transaction_data = vec![1; transaction_size]; // Deterministic data
     let shard_size = transaction_size / data_shards;
     let shards: Vec<Vec<u8>> = transaction_data
         .chunks(shard_size)
@@ -59,10 +83,23 @@ async fn generate_and_send_transactions_in_order(
     let merkle_root = compute_merkle_root(&shard_hashes);
 
     info!(
-        "Node {}: Shards: {:?}, Shard hashes: {:?}, Computed Merkle root: {:?}",
-        node.id, shards, shard_hashes, merkle_root
+        "Generated shards: {:?}, shard hashes: {:?}, Merkle root: {:?}",
+        shards, shard_hashes, merkle_root
     );
 
+    (shards, shard_hashes, merkle_root)
+}
+
+/// Send transactions to other nodes
+async fn send_transactions(
+    client: &Client,
+    toml_config: &TomlConfig,
+    node: &Node,
+    current_epoch: u64,
+    shards: &[Vec<u8>],
+    shard_hashes: &[Vec<u8>],
+    merkle_root: &[u8],
+) -> Result<(), Box<dyn std::error::Error>> {
     for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
         let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
@@ -104,12 +141,9 @@ async fn generate_and_send_transactions_in_order(
         }
     }
 
-    info!(
-        "Node {}: SENT Transaction proposals for epoch {}.",
-        node.id, current_epoch
-    );
     Ok(())
 }
+
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
