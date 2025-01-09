@@ -3,7 +3,7 @@ use tracing::{error, info};
 
 use reqwest::Client;
 
-use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::PrevoteRequest}, utils::{config_util::{load_config, save_config}, epoch_utils::{ensure_no_overlap, handle_sync_epoch}, merkle_utils::validate_merkle_branch}};
+use crate::{structs::{node::Node, requests::PrevoteRequest}, utils::{config_util::{load_config, save_config}, epoch_utils::{ensure_no_overlap, handle_sync_epoch}, merkle_utils::validate_merkle_branch}};
 
 pub async fn handle_propose(
     node: &Node,
@@ -61,7 +61,7 @@ pub async fn handle_propose(
     
     // Check if all proposals are received
     info!(
-        "Node {}: config.node.total_nodes = {} config.totalnodes minus 1 (Removed logic) = {}. Received: {}",
+        "Node {}: config.node.total_nodes = {} config.totalnodes - 1 = {}. Received: {}",
         node.id, config.node.total_nodes, config.node.total_nodes-1, proposal_tracker.len());
 
         if proposal_tracker.len() == config.node.total_nodes {
@@ -82,22 +82,43 @@ pub async fn handle_propose(
                 }
             }
 
-            let mut tracker = node.epoch_tracker.lock().await;
+            let mut epoch_tracker = node.epoch_tracker.lock().await;
             info!(
                 "Node {}: epoch_tracker = {:?} inserting epoch_id = {}",
-                node.id, tracker, epoch_id + 1);
-            tracker.insert(epoch_id + 1);  // Move to next epoch
+                node.id, epoch_tracker, epoch_id + 1);
+            epoch_tracker.insert(epoch_id + 1);  // Move to next epoch
             
             info!(
                 "Node {}: Clearing proposal_tracker {:?}",
                 node.id, proposal_tracker);
 
             proposal_tracker.clear();
+
+            info!(
+                "Node {}: Cleared proposal_tracker {:?}",
+                node.id, proposal_tracker);
+
+                info!(
+                    "Node {}: Saving cleared proposal_tracker back to config.network.proposals in toml",
+                    node.id);
+                //Either is cleared or node is appended too proposal_tracker
+                config.network.proposals=proposal_tracker;
+                save_config("/home/aleph-node/aleph-node-config.toml", &config).unwrap();
+            
+            
             // Transition to prevote phase
-            handle_prevote(node,sender, root.clone(), epoch_id).await;
-    
+            // handle_prevote(node,sender, root.clone(), epoch_id).await;
+            //TOOK THIS OUT FOR NOW.
+            
+            info!(
+                "Node {}: Sending Prevotes to {:?}",
+                node.id, &config.network.nodes);
             // Broadcast prevote
             for node_url in &config.network.nodes {
+                info!(
+                    "Node {}: Sending Prevotes to {:?}",
+                    node.id, node_url);
+
                 let payload = PrevoteRequest {
                     sender: node.id,
                     root: root.clone(),
@@ -114,15 +135,10 @@ pub async fn handle_propose(
                 }
             }
     
-            // Clear tracker for next epoch
-            proposal_tracker.clear();
         } else {
             info!(
                 "Node {}: Waiting for more proposals for epoch {}. Received: {}",
                 node.id, epoch_id, proposal_tracker.len()
             );
         }
-        //Either is cleared or node is appended too proposal_tracker
-        config.network.proposals=proposal_tracker;
-        save_config("/home/aleph-node/aleph-node-config.toml", &config).unwrap();
 }
