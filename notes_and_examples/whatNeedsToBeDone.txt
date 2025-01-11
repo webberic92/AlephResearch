@@ -62,13 +62,21 @@ Scalability Enhancements (RSA Accumulators):
 
 Recommendations:
 
-    Add Erasure Coding and Merkle Tree Logic: Implement erasure coding for unit UU and calculate Merkle roots and branches during the propose phase.
+    #Add Erasure Coding and Merkle Tree Logic: Implement erasure coding for unit UU and calculate Merkle roots and branches during the propose phase.
 
-    Merkle Branch Validation in Handlers: Incorporate Merkle branch validation in handle_propose and handle_prevote.
+    #Merkle Branch Validation in Handlers: Incorporate Merkle branch validation in handle_propose and handle_prevote.
 
-    DAG Synchronization: Introduce DAG synchronization checks before sending prevote.
+    #DAG Synchronization: Introduce DAG synchronization checks before sending prevote.
 
     Reconstruction and Validation Logic: Add reconstruction logic for UU after receiving 2f+12f+1 prevotes, including checks for parent availability and correctness.
+            Summary of Files to Update:
+
+        handle_propose.rs – Ensure shards and proof align with reconstruction.
+        merkle_utils.rs – Validate Merkle utilities for reconstruction.
+        handle_commit.rs – Finalize and persist reconstructed unit.
+        epoch_utils.rs / dag_utils.rs – Add DAG synchronization.
+        error_utils.rs / recovery_utils.rs – Handle reconstruction failures.
+
 
     Enhanced Commit Validation: Include h′=hh′=h validation and ensure parents of UU are locally available before sending commit.
 
