@@ -90,12 +90,12 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
             let node = node.clone();
             move || async move {
                 let quorum_votes = node.quorum_votes.read().await;
-                let epoch_tracker = node.epoch_tracker.lock().await;
+                let epoch_round_id = node.epoch_round_id.lock().await;
 
                 Json(Response {
                     status: format!(
                         "Node {} is healthy. Quorum votes: {:?}, Epochs: {:?}",
-                        node.id, *quorum_votes, *epoch_tracker
+                        node.id, *quorum_votes, *epoch_round_id
                     ),
                 })
             }
