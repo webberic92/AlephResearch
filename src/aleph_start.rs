@@ -122,12 +122,12 @@ async fn send_transactions(
             Ok(res) => {
                 if res.status().is_success() {
                     info!(
-                        "Node {}: Successfully sent transaction for epoch {} to {}",
+                        "Node {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
                         node.id, current_epoch, node_url
                     );
                 } else {
                     error!(
-                        "Node {}: Failed to send transaction for epoch {} to {}. Status: {}",
+                        "Node {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
                         node.id, current_epoch, node_url, res.status()
                     );
                 }

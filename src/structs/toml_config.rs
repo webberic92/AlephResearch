@@ -21,10 +21,13 @@ pub struct ConsensusConfig {
     pub transaction_size: usize,
     pub data_shards: usize,
     pub batch_size: usize,
+    pub epoch_round_id: usize,
+
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct NodeConfig {
     pub id: usize,
     pub total_nodes: usize,
+    pub epoch_round_id: usize,
 }

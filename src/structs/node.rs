@@ -11,7 +11,7 @@ pub struct Node {
 pub id: usize,
 pub total_nodes: usize,
 pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-pub epoch_tracker: Arc<Mutex<HashSet<u64>>>,
+pub epoch_round_id: Arc<Mutex<HashSet<u64>>>,
 pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
 }
 
@@ -21,7 +21,7 @@ impl Node {
             id,
             total_nodes,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            epoch_tracker: Arc::new(Mutex::new(HashSet::new())),
+            epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
         }
     }
