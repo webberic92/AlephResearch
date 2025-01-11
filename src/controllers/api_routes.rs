@@ -1,13 +1,14 @@
 use axum::{routing::post, Json, Router};
+use openssl::sha;
 use reqwest::Client;
 use std::sync::Arc;
 use tracing::info;
 
 use crate::{
-    handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose},
+    handlers::{handle_commit::handle_commit, handle_dag_sync, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
     structs::{
         node::Node,
-        requests::{CommitRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
+        requests::{CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
         responses::Response,
     },
     utils::epoch_utils::handle_sync_epoch,
@@ -50,8 +51,10 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                         &node,
                         payload.sender,
                         payload.root,
+                        payload.proof,
+                        payload.shard,
                         payload.epoch_id,
-                        payload.unit, // Updated to use `unit` instead of `shard`
+                         // Updated to use `unit` instead of `shard`
                     )
                     .await;
                     Json(Response {
@@ -123,6 +126,17 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                         node.id, *quorum_votes, *epoch_round_id
                     ),
                 })
+            }
+        }))
+        .route("/dag_sync", post({
+            let node = node.clone();
+            let client = client.clone();
+            move |Json(payload): Json<DAGSyncRequest>| {
+                let node = node.clone();
+                let client = client.clone();
+                async move {
+                    handle_dag_sync(&node, &client, payload).await
+                }
             }
         }))
 }

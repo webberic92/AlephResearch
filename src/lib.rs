@@ -6,6 +6,7 @@ pub mod utils{
     pub mod ip_server_utils; // Expose the structs module
     pub mod rbc_utils; // Expose the structs module
     pub mod epoch_utils; // Expose the structs module
+    pub mod dag_utils; // Expose the structs module
 }
 
 pub mod structs{
@@ -19,6 +20,7 @@ pub mod handlers{
     pub mod handle_propose;
     pub mod handle_prevote;
     pub mod handle_commit;
+    pub mod handle_dag_sync;
 }
 
 pub mod controllers{

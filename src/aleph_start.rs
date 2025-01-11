@@ -15,7 +15,6 @@ use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_su
 use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
 use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root};
 
-
 /// Main function to generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
@@ -164,7 +163,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     generate_and_send_transactions_in_order(&client, &toml_config, &node, current_epoch).await?;
 
-
     // Update the proposals field
     if !toml_config.network.proposals.contains(&node.id) {
         toml_config.network.proposals.push(node.id);
@@ -173,7 +171,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     } else {
         info!("Node {}: Already added to proposals in toml.", node.id);
     }
- 
+
     // Notify the Python server
     notify_transaction_submitted(&client, &toml_config, node.id).await?;
     Ok(())
