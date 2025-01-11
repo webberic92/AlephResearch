@@ -1,0 +1,80 @@
+Areas of Misalignment or Missing Elements:
+
+    Erasure Coding and Share Distribution (Initialization):
+        ch-RBC requires that the sender node uses (f+1,N)(f+1,N)-erasure coding to generate shares {sj}{sj​} for the unit UU, and a Merkle root hh is computed from these shares​
+
+​
+
+    .
+    In your code, there is no explicit erasure coding or Merkle tree computation logic.
+
+Merkle Branch Validation:
+
+    Nodes must validate the received shares using Merkle branches and ensure correctness before broadcasting a prevote message​
+
+    .
+    Your handle_propose and handle_prevote handlers do not include Merkle branch validation steps.
+
+Prevote and DAG Synchronization:
+
+    ch-RBC requires that nodes synchronize their DAG before sending a prevote to avoid processing meaningless data​
+
+​
+
+    .
+    There is no DAG synchronization logic in the handle_prevote function.
+
+Commit Phase Validity Check:
+
+    Before sending a commit, the protocol requires validation to ensure that h′=hh′=h and that all parent units are locally available​
+
+​
+
+    .
+    The handle_commit function does not seem to validate this.
+
+Validation of Reconstructed Units:
+
+    After receiving sufficient prevotes, nodes must reconstruct and validate the unit UU (e.g., ensuring parents exist and the data is complete)​
+
+​
+
+    .
+    This reconstruction and validation step is missing in the current implementation.
+
+Threshold Calculations:
+
+    The threshold for prevote and commit phases is correctly set to 2f+12f+1, but the reconstruction threshold (f+1f+1) needs explicit implementation for reconstructing UU​
+
+    .
+
+Logging vs. Functionality:
+
+    While logging is detailed, some critical functionalities such as checking share sizes, DAG synchronization, and parent availability checks seem absent.
+
+Scalability Enhancements (RSA Accumulators):
+
+    The RSA accumulator feature proposed in your research is not yet reflected in the implementation. It aims to replace Merkle trees to reduce communication complexity​
+
+​
+
+        .
+
+Recommendations:
+
+    Add Erasure Coding and Merkle Tree Logic: Implement erasure coding for unit UU and calculate Merkle roots and branches during the propose phase.
+
+    Merkle Branch Validation in Handlers: Incorporate Merkle branch validation in handle_propose and handle_prevote.
+
+    DAG Synchronization: Introduce DAG synchronization checks before sending prevote.
+
+    Reconstruction and Validation Logic: Add reconstruction logic for UU after receiving 2f+12f+1 prevotes, including checks for parent availability and correctness.
+
+    Enhanced Commit Validation: Include h′=hh′=h validation and ensure parents of UU are locally available before sending commit.
+
+    Implement RSA Accumulators: Replace Merkle trees with RSA accumulators as per your research goal to enhance scalability.
+
+Conclusion:
+
+To fully align with the ch-RBC protocol, you'll need to implement missing components like erasure coding, Merkle tree validation, and DAG synchronization. Additionally, the RSA accumulator integration is crucial for achieving the scalability improvements discussed in your research​
+​
