@@ -71,16 +71,15 @@ Recommendations:
     Reconstruction and Validation Logic: Add reconstruction logic for UU after receiving 2f+12f+1 prevotes, including checks for parent availability and correctness.
             Summary of Files to Update:
 
-        handle_propose.rs – Ensure shards and proof align with reconstruction.
-        merkle_utils.rs – Validate Merkle utilities for reconstruction.
-        handle_commit.rs – Finalize and persist reconstructed unit.
-        epoch_utils.rs / dag_utils.rs – Add DAG synchronization.
-        error_utils.rs / recovery_utils.rs – Handle reconstruction failures.
+        #handle_propose.rs – Ensure shards and proof align with reconstruction.
+        #merkle_utils.rs – Validate Merkle utilities for reconstruction.
+        #handle_commit.rs – Finalize and persist reconstructed unit.
+        #epoch_utils.rs / dag_utils.rs – Add DAG synchronization.
+        #error_utils.rs / recovery_utils.rs – Handle reconstruction failures.
 
 
-    Enhanced Commit Validation: Include h′=hh′=h validation and ensure parents of UU are locally available before sending commit.
+    #Enhanced Commit Validation: Include h′=hh′=h validation and ensure parents of UU are locally available before sending commit.
 
-    Implement RSA Accumulators: Replace Merkle trees with RSA accumulators as per your research goal to enhance scalability.
 
 Conclusion:
 

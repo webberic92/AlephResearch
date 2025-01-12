@@ -17,6 +17,7 @@ pub root: Vec<u8>,
 pub epoch_id: u64,
 pub proof: Vec<Vec<u8>>,
 pub shard: Vec<u8>,
+pub node_url: String,
 }
 
 #[derive(Deserialize)]

@@ -13,6 +13,7 @@ pub struct Node {
     pub epoch_round_id: Arc<Mutex<HashSet<u64>>>,
     pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
     pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>, // Renamed for clarity
+    pub dag: Arc<RwLock<HashMap<Vec<u8>, Vec<u8>>>>, // Added for illustration
 }
 
 impl Node {
@@ -24,6 +25,7 @@ impl Node {
             epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
             finalized_blocks: Arc::new(Mutex::new(HashSet::new())), // Updated name
+            dag: Arc::new(RwLock::new(HashMap::new())), // Added for illustration
         }
     }
 

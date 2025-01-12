@@ -11,20 +11,21 @@ pub struct DAGSyncResponse {
     pub message: String,
 }
 
+
 /// Handles the DAG synchronization API request.
 ///
 /// Checks whether the local DAG is in sync with the requesting node.
 pub async fn handle_dag_sync(
     node: &Node,
     client: &reqwest::Client,
-    payload: DAGSyncRequest,
+    Json(payload): Json<DAGSyncRequest>, // Deserialize the payload automatically
 ) -> Json<DAGSyncResponse> {
     info!(
         "Node {}: Received DAG sync request from Node {} for epoch {}",
         node.id, payload.node_url, payload.epoch_id
     );
 
-    match check_dag_sync(node, client, payload.epoch_id, &payload.node_url).await {
+    match check_dag_sync(client, payload.epoch_id, &payload.node_url).await {
         Ok(in_sync) => {
             if in_sync {
                 Json(DAGSyncResponse {
@@ -56,3 +57,4 @@ pub async fn handle_dag_sync(
         }
     }
 }
+

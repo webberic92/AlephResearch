@@ -5,9 +5,11 @@ use crate::{
     structs::{node::Node, requests::PrevoteRequest},
     utils::{
         config_util::{load_config, save_config},
+        dag_utils::{check_dag_sync, ensure_dag_synchronization},
         epoch_utils::{ensure_no_overlap, handle_sync_epoch},
-        merkle_utils::validate_merkle_branch,
-        dag_utils::check_dag_sync, // New DAG synchronization utility
+        errors_util::log_reconstruction_failure,
+        merkle_utils::{reconstruct_unit, validate_merkle_branch},
+        recovery_util::attempt_recovery,
     },
 };
 
@@ -45,13 +47,14 @@ fn persist_proposal_tracker(node_id: usize, proposal_tracker: &Vec<usize>, confi
     }
 }
 
+// Handle propose request
 pub async fn handle_propose(
     node: &Node,
     client: &Client,
     sender: usize,
     root: Vec<u8>,
     proof: Vec<Vec<u8>>,
-    shard: Vec<u8>,
+    shard: &Vec<u8>,
     epoch_id: u64,
 ) {
     info!("Node {}: ==== Handling PROPOSE REQUEST from Node {} ====", node.id, sender);
@@ -65,6 +68,30 @@ pub async fn handle_propose(
         );
         return;
     }
+
+    if let Err(e) = reconstruct_unit(&[shard.to_vec()], &proof) {
+        log_reconstruction_failure(node.id, epoch_id, &e);
+
+        // Load configuration to access network nodes
+        let config = load_config("/home/aleph-node/aleph-node-config.toml");
+
+        if let Some(first_node_url) = config.network.nodes.get(0) {
+            if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, first_node_url).await {
+                error!(
+                    "Node {}: Recovery failed for epoch {}. Error: {}",
+                    node.id, epoch_id, recovery_err
+                );
+            }
+        } else {
+            error!(
+                "Node {}: Recovery failed for epoch {} due to missing network node configuration.",
+                node.id, epoch_id
+            );
+        }
+        return;
+    }
+    info!("Node {}: Successfully reconstructed unit for epoch {}", node.id, epoch_id);
+
 
     // Synchronize and validate epoch
     if let Err(e) = handle_sync_epoch(node, epoch_id, sender).await {
@@ -80,7 +107,7 @@ pub async fn handle_propose(
 
     // Update proposal tracker
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
-    let mut proposal_tracker = config.network.proposals;
+    let mut proposal_tracker = config.network.proposals.clone();
     proposal_tracker.push(sender);
 
     if proposal_tracker.len() == config.node.total_nodes {
@@ -97,15 +124,11 @@ pub async fn handle_propose(
         }
 
         // DAG Synchronization Check
-        for node_url in &config.network.nodes {
-            if let Err(e) = check_dag_sync(node, client, epoch_id, node_url).await {
-                error!(
-                    "Node {}: DAG synchronization failed with node {} for epoch {}. Error: {:?}",
-                    node.id, node_url, epoch_id, e
-                );
+            if let Err(e) = ensure_dag_synchronization(client, epoch_id, &config).await {
+                error!("Node {}: DAG synchronization failed. Error: {:?}", node.id, e);
                 return;
             }
-        }
+        
 
         // Update epoch tracker and persist
         let mut epoch_tracker = node.epoch_round_id.lock().await;
@@ -126,6 +149,7 @@ pub async fn handle_propose(
                 proof: proof.clone(),
                 epoch_id: epoch_id,
                 shard: shard.clone(),
+                node_url: node_url.clone(),
             };
 
             match client.post(format!("http://{}/prevote", node_url)).json(&payload).send().await {

@@ -85,8 +85,8 @@ class TestAleph(Stack):
                 "chmod -R 777 /home/aleph-node/logs/",
 
                 # Continue setup for Aleph node
-                "aws s3 cp s3://aleph-research/aleph_rbc /home/aleph-node/ --quiet",
-                "aws s3 cp s3://aleph-research/aleph_start /home/aleph-node/ --quiet",
+                "aws s3 cp s3://aleph-research/alephRBC /home/aleph-node/ --quiet",
+                "aws s3 cp s3://aleph-research/alephStart /home/aleph-node/ --quiet",
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
 
@@ -139,7 +139,8 @@ class TestAleph(Stack):
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'round = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'round_size = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'epoch_round_id = 1 # bytes' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
@@ -153,15 +154,15 @@ class TestAleph(Stack):
             )
 
 
-            # Part 3: Start aleph_rbc
+            # Part 3: Start AlephRBC
             ec2_instance.user_data.add_commands(
-                "echo 'Starting aleph_rbc execution' >> /home/aleph-node/logs/node_status",
+                "echo 'Starting alephRBC execution' >> /home/aleph-node/logs/node_status",
 
-                # Check if the aleph_rbc binary is reachable and log the result
-                "if [ -f /home/aleph-node/aleph_rbc ]; then",
-                "  echo 'aleph_rbc binary is found at /home/aleph-node/aleph_rbc' >> /home/aleph-node/logs/node_status;",
+                # Check if the alephRBC binary is reachable and log the result
+                "if [ -f /home/aleph-node/alephRBC ]; then",
+                "  echo 'alephRBC binary is found at /home/aleph-node/alephRBC' >> /home/aleph-node/logs/node_status;",
                 "else",
-                "  echo 'ERROR: aleph_rbc binary not found at /home/aleph-node/aleph_rbc' >> /home/aleph-node/logs/node_status;",
+                "  echo 'ERROR: alephRBC binary not found at /home/aleph-node/alephRBC' >> /home/aleph-node/logs/node_status;",
                 "fi",
 
                 # Check if the configuration file is reachable and log the result
@@ -173,51 +174,51 @@ class TestAleph(Stack):
 
 
                 # Start the Aleph APIs
-                "echo 'Attempting to execute aleph_rbc with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/aleph_rbc --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 &",
+                "echo 'Attempting to execute alephRBC with configuration' >> /home/aleph-node/logs/node_status;",
+                "/home/aleph-node/alephRBC --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 &",
 
-                # Wait for the aleph_rbc server to be ready (simple retry logic)
-                "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /home/aleph-node/logs/node_status;",
-                    # Wait for the aleph_rbc server to be ready (simple retry logic)
+                # Wait for the alephRBC server to be ready (simple retry logic)
+                "echo 'Waiting for alephRBC to be ready on port 30333' >> /home/aleph-node/logs/node_status;",
+                    # Wait for the alephRBC server to be ready (simple retry logic)
                 "for i in {1..30}; do",
                 "    if netstat -tuln | grep -q ':30333'; then",
-                "        echo 'aleph_rbc APIs are ready.' >> /home/aleph-node/logs/node_status;",
+                "        echo 'alephRBC APIs are ready.' >> /home/aleph-node/logs/node_status;",
                 "        break;",
                 "    fi",
-                "    echo 'aleph_rbc not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    echo 'alephRBC not ready, retrying...' >> /home/aleph-node/logs/node_status;",
                 "    sleep 1;",
                 "done",
                 
                 "if ! netstat -tuln | grep -q ':30333'; then",
-                "    echo 'ERROR: aleph_rbc failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    echo 'ERROR: alephRBC failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
                 "    exit 1;",
                 "fi",
 
-                # Wait for the aleph_rbc server to confirm readiness via its API"
-                "echo 'Waiting for aleph_rbc API readiness...' >> /home/aleph-node/logs/node_status;",
+                # Wait for the alephRBC server to confirm readiness via its API"
+                "echo 'Waiting for alephRBC API readiness...' >> /home/aleph-node/logs/node_status;",
                 "for i in {1..30}; do",
                 "    if curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
-                "        echo 'aleph_rbc API is ready.' >> /home/aleph-node/logs/node_status;",
+                "        echo 'alephRBC API is ready.' >> /home/aleph-node/logs/node_status;",
                 "        break;",
                 "    fi",
-                "    echo 'aleph_rbc API not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    echo 'alephRBC API not ready, retrying...' >> /home/aleph-node/logs/node_status;",
                 "    sleep 1;",
                 "done",
                 "",
                 "if ! curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
-                "    echo 'ERROR: aleph_rbc API failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    echo 'ERROR: alephRBC API failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
                 "    exit 1;",
                 "fi",
 
-                f"echo 'Done with aleph_rbc loop for node {i + 1} IT SHOULD NOT HAVE MOVED ON TO aleph_start YET' >> /home/aleph-node/logs/node_status;",
+                f"echo 'Done with alephRBC loop for node {i + 1} IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET' >> /home/aleph-node/logs/node_status;",
 
             )
 
             # Part 4: Start Aleph Node and Monitor Logs
             ec2_instance.user_data.add_commands(                
                 # Start the Aleph testing
-                "echo 'Attempting to execute aleph_start with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/aleph_start --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
+                "echo 'Attempting to execute alephStart with configuration' >> /home/aleph-node/logs/node_status;",
+                "/home/aleph-node/alephStart --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
             )
 
             # Output the instance ID for debugging

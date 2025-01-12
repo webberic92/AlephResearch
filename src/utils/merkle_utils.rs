@@ -1,6 +1,5 @@
 use sha2::{Digest, Sha256};
-use tracing::info;
-
+use tracing::{error, info};
 
 /// Compute Merkle root from shard hashes
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
@@ -51,6 +50,7 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
+/// Validate a Merkle branch and return the computed root
 pub fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
     info!("Validating merkle branch");
 
@@ -65,4 +65,37 @@ pub fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
     }
     info!("Done validating merkle branch");
     hash
+}
+
+/// Reconstruct the original unit from shards and proof
+pub fn reconstruct_unit(shards: &[Vec<u8>], proof: &[Vec<u8>]) -> Result<Vec<u8>, String> {
+    info!("Reconstructing unit from shards");
+
+    // Validate the number of shards
+    if shards.is_empty() || proof.is_empty() {
+        error!("Shards or proof is empty during reconstruction");
+        return Err("Shards or proof is empty".to_string());
+    }
+
+    // Combine all shards into a single unit
+    let mut reconstructed_unit = vec![];
+    for shard in shards {
+        reconstructed_unit.extend(shard);
+    }
+
+    // Compute the Merkle root for verification
+    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    let computed_root = compute_merkle_root(&shard_hashes);
+
+    // Verify the computed root against the provided proof
+    if computed_root != proof[0] {
+        error!(
+            "Reconstruction failed: computed root {:?} does not match proof root {:?}",
+            computed_root, proof[0]
+        );
+        return Err("Reconstructed Merkle root does not match proof".to_string());
+    }
+
+    info!("Successfully reconstructed unit and verified Merkle root");
+    Ok(reconstructed_unit)
 }
