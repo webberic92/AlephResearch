@@ -3,7 +3,20 @@ use tokio::io::AsyncWriteExt;
 use serde_json::json;
 use tracing::{error, info};
 use crate::structs::node::Node;
+use crate::utils::merkle_utils::validate_merkle_branch;
+use crate::utils::dag_utils::are_parents_available;
 
+/// Handles the commit phase in the Aleph protocol with enhanced validation.
+///
+/// This function finalizes and persists the reconstructed unit if the quorum threshold is reached,
+/// after validating the root and ensuring parents' availability.
+///
+/// # Arguments
+/// - `node`: Reference to the current node.
+/// - `sender`: ID of the node sending the commit request.
+/// - `root`: The Merkle tree root associated with the commit.
+/// - `unit`: The finalized unit (block or transaction data).
+/// - `epoch_id`: The epoch in which the commit is being processed.
 pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<u8>, epoch_id: u64) {
     info!("Node {}: ==Handling== commit request from Node {}", node.id, sender);
 
@@ -12,9 +25,24 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
         let quorum_threshold = node.get_quorum_threshold(); // 2f + 1
         if *counter >= quorum_threshold {
             info!(
-                "Node {}: Commit finalized for root {:?} with {} votes",
+                "Node {}: Quorum reached. Validating and committing for root {:?} with {} votes",
                 node.id, root, *counter
             );
+
+            // Validate h′=hh′
+            if !validate_merkle_branch(&unit, &[root.clone()]).is_empty() {
+                error!("Node {}: Merkle branch validation failed for root {:?}", node.id, root);
+                return;
+            }
+
+            // Ensure parents of unit are available
+            if !are_parents_available(node, &unit).await {
+                error!(
+                    "Node {}: Parent availability check failed for unit associated with root {:?}",
+                    node.id, root
+                );
+                return;
+            }
 
             // Persist the finalized unit
             let epoch_file = format!("./finalized_units/epoch{}.json", epoch_id);
@@ -43,6 +71,13 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
 }
 
 /// Appends a finalized unit to the epoch file.
+///
+/// # Arguments
+/// - `epoch_file`: Path to the file where the unit will be stored.
+/// - `node_id`: ID of the current node.
+/// - `sender`: ID of the node that proposed the unit.
+/// - `root`: The Merkle tree root associated with the unit.
+/// - `unit`: The reconstructed and finalized unit.
 async fn append_finalized_unit(
     epoch_file: &str,
     node_id: usize,

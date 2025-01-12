@@ -29,7 +29,7 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                         payload.sender,
                         payload.root,
                         payload.proof,
-                        payload.shard,
+                        &payload.shard,
                         payload.epoch_id,
                     )
                     .await;
@@ -44,17 +44,20 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
         }))
         .route("/prevote", post({
             let node = node.clone();
+            let client = client.clone(); // Clone the `client` variable
             move |Json(payload): Json<PrevoteRequest>| {
                 let node = node.clone();
                 async move {
                     handle_prevote(
                         &node,
+                        &client, // Use the cloned `client` variable
                         payload.sender,
                         payload.root,
                         payload.proof,
                         payload.shard,
-                        payload.epoch_id,
-                         // Updated to use `unit` instead of `shard`
+                        payload.epoch_id, // Added `epoch_id` argument
+                        &payload.node_url,
+                        // Updated to use `unit` instead of `shard`
                     )
                     .await;
                     Json(Response {
@@ -135,7 +138,7 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                 let node = node.clone();
                 let client = client.clone();
                 async move {
-                    handle_dag_sync(&node, &client, payload).await
+                    handle_dag_sync(&node, &client, axum::Json(payload)).await
                 }
             }
         }))
