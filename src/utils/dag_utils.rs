@@ -3,7 +3,7 @@ use std::error::Error;
 use tracing::{error,  info};
 use reqwest::Client;
 
-use crate::structs::{node::Node, toml_config::TomlConfig};
+use crate::structs::node::Node;
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 ///
@@ -102,15 +102,15 @@ pub fn get_parents(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
 pub async fn ensure_dag_synchronization(
     client: &Client,
     epoch_id: u64,
-    config: &TomlConfig, // Add config parameter to access network nodes
+    node_url: &String, // Add config parameter to access network nodes
 ) -> Result<(), String> {
-    for node_url in &config.network.nodes {
+   
         if let Err(e) = check_dag_sync(client, epoch_id, &node_url, ).await {
             return Err(format!(
                 "DAG synchronization failed with node {} for epoch {}: {:?}",
                 node_url, epoch_id, e
             ));
-        }
+        
     }
     Ok(())
 }

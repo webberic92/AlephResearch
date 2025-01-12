@@ -1,5 +1,3 @@
-use crate::structs::toml_config::TomlConfig;
-use crate::utils::config_util::load_config;
 use crate::utils::errors_util::log_reconstruction_failure;
 use crate::utils::recovery_util::attempt_recovery;
 use crate::utils::dag_utils::ensure_dag_synchronization; // Ensure DAG synchronization
@@ -7,22 +5,11 @@ use crate::{handlers::handle_commit::handle_commit, utils::merkle_utils::reconst
 use crate::structs::node::Node;
 use crate::utils::merkle_utils::validate_merkle_branch;
 use reqwest::Client;
-use tracing::{error, info};
+use tracing::{error, info, debug};
 
 /// Handles a prevote request in the Aleph protocol.
 ///
 /// This function tracks quorum votes for a given root and triggers the commit phase if quorum is reached.
-///
-/// # Arguments
-/// - `node`: Reference to the current node.
-/// - `client`: HTTP client for sending recovery requests.
-/// - `config`: TOML configuration containing network information.
-/// - `sender`: ID of the node sending the prevote request.
-/// - `root`: The Merkle tree root associated with the prevote.
-/// - `proof`: The Merkle proof for the shard.
-/// - `shard`: The shard data.
-/// - `epoch_id`: The epoch in which the prevote is being processed.
-/// - `node_url`: URL of the node for DAG synchronization and recovery.
 pub async fn handle_prevote(
     node: &Node,
     client: &Client,
@@ -35,11 +22,10 @@ pub async fn handle_prevote(
 ) {
     info!("Node {}: ==== Handling PREVOTE REQUEST from Node {} ====", node.id, sender);
 
-        // Load configuration
-    let config_path = "/home/aleph-node/aleph-node-config.toml"; // Adjust path as needed
-    let config = load_config(config_path);
-    
+    // Load configuration
+
     // Validate Merkle Branch
+    info!("Node {}: Validating Merkle branch for shard", node.id);
     let computed_root = validate_merkle_branch(&shard, &proof);
     if computed_root != root {
         error!(
@@ -48,17 +34,26 @@ pub async fn handle_prevote(
         );
         return;
     }
+    info!("Node {}: Merkle branch validation passed", node.id);
 
-    // Ensure DAG synchronization
-    if let Err(e) = ensure_dag_synchronization(client, epoch_id, &config).await {
-        error!("Node {}: DAG synchronization failed. Error: {:?}", node.id, e);
-        return;
-    }
+    // Ensure DAG synchronization for each node in the network
+        info!("Node {}: Ensuring DAG synchronization with {}", node.id, node_url);
+        if let Err(e) = ensure_dag_synchronization(client, epoch_id, node_url).await {
+            error!(
+                "Node {}: DAG synchronization failed with node {}. Error: {:?}",
+                node.id, node_url, e
+            );
+            return;
+        }
+        info!("Node {}: DAG synchronization successful with {}", node.id, node_url);
+    
 
     // Update quorum votes
-    let mut quorum_votes = node.quorum_votes.write().await;
-    let count = quorum_votes.entry(root.clone()).or_insert(0);
+    let  quorum_votes = node.quorum_votes.write().await;
+    let mut quorum_votes_clone = quorum_votes.clone();
+    let count = quorum_votes_clone.entry(root.clone()).or_insert(0);
     *count += 1;
+    debug!("Node {}: Updated quorum votes: {:?}", node.id, quorum_votes);
 
     if *count >= node.get_quorum_threshold() {
         info!(
@@ -83,6 +78,7 @@ pub async fn handle_prevote(
                 handle_commit(node, sender, root, reconstructed_unit, epoch_id).await;
             }
             Err(e) => {
+                error!("Node {}: Reconstruction failed for root {:?}. Error: {:?}", node.id, root, e);
                 log_reconstruction_failure(node.id, epoch_id, &e);
                 if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, node_url).await {
                     error!(
@@ -98,5 +94,5 @@ pub async fn handle_prevote(
             node.id, root, *count
         );
     }
+    info!("Node {}: Finished handling PREVOTE REQUEST from Node {}", node.id, sender);
 }
-

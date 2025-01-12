@@ -167,9 +167,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     if !toml_config.network.proposals.contains(&node.id) {
         toml_config.network.proposals.push(node.id);
         save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;
-        info!("Node {}: Added to proposals in toml.", node.id);
+        info!("Node {}: Added to proposals in toml. Current proposals = {:?}", node.id, toml_config.network.proposals);
     } else {
-        info!("Node {}: Already added to proposals in toml.", node.id);
+        info!("Node {}: Already added to proposals in toml. Current proposals = {:?}", node.id, toml_config.network.proposals);
     }
 
     // Notify the Python server

@@ -21,21 +21,28 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
     info!("Node {}: ==Handling== commit request from Node {}", node.id, sender);
 
     let quorum_votes = node.quorum_votes.read().await;
+    info!("Node {}: Current quorum votes: {:?}", node.id, *quorum_votes);
+
     if let Some(counter) = quorum_votes.get(&root) {
         let quorum_threshold = node.get_quorum_threshold(); // 2f + 1
+        info!(
+            "Node {}: Quorum count for root {:?}: {} (threshold: {})",
+            node.id, root, *counter, quorum_threshold
+        );
+
         if *counter >= quorum_threshold {
-            info!(
-                "Node {}: Quorum reached. Validating and committing for root {:?} with {} votes",
-                node.id, root, *counter
-            );
+            info!("Node {}: Quorum threshold met. Proceeding with validation.", node.id);
 
             // Validate h′=hh′
+            info!("Node {}: Validating Merkle branch for unit.", node.id);
             if !validate_merkle_branch(&unit, &[root.clone()]).is_empty() {
                 error!("Node {}: Merkle branch validation failed for root {:?}", node.id, root);
                 return;
             }
+            info!("Node {}: Merkle branch validation passed.", node.id);
 
             // Ensure parents of unit are available
+            info!("Node {}: Checking parent availability for unit.", node.id);
             if !are_parents_available(node, &unit).await {
                 error!(
                     "Node {}: Parent availability check failed for unit associated with root {:?}",
@@ -43,18 +50,18 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
                 );
                 return;
             }
+            info!("Node {}: Parent availability check passed.", node.id);
 
             // Persist the finalized unit
             let epoch_file = format!("./finalized_units/epoch{}.json", epoch_id);
+            info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
 
-            // Ensure the directory exists
             if let Err(e) = fs::create_dir_all("./finalized_units").await {
                 error!("Node {}: Failed to create directory for finalized units: {:?}", node.id, e);
                 return;
             }
 
-            // Initialize or append to the epoch file
-            if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root, unit).await {
+            if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root.clone(), unit).await {
                 error!("Node {}: Failed to append finalized unit to file {}: {:?}", node.id, epoch_file, e);
             } else {
                 info!("Node {}: Successfully appended finalized unit to {}", node.id, epoch_file);
@@ -68,16 +75,11 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
     } else {
         info!("Node {}: Commit for unknown root {:?}", node.id, root);
     }
+
+    info!("Node {}: Commit handling completed for root {:?}.", node.id, root);
 }
 
 /// Appends a finalized unit to the epoch file.
-///
-/// # Arguments
-/// - `epoch_file`: Path to the file where the unit will be stored.
-/// - `node_id`: ID of the current node.
-/// - `sender`: ID of the node that proposed the unit.
-/// - `root`: The Merkle tree root associated with the unit.
-/// - `unit`: The reconstructed and finalized unit.
 async fn append_finalized_unit(
     epoch_file: &str,
     node_id: usize,
@@ -85,13 +87,18 @@ async fn append_finalized_unit(
     root: Vec<u8>,
     unit: Vec<u8>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    // Read existing data or start with an empty JSON array
+    info!("Node {}: Reading existing data from file: {}", node_id, epoch_file);
     let mut epoch_data = match fs::read_to_string(epoch_file).await {
-        Ok(content) => serde_json::from_str::<Vec<serde_json::Value>>(&content).unwrap_or_else(|_| vec![]),
-        Err(_) => vec![],
+        Ok(content) => {
+            info!("Node {}: Successfully read existing data from file.", node_id);
+            serde_json::from_str::<Vec<serde_json::Value>>(&content).unwrap_or_else(|_| vec![])
+        }
+        Err(_) => {
+            info!("Node {}: No existing data found. Initializing new epoch data.", node_id);
+            vec![]
+        },
     };
 
-    // Create a new finalized unit entry
     let unit_entry = json!({
         "node_id": node_id,
         "sender": sender,
@@ -100,18 +107,18 @@ async fn append_finalized_unit(
         "timestamp": chrono::Utc::now().to_rfc3339(),
     });
 
-    // Append the new entry
     epoch_data.push(unit_entry);
 
-    // Write back the updated data
+    info!("Node {}: Writing updated data to file: {}", node_id, epoch_file);
     let mut file = OpenOptions::new()
         .write(true)
         .create(true)
-        .truncate(true) // Overwrite the file
+        .truncate(true)
         .open(epoch_file)
         .await?;
     file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes())
         .await?;
+    info!("Node {}: Successfully wrote data to file.", node_id);
 
     Ok(())
 }

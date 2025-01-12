@@ -29,5 +29,4 @@ pub struct ConsensusConfig {
 pub struct NodeConfig {
     pub id: usize,
     pub total_nodes: usize,
-    pub epoch_round_id: usize,
 }
