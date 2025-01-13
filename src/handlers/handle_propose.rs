@@ -113,16 +113,17 @@ pub async fn handle_propose(
     persist_proposal_tracker(node.id, &proposal_tracker, "/home/aleph-node/aleph-node-config.toml");
     info!("Node {} HANDLE PROPOSE: Added proposal to proposal tracker  CURRENT: {:?}", node.id, proposal_tracker);
 
+
     if proposal_tracker.len() == config.node.total_nodes {
         info!("Node {} HANDLE PROPOSE: All proposals received for epoch {}", node.id, epoch_id);
 
         // Synchronize next epoch and DAG
         for node_url in &config.network.nodes {
-            let payload = json!({ "epoch_id": epoch_id + 1 });
+            let payload = json!({ "epoch_id": epoch_id});
             if let Err(e) = client.post(format!("http://{}/sync_epoch", node_url)).json(&payload).send().await {
                 error!("Node {} HANDLE PROPOSE: Failed to synchronize with node {}. Error: {:?}", node.id, node_url, e);
             } else {
-                info!("Node {} HANDLE PROPOSE: Synchronized epoch {} with {}", node.id, epoch_id + 1, node_url);
+                info!("Node {} HANDLE PROPOSE: Synchronized epoch {} with {}", node.id, epoch_id, node_url);
             }
 
             // DAG Synchronization Check
@@ -130,20 +131,11 @@ pub async fn handle_propose(
                 error!("Node {} HANDLE PROPOSE: DAG synchronization failed. Error: {:?}", node.id, e);
                 return;
             } else {
-                info!("Node {} HANDLE PROPOSE: DAG synchronized {} with {}", node.id, epoch_id + 1, node_url);
+                info!("Node {} HANDLE PROPOSE: DAG synchronized {} with {}", node.id, epoch_id, node_url);
 
             }
 
         }
-
-        // Update epoch tracker and persist
-        let mut epoch_tracker = node.epoch_round_id.lock().await;
-        epoch_tracker.insert(epoch_id + 1);
-        persist_epoch_round_id(node.id, epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
-
-        // Clear proposal tracker and persist
-        proposal_tracker.clear();
-        persist_proposal_tracker(node.id, &proposal_tracker, "/home/aleph-node/aleph-node-config.toml");
 
         // Transition to prevote phase
         for node_url in &config.network.nodes {
@@ -174,6 +166,16 @@ pub async fn handle_propose(
                 }
             }
         }
+
+        // Update epoch tracker and persist
+        let mut epoch_tracker = node.epoch_round_id.lock().await;
+        epoch_tracker.insert(epoch_id + 1);
+        persist_epoch_round_id(node.id, epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
+
+        // Clear proposal tracker and persist
+        proposal_tracker.clear();
+        persist_proposal_tracker(node.id, &proposal_tracker, "/home/aleph-node/aleph-node-config.toml");
+
     } else {
         info!("Node {} HANDLE PROPOSE: Waiting for more proposals for epoch {}", node.id, epoch_id);
     }

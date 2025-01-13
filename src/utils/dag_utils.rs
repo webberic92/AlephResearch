@@ -104,7 +104,6 @@ pub async fn ensure_dag_synchronization(
     epoch_id: u64,
     node_url: &String, // Add config parameter to access network nodes
 ) -> Result<(), String> {
-   
         if let Err(e) = check_dag_sync(client, epoch_id, &node_url, ).await {
             return Err(format!(
                 "DAG synchronization failed with node {} for epoch {}: {:?}",
