@@ -38,7 +38,7 @@ pub async fn handle_prevote(
 
     // Ensure DAG synchronization for each node in the network
         info!("Node {}: Ensuring DAG synchronization with {}", node.id, node_url);
-        if let Err(e) = ensure_dag_synchronization(client, epoch_id, node_url).await {
+        if let Err(e) = ensure_dag_synchronization(node, client, epoch_id, node_url).await {
             error!(
                 "Node {}: DAG synchronization failed with node {}. Error: {:?}",
                 node.id, node_url, e

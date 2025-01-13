@@ -1,34 +1,30 @@
 use std::error::Error;
-
-use tracing::{error,  info};
+use serde_json::json;
+use tracing::{error, info};
 use reqwest::Client;
-
 use crate::structs::node::Node;
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
-///
-/// # Arguments
-/// - `node`: Reference to the current node.
-/// - `client`: HTTP client for making requests.
-/// - `epoch_id`: The epoch ID for which to check synchronization.
-/// - `target_node_id`: The ID of the target node.
-///
-/// # Returns
-/// - `Result<bool, Box<dyn std::error::Error>>`: `Ok(true)` if synchronized, `Ok(false)` if not, or an error.
+/// Logs request URL and payload, returning synchronization status.
+pub async fn check_dag_sync(client: &Client, epoch_id: u64, sender: &str) -> Result<bool, Box<dyn Error>> {
+    let url = format!("{}/dag_sync", sender);
+    let payload = json!({
+        "epoch_id": epoch_id,
+        "sender": sender // Include the target node URL in the payload
+    });
 
-/// Checks if the DAG is in sync with the given node for the specified epoch.
-///
-/// Returns `Ok(true)` if in sync, `Ok(false)` if not in sync, and `Err` if an error occurs.
-pub async fn check_dag_sync(client: &Client, epoch_id: u64, node_url: &str) -> Result<bool, Box<dyn Error>> {
-    let url = format!("{}/check_dag_sync?epoch_id={}", node_url, epoch_id);
-    info!("Checking DAG sync with {} for epoch {}", node_url, epoch_id);
+    info!("Sending DAG sync check to URL: {} with payload: {:?}", url, payload);
 
-    let response = client.get(&url).send().await?;
+    let response = client.post(&url).json(&payload).send().await?;
+    info!("DAG sync response status: {}", response.status());
 
     if response.status().is_success() {
-        let sync_status: bool = response.json().await?;
-        Ok(sync_status)
+        let response_data: serde_json::Value = response.json().await?;
+        let in_sync = response_data["in_sync"].as_bool().unwrap_or(false);
+        info!("DAG sync status with {} for epoch {}: {}", sender, epoch_id, in_sync);
+        Ok(in_sync)
     } else {
+        error!("Failed to check DAG sync with {} for epoch {}. Status: {}", sender, epoch_id, response.status());
         Err(format!(
             "Failed to check DAG sync. Status: {}",
             response.status()
@@ -36,15 +32,34 @@ pub async fn check_dag_sync(client: &Client, epoch_id: u64, node_url: &str) -> R
     }
 }
 
-/// Verifies whether the parents of the given unit are locally available in the DAG.
-///
-/// # Arguments
-/// - `node`: Reference to the current node.
-/// - `unit`: The unit whose parent availability is being checked.
-///
-/// # Returns
-/// - `true` if all parents are available.
-/// - `false` if any parent is missing.
+/// Ensures that the DAG has reached the required round before progressing.
+/// Adapts to use `node.epoch_round_id` since `node.get_current_round()` is unavailable.
+pub async fn ensure_round_sync(node: &Node, target_round: u64) -> Result<(), String> {
+    let current_round = {
+        let epoch_round_id = node.epoch_round_id.lock().await;
+        *epoch_round_id.iter().max().unwrap_or(&0)
+    };
+
+    if current_round < target_round - 1 {
+        return Err(format!(
+            "Node {}: DAG not synchronized to round {} for prevote (current round: {})",
+            node.id, target_round - 1, current_round
+        ));
+    }
+    info!("Node {}: DAG is synchronized to round {} or beyond.", node.id, target_round - 1);
+    Ok(())
+}
+
+/// Validates that all parents of a unit are present in the local DAG.
+pub async fn validate_unit_parents(node: &Node, unit: &[u8]) -> Result<(), String> {
+    if !are_parents_available(node, unit).await {
+        return Err(format!("Node {}: Missing parents for unit", node.id));
+    }
+    info!("Node {}: All parents for unit are available.", node.id);
+    Ok(())
+}
+
+/// Checks if the parents of a given unit are available in the local DAG.
 pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     info!("Node {}: Checking parent availability for unit", node.id);
 
@@ -73,9 +88,9 @@ pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     true
 }
 
+/// Mock implementation to extract parent hashes from the unit.
+/// Replace with actual logic for your protocol.
 pub fn get_parents(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
-    // Extract parent hashes from the unit
-    // Mock implementation, replace with actual logic for your protocol
     if unit.is_empty() {
         return Err("Unit is empty".to_string());
     }
@@ -98,22 +113,25 @@ pub fn get_parents(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     Ok(parents)
 }
 
-
+/// Ensures DAG synchronization by checking the current epoch and validating the DAG.
+/// Ensures DAG synchronization by checking the current epoch and validating the DAG.
 pub async fn ensure_dag_synchronization(
+    node: &Node, // Pass node as an argument
     client: &Client,
     epoch_id: u64,
-    node_url: &String, // Add config parameter to access network nodes
+    sender: &String,
 ) -> Result<(), String> {
-        if let Err(e) = check_dag_sync(client, epoch_id, &node_url, ).await {
-            return Err(format!(
-                "DAG synchronization failed with node {} for epoch {}: {:?}",
-                node_url, epoch_id, e
-            ));
-        
+    // Step 1: Check basic DAG synchronization with the target node
+    if let Err(e) = check_dag_sync(client, epoch_id, &sender).await {
+        return Err(format!(
+            "DAG synchronization failed with node {} for epoch {}: {:?}",
+            sender, epoch_id, e
+        ));
     }
+
+    // Step 2: Ensure the DAG has reached the required round for prevote
+    ensure_round_sync(node, epoch_id).await?;
+
     Ok(())
 }
-
-
-
 
