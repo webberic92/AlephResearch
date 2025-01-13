@@ -1,13 +1,13 @@
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.137.43
+PRIVATE_IP = 10.0.178.209
 Node registration success.
 IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.157.49:30333", "10.0.161.250:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.164.240:30333", "10.0.179.92:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.149.118"
-nodes = ["10.0.157.49:30333", "10.0.161.250:30333"]
+ip_manager_address = "10.0.139.155"
+nodes = ["10.0.164.240:30333", "10.0.179.92:30333"]
 proposals = []
 
 [consensus]
@@ -24,242 +24,71 @@ transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
 [node]
 id = 1
 total_nodes = 3
-Starting alephRBC execution
-alephRBC binary is found at /home/aleph-node/alephRBC
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
 Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute alephRBC with configuration
-Waiting for alephRBC to be ready on port 30333
-alephRBC not ready, retrying...
-2025-01-12T13:58:42.101550Z  INFO alephRBC: API server running on 0.0.0.0:30333
-2025-01-12T13:58:42.794247Z  INFO alephRBC: Node 1: ==== Handling SNYC EPOCH request from Node 2 ====
-2025-01-12T13:58:42.794271Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 2
-2025-01-12T13:58:42.794276Z  INFO alephRBC: Node 1: Epoch 1 synchronized successfully with node 2
-2025-01-12T13:58:42.796639Z  INFO alephRBC: Node 1: ==== Handling SNYC EPOCH request from Node 2 ====
-2025-01-12T13:58:42.796651Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 2
-2025-01-12T13:58:42.796655Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 2
-2025-01-12T13:58:42.828189Z  INFO alephRBC: Node 1: ==== Handling SNYC EPOCH request from Node 3 ====
-2025-01-12T13:58:42.828211Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 3
-2025-01-12T13:58:42.828216Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 3
-2025-01-12T13:58:42.829987Z  INFO alephRBC: Node 1: ==== Handling SNYC EPOCH request from Node 3 ====
-2025-01-12T13:58:42.829995Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 3
-2025-01-12T13:58:42.829999Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 3
-alephRBC APIs are ready.
-Waiting for alephRBC API readiness...
-alephRBC API is ready.
-Done with alephRBC loop for node 1 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
-Attempting to execute alephStart with configuration
-2025-01-12T13:58:43.127228Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:43.129711Z  INFO alephStart: All nodes are healthy!
-2025-01-12T13:58:43.133079Z  INFO alephStart: Epoch 1 synchronized across all nodes.
-2025-01-12T13:58:43.133098Z  INFO alephStart: Node 1: Waiting for its turn to submit transaction for epoch 1
-2025-01-12T13:58:43.134942Z  INFO alephStart: Node 1: It's my turn. Generating transactions for epoch 1
-2025-01-12T13:58:43.134980Z  INFO alephStart: Node 1: Shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], Shard hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]], Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159,33]
-2025-01-12T13:58:43.136873Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.157.49:30333
-2025-01-12T13:58:43.138929Z  INFO alephStart: Node 1: Successfully sent transaction for epoch 1 to 10.0.161.250:30333
-2025-01-12T13:58:43.138967Z  INFO alephStart: Node 1: SENT Transaction proposals for epoch 1.
-2025-01-12T13:58:43.139781Z  INFO alephStart: Node 1: Added to proposals in toml.
-2025-01-12T13:58:43.141351Z  INFO alephStart: Node 1: Successfully notified python server transaction submission.
-2025-01-12T13:58:43.801148Z  INFO alephRBC: Node 1: ==== Handling PROPOSE REQUEST from Node 2 ====
-2025-01-12T13:58:43.801174Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 2
-2025-01-12T13:58:43.801179Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 2
-2025-01-12T13:58:43.801184Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
-2025-01-12T13:58:43.801187Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
-2025-01-12T13:58:43.801191Z  INFO alephRBC: Validating merkle branch
-2025-01-12T13:58:43.801205Z  INFO alephRBC: Done validating merkle branch
-2025-01-12T13:58:43.801208Z  INFO alephRBC: Node 1: Propose phase successful for epoch 1 from 2
-2025-01-12T13:58:43.801306Z  INFO alephRBC: Node 1: Inserting sender 2 into proposal_tracker {1}
-2025-01-12T13:58:43.801311Z  INFO alephRBC: Node 1: Inserted sender 2 into proposal_tracker {1, 2}
-2025-01-12T13:58:43.801314Z  INFO alephRBC: Node 1: config.node.total_nodes = 3 config.totalnodes minus 1 (logic) = 2. Received: 2
-2025-01-12T13:58:43.801318Z  INFO alephRBC: Node 1: Waiting for more proposals for epoch 1. Received: 2
-2025-01-12T13:58:43.834424Z  INFO alephRBC: Node 1: ==== Handling PROPOSE REQUEST from Node 3 ====
-2025-01-12T13:58:43.834447Z  INFO alephRBC: Node 1: Synchronizing epoch 1 from 3
-2025-01-12T13:58:43.834452Z  INFO alephRBC: Node 1: Epoch 1 already synchronized with 3
-2025-01-12T13:58:43.834456Z  INFO alephRBC: Node 1: Detecting if there is overlap for epoch 1
-2025-01-12T13:58:43.834459Z  INFO alephRBC: Node 1: Overlap for epoch 1 detected, but continuing
-2025-01-12T13:58:43.834463Z  INFO alephRBC: Validating merkle branch
-2025-01-12T13:58:43.834472Z  INFO alephRBC: Done validating merkle branch
-2025-01-12T13:58:43.834475Z  INFO alephRBC: Node 1: Propose phase successful for epoch 1 from 3
-2025-01-12T13:58:43.834596Z  INFO alephRBC: Node 1: Inserting sender 3 into proposal_tracker {1, 2}
-2025-01-12T13:58:43.834602Z  INFO alephRBC: Node 1: Inserted sender 3 into proposal_tracker {3, 1, 2}
-2025-01-12T13:58:43.834605Z  INFO alephRBC: Node 1: config.node.total_nodes = 3 config.totalnodes minus 1 (Removed logic) = 2. Received: 3
-2025-01-12T13:58:43.834609Z  INFO alephRBC: Node 1: All proposals received for epoch 1
-2025-01-12T13:58:43.835711Z  INFO alephRBC: Node 1: Synchronized epoch 2 with 10.0.157.49:30333
-2025-01-12T13:58:43.860508Z  INFO alephRBC: Node 1: Synchronized epoch 2 with 10.0.161.250:30333
-2025-01-12T13:58:43.860542Z  INFO alephRBC: Node 1: epoch_tracker = {1} inserting epoch_id = 2
-2025-01-12T13:58:43.860547Z  INFO alephRBC: Node 1: Clearing proposal_tracker {3, 1, 2}
-2025-01-12T13:58:43.860551Z  INFO alephRBC: Node 1: ==Handling== prevote request from Node 3
-2025-01-12T13:58:43.860556Z  INFO alephRBC: Node 1: Quorum reached for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114,207, 141, 159, 33] with 1 votes
-2025-01-12T13:58:43.860581Z  INFO alephRBC: Node 1: ==Handling== commit request from Node 3
-
-
-
-
-
-
-
-sh-4.2$ cat /home/aleph-node/logs/node_statusPRIVATE_IP = 10.0.161.250Node registration success.IP Manager not ready, retrying...
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.137.43:30333", "10.0.157.49:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.149.118"
-nodes = ["10.0.137.43:30333", "10.0.157.49:30333"]
-proposals = []
-
-[consensus]
-batch_size = 1
-transaction_size = 256 # bytes
-round_size = 1 # bytes
-epoch_round_id = 1 # bytes
-data_shards = 4 # Number of data shards for erasure coding
-
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 2
-total_nodes = 3
-Starting alephRBC execution
-alephRBC binary is found at /home/aleph-node/alephRBC
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute alephRBC with configuration
-Waiting for alephRBC to be ready on port 30333
-alephRBC not ready, retrying...
-2025-01-12T13:58:41.761436Z  INFO alephRBC: API server running on 0.0.0.0:30333
-alephRBC APIs are ready.
-Waiting for alephRBC API readiness...
-alephRBC API is ready.
-Done with alephRBC loop for node 2 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
-Attempting to execute alephStart with configuration2025-01-12T13:58:42.790541Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:42.793912Z  INFO alephStart: All nodes are healthy!
-2025-01-12T13:58:42.795263Z  INFO alephStart: Epoch 1 synchronized across all nodes.
-2025-01-12T13:58:42.795274Z  INFO alephStart: Node 2: Waiting for its turn to submit transaction for epoch 1
-2025-01-12T13:58:42.797483Z  INFO alephStart: Epoch 1 synchronized across all nodes.
-2025-01-12T13:58:42.828640Z  INFO alephRBC: Node 2: ==== Handling SNYC EPOCH request from Node 3 ====
-2025-01-12T13:58:42.828666Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 3
-2025-01-12T13:58:42.828671Z  INFO alephRBC: Node 2: Epoch 1 synchronized successfully with node 3
-2025-01-12T13:58:42.830438Z  INFO alephRBC: Node 2: ==== Handling SNYC EPOCH request from Node 3 ====
-2025-01-12T13:58:42.830452Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 3
-2025-01-12T13:58:42.830457Z  INFO alephRBC: Node 2: Epoch 1 already synchronized with 3
-2025-01-12T13:58:43.132851Z  INFO alephRBC: Node 2: ==== Handling SNYC EPOCH request from Node 1 ====
-2025-01-12T13:58:43.132876Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 1
-2025-01-12T13:58:43.132882Z  INFO alephRBC: Node 2: Epoch 1 already synchronized with 1
-2025-01-12T13:58:43.137669Z  INFO alephRBC: Node 2: ==== Handling PROPOSE REQUEST from Node 1 ====
-2025-01-12T13:58:43.137696Z  INFO alephRBC: Node 2: Synchronizing epoch 1 from 1
-2025-01-12T13:58:43.137701Z  INFO alephRBC: Node 2: Epoch 1 already synchronized with 1
-2025-01-12T13:58:43.137705Z  INFO alephRBC: Node 2: Detecting if there is overlap for epoch 1
-2025-01-12T13:58:43.137709Z  INFO alephRBC: Node 2: Overlap for epoch 1 detected, but continuing
-2025-01-12T13:58:43.137712Z  INFO alephRBC: Validating merkle branch
-2025-01-12T13:58:43.137724Z  INFO alephRBC: Done validating merkle branch
-2025-01-12T13:58:43.137728Z  INFO alephRBC: Node 2: Propose phase successful for epoch 1 from 1
-2025-01-12T13:58:43.137852Z  INFO alephRBC: Node 2: Inserting sender 1 into proposal_tracker {}
-2025-01-12T13:58:43.137863Z  INFO alephRBC: Node 2: Inserted sender 1 into proposal_tracker {1}
-2025-01-12T13:58:43.137867Z  INFO alephRBC: Node 2: config.node.total_nodes = 3 config.totalnodes minus 1 (Removed logic) = 2. Received: 1
-2025-01-12T13:58:43.137876Z  INFO alephRBC: Node 2: Waiting for more proposals for epoch 1. Received: 1
-2025-01-12T13:58:43.798706Z  INFO alephStart: Node 2: Retrying transaction submission for epoch 1
-2025-01-12T13:58:43.800598Z  INFO alephStart: Node 2: It's my turn. Generating transactions for epoch 1
-2025-01-12T13:58:43.800640Z  INFO alephStart: Node 2: Shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], Shard hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]], Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159,33]
-2025-01-12T13:58:43.801671Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.137.43:30333
-2025-01-12T13:58:43.802583Z  INFO alephStart: Node 2: Successfully sent transaction for epoch 1 to 10.0.157.49:30333
-2025-01-12T13:58:43.802625Z  INFO alephStart: Node 2: SENT Transaction proposals for epoch 1.
-2025-01-12T13:58:43.802848Z  INFO alephStart: Node 2: Added to proposals in toml.
-2025-01-12T13:58:43.804187Z  INFO alephStart: Node 2: Successfully notified python server transaction submission.
-
-
-
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.157.49
-Node registration success.
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.137.43:30333", "10.0.161.250:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.149.118"
-nodes = ["10.0.137.43:30333", "10.0.161.250:30333"]
-proposals = []
-
-[consensus]
-batch_size = 1
-transaction_size = 256 # bytes
-round_size = 1 # bytes
-epoch_round_id = 1 # bytes
-data_shards = 4 # Number of data shards for erasure coding
-
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 3
-total_nodes = 3
-Starting alephRBC execution
-alephRBC binary is found at /home/aleph-node/alephRBC
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute alephRBC with configuration
-Waiting for alephRBC to be ready on port 30333
-alephRBC not ready, retrying...
-2025-01-12T13:58:38.787565Z  INFO alephRBC: API server running on 0.0.0.0:30333
-alephRBC APIs are ready.
-Waiting for alephRBC API readiness...
-alephRBC API is ready.
-Done with alephRBC loop for node 3 IT SHOULD NOT HAVE MOVED ON TO ALEPHSTART YET
-Attempting to execute alephStart with configuration
-2025-01-12T13:58:39.821567Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:39.822557Z  INFO alephStart: Node 10.0.137.43:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.137.43:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-12T13:58:39.822590Z  INFO alephStart: Some nodes are not healthy. Retrying in 1 second...
-2025-01-12T13:58:40.823824Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:40.824380Z  INFO alephStart: Node 10.0.137.43:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.137.43:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-12T13:58:40.824404Z  INFO alephStart: Some nodes are not healthy. Retrying in 1 second...
-2025-01-12T13:58:41.824832Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:41.825398Z  INFO alephStart: Node 10.0.137.43:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.137.43:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-12T13:58:41.825420Z  INFO alephStart: Some nodes are not healthy. Retrying in 1 second...
-2025-01-12T13:58:42.795091Z  INFO alephRBC: Node 3: ==== Handling SNYC EPOCH request from Node 2 ====
-2025-01-12T13:58:42.795123Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 2
-2025-01-12T13:58:42.795130Z  INFO alephRBC: Node 3: Epoch 1 synchronized successfully with node 2
-2025-01-12T13:58:42.797274Z  INFO alephRBC: Node 3: ==== Handling SNYC EPOCH request from Node 2 ====
-2025-01-12T13:58:42.797289Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 2
-2025-01-12T13:58:42.797295Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 2
-2025-01-12T13:58:42.825542Z  INFO alephStart: Checking health of all nodes...
-2025-01-12T13:58:42.827921Z  INFO alephStart: All nodes are healthy!
-2025-01-12T13:58:42.828799Z  INFO alephStart: Epoch 1 synchronized across all nodes.
-2025-01-12T13:58:42.828818Z  INFO alephStart: Node 3: Waiting for its turn to submit transaction for epoch 1
-2025-01-12T13:58:42.830583Z  INFO alephStart: Epoch 1 synchronized across all nodes.
-2025-01-12T13:58:43.130041Z  INFO alephRBC: Node 3: ==== Handling SNYC EPOCH request from Node 1 ====
-2025-01-12T13:58:43.130068Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 1
-2025-01-12T13:58:43.130075Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 1
-2025-01-12T13:58:43.135429Z  INFO alephRBC: Node 3: ==== Handling PROPOSE REQUEST from Node 1 ====
-2025-01-12T13:58:43.135454Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 1
-2025-01-12T13:58:43.135461Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 1
-2025-01-12T13:58:43.135466Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
-2025-01-12T13:58:43.135471Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
-2025-01-12T13:58:43.135476Z  INFO alephRBC: Validating merkle branch
-2025-01-12T13:58:43.135494Z  INFO alephRBC: Done validating merkle branch
-2025-01-12T13:58:43.135498Z  INFO alephRBC: Node 3: Propose phase successful for epoch 1 from 1
-2025-01-12T13:58:43.135662Z  INFO alephRBC: Node 3: Inserting sender 1 into proposal_tracker {}
-2025-01-12T13:58:43.135670Z  INFO alephRBC: Node 3: Inserted sender 1 into proposal_tracker {1}
-2025-01-12T13:58:43.135675Z  INFO alephRBC: Node 3: config.node.total_nodes = 3 config.totalnodes minus 1 (Removed logic) = 2. Received: 1
-2025-01-12T13:58:43.135680Z  INFO alephRBC: Node 3: Waiting for more proposals for epoch 1. Received: 1
-2025-01-12T13:58:43.802133Z  INFO alephRBC: Node 3: ==== Handling PROPOSE REQUEST from Node 2 ====
-2025-01-12T13:58:43.802156Z  INFO alephRBC: Node 3: Synchronizing epoch 1 from 2
-2025-01-12T13:58:43.802161Z  INFO alephRBC: Node 3: Epoch 1 already synchronized with 2
-2025-01-12T13:58:43.802165Z  INFO alephRBC: Node 3: Detecting if there is overlap for epoch 1
-2025-01-12T13:58:43.802169Z  INFO alephRBC: Node 3: Overlap for epoch 1 detected, but continuing
-2025-01-12T13:58:43.802173Z  INFO alephRBC: Validating merkle branch
-2025-01-12T13:58:43.802181Z  INFO alephRBC: Done validating merkle branch
-2025-01-12T13:58:43.802184Z  INFO alephRBC: Node 3: Propose phase successful for epoch 1 from 2
-2025-01-12T13:58:43.802295Z  INFO alephRBC: Node 3: Inserting sender 2 into proposal_tracker {1}
-2025-01-12T13:58:43.802300Z  INFO alephRBC: Node 3: Inserted sender 2 into proposal_tracker {1, 2}
-2025-01-12T13:58:43.802303Z  INFO alephRBC: Node 3: config.node.total_nodes = 3 config.totalnodes minus 1 (Removed logic) = 2. Received: 2
-2025-01-12T13:58:43.802306Z  INFO alephRBC: Node 3: Waiting for more proposals for epoch 1. Received: 2
-2025-01-12T13:58:43.831699Z  INFO alephStart: Node 3: Retrying transaction submission for epoch 1
-2025-01-12T13:58:43.833868Z  INFO alephStart: Node 3: It's my turn. Generating transactions for epoch 1
-2025-01-12T13:58:43.833912Z  INFO alephStart: Node 3: Shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], Shard hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]], Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159,33]
-sh-4.2$
-
-
-
-
-
-
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+2025-01-12T22:58:33.167762Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-01-12T22:58:33.749391Z  INFO aleph_research::controllers::api_routes: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-12T22:58:33.749419Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 2
+2025-01-12T22:58:33.749426Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 synchronized successfully with node 2
+2025-01-12T22:58:33.752164Z  INFO aleph_research::controllers::api_routes: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-12T22:58:33.752185Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 2
+2025-01-12T22:58:33.752191Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 2
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+2025-01-12T22:58:34.175801Z  INFO aleph_research::controllers::api_routes: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-12T22:58:34.175828Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 3
+2025-01-12T22:58:34.175835Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 3
+2025-01-12T22:58:34.178662Z  INFO aleph_research::controllers::api_routes: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-12T22:58:34.178680Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 3
+2025-01-12T22:58:34.178686Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 3
+Done with aleph_rbc loop for node 1 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
+Attempting to execute aleph_start with configuration
+2025-01-12T22:58:34.205867Z  INFO aleph_research::utils::rbc_utils: Checking health of all nodes...
+2025-01-12T22:58:34.208399Z  INFO aleph_research::utils::rbc_utils: All nodes are healthy!
+2025-01-12T22:58:34.209407Z  INFO aleph_research::utils::rbc_utils: Epoch 1 synchronized across all nodes.
+2025-01-12T22:58:34.209419Z  INFO aleph_start: Node 1: Waiting for its turn to submit transaction for epoch 1
+2025-01-12T22:58:34.213226Z  INFO aleph_start: Node 1: It's my turn for epoch 1
+2025-01-12T22:58:34.213272Z  INFO aleph_start: Generated shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]], shard hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124,137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223,140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]], Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-12T22:58:34.219912Z  INFO aleph_start: Node 1:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch 1 to 10.0.164.240:30333=======***
+2025-01-12T22:58:34.223202Z  INFO aleph_start: Node 1:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch 1 to 10.0.179.92:30333=======***
+2025-01-12T22:58:34.223264Z  INFO aleph_start: Node 1: SENT Transaction proposals for epoch 1.
+2025-01-12T22:58:34.224589Z  INFO aleph_start: Node 1: Added to proposals in toml. Current proposals = [1]
+2025-01-12T22:58:34.226470Z  INFO aleph_research::utils::ip_server_utils: Node 1: Successfully notified python server transaction submission.
+2025-01-12T22:58:34.757001Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: ==== Handling PROPOSE REQUEST from Node 2 ====
+2025-01-12T22:58:34.757027Z  INFO aleph_research::utils::merkle_utils: Validating merkle branch
+2025-01-12T22:58:34.757041Z  INFO aleph_research::utils::merkle_utils: Done validating merkle branch
+2025-01-12T22:58:34.757045Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit from shards
+2025-01-12T22:58:34.757050Z  INFO aleph_research::utils::merkle_utils: Successfully reconstructed unit and verified Merkle root
+2025-01-12T22:58:34.757054Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Successfully reconstructed unit for epoch 1
+2025-01-12T22:58:34.757058Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 2
+2025-01-12T22:58:34.757063Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 2
+2025-01-12T22:58:34.757066Z  INFO aleph_research::utils::epoch_utils: Node 1: Detecting if there is overlap for epoch 1
+2025-01-12T22:58:34.757070Z  INFO aleph_research::utils::epoch_utils: Node 1: Overlap for epoch 1 detected, but continuing
+2025-01-12T22:58:34.757073Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Propose validated for epoch 1 from 2
+2025-01-12T22:58:34.757186Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Adding proposal to proposal tracker  CURRENT: [1, 2] adding 2
+2025-01-12T22:58:34.757365Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Successfully saved updated proposal tracker to config file: [1, 2]
+2025-01-12T22:58:34.757372Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Added proposal to proposal tracker  CURRENT: [1, 2]
+2025-01-12T22:58:34.757376Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Waiting for more proposals for epoch 1
+2025-01-12T22:58:35.184779Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: ==== Handling PROPOSE REQUEST from Node 3 ====
+2025-01-12T22:58:35.184807Z  INFO aleph_research::utils::merkle_utils: Validating merkle branch
+2025-01-12T22:58:35.184817Z  INFO aleph_research::utils::merkle_utils: Done validating merkle branch
+2025-01-12T22:58:35.184820Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit from shards
+2025-01-12T22:58:35.184825Z  INFO aleph_research::utils::merkle_utils: Successfully reconstructed unit and verified Merkle root
+2025-01-12T22:58:35.184829Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Successfully reconstructed unit for epoch 1
+2025-01-12T22:58:35.184833Z  INFO aleph_research::utils::epoch_utils: Node 1: Synchronizing epoch 1 from 3
+2025-01-12T22:58:35.184838Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 3
+2025-01-12T22:58:35.184841Z  INFO aleph_research::utils::epoch_utils: Node 1: Detecting if there is overlap for epoch 1
+2025-01-12T22:58:35.184844Z  INFO aleph_research::utils::epoch_utils: Node 1: Overlap for epoch 1 detected, but continuing
+2025-01-12T22:58:35.184848Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Propose validated for epoch 1 from 3
+2025-01-12T22:58:35.184968Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Adding proposal to proposal tracker  CURRENT: [1, 2, 3] adding 3
+2025-01-12T22:58:35.185161Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Successfully saved updated proposal tracker to config file: [1, 2, 3]
+2025-01-12T22:58:35.185166Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Added proposal to proposal tracker  CURRENT: [1, 2, 3]
+2025-01-12T22:58:35.185170Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: All proposals received for epoch 1
+2025-01-12T22:58:35.186694Z  INFO aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: Synchronized epoch 2 with 10.0.164.240:30333
+2025-01-12T22:58:35.186727Z  INFO aleph_research::utils::dag_utils: Checking DAG sync with 10.0.164.240:30333 for epoch 1
+2025-01-12T22:58:35.186742Z ERROR aleph_research::handlers::handle_propose: Node 1 HANDLE PROPOSE: DAG synchronization failed. Error: "DAG synchronization failed with node 10.0.164.240:30333 for epoch 1: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }"
