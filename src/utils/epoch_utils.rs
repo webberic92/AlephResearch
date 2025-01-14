@@ -18,6 +18,10 @@ pub async fn ensure_no_overlap(node: &Node, epoch_id: u64) -> Result<(), &'stati
 }
 
 pub async fn handle_sync_epoch(node: &Node, epoch_id: u64, sender: usize) -> Result<(), &'static str> {
+    info!(
+        "Node {}: ==== Handling SYNC EPOCH request from Node {} ====",
+        node.id, sender
+    );
     info!("Node {}: Synchronizing epoch {} from {}", node.id, epoch_id,sender);
 
     let mut tracker = node.epoch_round_id.lock().await;

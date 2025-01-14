@@ -84,7 +84,7 @@ async fn wait_for_turn(
         );
     }
 
-    info!("Node {}: It's my turn for epoch {}", toml_config.node.id,  toml_config.consensus.epoch_round_id);
+    info!("Node {}: It's my turn to propose for epoch {}", toml_config.node.id,  toml_config.consensus.epoch_round_id);
     Ok(())
 }
 
