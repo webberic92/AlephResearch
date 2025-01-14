@@ -1,5 +1,3 @@
-pub mod generate_keys;
-
 pub mod utils{
     pub mod merkle_utils; // Expose the structs module
     pub mod config_util;
