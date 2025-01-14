@@ -26,15 +26,15 @@ pub async fn is_node_turn(client: &Client, toml_config: &TomlConfig, current_epo
     }
 }
 
-pub async fn notify_transaction_submitted(client: &Client, toml_config: &TomlConfig, node_id: usize) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn notify_transaction_submitted(client: &Client, toml_config: &TomlConfig) -> Result<(), Box<dyn std::error::Error>> {
     let url = format!("http://{}:8080/submit_transaction", toml_config.network.ip_manager_address);
-    let payload = json!({ "node_id": node_id });
+    let payload = json!({ "node_id": toml_config.node.id });
     
     let response = client.post(&url).json(&payload).send().await?;
     if response.status().is_success() {
-        info!("Node {}: Successfully notified python server transaction submission.", node_id);
+        info!("Node {}: Successfully notified python server transaction submission.", toml_config.node.id);
     } else {
-        error!("Node {}: Failed to notify python server transaction submission. Status: {}", node_id, response.status());
+        error!("Node {}: Failed to notify python server transaction submission. Status: {}", toml_config.node.id, response.status());
     }
     Ok(())
 }
