@@ -52,7 +52,7 @@ async fn generate_and_send_transactions_in_order(
 
     let (shards, shard_hashes, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
 
-    send_transactions(client, toml_config, toml_config.consensus.epoch_round_id, &shards, &shard_hashes, &merkle_root).await?;
+    send_transactions(client, toml_config, &shards, &shard_hashes, &merkle_root).await?;
 
     info!(
         "Node {}: SENT Transaction proposals for epoch {}.",
@@ -117,7 +117,6 @@ async fn generate_shards_and_merkle_root(
 async fn send_transactions(
     client: &Client,
     toml_config: &TomlConfig,
-    current_epoch: u64,
     shards: &[Vec<u8>],
     shard_hashes: &[Vec<u8>],
     merkle_root: &[u8],
@@ -131,7 +130,7 @@ async fn send_transactions(
             "shard": shard,
             "proof": merkle_branch,
             "root": merkle_root,
-            "epoch_id": current_epoch,
+            "epoch_id": toml_config.consensus.epoch_round_id,
         });
 
         let response = client
@@ -145,19 +144,19 @@ async fn send_transactions(
                 if res.status().is_success() {
                     info!(
                         "Node {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
-                        toml_config.node.id, current_epoch, node_url
+                        toml_config.node.id, toml_config.consensus.epoch_round_id, node_url
                     );
                 } else {
                     error!(
                         "Node {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
-                        toml_config.node.id, current_epoch, node_url, res.status()
+                        toml_config.node.id, toml_config.consensus.epoch_round_id, node_url, res.status()
                     );
                 }
             }
             Err(e) => {
                 error!(
                     "Node {}: Error sending transaction for epoch {} to {}: {:?}",
-                    toml_config.node.id, current_epoch, node_url, e
+                    toml_config.node.id, toml_config.consensus.epoch_round_id, node_url, e
                 );
             }
         }
