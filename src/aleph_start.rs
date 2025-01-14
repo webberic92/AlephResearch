@@ -1,36 +1,62 @@
 use reqwest::Client;
 use serde_json::json;
 use sha2::{Digest, Sha256};
-use std::{sync::Arc, time::Duration};
+use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
 
 use aleph_research::structs;
 use crate::structs::toml_config::TomlConfig;
-use crate::structs::node::Node;
 
 use aleph_research::utils::config_util::{load_config, save_config};
 use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_submitted};
 use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
 use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root};
 
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt().init();
+
+    let mut toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
+    let client = Client::new();
+
+    wait_for_all_nodes_health(&client, &toml_config).await;
+
+    if !ensure_epoch_sync(&client, &toml_config).await {
+        error!("Epoch synchronization failed. Exiting...");
+        return Err("Epoch synchronization failed".into());
+    }
+
+    generate_and_send_transactions_in_order(&client, &toml_config).await?;
+
+    // Update the proposals field
+    if !toml_config.network.proposals.contains(&toml_config.node.id) {
+        toml_config.network.proposals.push(toml_config.node.id);
+        save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;
+        info!("Node {}: Added to proposals in toml from aleph_start. Current proposals = {:?}", toml_config.node.id, toml_config.network.proposals);
+    } else {
+        info!("Node {}: Already added to proposals in toml. Current proposals = {:?}", toml_config.node.id, toml_config.network.proposals);
+    }
+
+    // Notify the Python server
+    notify_transaction_submitted(&client, &toml_config).await?;
+    Ok(())
+}
 /// Main function to generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
     toml_config: &TomlConfig,
-    node: &Node,
-    current_epoch: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    wait_for_turn(client, toml_config, node, current_epoch).await?;
+    wait_for_turn(client, toml_config).await?;
 
     let (shards, shard_hashes, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
 
-    send_transactions(client, toml_config, node, current_epoch, &shards, &shard_hashes, &merkle_root).await?;
+    send_transactions(client, toml_config, toml_config.consensus.epoch_round_id, &shards, &shard_hashes, &merkle_root).await?;
 
     info!(
         "Node {}: SENT Transaction proposals for epoch {}.",
-        node.id, current_epoch
+        toml_config.node.id, toml_config.consensus.epoch_round_id
     );
     Ok(())
 }
@@ -39,28 +65,26 @@ async fn generate_and_send_transactions_in_order(
 async fn wait_for_turn(
     client: &Client,
     toml_config: &TomlConfig,
-    node: &Node,
-    current_epoch: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         "Node {}: Waiting for its turn to submit transaction for epoch {}",
-        node.id, current_epoch
+        toml_config.node.id, toml_config.consensus.epoch_round_id
     );
 
     loop {
-        if is_node_turn(client, toml_config, current_epoch).await {
+        if is_node_turn(client, toml_config,  toml_config.consensus.epoch_round_id).await {
             break;
         }
 
-        ensure_epoch_sync(client, toml_config, current_epoch).await;
+        ensure_epoch_sync(client, toml_config).await;
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
         info!(
             "Node {}: Retrying transaction submission for epoch {}",
-            toml_config.node.id, current_epoch
+            toml_config.node.id,  toml_config.consensus.epoch_round_id
         );
     }
 
-    info!("Node {}: It's my turn for epoch {}", node.id, current_epoch);
+    info!("Node {}: It's my turn for epoch {}", toml_config.node.id,  toml_config.consensus.epoch_round_id);
     Ok(())
 }
 
@@ -93,7 +117,6 @@ async fn generate_shards_and_merkle_root(
 async fn send_transactions(
     client: &Client,
     toml_config: &TomlConfig,
-    node: &Node,
     current_epoch: u64,
     shards: &[Vec<u8>],
     shard_hashes: &[Vec<u8>],
@@ -104,7 +127,7 @@ async fn send_transactions(
         let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
 
         let payload = json!({
-            "sender": node.id,
+            "sender": toml_config.node.id,
             "shard": shard,
             "proof": merkle_branch,
             "root": merkle_root,
@@ -122,19 +145,19 @@ async fn send_transactions(
                 if res.status().is_success() {
                     info!(
                         "Node {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
-                        node.id, current_epoch, node_url
+                        toml_config.node.id, current_epoch, node_url
                     );
                 } else {
                     error!(
                         "Node {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
-                        node.id, current_epoch, node_url, res.status()
+                        toml_config.node.id, current_epoch, node_url, res.status()
                     );
                 }
             }
             Err(e) => {
                 error!(
                     "Node {}: Error sending transaction for epoch {} to {}: {:?}",
-                    node.id, current_epoch, node_url, e
+                    toml_config.node.id, current_epoch, node_url, e
                 );
             }
         }
@@ -144,35 +167,3 @@ async fn send_transactions(
 }
 
 
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    tracing_subscriber::fmt().init();
-
-    let mut toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
-    let client = Client::new();
-    let current_epoch = 1;
-
-    let node = Arc::new(Node::new(toml_config.node.id, toml_config.node.total_nodes));
-
-    wait_for_all_nodes_health(&client, &toml_config.network.nodes).await;
-
-    if !ensure_epoch_sync(&client, &toml_config, current_epoch).await {
-        error!("Epoch synchronization failed. Exiting...");
-        return Err("Epoch synchronization failed".into());
-    }
-
-    generate_and_send_transactions_in_order(&client, &toml_config, &node, current_epoch).await?;
-
-    // Update the proposals field
-    if !toml_config.network.proposals.contains(&node.id) {
-        toml_config.network.proposals.push(node.id);
-        save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;
-        info!("Node {}: Added to proposals in toml. Current proposals = {:?}", node.id, toml_config.network.proposals);
-    } else {
-        info!("Node {}: Already added to proposals in toml. Current proposals = {:?}", node.id, toml_config.network.proposals);
-    }
-
-    // Notify the Python server
-    notify_transaction_submitted(&client, &toml_config, node.id).await?;
-    Ok(())
-}

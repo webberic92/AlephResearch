@@ -21,7 +21,7 @@ pub struct ConsensusConfig {
     pub transaction_size: usize,
     pub data_shards: usize,
     pub batch_size: usize,
-    pub epoch_round_id: usize,
+    pub epoch_round_id: u64,
 
 }
 

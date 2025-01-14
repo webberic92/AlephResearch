@@ -294,7 +294,7 @@ async fn update_epoch_tracker(node: &Node, epoch_id: u64) {
 // Persist the epoch round ID to the TOML file
 pub async fn persist_epoch_round_id(node_id: usize, epoch_id: u64, config_path: &str) {
     let mut config = load_config(config_path);
-    config.consensus.epoch_round_id = (epoch_id + 1) as usize;
+    config.consensus.epoch_round_id = epoch_id + 1;
 
     match save_config(config_path, &config) {
         Ok(_) => info!("Node {}: Successfully updated epoch_round_id = {}.", node_id, config.consensus.epoch_round_id),
