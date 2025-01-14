@@ -1,7 +1,6 @@
 use axum::{routing::post, Json, Router};
 use reqwest::Client;
 use std::sync::Arc;
-use tracing::info;
 
 use crate::{
     handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},

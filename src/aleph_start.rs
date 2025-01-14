@@ -18,7 +18,7 @@ use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    let mut toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
+    let toml_config: TomlConfig = load_config("/home/aleph-node/aleph-node-config.toml");
     let client = Client::new();
 
     wait_for_all_nodes_health(&client, &toml_config).await;
@@ -30,7 +30,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     generate_and_send_transactions_in_order(&client, &toml_config).await?;
 
-    // Update the proposals field
+    // Update the proposals field load new proposals.
+    let mut toml_config: TomlConfig = load_config("/home/aleph-node/aleph-node-config.toml");
     if !toml_config.network.proposals.contains(&toml_config.node.id) {
         toml_config.network.proposals.push(toml_config.node.id);
         save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;

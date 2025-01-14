@@ -30,32 +30,32 @@ pub async fn handle_propose(
         node.id, sender
     );
 
-    // Step 1: Validate the proposal (Merkle root and unit reconstruction)
-    // ch-RBC proof: Ensures data integrity and prevents malicious data injection (line 7 of ch-RBC protocol).
-    if !validate_proposal(node, client, &root, &proof, &shard, epoch_id).await {
-        return;
-    }
+    // // Step 1: Validate the proposal (Merkle root and unit reconstruction)
+    // // ch-RBC proof: Ensures data integrity and prevents malicious data injection (line 7 of ch-RBC protocol).
+    // if !validate_proposal(node, client, &root, &proof, &shard, epoch_id).await {
+    //     return;
+    // }
 
-    // Step 2: Synchronize the epoch to ensure all nodes are aligned
-    // ch-RBC proof: Guarantees that nodes are processing data from the same round (line 11).
-    if !synchronize_epoch(node, epoch_id, sender).await {
-        return;
-    }
+    // // Step 2: Synchronize the epoch to ensure all nodes are aligned
+    // // ch-RBC proof: Guarantees that nodes are processing data from the same round (line 11).
+    // if !synchronize_epoch(node, epoch_id, sender).await {
+    //     return;
+    // }
 
     // Step 3: Update the proposal tracker with the sender's ID
     // ch-RBC proof: Tracks received proposals, ensuring a majority quorum is reached (lines 12-13).
     update_proposal_tracker(node, sender, epoch_id).await;
 
-    // Step 4: Check if all proposals for the current epoch have been received
-    // If true, finalize the epoch and transition to the next phase
-    if all_proposals_received().await {
-        finalize_epoch(node, client, epoch_id, &root, &proof, shard).await;
-    } else {
-        info!(
-            "Node {} HANDLE PROPOSE: Waiting for more proposals for epoch {}",
-            node.id, epoch_id
-        );
-    }
+    // // Step 4: Check if all proposals for the current epoch have been received
+    // // If true, finalize the epoch and transition to the next phase
+    // if all_proposals_received().await {
+    //     finalize_epoch(node, client, epoch_id, &root, &proof, shard).await;
+    // } else {
+    //     info!(
+    //         "Node {} HANDLE PROPOSE: Waiting for more proposals for epoch {}",
+    //         node.id, epoch_id
+    //     );
+    // }
 }
 
 // Validate the proposal (Merkle branch and reconstruction)
@@ -308,7 +308,7 @@ pub fn persist_proposal_tracker(node_id: usize, proposal_tracker: &Vec<usize>, c
     config.network.proposals = proposal_tracker.clone();
 
     match save_config(config_path, &config) {
-        Ok(_) => info!("Node {}: Successfully updated proposal tracker.", node_id),
+        Ok(_) => info!("Node {}: Successfully updated proposal tracker in toml.", node_id),
         Err(e) => error!("Node {}: Failed to update proposal tracker. Error: {:?}", node_id, e),
     }
 }
