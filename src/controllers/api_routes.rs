@@ -19,8 +19,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
             let node = node.clone();
             let client = client.clone();
             move |Json(payload): Json<ProposeRequest>| {
-                let node = node.clone();
-                let client = client.clone();
                 async move {
                     handle_propose(
                         &node,
@@ -45,7 +43,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
             let node = node.clone();
             let client = client.clone(); // Clone the `client` variable
             move |Json(payload): Json<PrevoteRequest>| {
-                let node = node.clone();
                 async move {
                     handle_prevote(
                         &node,
@@ -71,7 +68,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
         .route("/commit", post({
             let node = node.clone();
             move |Json(payload): Json<CommitRequest>| {
-                let node = node.clone();
                 async move {
                     handle_commit(
                         &node,
@@ -93,11 +89,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
         .route("/sync_epoch", post({
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {
-                let node = node.clone();
-                info!(
-                    "Node {}: ==== Handling SYNC EPOCH request from Node {} ====",
-                    node.id, payload.sender
-                );
                 async move {
                     match handle_sync_epoch(&node, payload.epoch_id, payload.sender).await {
                         Ok(_) => Json(Response {
