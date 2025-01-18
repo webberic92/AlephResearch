@@ -4,7 +4,7 @@ use reqwest::Client;
 use crate::{
     structs::{node::Node, requests::PrevoteRequest},
     utils::{
-        config_util::{load_config, save_config},
+        config_util::{are_enough_proposals_received, load_config, save_config},
         dag_utils::ensure_dag_synchronization,
         epoch_utils::{ensure_no_overlap, handle_sync_epoch},
         errors_util::log_reconstruction_failure,
@@ -26,8 +26,8 @@ pub async fn handle_propose(
     epoch_id: u64,
 ) {
     info!(
-        "***==== Handling PROPOSE REQUEST Node {}:  from {} ====***",
-        node.id, sender
+        "***==== Handling PROPOSE REQUEST Node {} {} :  from {} ====***",
+        node.id, node.ip_address, sender
     );
 
     // Step 1: Validate the proposal (Merkle root and unit reconstruction)
@@ -48,12 +48,14 @@ pub async fn handle_propose(
 
     // Step 4: Check if all proposals for the current epoch have been received
     // If true, finalize the epoch and transition to the next phase
-    if all_proposals_received().await {
-        finalize_epoch(node, client, epoch_id, &root, &proof, shard).await;
+    if are_enough_proposals_received().await {
+        info!("Node {} {}: Recieved enough proposals times to PREVOTE!", node.id,node.ip_address);
+
+        send_prevotes(node, client, epoch_id, &root, &proof, shard).await;
     } else {
         info!(
-            "Node {} HANDLE PROPOSE: Waiting for more proposals for epoch {}",
-            node.id, epoch_id
+            "Node {} {}  HANDLE PROPOSE: Waiting for more proposals for epoch {}",
+            node.id, node.ip_address, epoch_id
         );
     }
 }
@@ -78,8 +80,8 @@ async fn validate_proposal(
     let computed_root = validate_merkle_branch(shard, proof);
     if computed_root != *root {
         error!(
-            "Node {} HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
-            node.id, epoch_id, computed_root, root
+            "Node {} {}  HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
+            node.id, node.ip_address, epoch_id, computed_root, root
         );
         return false;
     }
@@ -96,8 +98,8 @@ async fn validate_proposal(
     }
 
     info!(
-        "Node {} HANDLE PROPOSE: Successfully validated proposal for epoch {}",
-        node.id, epoch_id
+        "Node {} {}  HANDLE PROPOSE: Successfully validated proposal for epoch {}",
+        node.id, node.ip_address, epoch_id
     );
     true
 }
@@ -112,16 +114,16 @@ async fn attempt_recovery_from_first_node(
     if let Some(first_node_url) = config.network.nodes.get(0) {
         if let Err(e) = attempt_recovery(node, client, epoch_id, first_node_url).await {
             error!(
-                "Node {} HANDLE PROPOSE: Recovery failed for epoch {}. Error: {}",
-                node.id, epoch_id, e
+                "Node {} {}  HANDLE PROPOSE: Recovery failed for epoch {}. Error: {}",
+                node.id, node.ip_address, epoch_id, e
             );
             return false;
         }
         true
     } else {
         error!(
-            "Node {} HANDLE PROPOSE: Missing network node configuration for recovery in epoch {}",
-            node.id, epoch_id
+            "Node {} {}  HANDLE PROPOSE: Missing network node configuration for recovery in epoch {}",
+            node.id, node.ip_address, epoch_id
         );
         false
     }
@@ -135,23 +137,23 @@ async fn synchronize_epoch(node: &Node, epoch_id: u64, sender: usize) -> bool {
 
     if handle_sync_epoch(node, epoch_id, sender).await.is_err() {
         error!(
-            "Node {} HANDLE PROPOSE: Synchronization failed for epoch {}",
-            node.id, epoch_id
+            "Node {} {}  HANDLE PROPOSE: Synchronization failed for epoch {}",
+           node.id, node.ip_address, epoch_id
         );
         return false;
     }
 
     if ensure_no_overlap(node, epoch_id).await.is_err() {
         error!(
-            "Node {} HANDLE PROPOSE: Overlap detected for epoch {}",
-            node.id, epoch_id
+            "Node {} {}  HANDLE PROPOSE: Overlap detected for epoch {}",
+           node.id, node.ip_address, epoch_id
         );
         return false;
     }
 
     info!(
-        "Node {} HANDLE PROPOSE: Epoch {} synchronized successfully",
-        node.id, epoch_id
+        "Node {} {}  HANDLE PROPOSE: Epoch {} synchronized successfully",
+       node.id, node.ip_address, epoch_id
     );
     true
 }
@@ -163,34 +165,20 @@ async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) {
     let config = load_config(config_path);
     let mut proposal_tracker = config.network.proposals.clone();
     proposal_tracker.push(sender);
-    persist_proposal_tracker(node.id, &proposal_tracker, config_path);
+    persist_proposal_tracker( &proposal_tracker, config_path);
     info!(
-        "Node {} HANDLE PROPOSE: Updated proposal tracker for epoch {}: {:?}",
-        node.id, epoch_id, proposal_tracker
+        "Node {} {}  HANDLE PROPOSE: Updated proposal tracker for epoch {}: {:?}",
+        node.id, node.ip_address, epoch_id, proposal_tracker
     );
 }
 
-// Check if all proposals have been received
-// ch-RBC proof: Ensures a majority quorum (2f+1) of proposals before moving to prevote.
-// Check if a majority quorum (2f + 1) of proposals has been received
-//TODO: However, the logic in all_proposals_received does not explicitly verify that the proposals come from distinct, non-faulty nodes.
-//TODO: Add logic to ensure proposals are unique and originate from different nodes.
-//TODO: Include safeguards to handle malicious nodes attempting to spam invalid proposals.
-async fn all_proposals_received() -> bool {
-    let config = load_config("/home/aleph-node/aleph-node-config.toml");
-    let total_nodes = config.node.total_nodes;
-    let faulty_nodes = (total_nodes - 1) / 3; // f = ⌊(N-1)/3⌋
-    let required_quorum = 2 * faulty_nodes + 1; //2F+1
-
-    config.network.proposals.len() >= required_quorum
-}
 
 // Finalize the epoch, sync DAG, and transition to prevote
 // This function performs the final steps of the propose phase and transitions to the prevote phase.
 //TODO 
 // Ensure retries for DAG synchronization in case of temporary network failures.
 // Include a timeout mechanism to prevent indefinite delays caused by slow or unresponsive nodes.
-async fn finalize_epoch(
+async fn send_prevotes(
     node: &Node,
     client: &Client,
     epoch_id: u64,
@@ -199,16 +187,16 @@ async fn finalize_epoch(
     shard: &Vec<u8>,
 ) {
     info!(
-        "Node {} HANDLE PROPOSE: Finalizing epoch {}",
-        node.id, epoch_id
+        "Node {} {} All Proposals received: Finalizing epoch {}",
+        node.id, node.ip_address, epoch_id
     );
 
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
 
     for node_url in &config.network.nodes {
         info!(
-            "Node {} NETWORK NODES LOOP NODE URL : {}",
-            node.id, node_url
+            "Node {} {} NETWORK NODES LOOP NODE URL : {}",
+            node.id,node.ip_address, node_url
         );
         
         synchronize_dag_and_epoch(node, client, epoch_id, node_url).await;
@@ -228,15 +216,15 @@ async fn synchronize_dag_and_epoch(node: &Node, client: &Client, epoch_id: u64, 
         .send()
         .await
     {
-        error!("Failed to synchronize epoch {} with {}. Error: {:?}", epoch_id, node_url, e);
+        error!("Node {} {} Failed to synchronize epoch {} with {}. Error: {:?}",  node.id,node.ip_address,epoch_id, node_url, e);
     } else {
-        info!("Synchronized epoch {} with {}", epoch_id, node_url);
+        info!("Node {} {} Synchronized epoch {} with {}",  node.id,node.ip_address,epoch_id, node_url);
     }
 
     if let Err(e) = ensure_dag_synchronization(node, client, epoch_id, node_url).await {
-        error!("DAG synchronization failed with {} for epoch {}. Error: {:?}", node_url, epoch_id, e);
+        error!("Node {} {} DAG synchronization failed with {} for epoch {}. Error: {:?}",  node.id,node.ip_address,node_url, epoch_id, e);
     } else {
-        info!("DAG synchronized with {} for epoch {}", node_url, epoch_id);
+        info!("Node {} {} DAG synchronized with {} for epoch {}",  node.id,node.ip_address,node_url, epoch_id);
     }
 }
 
@@ -269,16 +257,16 @@ async fn send_prevote(
         .await
     {
         Ok(response) if response.status().is_success() => {
-            info!("Prevote sent to {}", node_url);
+            info!("Node {} {} Prevote sent to {}", node.id,node.ip_address, node_url);
         }
         Ok(response) => {
             error!(
-                "Failed to send prevote to {}. Status: {}",
-                node_url, response.status()
+                "Node {} {} Failed to send prevote to {}. Status: {}",
+                node.id,node.ip_address,node_url, response.status()
             );
         }
         Err(e) => {
-            error!("Failed to send prevote to {}. Error: {:?}", node_url, e);
+            error!("Node {} {} Failed to send prevote to {}. Error: {:?}", node.id,node.ip_address, node_url, e);
         }
     }
 }
@@ -288,27 +276,27 @@ async fn send_prevote(
 async fn update_epoch_tracker(node: &Node, epoch_id: u64) {
     let mut epoch_tracker = node.epoch_round_id.lock().await;
     epoch_tracker.insert(epoch_id + 1);
-    persist_epoch_round_id(node.id, epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
+    persist_epoch_round_id( epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
 }
 
 // Persist the epoch round ID to the TOML file
-pub async fn persist_epoch_round_id(node_id: usize, epoch_id: u64, config_path: &str) {
+pub async fn persist_epoch_round_id(epoch_id: u64, config_path: &str) {
     let mut config = load_config(config_path);
     config.consensus.epoch_round_id = epoch_id + 1;
 
     match save_config(config_path, &config) {
-        Ok(_) => info!("Node {}: Successfully updated epoch_round_id = {}.", node_id, config.consensus.epoch_round_id),
-        Err(e) => error!("Node {}: Failed to update epoch_round_id. Error: {:?}", node_id, e),
+        Ok(_) => info!("Node {} {} Successfully updated epoch_round_id = {}.", config.node.id, config.network.ip_address, config.consensus.epoch_round_id),
+        Err(e) => error!("Node {} {} Failed to update epoch_round_id. Error: {:?}", config.node.id, config.network.ip_address, e),
     }
 }
 
 // Persist the proposal tracker to the TOML file
-pub fn persist_proposal_tracker(node_id: usize, proposal_tracker: &Vec<usize>, config_path: &str) {
+pub fn persist_proposal_tracker(proposal_tracker: &Vec<usize>, config_path: &str) {
     let mut config = load_config(config_path);
     config.network.proposals = proposal_tracker.clone();
 
     match save_config(config_path, &config) {
-        Ok(_) => info!("Node {}: Successfully updated proposal tracker in toml.", node_id),
-        Err(e) => error!("Node {}: Failed to update proposal tracker. Error: {:?}", node_id, e),
+        Ok(_) => info!("Node {} {} Successfully updated proposal tracker in toml.", config.node.id, config.network.ip_address),
+        Err(e) => error!("Node {} {} Failed to update proposal tracker. Error: {:?}", config.node.id, config.network.ip_address, e),
     }
 }

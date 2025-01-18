@@ -1,3 +1,5 @@
+
+use aleph_research::structs::toml_config::TomlConfig;
 use reqwest::Client;
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -6,10 +8,8 @@ use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
 
-use aleph_research::structs;
-use crate::structs::toml_config::TomlConfig;
-
-use aleph_research::utils::config_util::{load_config, save_config};
+// use crate::structs::toml_config::TomlConfig;
+use aleph_research::utils::config_util::{are_enough_proposals_received, load_config, save_config};
 use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_submitted};
 use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
 use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root};
@@ -23,43 +23,103 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     wait_for_all_nodes_health(&client, &toml_config).await;
 
-    if !ensure_epoch_sync(&client, &toml_config).await {
-        error!("Epoch synchronization failed. Exiting...");
-        return Err("Epoch synchronization failed".into());
+    // Handle the Result from generate_and_send_transactions_in_order
+    let merkle_root = generate_and_send_transactions_in_order(&client, &toml_config).await?;
+
+    // Update the proposals field in the TOML config
+    let mut updated_toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
+    if !updated_toml_config.network.proposals.contains(&updated_toml_config.node.id) {
+        updated_toml_config.network.proposals.push(updated_toml_config.node.id);
+        save_config("/home/aleph-node/aleph-node-config.toml", &updated_toml_config)?;
+        info!(
+            "Node {} {}: Added to proposals. Current proposals: {:?}",
+            updated_toml_config.node.id, updated_toml_config.network.ip_address, updated_toml_config.network.proposals
+        );
     }
 
-    generate_and_send_transactions_in_order(&client, &toml_config).await?;
-
-    // Update the proposals field load new proposals.
-    let mut toml_config: TomlConfig = load_config("/home/aleph-node/aleph-node-config.toml");
-    if !toml_config.network.proposals.contains(&toml_config.node.id) {
-        toml_config.network.proposals.push(toml_config.node.id);
-        save_config("/home/aleph-node/aleph-node-config.toml", &toml_config)?;
-        info!("Node {}: Added to proposals in toml from aleph_start. Current proposals = {:?}", toml_config.node.id, toml_config.network.proposals);
-    } else {
-        info!("Node {}: Already added to proposals in toml. Current proposals = {:?}", toml_config.node.id, toml_config.network.proposals);
+    // Pass the unwrapped merkle_root to send_prevotes
+    if are_enough_proposals_received().await {
+        send_prevotes(&client, &updated_toml_config, &merkle_root).await?;
     }
 
-    // Notify the Python server
-    notify_transaction_submitted(&client, &toml_config).await?;
+    notify_transaction_submitted(&client, &updated_toml_config).await?;
     Ok(())
 }
-/// Main function to generate and send transactions in order
+
+
+
+/// Prevote logic
+async fn send_prevotes(
+    client: &Client,
+    toml_config: &TomlConfig,
+    merkle_root: &Vec<u8>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(
+        "Node {} {}: Starting PREVOTE phase...",
+        toml_config.node.id, toml_config.network.ip_address
+    );
+
+    // Construct prevote payload
+    let prevote_payload = json!({
+        "sender": toml_config.node.id,
+        "epoch_id": toml_config.consensus.epoch_round_id,
+        "root": merkle_root,
+    });
+
+    // Multicast prevote message to all nodes
+    for node_url in &toml_config.network.nodes {
+        let response = client
+            .post(format!("http://{}/prevote", node_url))
+            .json(&prevote_payload)
+            .send()
+            .await;
+
+        match response {
+            Ok(res) if res.status().is_success() => {
+                info!(
+                    "Node {}: Prevote successfully sent to {}",
+                    toml_config.node.id, node_url
+                );
+            }
+            Ok(res) => {
+                error!(
+                    "Node {}: Failed to send prevote to {}. Status: {}",
+                    toml_config.node.id, node_url, res.status()
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Node {}: Error sending prevote to {}: {:?}",
+                    toml_config.node.id, node_url, e
+                );
+            }
+        }
+    }
+
+    info!(
+        "Node {} {}: Completed sending PREVOTE messages.",
+        toml_config.node.id, toml_config.network.ip_address
+    );
+
+    Ok(())
+}
+
+/// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
     toml_config: &TomlConfig,
-) -> Result<(), Box<dyn std::error::Error>> {
-    wait_for_turn(client, toml_config).await?;
+) -> Result< Vec<u8>, Box<dyn std::error::Error>> {
+    wait_for_turn(client, toml_config).await?; 
 
     let (shards, shard_hashes, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
 
     send_transactions(client, toml_config, &shards, &shard_hashes, &merkle_root).await?;
 
     info!(
-        "Node {}: SENT Transaction proposals for epoch {}.",
-        toml_config.node.id, toml_config.consensus.epoch_round_id
+        "Node {} {}: SENT Transaction proposals for epoch {}.",
+        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
     );
-    Ok(())
+    Ok(merkle_root)
 }
 
 /// Wait for the node's turn to submit a transaction
@@ -68,53 +128,30 @@ async fn wait_for_turn(
     toml_config: &TomlConfig,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
-        "Node {}: Waiting for its turn to submit transaction for epoch {}",
-        toml_config.node.id, toml_config.consensus.epoch_round_id
+        "Node {} {}: Waiting for its turn to submit transaction for epoch {}",
+        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
     );
 
     loop {
-        if is_node_turn(client, toml_config,  toml_config.consensus.epoch_round_id).await {
+        if is_node_turn(client, toml_config, toml_config.consensus.epoch_round_id).await {
             break;
         }
 
         ensure_epoch_sync(client, toml_config).await;
         sleep(Duration::from_secs(1)).await; // Poll every 1 second
         info!(
-            "Node {}: Retrying transaction submission for epoch {}",
-            toml_config.node.id,  toml_config.consensus.epoch_round_id
+            "Node {} {}: Retrying transaction submission for epoch {}",
+            toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
         );
     }
 
-    info!("Node {}: It's my turn to propose for epoch {}", toml_config.node.id,  toml_config.consensus.epoch_round_id);
+    info!(
+        "Node {} {}: It's my turn to propose for epoch {}",
+        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
+    );
     Ok(())
 }
 
-/// Generate shards and Merkle root
-async fn generate_shards_and_merkle_root(
-    toml_config: &TomlConfig,
-) -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<u8>) {
-    let transaction_size = toml_config.consensus.transaction_size;
-    let data_shards = toml_config.consensus.data_shards;
-
-    let transaction_data = vec![1; transaction_size]; // Deterministic data
-    let shard_size = transaction_size / data_shards;
-    let shards: Vec<Vec<u8>> = transaction_data
-        .chunks(shard_size)
-        .map(|chunk| chunk.to_vec())
-        .collect();
-
-    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
-    let merkle_root = compute_merkle_root(&shard_hashes);
-
-    info!(
-        "Generated shards: {:?}, shard hashes: {:?}, Merkle root: {:?}",
-        shards, shard_hashes, merkle_root
-    );
-
-    (shards, shard_hashes, merkle_root)
-}
-
-/// Send transactions to other nodes
 async fn send_transactions(
     client: &Client,
     toml_config: &TomlConfig,
@@ -144,20 +181,20 @@ async fn send_transactions(
             Ok(res) => {
                 if res.status().is_success() {
                     info!(
-                        "Node {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
-                        toml_config.node.id, toml_config.consensus.epoch_round_id, node_url
+                        "Node {} {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
+                        toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url
                     );
                 } else {
                     error!(
-                        "Node {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
-                        toml_config.node.id, toml_config.consensus.epoch_round_id, node_url, res.status()
+                        "Node {} {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
+                        toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, res.status()
                     );
                 }
             }
             Err(e) => {
                 error!(
-                    "Node {}: Error sending transaction for epoch {} to {}: {:?}",
-                    toml_config.node.id, toml_config.consensus.epoch_round_id, node_url, e
+                    "Node {} {}: Error sending transaction for epoch {} to {}: {:?}",
+                    toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, e
                 );
             }
         }
@@ -166,4 +203,26 @@ async fn send_transactions(
     Ok(())
 }
 
+async fn generate_shards_and_merkle_root(
+    toml_config: &TomlConfig,
+) -> (Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<u8>) {
+    let transaction_size = toml_config.consensus.transaction_size;
+    let data_shards = toml_config.consensus.data_shards;
 
+    let transaction_data = vec![1; transaction_size]; // Deterministic data
+    let shard_size = transaction_size / data_shards;
+    let shards: Vec<Vec<u8>> = transaction_data
+        .chunks(shard_size)
+        .map(|chunk| chunk.to_vec())
+        .collect();
+
+    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    let merkle_root = compute_merkle_root(&shard_hashes);
+
+    info!(
+        "Generated shards: {:?}, shard hashes: {:?}, Merkle root: {:?}",
+        shards, shard_hashes, merkle_root
+    );
+
+    (shards, shard_hashes, merkle_root)
+}
