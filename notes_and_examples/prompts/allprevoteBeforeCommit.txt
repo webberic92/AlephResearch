@@ -1,0 +1,41 @@
+In the ch-RBC protocol, the phases of propose, prevote, and commit aim to ensure consensus and reliability in the presence of Byzantine nodes. Here's how the prevote and commit phases typically work:
+Sequence of Events in ch-RBC:
+
+    Propose Phase:
+        Node 1 (the leader for the current round) sends its proposal.
+        Nodes 2 and 3 receive and validate this proposal.
+
+    Prevote Phase:
+        Once a node receives and validates the proposal, it transitions to the prevote phase.
+        Each node (including Node 1) sends a prevote to all other nodes.
+        This ensures that every node knows which nodes are ready to proceed with the proposed data.
+
+    Important:
+        Node 1 participates in the prevote phase just like Nodes 2 and 3.
+        The prevote phase requires a quorum (e.g., 2f + 1 votes where f is the number of faulty nodes) to proceed to the next phase.
+
+    Commit Phase:
+        Once a node collects enough prevotes (e.g., 2f + 1), it transitions to the commit phase.
+        In the commit phase, the node finalizes the data and broadcasts a commit message to all other nodes.
+
+    Flow of Commit:
+        Node 1 can only commit after receiving sufficient prevotes (including its own).
+        Similarly, Nodes 2 and 3 must gather enough prevotes before they commit.
+
+Specific Answer to Your Question:
+
+    Does Node 1 participate in the prevote phase?
+    Yes, Node 1 participates in the prevote phase after sending its proposal. It sends its prevote and also waits for prevotes from Nodes 2 and 3.
+
+    Who commits first?
+    The node that gathers sufficient prevotes (e.g., 2f + 1) can proceed to the commit phase first. This could be Node 1, Node 2, or Node 3, depending on network delays and synchronization.
+
+    Does Node 1 wait for prevotes from Nodes 2 and 3 before committing?
+    Yes, Node 1 needs to collect enough prevotes (from itself, Node 2, and Node 3) to ensure the quorum required by the protocol before transitioning to the commit phase.
+
+Summary:
+
+    Node 1 sends its proposal.
+    All nodes, including Node 1, send their prevotes.
+    Once a node gathers a quorum of prevotes, it transitions to the commit phase.
+    The commit phase happens independently for each node after quorum is achieved. Node 1 does not commit until it has sufficient prevotes, even if it was the proposer.

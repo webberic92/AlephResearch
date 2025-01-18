@@ -22,8 +22,6 @@ pub async fn handle_sync_epoch(node: &Node, epoch_id: u64, sender: usize) -> Res
         "Node {}: ==== Handling SYNC EPOCH request from Node {} ====",
         node.id, sender
     );
-    info!("Node {}: Synchronizing epoch {} from {}", node.id, epoch_id,sender);
-
     let mut tracker = node.epoch_round_id.lock().await;
     if tracker.contains(&epoch_id) {
         info!("Node {}: Epoch {} already synchronized with {}", node.id, epoch_id, sender);
