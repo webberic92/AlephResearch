@@ -25,11 +25,18 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     payload: PrevoteRequest,
 ) -> impl IntoResponse {
+    // Log the raw deserialized payload
+    info!(
+        "Received PrevoteRequest at Node {}: {:?}",
+        node.id, payload
+    );
+
+    // Call the actual logic for handling prevote
     match handle_prevote_logic(
         &node,
         &client,
         payload.sender,
-        payload.root,
+        payload.root.clone(),
         &payload.proofs,
         &payload.shards,
         payload.epoch_id,
@@ -37,15 +44,27 @@ pub async fn handle_prevote(
     )
     .await
     {
-        Ok(_) => Json(Response {
-            status: format!(
-                "Node {}: Prevote accepted from Node {}",
+        Ok(_) => {
+            info!(
+                "Prevote successfully handled at Node {} for sender Node {}",
                 node.id, payload.sender
-            ),
-        }),
-        Err(e) => Json(Response {
-            status: format!("Failed to handle prevote: {}", e),
-        }),
+            );
+            Json(Response {
+                status: format!(
+                    "Node {}: Prevote accepted from Node {}",
+                    node.id, payload.sender
+                ),
+            })
+        }
+        Err(e) => {
+            error!(
+                "Failed to handle prevote at Node {} for sender Node {}: {}",
+                node.id, payload.sender, e
+            );
+            Json(Response {
+                status: format!("Failed to handle prevote: {}", e),
+            })
+        }
     }
 }
 
