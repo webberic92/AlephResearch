@@ -22,7 +22,7 @@ pub async fn handle_propose(
     sender: usize,
     root: Vec<u8>,
     proofs: &[Vec<Vec<u8>>], // Slice of vectors of vectors
-    shards: &[Vec<u8>], // Slice of vectors
+    shards: &[Vec<u8>],      // Slice of vectors
     epoch_id: u64,
 ) {
     info!(
@@ -32,7 +32,7 @@ pub async fn handle_propose(
 
     // Step 1: Validate the proposal (Merkle root and unit reconstruction)
     // ch-RBC proof: Ensures data integrity and prevents malicious data injection (line 7 of ch-RBC protocol).
-    if !validate_proposal(node, client, &root, &proofs, &shards, epoch_id).await {
+    if !validate_proposal(node, client, &root, proofs, shards, epoch_id).await {
         return;
     }
 
@@ -49,16 +49,21 @@ pub async fn handle_propose(
     // Step 4: Check if all proposals for the current epoch have been received
     // If true, finalize the epoch and transition to the next phase
     if are_enough_proposals_received().await {
-        info!("Node {} {}: Recieved enough proposals times to PREVOTE!", node.id,node.ip_address);
+        info!("Node {} {}: Received enough proposals to PREVOTE from handle_proposal!", node.id, node.ip_address);
 
-        // send_prevotes(node, client, epoch_id, &root, &proof, shard).await;
+        // Convert slices to Vec before calling send_prevotes
+        let proofs_vec = proofs.to_vec();
+        let shards_vec = shards.to_vec();
+
+        send_prevotes(node, client, epoch_id, &root, &proofs_vec, &shards_vec).await;
     } else {
         info!(
-            "Node {} {}  HANDLE PROPOSE: Waiting for more proposals for epoch {}",
+            "Node {} {} HANDLE PROPOSE: Waiting for more proposals for epoch {}",
             node.id, node.ip_address, epoch_id
         );
     }
 }
+
 
 // Validate the proposal (Merkle branch and reconstruction)
 // Ensures the integrity of the proposed data using Merkle proofs and reconstructs the unit if necessary.
