@@ -3,13 +3,13 @@ use serde::{Deserialize, Serialize};
 #[derive(Deserialize,Debug)]
 pub struct ProposeRequest {
     pub sender: usize,               // ID of the node sending the proposal
-    pub shards: Vec<Vec<u8>>,        // Data shards for the proposal
-    pub proofs: Vec<Vec<Vec<u8>>>,   // Merkle proofs for each shard
     pub root: Vec<u8>,               // Merkle root of the tree
+    pub proofs: Vec<Vec<Vec<u8>>>,   // Merkle proofs for each shard
+    pub shards: Vec<Vec<u8>>,        // Data shards for the proposal
     pub epoch_id: u64,               // Epoch ID for the proposal
 }
 
-#[derive(Serialize,Deserialize)]
+#[derive(Serialize,Deserialize,Debug)]
 pub struct PrevoteRequest {
     pub sender: usize,
     pub root: Vec<u8>,

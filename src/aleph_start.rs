@@ -1,4 +1,5 @@
 
+use aleph_research::structs::requests::PrevoteRequest;
 use aleph_research::structs::toml_config::TomlConfig;
 use reqwest::Client;
 use serde_json::json;
@@ -7,7 +8,6 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
-use openssl::base64::encode_block;
 use aleph_research::utils::config_util::{are_enough_proposals_received, load_config, save_config};
 use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_submitted};
 use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
@@ -61,28 +61,33 @@ async fn send_prevotes(
         toml_config.node.id, toml_config.network.ip_address
     );
 
-    // Construct prevote payload
-    let prevote_payload = json!({
-        "sender": toml_config.node.id,
-        "epoch_id": toml_config.consensus.epoch_round_id,
-        "root": merkle_root,
-        "proofs": proofs, // Updated to plural
-        "shards": shards, // Updated to plural
-    });
-
-    info!(
-        "Node {} {}: Prevote payload to be sent: {}",
-        toml_config.node.id, toml_config.network.ip_address, prevote_payload
-    );
-
     let mut all_successful = true; // Track if all prevote messages succeed
 
     // Multicast prevote message to all nodes
-    for node_url in &toml_config.network.nodes {
-        let url = format!("http://{}/prevote", node_url);
-        info!("Node {}: Sending prevote to {}", toml_config.node.id, url);
+    for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
+        let shard = &shards[index % shards.len()];
+        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&proofs, index % proofs.len())
+            .iter()
+            .map(|hash| hash.to_vec())
+            .collect();
 
-        let response = client.post(&url).json(&prevote_payload).send().await;
+        // Construct prevote payload
+        let payload = PrevoteRequest {
+            sender: toml_config.node.id,
+            epoch_id: toml_config.consensus.epoch_round_id,
+            root: merkle_root.clone(),         // Raw byte array
+            proofs: vec![merkle_branch],       // Raw byte arrays as Vec<Vec<Vec<u8>>>
+            shards: vec![shard.clone()],       // Raw byte arrays
+            node_url: node_url.to_string(),    // Include the node URL
+        };
+
+        info!(
+            "Node {}: Sending prevote to {}. Payload: {:?}",
+            toml_config.node.id, node_url, payload
+        );
+
+        let url = format!("http://{}/prevote", node_url);
+        let response = client.post(&url).json(&payload).send().await;
 
         match response {
             Ok(res) => {
@@ -127,6 +132,8 @@ async fn send_prevotes(
         Err("One or more PREVOTE messages failed".into())
     }
 }
+
+
 
 /// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
@@ -200,10 +207,10 @@ async fn send_transactions(
             "epoch_id": toml_config.consensus.epoch_round_id,
         });
 
-        info!(
-            "Node {}: Sending propose request to {}. Payload: {:?}",
-            toml_config.node.id, node_url, payload
-        );
+        // info!(
+        //     "Node {}: Sending propose request to {}. Payload: {:?}",
+        //     toml_config.node.id, node_url, payload
+        // );
 
         let response = client
             .post(format!("http://{}/propose", node_url))
