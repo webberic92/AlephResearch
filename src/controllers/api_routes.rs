@@ -16,47 +16,47 @@ use crate::{
 
 pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
-    .route("/propose", post({
-        let node = node.clone();
-        let client = client.clone();
-        move |Json(payload): Json<Value>| { // Change to accept raw JSON
-            async move {
-                // Log the raw payload
-                info!("Received raw payload: {:?}", payload);
-    
-                // Attempt to deserialize into `ProposeRequest`
-                match serde_json::from_value::<ProposeRequest>(payload.clone()) {
-                    Ok(parsed_payload) => {
-                        info!("Successfully deserialized payload: {:?}", parsed_payload);
-    
-                        handle_propose(
-                            &node,
-                            &client,
-                            parsed_payload.sender,
-                            parsed_payload.root,
-                            &parsed_payload.proofs, // Pass reference to slice of vectors of vectors
-                            &parsed_payload.shards, // Pass reference to slice of vectors
-                            parsed_payload.epoch_id,
-                        )
-                        .await;
-    
-                        Json(Response {
-                            status: format!(
-                                "Node {}: Propose accepted from Node {} for epoch {}",
-                                node.id, parsed_payload.sender, parsed_payload.epoch_id
-                            ),
-                        })
-                    }
-                    Err(e) => {
-                        error!("Failed to deserialize payload: {:?}", e);
-                        Json(Response {
-                            status: format!("Deserialization error: {:?}", e),
-                        })
+        .route("/propose", post({
+            let node = node.clone();
+            let client = client.clone();
+            move |Json(payload): Json<Value>| { // Accept raw JSON
+                async move {
+                    // Log raw payload
+                    info!("Received raw payload: {:?}", payload);
+        
+                    // Attempt deserialization into ProposeRequest
+                    match serde_json::from_value::<ProposeRequest>(payload.clone()) {
+                        Ok(parsed_payload) => {
+                            info!("Successfully deserialized payload: {:?}", parsed_payload);
+        
+                            handle_propose(
+                                &node,
+                                &client,
+                                parsed_payload.sender,
+                                parsed_payload.root,
+                                &parsed_payload.proofs, // Pass reference to Vec<Vec<Vec<u8>>>
+                                &parsed_payload.shards, // Pass reference to Vec<Vec<u8>>
+                                parsed_payload.epoch_id,
+                            )
+                            .await;
+        
+                            Json(Response {
+                                status: format!(
+                                    "Node {}: Propose accepted from Node {} for epoch {}",
+                                    node.id, parsed_payload.sender, parsed_payload.epoch_id
+                                ),
+                            })
+                        }
+                        Err(e) => {
+                            error!("Failed to deserialize payload: {:?}", e);
+                            Json(Response {
+                                status: format!("Deserialization error: {:?}", e),
+                            })
+                        }
                     }
                 }
             }
-        }
-    }))  
+        }))  
         .route("/prevote", post({
             let node = node.clone();
             let client = client.clone();

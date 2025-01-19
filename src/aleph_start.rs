@@ -38,8 +38,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Pass the unwrapped merkle_root to send_prevotes
     if are_enough_proposals_received().await {
-
-        send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
+        info!(
+            "Node {} {}: Enough proposals. received to start prevoting form aleph_start.{:?}",
+            updated_toml_config.node.id, updated_toml_config.network.ip_address, updated_toml_config.network.proposals
+        );
+        // send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
     }
 
     notify_transaction_submitted(&client, &updated_toml_config).await?;
@@ -194,23 +197,23 @@ async fn send_transactions(
 ) -> Result<(), Box<dyn std::error::Error>> {
     for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
-        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shards.len())
+        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shard_hashes.len())
             .iter()
-            .map(|hash| hash.to_vec())
+            .map(|hash| hash.clone()) // Clone to ensure type matches Vec<Vec<u8>>
             .collect();
 
         let payload = json!({
             "sender": toml_config.node.id,
-            "shards": vec![shard.clone()], // Raw byte arrays
-            "proofs": merkle_branch,      // Raw byte arrays
-            "root": merkle_root.to_vec(), // Raw byte array
+            "shards": vec![shard.clone()], // Use `Vec<Vec<u8>>`
+            "proofs": vec![merkle_branch], // Use `Vec<Vec<Vec<u8>>>`
+            "root": merkle_root.to_vec(), // Use `Vec<u8>`
             "epoch_id": toml_config.consensus.epoch_round_id,
         });
 
-        // info!(
-        //     "Node {}: Sending propose request to {}. Payload: {:?}",
-        //     toml_config.node.id, node_url, payload
-        // );
+        info!(
+            "Node {}: Sending propose request to {}. Payload: {:?}",
+            toml_config.node.id, node_url, payload
+        );
 
         let response = client
             .post(format!("http://{}/propose", node_url))

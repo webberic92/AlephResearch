@@ -26,10 +26,10 @@ pub async fn handle_prevote(
     payload: PrevoteRequest,
 ) -> impl IntoResponse {
     // Log the raw deserialized payload
-    // info!(
-    //     "Received PrevoteRequest at Node {}: {:?}",
-    //     node.id, payload
-    // );
+    info!(
+        "Received PrevoteRequest at Node {}: {:?}",
+        node.id, payload
+    );
 
     // Call the actual logic for handling prevote
     match handle_prevote_logic(
@@ -82,82 +82,82 @@ pub async fn handle_prevote_logic(
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!("Node {}: ==== Handling PREVOTE REQUEST from Node {} ====", node.id, sender);
 
-    // // Validate Merkle Branch
-    // info!("Node {}: Validating Merkle branch for shard", node.id);
-    // let computed_root = validate_merkle_branch(&shards, &proofs);
-    // if computed_root != *root {
-    //     error!(
-    //         "Node {}: Prevote phase failed for epoch {}. Merkle root mismatch. Computed: {:?}, Expected: {:?}, Shards: {:?}, Proof: {:?}",
-    //         node.id, epoch_id, computed_root, root, shards, proofs
-    //     );
-    //     return Err("Merkle root mismatch".into());
-    // }
-    // info!("Node {}: Merkle branch validation passed", node.id);
+    // Validate Merkle Branch
+    info!("Node {}: Validating Merkle branch for shard", node.id);
+    let computed_root = validate_merkle_branch(&shards, &proofs);
+    if computed_root != *root {
+        error!(
+            "Node {}: Prevote phase failed for epoch {}. Merkle root mismatch. Computed: {:?}, Expected: {:?}, Shards: {:?}, Proof: {:?}",
+            node.id, epoch_id, computed_root, root, shards, proofs
+        );
+        return Err("Merkle root mismatch".into());
+    }
+    info!("Node {}: Merkle branch validation passed", node.id);
 
-    // // Ensure DAG synchronization
-    // info!("Node {}: Ensuring DAG synchronization with {}", node.id, node_url);
-    // if let Err(e) = ensure_dag_synchronization(node, client, epoch_id, node_url).await {
-    //     error!(
-    //         "Node {}: DAG synchronization failed with node {}. Error: {:?}",
-    //         node.id, node_url, e
-    //     );
-    //     return Err(format!("DAG synchronization failed: {:?}", e).into());
-    // }
-    // info!("Node {}: DAG synchronization successful with {}", node.id, node_url);
+    // Ensure DAG synchronization
+    info!("Node {}: Ensuring DAG synchronization with {}", node.id, node_url);
+    if let Err(e) = ensure_dag_synchronization(node, client, epoch_id, node_url).await {
+        error!(
+            "Node {}: DAG synchronization failed with node {}. Error: {:?}",
+            node.id, node_url, e
+        );
+        return Err(format!("DAG synchronization failed: {:?}", e).into());
+    }
+    info!("Node {}: DAG synchronization successful with {}", node.id, node_url);
 
-    // // Update quorum votes
-    // {
-    //     let mut quorum_votes = node.quorum_votes.write().await;
-    //     let count = quorum_votes.entry(root.clone()).or_insert(0);
-    //     *count += 1;
-    //     debug!(
-    //         "Node {}: Updated quorum votes for root {:?}: {}",
-    //         node.id, root, *count
-    //     );
+    // Update quorum votes
+    {
+        let mut quorum_votes = node.quorum_votes.write().await;
+        let count = quorum_votes.entry(root.clone()).or_insert(0);
+        *count += 1;
+        debug!(
+            "Node {}: Updated quorum votes for root {:?}: {}",
+            node.id, root, *count
+        );
 
-    //     if *count >= node.get_quorum_threshold() {
-    //         info!(
-    //             "Node {}: Quorum reached for root {:?} with {} votes",
-    //             node.id, root, *count
-    //         );
+        if *count >= node.get_quorum_threshold() {
+            info!(
+                "Node {}: Quorum reached for root {:?} with {} votes",
+                node.id, root, *count
+            );
 
-    //         // Reconstruction and Validation Logic
-    //         info!(
-    //             "Node {}: Starting reconstruction for unit associated with root {:?}",
-    //             node.id, root
-    //         );
+            // Reconstruction and Validation Logic
+            info!(
+                "Node {}: Starting reconstruction for unit associated with root {:?}",
+                node.id, root
+            );
 
-    //         match reconstruct_unit(shards, proofs,&root) {
-    //             Ok(reconstructed_unit) => {
-    //                 info!(
-    //                     "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
-    //                     node.id, root
-    //                 );
+            match reconstruct_unit(shards, proofs,&root) {
+                Ok(reconstructed_unit) => {
+                    info!(
+                        "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
+                        node.id, root
+                    );
 
-    //                 // Handle commit phase
-    //                 handle_commit(node, sender, root, reconstructed_unit, epoch_id).await;
-    //             }
-    //             Err(e) => {
-    //                 error!(
-    //                     "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
-    //                     node.id, root, e
-    //                 );
-    //                 log_reconstruction_failure(node.id, epoch_id, &e);
-    //                 if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, node_url).await {
-    //                     error!(
-    //                         "Node {}: Recovery failed for epoch {}. Error: {}",
-    //                         node.id, epoch_id, recovery_err
-    //                     );
-    //                 }
-    //             }
-    //         }
-    //     } else {
-    //         info!(
-    //             "Node {}: Prevote accepted for root {:?}. Current votes: {}",
-    //             node.id, root, *count
-    //         );
-    //     }
-    // }
+                    // Handle commit phase
+                    handle_commit(node, sender, root, reconstructed_unit, epoch_id).await;
+                }
+                Err(e) => {
+                    error!(
+                        "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
+                        node.id, root, e
+                    );
+                    log_reconstruction_failure(node.id, epoch_id, &e);
+                    if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, node_url).await {
+                        error!(
+                            "Node {}: Recovery failed for epoch {}. Error: {}",
+                            node.id, epoch_id, recovery_err
+                        );
+                    }
+                }
+            }
+        } else {
+            info!(
+                "Node {}: Prevote accepted for root {:?}. Current votes: {}",
+                node.id, root, *count
+            );
+        }
+    }
 
     info!("Node {}: Finished handling PREVOTE REQUEST from Node {}", node.id, sender);
     Ok(())
