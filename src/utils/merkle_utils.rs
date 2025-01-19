@@ -1,5 +1,6 @@
 use sha2::{Digest, Sha256};
 use tracing::{error, info};
+use base64::{engine::general_purpose, Engine as _};
 
 /// Compute Merkle root from shard hashes
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
@@ -51,42 +52,62 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
 }
 
 /// Validate Merkle branches and return the root
-pub fn validate_merkle_branch(shards: &[Vec<u8>], proofs: &[Vec<Vec<u8>>]) -> Vec<u8> {
-    info!("Validating Merkle branch");
+pub fn validate_merkle_branch(
+    shard_hashes: &[Vec<u8>],
+    proofs: &[Vec<Vec<u8>>],
+) -> Vec<u8> {
+    let mut current_hashes = shard_hashes.to_vec();
 
-    if shards.len() != proofs.len() {
-        error!(
-            "Mismatch in lengths: shards ({}) vs proofs ({})",
-            shards.len(),
-            proofs.len()
-        );
-        return Vec::new();
-    }
+    // Log initial shard hashes
+    info!("Initial shard hashes: {:?}", current_hashes);
 
-    // Start with the hash of each shard
-    let mut validated_hashes = Vec::new();
+    for (level, proof) in proofs.iter().enumerate() {
+        let mut next_level_hashes = vec![];
 
-    for (shard, shard_proofs) in shards.iter().zip(proofs.iter()) {
-        // Start with the hash of the shard
-        let mut hash = Sha256::digest(shard).to_vec();
-
-        // Combine with sibling hashes from the proof
-        for sibling in shard_proofs {
-            let combined = if hash < *sibling {
-                [hash.clone(), sibling.clone()].concat()
+        for (i, chunk) in current_hashes.chunks(2).enumerate() {
+            let left = &chunk[0];
+            let right = if chunk.len() > 1 {
+                &chunk[1]
             } else {
-                [sibling.clone(), hash.clone()].concat()
+                // Single hash on this level (no sibling)
+                left
             };
-            hash = Sha256::digest(&combined).to_vec();
+
+            // Compute the combined hash
+            let mut hasher = Sha256::new();
+            hasher.update(left);
+            hasher.update(right);
+            let combined_hash = hasher.finalize().to_vec();
+
+            // Log each hash computation
+            info!(
+                "Level {}: Combining chunk {} -> Left: {:?}, Right: {:?}, Combined: {:?}",
+                level, i, left, right, combined_hash
+            );
+
+            next_level_hashes.push(combined_hash);
         }
 
-        validated_hashes.push(hash);
+        // Append proof hashes to the next level if provided
+        for proof_hash in proof {
+            info!("Level {}: Adding proof hash: {:?}", level, proof_hash);
+            next_level_hashes.push(proof_hash.clone());
+        }
+
+        current_hashes = next_level_hashes;
     }
 
-    let root = compute_merkle_root(&validated_hashes);
-    info!("Merkle branches validated. Computed root: {:?}", root);
-
-    root
+    // The last remaining hash should be the computed root
+    if current_hashes.len() == 1 {
+        info!("Computed Merkle root: {:?}", current_hashes[0]);
+        current_hashes[0].clone()
+    } else {
+        error!(
+            "Failed to compute a single root hash. Remaining hashes: {:?}",
+            current_hashes
+        );
+        vec![] // Return an empty vector to indicate failure
+    }
 }
 
 
@@ -94,10 +115,26 @@ pub fn validate_merkle_branch(shards: &[Vec<u8>], proofs: &[Vec<Vec<u8>>]) -> Ve
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
     proofs: &[Vec<Vec<u8>>],
-    root: &Vec<u8>, // Pass the expected Merkle root as a parameter
+    root: &Vec<u8>, // Expected Merkle root
 ) -> Result<Vec<u8>, String> {
     info!("Reconstructing unit from shards and verifying Merkle proof");
 
+    info!("Raw serialized shards: {:?}", shards);
+    info!("Raw serialized proofs: {:?}", proofs);
+
+    let serialized_shards: Vec<String> = shards
+        .iter()
+        .map(|shard| general_purpose::STANDARD.encode(shard))
+        .collect();
+    let serialized_proofs: Vec<Vec<String>> = proofs
+        .iter()
+        .map(|proof| proof.iter().map(|p| general_purpose::STANDARD.encode(p)).collect())
+        .collect();
+
+    info!("Serialized shards for transmission: {:?}", serialized_shards);
+    info!("Serialized proofs for transmission: {:?}", serialized_proofs);
+
+    // Validate inputs
     if shards.is_empty() || proofs.is_empty() {
         let error_message = "Reconstruction failed: shards or proofs are empty".to_string();
         error!("{}", error_message);
@@ -114,7 +151,7 @@ pub fn reconstruct_unit(
         return Err(error_message);
     }
 
-    // Combine all shards into a single reconstructed unit
+    // Combine shards into a single unit
     let mut reconstructed_unit = vec![];
     for shard in shards {
         reconstructed_unit.extend(shard);
@@ -122,8 +159,9 @@ pub fn reconstruct_unit(
 
     // Compute the hashes of the shards
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    info!("Shard hashes for reconstruction: {:?}", shard_hashes);
 
-    // Validate the Merkle branch and compare the computed root with the provided root
+    // Validate Merkle proof and compare computed root with provided root
     let computed_root = validate_merkle_branch(&shard_hashes, proofs);
     if computed_root != *root {
         let error_message = format!(
@@ -137,4 +175,5 @@ pub fn reconstruct_unit(
     info!("Successfully reconstructed unit and verified Merkle root");
     Ok(reconstructed_unit)
 }
+
 
