@@ -21,8 +21,8 @@ pub async fn handle_propose(
     client: &Client,
     sender: usize,
     root: Vec<u8>,
-    proof: Vec<Vec<u8>>,
-    shard: &Vec<u8>,
+    proofs: &[Vec<Vec<u8>>], // Slice of vectors of vectors
+    shards: &[Vec<u8>], // Slice of vectors
     epoch_id: u64,
 ) {
     info!(
@@ -32,7 +32,7 @@ pub async fn handle_propose(
 
     // Step 1: Validate the proposal (Merkle root and unit reconstruction)
     // ch-RBC proof: Ensures data integrity and prevents malicious data injection (line 7 of ch-RBC protocol).
-    if !validate_proposal(node, client, &root, &proof, &shard, epoch_id).await {
+    if !validate_proposal(node, client, &root, &proofs, &shards, epoch_id).await {
         return;
     }
 
@@ -51,7 +51,7 @@ pub async fn handle_propose(
     if are_enough_proposals_received().await {
         info!("Node {} {}: Recieved enough proposals times to PREVOTE!", node.id,node.ip_address);
 
-        send_prevotes(node, client, epoch_id, &root, &proof, shard).await;
+        // send_prevotes(node, client, epoch_id, &root, &proof, shard).await;
     } else {
         info!(
             "Node {} {}  HANDLE PROPOSE: Waiting for more proposals for epoch {}",
@@ -66,43 +66,63 @@ async fn validate_proposal(
     node: &Node,
     client: &Client,
     root: &Vec<u8>,
-    proof: &Vec<Vec<u8>>,
-    shard: &Vec<u8>,
+    proofs: &[Vec<Vec<u8>>], // Updated type to match `reconstruct_unit`
+    shards: &[Vec<u8>], // Updated type to match `reconstruct_unit`
     epoch_id: u64,
 ) -> bool {
-
-
-    //TODO: Log any recovery attempts and confirm that they involve querying honest nodes as per the proof (lines 15-16)
-
-
+    info!(
+        "Node {} {}: Starting proposal validation for epoch {}",
+        node.id, node.ip_address, epoch_id
+    );
 
     // Validate Merkle branch
-    let computed_root = validate_merkle_branch(shard, proof);
+    let computed_root = validate_merkle_branch(shards,proofs); // Pass slices directly
     if computed_root != *root {
         error!(
-            "Node {} {}  HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
+            "Node {} {}: HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
             node.id, node.ip_address, epoch_id, computed_root, root
         );
         return false;
     }
+    info!(
+        "Node {} {}: Merkle root validation passed for epoch {}",
+        node.id, node.ip_address, epoch_id
+    );
 
     // Attempt to reconstruct the unit
-    if let Err(e) = reconstruct_unit(&[shard.to_vec()], proof) {
-        log_reconstruction_failure(node.id, epoch_id, &e);
+    match reconstruct_unit(shards, proofs,root) {
+        Ok(_) => {
+            info!(
+                "Node {} {}: Successfully reconstructed unit for epoch {}",
+                node.id, node.ip_address, epoch_id
+            );
+        }
+        Err(e) => {
+            log_reconstruction_failure(node.id, epoch_id, &e);
 
-        // Attempt recovery from the first node if reconstruction fails
-        // ch-RBC proof: Ensures liveness by allowing recovery from honest nodes (lines 15-16).
-        if !attempt_recovery_from_first_node(node, client, epoch_id).await {
-            return false;
+            // Attempt recovery from the first node if reconstruction fails
+            info!(
+                "Node {} {}: Attempting recovery from the first node for epoch {}",
+                node.id, node.ip_address, epoch_id
+            );
+            if !attempt_recovery_from_first_node(node, client, epoch_id).await {
+                error!(
+                    "Node {} {}: Recovery failed for epoch {}",
+                    node.id, node.ip_address, epoch_id
+                );
+                return false;
+            }
         }
     }
 
     info!(
-        "Node {} {}  HANDLE PROPOSE: Successfully validated proposal for epoch {}",
+        "Node {} {}: Successfully validated proposal for epoch {}",
         node.id, node.ip_address, epoch_id
     );
     true
 }
+
+
 
 // Attempt recovery from the first node in the network
 async fn attempt_recovery_from_first_node(
@@ -183,8 +203,8 @@ async fn send_prevotes(
     client: &Client,
     epoch_id: u64,
     root: &Vec<u8>,
-    proof: &Vec<Vec<u8>>,
-    shard: &Vec<u8>,
+    proofs: &Vec<Vec<Vec<u8>>>,
+    shards: &Vec<Vec<u8>>,
 ) {
     info!(
         "Node {} {} All Proposals received: Finalizing epoch {}",
@@ -200,7 +220,7 @@ async fn send_prevotes(
         );
         
         synchronize_dag_and_epoch(node, client, epoch_id, node_url).await;
-        send_prevote(node, client, node_url, epoch_id, root, proof, shard).await;
+        send_prevote(node, client, node_url, epoch_id, root, proofs, shards).await;
     }
 
     update_epoch_tracker(node, epoch_id).await;
@@ -238,15 +258,18 @@ async fn send_prevote(
     node_url: &str,
     epoch_id: u64,
     root: &Vec<u8>,
-    proof: &Vec<Vec<u8>>,
-    shard: &Vec<u8>,
+    proofs: &Vec<Vec<Vec<u8>>>,
+    shards: &Vec<Vec<u8>>,
 ) {
+
+//     pub shards: Vec<Vec<u8>>, // Multiple shards
+// pub proofs: Vec<Vec<Vec<u8>>>,
     let payload = PrevoteRequest {
         sender: node.id,
         root: root.clone(),
-        proof: proof.clone(),
+        proofs: proofs.clone(),
         epoch_id,
-        shard: shard.clone(),
+        shards: shards.clone(),
         node_url: node_url.to_string(),
     };
 

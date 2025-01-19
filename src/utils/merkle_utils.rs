@@ -50,52 +50,91 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
-/// Validate a Merkle branch and return the computed root
-pub fn validate_merkle_branch(shard: &[u8], proof: &[Vec<u8>]) -> Vec<u8> {
-    info!("Validating merkle branch");
+/// Validate Merkle branches and return the root
+pub fn validate_merkle_branch(shards: &[Vec<u8>], proofs: &[Vec<Vec<u8>>]) -> Vec<u8> {
+    info!("Validating Merkle branch");
 
-    let mut hash = Sha256::digest(shard).to_vec();
-    for sibling in proof {
-        let combined = if hash < *sibling {
-            [hash.clone(), sibling.clone()].concat()
-        } else {
-            [sibling.clone(), hash.clone()].concat()
-        };
-        hash = Sha256::digest(&combined).to_vec();
+    if shards.len() != proofs.len() {
+        error!(
+            "Mismatch in lengths: shards ({}) vs proofs ({})",
+            shards.len(),
+            proofs.len()
+        );
+        return Vec::new();
     }
-    info!("Done validating merkle branch");
-    hash
+
+    // Start with the hash of each shard
+    let mut validated_hashes = Vec::new();
+
+    for (shard, shard_proofs) in shards.iter().zip(proofs.iter()) {
+        // Start with the hash of the shard
+        let mut hash = Sha256::digest(shard).to_vec();
+
+        // Combine with sibling hashes from the proof
+        for sibling in shard_proofs {
+            let combined = if hash < *sibling {
+                [hash.clone(), sibling.clone()].concat()
+            } else {
+                [sibling.clone(), hash.clone()].concat()
+            };
+            hash = Sha256::digest(&combined).to_vec();
+        }
+
+        validated_hashes.push(hash);
+    }
+
+    let root = compute_merkle_root(&validated_hashes);
+    info!("Merkle branches validated. Computed root: {:?}", root);
+
+    root
 }
 
-/// Reconstruct the original unit from shards and proof
-pub fn reconstruct_unit(shards: &[Vec<u8>], proof: &[Vec<u8>]) -> Result<Vec<u8>, String> {
-    info!("Reconstructing unit from shards");
 
-    // Validate the number of shards
-    if shards.is_empty() || proof.is_empty() {
-        error!("Shards or proof is empty during reconstruction");
-        return Err("Shards or proof is empty".to_string());
+/// Reconstruct the original unit from shards and validate using proofs
+pub fn reconstruct_unit(
+    shards: &[Vec<u8>],
+    proofs: &[Vec<Vec<u8>>],
+    root: &Vec<u8>, // Pass the expected Merkle root as a parameter
+) -> Result<Vec<u8>, String> {
+    info!("Reconstructing unit from shards and verifying Merkle proof");
+
+    if shards.is_empty() || proofs.is_empty() {
+        let error_message = "Reconstruction failed: shards or proofs are empty".to_string();
+        error!("{}", error_message);
+        return Err(error_message);
     }
 
-    // Combine all shards into a single unit
+    if shards.len() != proofs.len() {
+        let error_message = format!(
+            "Reconstruction failed: number of shards ({}) does not match number of proofs ({})",
+            shards.len(),
+            proofs.len()
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+
+    // Combine all shards into a single reconstructed unit
     let mut reconstructed_unit = vec![];
     for shard in shards {
         reconstructed_unit.extend(shard);
     }
 
-    // Compute the Merkle root for verification
+    // Compute the hashes of the shards
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
-    let computed_root = compute_merkle_root(&shard_hashes);
 
-    // Verify the computed root against the provided proof
-    if computed_root != proof[0] {
-        error!(
-            "Reconstruction failed: computed root {:?} does not match proof root {:?}",
-            computed_root, proof[0]
+    // Validate the Merkle branch and compare the computed root with the provided root
+    let computed_root = validate_merkle_branch(&shard_hashes, proofs);
+    if computed_root != *root {
+        let error_message = format!(
+            "Reconstruction failed: computed root {:?} does not match provided root {:?}",
+            computed_root, root
         );
-        return Err("Reconstructed Merkle root does not match proof".to_string());
+        error!("{}", error_message);
+        return Err(error_message);
     }
 
     info!("Successfully reconstructed unit and verified Merkle root");
     Ok(reconstructed_unit)
 }
+
