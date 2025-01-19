@@ -18,7 +18,7 @@ openssl = { version = "0.10", features = ["vendored"] }
 axum = { version = "0.7.9", features = ["http1", "http2"] }
 sha2 = "0.10"
 chrono = "0.4"
-
+base64 = "0.22.0"
 [[bin]]
 name = "aleph_rbc"
 path = "src/aleph_rbc.rs"

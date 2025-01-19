@@ -7,8 +7,7 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
 use tracing_subscriber;
-
-// use crate::structs::toml_config::TomlConfig;
+use openssl::base64::encode_block;
 use aleph_research::utils::config_util::{are_enough_proposals_received, load_config, save_config};
 use aleph_research::utils::ip_server_utils::{is_node_turn, notify_transaction_submitted};
 use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, ensure_epoch_sync};
@@ -24,7 +23,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     wait_for_all_nodes_health(&client, &toml_config).await;
 
     // Handle the Result from generate_and_send_transactions_in_order
-    let merkle_root = generate_and_send_transactions_in_order(&client, &toml_config).await?;
+    let (merkle_root, proofs, shards) = generate_and_send_transactions_in_order(&client, &toml_config).await?;
 
     // Update the proposals field in the TOML config
     let mut updated_toml_config = load_config("/home/aleph-node/aleph-node-config.toml");
@@ -39,7 +38,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Pass the unwrapped merkle_root to send_prevotes
     if are_enough_proposals_received().await {
-        send_prevotes(&client, &updated_toml_config, &merkle_root).await?;
+
+        send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
     }
 
     notify_transaction_submitted(&client, &updated_toml_config).await?;
@@ -53,9 +53,11 @@ async fn send_prevotes(
     client: &Client,
     toml_config: &TomlConfig,
     merkle_root: &Vec<u8>,
+    proofs: &Vec<Vec<u8>>, // Updated to plural
+    shards: &Vec<Vec<u8>>, // Updated to plural
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
-        "Node {} {}: Starting PREVOTE phase...",
+        "Node {} {}: Starting PREVOTE phase from aleph_start...",
         toml_config.node.id, toml_config.network.ip_address
     );
 
@@ -64,62 +66,86 @@ async fn send_prevotes(
         "sender": toml_config.node.id,
         "epoch_id": toml_config.consensus.epoch_round_id,
         "root": merkle_root,
+        "proofs": proofs, // Updated to plural
+        "shards": shards, // Updated to plural
     });
+
+    info!(
+        "Node {} {}: Prevote payload to be sent: {}",
+        toml_config.node.id, toml_config.network.ip_address, prevote_payload
+    );
+
+    let mut all_successful = true; // Track if all prevote messages succeed
 
     // Multicast prevote message to all nodes
     for node_url in &toml_config.network.nodes {
-        let response = client
-            .post(format!("http://{}/prevote", node_url))
-            .json(&prevote_payload)
-            .send()
-            .await;
+        let url = format!("http://{}/prevote", node_url);
+        info!("Node {}: Sending prevote to {}", toml_config.node.id, url);
+
+        let response = client.post(&url).json(&prevote_payload).send().await;
 
         match response {
-            Ok(res) if res.status().is_success() => {
-                info!(
-                    "Node {}: Prevote successfully sent to {}",
-                    toml_config.node.id, node_url
-                );
-            }
             Ok(res) => {
-                error!(
-                    "Node {}: Failed to send prevote to {}. Status: {}",
-                    toml_config.node.id, node_url, res.status()
-                );
+                let status = res.status();
+                let response_body = res.text().await.unwrap_or_else(|_| "Failed to read response body".to_string());
+
+                if status.is_success() {
+                    info!(
+                        "Node {}: Prevote successfully sent to {}. Response: {}",
+                        toml_config.node.id, node_url, response_body
+                    );
+                } else {
+                    error!(
+                        "Node {}: Failed to send prevote to {}. Status: {}. Response: {}",
+                        toml_config.node.id, node_url, status, response_body
+                    );
+                    all_successful = false; // Mark failure if any message fails
+                }
             }
             Err(e) => {
                 error!(
                     "Node {}: Error sending prevote to {}: {:?}",
                     toml_config.node.id, node_url, e
                 );
+                all_successful = false; // Mark failure if there's a network error
             }
         }
     }
 
-    info!(
-        "Node {} {}: Completed sending PREVOTE messages.",
-        toml_config.node.id, toml_config.network.ip_address
-    );
-
-    Ok(())
+    // Final log and return result based on success/failure
+    if all_successful {
+        info!(
+            "Node {} {}: All PREVOTE messages sent successfully.",
+            toml_config.node.id, toml_config.network.ip_address
+        );
+        Ok(())
+    } else {
+        error!(
+            "Node {} {}: Failed to send one or more PREVOTE messages.",
+            toml_config.node.id, toml_config.network.ip_address
+        );
+        Err("One or more PREVOTE messages failed".into())
+    }
 }
 
 /// Generate and send transactions in order
 async fn generate_and_send_transactions_in_order(
     client: &Client,
     toml_config: &TomlConfig,
-) -> Result< Vec<u8>, Box<dyn std::error::Error>> {
-    wait_for_turn(client, toml_config).await?; 
+) -> Result<(Vec<u8>, Vec<Vec<u8>>, Vec<Vec<u8>>), Box<dyn std::error::Error>> {
+    wait_for_turn(client, toml_config).await?;
 
-    let (shards, shard_hashes, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
+    let (shards, proofs, merkle_root) = generate_shards_and_merkle_root(toml_config).await;
 
-    send_transactions(client, toml_config, &shards, &shard_hashes, &merkle_root).await?;
+    send_transactions(client, toml_config, &shards, &proofs, &merkle_root).await?;
 
     info!(
         "Node {} {}: SENT Transaction proposals for epoch {}.",
         toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
     );
-    Ok(merkle_root)
+
+    // Return Merkle root, proofs, and shards
+    Ok((merkle_root, proofs, shards))
 }
 
 /// Wait for the node's turn to submit a transaction
@@ -161,15 +187,23 @@ async fn send_transactions(
 ) -> Result<(), Box<dyn std::error::Error>> {
     for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
-        let merkle_branch = compute_merkle_branch(&shard_hashes, index % shards.len());
+        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shards.len())
+            .iter()
+            .map(|hash| hash.to_vec())
+            .collect();
 
         let payload = json!({
             "sender": toml_config.node.id,
-            "shard": shard,
-            "proof": merkle_branch,
-            "root": merkle_root,
+            "shards": vec![shard.clone()], // Raw byte arrays
+            "proofs": merkle_branch,      // Raw byte arrays
+            "root": merkle_root.to_vec(), // Raw byte array
             "epoch_id": toml_config.consensus.epoch_round_id,
         });
+
+        info!(
+            "Node {}: Sending propose request to {}. Payload: {:?}",
+            toml_config.node.id, node_url, payload
+        );
 
         let response = client
             .post(format!("http://{}/propose", node_url))
@@ -181,20 +215,21 @@ async fn send_transactions(
             Ok(res) => {
                 if res.status().is_success() {
                     info!(
-                        "Node {} {}:***========== SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}=======***",
-                        toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url
+                        "Node {} {}: SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}",
+                        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url
                     );
                 } else {
+                    let error_text = res.text().await.unwrap_or_else(|_| "Unknown error".to_string());
                     error!(
-                        "Node {} {}: Failed to send propose request transaction for epoch {} to {}. Status: {}",
-                        toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, res.status()
+                        "Node {} {}: Failed to send propose request transaction for epoch {} to {} Response: {}",
+                        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, error_text
                     );
                 }
             }
             Err(e) => {
                 error!(
                     "Node {} {}: Error sending transaction for epoch {} to {}: {:?}",
-                    toml_config.node.id,toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, e
+                    toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, e
                 );
             }
         }
@@ -216,13 +251,13 @@ async fn generate_shards_and_merkle_root(
         .map(|chunk| chunk.to_vec())
         .collect();
 
-    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
-    let merkle_root = compute_merkle_root(&shard_hashes);
+    let proofs: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    let merkle_root = compute_merkle_root(&proofs);
 
     info!(
-        "Generated shards: {:?}, shard hashes: {:?}, Merkle root: {:?}",
-        shards, shard_hashes, merkle_root
+        "Generated shards: {:?}, shard proofs: {:?}, Merkle root: {:?}",
+        shards, proofs, merkle_root
     );
 
-    (shards, shard_hashes, merkle_root)
+    (shards, proofs, merkle_root)
 }

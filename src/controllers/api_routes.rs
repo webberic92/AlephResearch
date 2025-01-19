@@ -1,5 +1,7 @@
 use axum::{routing::post, Json, Router};
 use reqwest::Client;
+use serde_json::Value;
+use tracing::{error, info};
 use std::sync::Arc;
 
 use crate::{
@@ -14,53 +16,55 @@ use crate::{
 
 pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
-        .route("/propose", post({
-            let node = node.clone();
-            let client = client.clone();
-            move |Json(payload): Json<ProposeRequest>| {
-                async move {
-                    handle_propose(
-                        &node,
-                        &client,
-                        payload.sender,
-                        payload.root,
-                        payload.proof,
-                        &payload.shard,
-                        payload.epoch_id,
-                    )
-                    .await;
-                    Json(Response {
-                        status: format!(
-                            "Node {}: Propose accepted from Node {} for epoch {}",
-                            node.id, payload.sender, payload.epoch_id
-                        ),
-                    })
+    .route("/propose", post({
+        let node = node.clone();
+        let client = client.clone();
+        move |Json(payload): Json<Value>| { // Change to accept raw JSON
+            async move {
+                // Log the raw payload
+                info!("Received raw payload: {:?}", payload);
+    
+                // Attempt to deserialize into `ProposeRequest`
+                match serde_json::from_value::<ProposeRequest>(payload.clone()) {
+                    Ok(parsed_payload) => {
+                        info!("Successfully deserialized payload: {:?}", parsed_payload);
+    
+                        handle_propose(
+                            &node,
+                            &client,
+                            parsed_payload.sender,
+                            parsed_payload.root,
+                            &parsed_payload.proofs, // Pass reference to slice of vectors of vectors
+                            &parsed_payload.shards, // Pass reference to slice of vectors
+                            parsed_payload.epoch_id,
+                        )
+                        .await;
+    
+                        Json(Response {
+                            status: format!(
+                                "Node {}: Propose accepted from Node {} for epoch {}",
+                                node.id, parsed_payload.sender, parsed_payload.epoch_id
+                            ),
+                        })
+                    }
+                    Err(e) => {
+                        error!("Failed to deserialize payload: {:?}", e);
+                        Json(Response {
+                            status: format!("Deserialization error: {:?}", e),
+                        })
+                    }
                 }
             }
-        }))
+        }
+    }))  
         .route("/prevote", post({
             let node = node.clone();
-            let client = client.clone(); // Clone the `client` variable
+            let client = client.clone();
             move |Json(payload): Json<PrevoteRequest>| {
+                let node = node.clone();
+                let client = client.clone();
                 async move {
-                    handle_prevote(
-                        &node,
-                        &client, // Use the cloned `client` variable
-                        payload.sender,
-                        payload.root,
-                        payload.proof,
-                        payload.shard,
-                        payload.epoch_id, // Added `epoch_id` argument
-                        &payload.node_url,
-                        // Updated to use `unit` instead of `shard`
-                    )
-                    .await;
-                    Json(Response {
-                        status: format!(
-                            "Node {}: Prevote accepted from Node {}",
-                            node.id, payload.sender
-                        ),
-                    })
+                    handle_prevote(node, client, payload).await
                 }
             }
         }))
