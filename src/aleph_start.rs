@@ -198,6 +198,10 @@ async fn send_transactions(
     let mut all_successful = true;
 
     for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
+        info!(
+            "Node {} {}: Sending proposal too {} for epoch {}",
+            toml_config.node.id, toml_config.network.ip_address, node_url, toml_config.consensus.epoch_round_id
+        );
         let shard = &shards[index % shards.len()];
         let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shard_hashes.len())
             .iter()

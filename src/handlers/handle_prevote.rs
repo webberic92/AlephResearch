@@ -1,4 +1,3 @@
-use crate::utils::errors_util::log_reconstruction_failure;
 use crate::utils::recovery_util::attempt_recovery;
 use crate::utils::dag_utils::ensure_dag_synchronization; // Ensure DAG synchronization
 use crate::{handlers::handle_commit::handle_commit, utils::merkle_utils::reconstruct_unit};
@@ -142,13 +141,17 @@ pub async fn handle_prevote_logic(
                         "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
                         node.id, root, e
                     );
-                    log_reconstruction_failure(node.id, epoch_id, &e);
-                    if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, node_url).await {
-                        error!(
-                            "Node {}: Recovery failed for epoch {}. Error: {}",
-                            node.id, epoch_id, recovery_err
-                        );
-                    }
+
+                    // info!(
+                    //     "Node {}: Attempting recovery for epoch {}. Ensure DAG synchronization and shard validity.",
+                    //     node.id, epoch_id
+                    // );                    
+                    // if let Err(recovery_err) = attempt_recovery(node, client, epoch_id, node_url).await {
+                    //     error!(
+                    //         "Node {}: Recovery failed for epoch {}. Error: {}",
+                    //         node.id, epoch_id, recovery_err
+                    //     );
+                    // }
                 }
             }
         } else {

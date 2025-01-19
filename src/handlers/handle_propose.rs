@@ -8,7 +8,6 @@ use crate::{
         config_util::{are_enough_proposals_received, load_config, save_config},
         dag_utils::ensure_dag_synchronization,
         epoch_utils::{ensure_no_overlap, handle_sync_epoch},
-        errors_util::log_reconstruction_failure,
         merkle_utils::{reconstruct_unit, validate_merkle_branch},
         recovery_util::attempt_recovery,
     },
@@ -212,22 +211,23 @@ async fn validate_and_reconstruct_unit(
             Ok(())
         }
         Err(e) => {
-            log_reconstruction_failure(node.id, epoch_id, &e);
-
-            // Attempt recovery
-            info!(
-                "Node {} {}: Attempting recovery from the first node for epoch {}",
-                node.id, node.ip_address, epoch_id
+            error!(
+                "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
+                node.id, root, e
             );
-            if !attempt_recovery_from_first_node(node, client, epoch_id).await {
-                let error_message = format!(
-                    "Node {} {}: Recovery failed for epoch {}",
-                    node.id, node.ip_address, epoch_id
-                );
-                error!("{}", error_message);
-                return Err(error_message);
-            }
-
+            // Attempt recovery
+            // info!(
+            //     "Node {} {}: Attempting recovery from the first node for epoch {}",
+            //     node.id, node.ip_address, epoch_id
+            // );
+            // if !attempt_recovery_from_first_node(node, client, epoch_id).await {
+            //     let error_message = format!(
+            //         "Node {} {}: Recovery failed for epoch {}",
+            //         node.id, node.ip_address, epoch_id
+            //     );
+            //     error!("{}", error_message);
+            //     return Err(error_message);
+            // }
             Err(format!(
                 "Node {} {}: Reconstruction failed for epoch {}: {}",
                 node.id, node.ip_address, epoch_id, e
