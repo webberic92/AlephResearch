@@ -1,0 +1,53 @@
+In most distributed consensus protocols, including ones that follow Byzantine Fault Tolerant (BFT) designs like your described system, epochs progress sequentially and are tightly coupled to the completion of specific phases (e.g., propose, prevote, commit). Here's how it generally works, addressing your questions:
+1. Does the prevote phase complete to the commit phase before the epoch increases?
+
+    Yes, the prevote phase must complete and lead to a commit before the epoch advances to the next one.
+    In your scenario:
+        Node 1 sends a proposal.
+        This satisfies the quorum required to begin the prevote phase.
+        Nodes exchange prevote messages until a quorum is satisfied, leading to a commit.
+        Only after the commit phase is finalized does the system transition from epoch 1 to epoch 2.
+
+Why?
+
+    The commit phase ensures that all nodes agree on the finalized state or decision for the current epoch.
+    Advancing to the next epoch without completing the commit phase could result in inconsistency or divergence in the system state across nodes.
+
+2. Is the epoch increased every time a commit happens?
+
+    Yes, typically the epoch increases after every commit.
+    The successful completion of a commit phase indicates that consensus has been reached for the current epoch, allowing the system to move to the next epoch.
+
+Workflow:
+
+    Proposal Phase: A node proposes data or a block for the current epoch.
+    Prevote Phase: Nodes validate the proposal and cast prevotes.
+    Commit Phase: If a quorum of prevotes is reached, nodes commit to the proposed data.
+    Epoch Transition: Once the commit phase completes, the epoch counter is incremented, and the next round begins.
+
+Implications:
+
+    Each epoch corresponds to a unique consensus decision, such as the agreement on a batch of transactions, block, or other data.
+    The transition to the next epoch ensures that all nodes start the new round with a consistent state.
+
+Practical Considerations in Your Setup
+
+    Three Nodes:
+        With three nodes, a quorum (majority) is two. Once two nodes agree on a proposal (prevote and commit), the system can progress to the next epoch.
+
+    Fault Tolerance:
+        Ensure that all nodes have synchronized their state before transitioning to the next epoch. For example:
+            Node 1 sends a proposal.
+            Node 2 and Node 3 both receive the proposal and send prevotes.
+            If two nodes (e.g., Node 1 and Node 2) reach quorum during the prevote phase, they can transition to commit and finalize the epoch.
+
+    Epoch Increment:
+        Ensure the epoch counter only increments after the commit phase is finalized across the quorum of nodes.
+
+Summary
+
+    The prevote phase must complete to the commit phase before advancing to the next epoch.
+    Epoch increases only after the commit phase is completed successfully, ensuring consistency.
+    The system transitions in the following order: propose → prevote → commit → epoch increment.
+
+This design guarantees that each epoch has a well-defined, agreed-upon state before moving forward. Let me know if you need help refining your protocol logic or debugging transitions!

@@ -1,7 +1,7 @@
 
 use aleph_research::structs::requests::PrevoteRequest;
 use aleph_research::structs::toml_config::TomlConfig;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde_json::json;
 use sha2::{Digest, Sha256};
 use std::time::Duration;
@@ -45,7 +45,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         // send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
     }
 
-    notify_transaction_submitted(&client, &updated_toml_config).await?;
+    // notify_transaction_submitted(&client, &updated_toml_config).await?;
     Ok(())
 }
 
@@ -195,25 +195,22 @@ async fn send_transactions(
     shard_hashes: &[Vec<u8>],
     merkle_root: &[u8],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let mut all_successful = true;
+
     for (index, node_url) in toml_config.network.nodes.iter().enumerate() {
         let shard = &shards[index % shards.len()];
         let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shard_hashes.len())
             .iter()
-            .map(|hash| hash.clone()) // Clone to ensure type matches Vec<Vec<u8>>
+            .map(|hash| hash.clone())
             .collect();
 
         let payload = json!({
             "sender": toml_config.node.id,
-            "shards": vec![shard.clone()], // Use `Vec<Vec<u8>>`
-            "proofs": vec![merkle_branch], // Use `Vec<Vec<Vec<u8>>>`
-            "root": merkle_root.to_vec(), // Use `Vec<u8>`
+            "shards": vec![shard.clone()],
+            "proofs": vec![merkle_branch],
+            "root": merkle_root.to_vec(),
             "epoch_id": toml_config.consensus.epoch_round_id,
         });
-
-        info!(
-            "Node {}: Sending propose request to {}. Payload: {:?}",
-            toml_config.node.id, node_url, payload
-        );
 
         let response = client
             .post(format!("http://{}/propose", node_url))
@@ -223,29 +220,46 @@ async fn send_transactions(
 
         match response {
             Ok(res) => {
-                if res.status().is_success() {
-                    info!(
-                        "Node {} {}: SUCCESSFULLY SENT PROPOSE REQUEST for epoch {} to {}",
-                        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url
-                    );
-                } else {
-                    let error_text = res.text().await.unwrap_or_else(|_| "Unknown error".to_string());
-                    error!(
-                        "Node {} {}: Failed to send propose request transaction for epoch {} to {} Response: {}",
-                        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, error_text
-                    );
+                match res.status() {
+                    StatusCode::OK => {
+                        info!(
+                            "Node {}: Proposal successfully sent to {}",
+                            toml_config.node.id, node_url
+                        );
+                    }
+                    StatusCode::BAD_REQUEST => {
+                        let error_text = res.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+                        error!(
+                            "Node {}: Proposal rejected by {}: {}",
+                            toml_config.node.id, node_url, error_text
+                        );
+                        all_successful = false;
+                    }
+                    _ => {
+                        let error_text = res.text().await.unwrap_or_else(|_| "Unknown error".to_string());
+                        error!(
+                            "Node {}: Unexpected error from {}: Response: {}",
+                            toml_config.node.id, node_url, error_text
+                        );
+                        all_successful = false;
+                    }
                 }
             }
             Err(e) => {
                 error!(
-                    "Node {} {}: Error sending transaction for epoch {} to {}: {:?}",
-                    toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id, node_url, e
+                    "Node {}: Network error while sending proposal to {}: {:?}",
+                    toml_config.node.id, node_url, e
                 );
+                all_successful = false;
             }
         }
     }
 
-    Ok(())
+    if all_successful {
+        Ok(())
+    } else {
+        Err("One or more proposals failed".into())
+    }
 }
 
 async fn generate_shards_and_merkle_root(
@@ -264,10 +278,10 @@ async fn generate_shards_and_merkle_root(
     let proofs: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
     let merkle_root = compute_merkle_root(&proofs);
 
-    info!(
-        "Generated shards: {:?}, shard proofs: {:?}, Merkle root: {:?}",
-        shards, proofs, merkle_root
-    );
+    // info!(
+    //     "Generated shards: {:?}, shard proofs: {:?}, Merkle root: {:?}",
+    //     shards, proofs, merkle_root
+    // );
 
     (shards, proofs, merkle_root)
 }

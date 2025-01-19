@@ -1,8 +1,9 @@
+use axum::Json;
 use serde_json::json;
 use tracing::{error, info};
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use crate::{
-    structs::{node::Node, requests::PrevoteRequest},
+    structs::{node::Node, requests::PrevoteRequest, responses::Response},
     utils::{
         config_util::{are_enough_proposals_received, load_config, save_config},
         dag_utils::ensure_dag_synchronization,
@@ -21,112 +22,219 @@ pub async fn handle_propose(
     client: &Client,
     sender: usize,
     root: Vec<u8>,
-    proofs: &[Vec<Vec<u8>>], // Slice of vectors of vectors
-    shards: &[Vec<u8>],      // Slice of vectors
+    proofs: &[Vec<Vec<u8>>],
+    shards: &[Vec<u8>],
     epoch_id: u64,
-) {
+) -> (StatusCode, Json<Response>) {
     info!(
         "***==== Handling PROPOSE REQUEST Node {} {} :  from {} ====***",
         node.id, node.ip_address, sender
     );
 
-    // Step 1: Validate the proposal (Merkle root and unit reconstruction)
-    // ch-RBC proof: Ensures data integrity and prevents malicious data injection (line 7 of ch-RBC protocol).
-    if !validate_proposal(node, client, &root, proofs, shards, epoch_id).await {
-        return;
+    // Step 1: Validate the Merkle root
+    if let Err(error_message) = validate_merkle_branch_proposal(node, &root, proofs, shards, epoch_id).await {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(Response { status: error_message }),
+        );
     }
 
-    // Step 2: Synchronize the epoch to ensure all nodes are aligned
-    // ch-RBC proof: Guarantees that nodes are processing data from the same round (line 11).
+    // Step 2: Validate reconstruction
+    if let Err(error_message) = validate_and_reconstruct_unit(node, client, &root, proofs, shards, epoch_id).await {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(Response { status: error_message }),
+        );
+    }
+
+    // Step 3: Synchronize the epoch
     if !synchronize_epoch(node, epoch_id, sender).await {
-        return;
+        error!(
+            "Node {} {}: Synchronization failed for epoch {} from sender {}",
+            node.id, node.ip_address, epoch_id, sender
+        );
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(Response {
+                status: format!(
+                    "Node {}: Synchronization failed for epoch {} from sender {}",
+                    node.id, epoch_id, sender
+                ),
+            }),
+        );
     }
 
-    // Step 3: Update the proposal tracker with the sender's ID
-    // ch-RBC proof: Tracks received proposals, ensuring a majority quorum is reached (lines 12-13).
+    // Step 3: Update the proposal tracker
     update_proposal_tracker(node, sender, epoch_id).await;
 
-    // Step 4: Check if all proposals for the current epoch have been received
-    // If true, finalize the epoch and transition to the next phase
+    // Step 4: Transition to the prevote phase if enough proposals are received
     if are_enough_proposals_received().await {
-        info!("Node {} {}: Received enough proposals to PREVOTE from handle_proposal!", node.id, node.ip_address);
+        info!(
+            "Node {} {}: Received enough proposals to PREVOTE from handle_propose!",
+            node.id, node.ip_address
+        );
 
-        // Convert slices to Vec before calling send_prevotes
-        let proofs_vec = proofs.to_vec();
-        let shards_vec = shards.to_vec();
+        // let proofs_vec = proofs.to_vec();
+        // let shards_vec = shards.to_vec();
 
-        send_prevotes(node, client, epoch_id, &root, &proofs_vec, &shards_vec).await;
+        // send_prevotes(node, client, epoch_id, &root, &proofs_vec, &shards_vec).await;
     } else {
         info!(
-            "Node {} {} HANDLE PROPOSE: Waiting for more proposals for epoch {}",
+            "Node {} {}: Waiting for more proposals for epoch {}",
             node.id, node.ip_address, epoch_id
         );
     }
+
+    (
+        StatusCode::OK,
+        Json(Response {
+            status: format!(
+                "Node {}: Proposal accepted for epoch {} from sender {}",
+                node.id, epoch_id, sender
+            ),
+        }),
+    )
 }
+
 
 
 // Validate the proposal (Merkle branch and reconstruction)
 // Ensures the integrity of the proposed data using Merkle proofs and reconstructs the unit if necessary.
-async fn validate_proposal(
+// async fn validate_proposal(
+//     node: &Node,
+//     client: &Client,
+//     root: &Vec<u8>,
+//     proofs: &[Vec<Vec<u8>>], // Updated type to match `reconstruct_unit`
+//     shards: &[Vec<u8>], // Updated type to match `reconstruct_unit`
+//     epoch_id: u64,
+// ) -> bool {
+//     info!(
+//         "Node {} {}: Starting proposal validation for epoch {}",
+//         node.id, node.ip_address, epoch_id
+//     );
+
+//     // Validate Merkle branch
+//     let computed_root = validate_merkle_branch(shards,proofs); // Pass slices directly
+//     if computed_root != *root {
+//         error!(
+//             "Node {} {}: HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
+//             node.id, node.ip_address, epoch_id, computed_root, root
+//         );
+//         return false;
+//     }
+//     info!(
+//         "Node {} {}: Merkle root validation passed for epoch {}",
+//         node.id, node.ip_address, epoch_id
+//     );
+
+//     // Attempt to reconstruct the unit
+//     match reconstruct_unit(shards, proofs,root) {
+//         Ok(_) => {
+//             info!(
+//                 "Node {} {}: Successfully reconstructed unit for epoch {}",
+//                 node.id, node.ip_address, epoch_id
+//             );
+//         }
+//         Err(e) => {
+//             log_reconstruction_failure(node.id, epoch_id, &e);
+
+//             // Attempt recovery from the first node if reconstruction fails
+//             info!(
+//                 "Node {} {}: Attempting recovery from the first node for epoch {}",
+//                 node.id, node.ip_address, epoch_id
+//             );
+//             if !attempt_recovery_from_first_node(node, client, epoch_id).await {
+//                 error!(
+//                     "Node {} {}: Recovery failed for epoch {}",
+//                     node.id, node.ip_address, epoch_id
+//                 );
+//                 return false;
+//             }
+//         }
+//     }
+
+//     info!(
+//         "Node {} {}: Successfully validated proposal for epoch {}",
+//         node.id, node.ip_address, epoch_id
+//     );
+//     true
+// }
+
+async fn validate_merkle_branch_proposal(
     node: &Node,
-    client: &Client,
     root: &Vec<u8>,
-    proofs: &[Vec<Vec<u8>>], // Updated type to match `reconstruct_unit`
-    shards: &[Vec<u8>], // Updated type to match `reconstruct_unit`
+    proofs: &[Vec<Vec<u8>>],
+    shards: &[Vec<u8>],
     epoch_id: u64,
-) -> bool {
+) -> Result<(), String> {
     info!(
-        "Node {} {}: Starting proposal validation for epoch {}",
+        "Node {} {}: Validating Merkle branch for epoch {}",
         node.id, node.ip_address, epoch_id
     );
 
-    // Validate Merkle branch
-    let computed_root = validate_merkle_branch(shards,proofs); // Pass slices directly
+    let computed_root = validate_merkle_branch(shards, proofs);
     if computed_root != *root {
-        error!(
-            "Node {} {}: HANDLE PROPOSE: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
+        let error_message = format!(
+            "Node {} {}: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
             node.id, node.ip_address, epoch_id, computed_root, root
         );
-        return false;
+        error!("{}", error_message);
+        return Err(error_message);
     }
+
     info!(
         "Node {} {}: Merkle root validation passed for epoch {}",
         node.id, node.ip_address, epoch_id
     );
 
-    // Attempt to reconstruct the unit
-    match reconstruct_unit(shards, proofs,root) {
+    Ok(())
+}
+
+async fn validate_and_reconstruct_unit(
+    node: &Node,
+    client: &Client,
+    root: &Vec<u8>,
+    proofs: &[Vec<Vec<u8>>],
+    shards: &[Vec<u8>],
+    epoch_id: u64,
+) -> Result<(), String> {
+    info!(
+        "Node {} {}: Reconstructing unit for epoch {}",
+        node.id, node.ip_address, epoch_id
+    );
+
+    match reconstruct_unit(shards, proofs, root) {
         Ok(_) => {
             info!(
                 "Node {} {}: Successfully reconstructed unit for epoch {}",
                 node.id, node.ip_address, epoch_id
             );
+            Ok(())
         }
         Err(e) => {
             log_reconstruction_failure(node.id, epoch_id, &e);
 
-            // Attempt recovery from the first node if reconstruction fails
+            // Attempt recovery
             info!(
                 "Node {} {}: Attempting recovery from the first node for epoch {}",
                 node.id, node.ip_address, epoch_id
             );
             if !attempt_recovery_from_first_node(node, client, epoch_id).await {
-                error!(
+                let error_message = format!(
                     "Node {} {}: Recovery failed for epoch {}",
                     node.id, node.ip_address, epoch_id
                 );
-                return false;
+                error!("{}", error_message);
+                return Err(error_message);
             }
+
+            Err(format!(
+                "Node {} {}: Reconstruction failed for epoch {}: {}",
+                node.id, node.ip_address, epoch_id, e
+            ))
         }
     }
-
-    info!(
-        "Node {} {}: Successfully validated proposal for epoch {}",
-        node.id, node.ip_address, epoch_id
-    );
-    true
 }
-
 
 
 // Attempt recovery from the first node in the network
