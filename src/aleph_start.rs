@@ -306,13 +306,26 @@ async fn generate_shards_and_merkle_root(
     let transaction_size = toml_config.consensus.transaction_size;
     let data_shards = toml_config.consensus.data_shards;
 
+    // Generate deterministic transaction data
     let transaction_data = vec![1; transaction_size]; // Deterministic data
+    info!("Generated deterministic transaction data of size: {}", transaction_size);
+    
+    // Generate shards
     let shard_size = transaction_size / data_shards;
     let shards: Vec<Vec<u8>> = transaction_data
-        .chunks(shard_size)
-        .map(|chunk| chunk.to_vec())
-        .collect();
+    .chunks(shard_size)
+    .map(|chunk| chunk.to_vec())
+    .collect();
 
+    info!("Transaction data size: {}", transaction_data.len());
+    info!(
+        "Shard sizes: {:?}",
+        shards.iter().map(|s| s.len()).collect::<Vec<_>>()
+    );
+    info!(
+        "Total size of all shards: {}",
+        shards.iter().map(|s| s.len()).sum::<usize>()
+    );
     assert_eq!(
         shards.len(),
         data_shards,
@@ -321,14 +334,46 @@ async fn generate_shards_and_merkle_root(
         shards.len()
     );
 
-    info!("Generated transaction data: {:?}", transaction_data);
-    info!("Generated shards: {:?}", shards);
+    // Log shard details
+    for (i, shard) in shards.iter().enumerate() {
+        info!(
+            "Shard {}: Size = {}, Data = {:?}",
+            i,
+            shard.len(),
+            &shard[0..std::cmp::min(10, shard.len())] // Log only the first 10 bytes for readability
+        );
+    }
 
-    let proofs: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+    // Compute hashes for each shard
+    let proofs: Vec<Vec<u8>> = shards.iter().map(|s| {
+        let hash = Sha256::digest(s).to_vec();
+        info!("Computed hash for shard: {:?}", hash);
+        hash
+    }).collect();
+
+    // Compute Merkle root
     let merkle_root = compute_merkle_root(&proofs);
-
-    info!("Generated proofs: {:?}", proofs);
     info!("Computed Merkle root: {:?}", merkle_root);
 
+    // Validate shard size according to protocol constraints
+    for shard in &shards {
+        let is_valid = check_shard_size(shard.len(), toml_config.consensus.batch_size);
+        if !is_valid {
+            error!(
+                "Shard size validation failed. Size: {}, Batch size limit: {}",
+                shard.len(),
+                toml_config.consensus.batch_size
+            );
+        }
+    }
+
+
+
+    // Return shards, proofs, and the root
     (shards, proofs, merkle_root)
+}
+
+/// Check shard size validity according to protocol constraints
+fn check_shard_size(shard_size: usize, batch_size_limit: usize) -> bool {
+    shard_size <= batch_size_limit
 }
