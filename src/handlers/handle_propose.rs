@@ -29,6 +29,7 @@ pub async fn handle_propose(
         "***==== Handling PROPOSE REQUEST Node {} {} from Sender {} ====***",
         node.id, node.ip_address, sender
     );
+    info!("Proofs received for validation: {:?}", proofs);
 
     // Step 1: Validate the Merkle root
     let computed_root = validate_merkle_branch(shards, proofs);
@@ -93,3 +94,4 @@ pub async fn handle_propose(
         }),
     )
 }
+

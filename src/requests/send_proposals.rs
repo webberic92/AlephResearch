@@ -10,7 +10,7 @@ pub async fn send_proposals(
     client: &Client,
     toml_config: &TomlConfig,
     shards: &[Vec<u8>],
-    shard_hashes: &[Vec<u8>],
+    proofs: &[Vec<u8>],
     merkle_root: &[u8],
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
@@ -20,7 +20,7 @@ pub async fn send_proposals(
         toml_config.consensus.epoch_round_id
     );
 
-    for (i, hash) in shard_hashes.iter().enumerate() {
+    for (i, hash) in proofs.iter().enumerate() {
         info!(
             "Node {} {}: Shard {} Hash: {:?}",
             toml_config.node.id, toml_config.network.ip_address, i, hash
@@ -37,7 +37,7 @@ pub async fn send_proposals(
 
         // Extract shard and corresponding Merkle branch
         let shard = &shards[index % shards.len()];
-        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&shard_hashes, index % shard_hashes.len())
+        let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&proofs, index % proofs.len())
             .iter()
             .map(|hash| hash.clone())
             .collect();
@@ -47,14 +47,10 @@ pub async fn send_proposals(
             .map(|shard| general_purpose::STANDARD.encode(shard))
             .collect();
 
-        let serialized_proofs: Vec<Vec<String>> = shard_hashes
-            .iter()
-            .map(|hash| vec![general_purpose::STANDARD.encode(hash)])
-            .collect();
+        let serialized_proofs = serde_json::to_string(&proofs)?;
+        info!("Serialized proofs: {}", serialized_proofs);
 
         info!("Serialized shards for transmission: {:?}", serialized_shards);
-        info!("Serialized proofs for transmission: {:?}", serialized_proofs);
-
         // Prepare payload
         let payload = json!({
             "sender": toml_config.node.id,
@@ -75,6 +71,10 @@ pub async fn send_proposals(
             Ok(res) => {
                 let status = res.status();
                 let response_body = res.text().await.unwrap_or_else(|_| "Failed to read response body".to_string());
+
+                // Log raw request body for debugging
+                let raw_body = serde_json::to_string(&payload)?;
+                info!("Raw request body sent to {}: {}", node_url, raw_body);
 
                 match status {
                     StatusCode::OK => {

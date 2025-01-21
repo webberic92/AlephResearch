@@ -31,8 +31,12 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             current_index - 1
         };
 
+        // Add the sibling hash even if it doesn't exist (use a placeholder)
         if sibling_index < current_level.len() {
             branch.push(current_level[sibling_index].clone());
+        } else {
+            // Placeholder for missing sibling
+            branch.push(vec![]);
         }
 
         current_index /= 2;
@@ -51,12 +55,12 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
+
 /// Validate Merkle branches and return the root
 pub fn validate_merkle_branch(
     shard_hashes: &[Vec<u8>],
     proofs: &[Vec<Vec<u8>>],
 ) -> Vec<u8> {
-    // Log the number of initial shard hashes and proofs
     info!(
         "Validating Merkle branch with {} shard hashes and {} levels of proofs",
         shard_hashes.len(),
@@ -65,9 +69,6 @@ pub fn validate_merkle_branch(
 
     let mut current_hashes = shard_hashes.to_vec();
 
-    // Log initial shard hashes
-    info!("Initial shard hashes: {:?}", current_hashes);
-
     for (level, proof) in proofs.iter().enumerate() {
         let mut next_level_hashes = vec![];
 
@@ -75,54 +76,25 @@ pub fn validate_merkle_branch(
             let left = &chunk[0];
             let right = if chunk.len() > 1 {
                 &chunk[1]
+            } else if let Some(proof_hash) = proof.get(i) {
+                proof_hash // Use the provided proof hash
             } else {
-                // Single hash on this level (no sibling)
-                left
+                error!(
+                    "Missing proof hash at Level {}, Chunk {}. Proof: {:?}",
+                    level, i, proof
+                );
+                return vec![];
             };
 
-            // Compute the combined hash
             let mut hasher = Sha256::new();
             hasher.update(left);
             hasher.update(right);
-            let combined_hash = hasher.finalize().to_vec();
-
-            // Log each hash computation with clarity
-            info!(
-                "Level {}: Chunk {} -> Left: {:?}, Right: {:?}, Combined: {:?}",
-                level, i, left, right, combined_hash
-            );
-
-            next_level_hashes.push(combined_hash);
+            next_level_hashes.push(hasher.finalize().to_vec());
         }
-
-        // Append proof hashes to the next level if provided
-        if !proof.is_empty() {
-            info!(
-                "Level {}: Adding {} proof hashes to the next level",
-                level,
-                proof.len()
-            );
-            for (j, proof_hash) in proof.iter().enumerate() {
-                info!(
-                    "Level {}: Proof hash {} -> {:?}",
-                    level, j, proof_hash
-                );
-                next_level_hashes.push(proof_hash.clone());
-            }
-        } else {
-            info!("Level {}: No proof hashes provided", level);
-        }
-
-        // Log the state of the next level hashes
-        info!(
-            "Level {}: Next level hashes after merging: {:?}",
-            level, next_level_hashes
-        );
 
         current_hashes = next_level_hashes;
     }
 
-    // The last remaining hash should be the computed root
     if current_hashes.len() == 1 {
         info!("Successfully computed Merkle root: {:?}", current_hashes[0]);
         current_hashes[0].clone()
@@ -131,9 +103,10 @@ pub fn validate_merkle_branch(
             "Failed to compute a single root hash. Remaining hashes: {:?}",
             current_hashes
         );
-        vec![] // Return an empty vector to indicate failure
+        vec![]
     }
 }
+
 
 
 
@@ -144,16 +117,16 @@ pub fn reconstruct_unit(
     root: &Vec<u8>, // Expected Merkle root
 ) -> Result<Vec<u8>, String> {
     info!("Reconstructing unit from shards and verifying Merkle proof");
-
+    
     info!("Raw serialized shards: {:?}", shards);
     info!("Raw serialized proofs: {:?}", proofs);
-
+    
     let serialized_shards: Vec<String> = shards
         .iter()
         .map(|shard| general_purpose::STANDARD.encode(shard))
         .collect();
     let serialized_proofs: Vec<Vec<String>> = proofs
-        .iter()
+    .iter()
         .map(|proof| proof.iter().map(|p| general_purpose::STANDARD.encode(p)).collect())
         .collect();
 
@@ -197,7 +170,7 @@ pub fn reconstruct_unit(
         error!("{}", error_message);
         return Err(error_message);
     }
-
+    
     info!("Successfully reconstructed unit and verified Merkle root");
     Ok(reconstructed_unit)
 }
@@ -210,7 +183,7 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
         .chunks(shard_size)
         .map(|chunk| chunk.to_vec())
         .collect();
-
+    
     info!("Transaction data size: {}", transaction_data.len());
     info!(
         "Shard sizes: {:?}",
@@ -227,7 +200,7 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
         data_shards,
         shards.len()
     );
-
+    
     for (i, shard) in shards.iter().enumerate() {
         info!(
             "Shard {}: Size = {}, Data = {:?}",
@@ -260,3 +233,44 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
     );
     Ok(()) // Return Ok if validation passes
 }
+
+
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+    
+        #[test]
+        fn test_merkle_branch_consistency() {
+            // Example shard hashes
+            let shard_hashes = vec![
+                Sha256::digest(b"shard1").to_vec(),
+                Sha256::digest(b"shard2").to_vec(),
+                Sha256::digest(b"shard3").to_vec(),
+                Sha256::digest(b"shard4").to_vec(),
+            ];
+    
+            // Compute the Merkle branch and root
+            let branch = compute_merkle_branch(&shard_hashes, 0);
+            let computed_root = validate_merkle_branch(&shard_hashes, &[branch.clone()]);
+    
+            // Recalculate the root using just the branch
+            assert_eq!(
+                computed_root,
+                compute_merkle_branch(&shard_hashes, 0)[0]
+            );
+        }
+    
+        #[test]
+        fn test_invalid_merkle_proof() {
+            let shard_hashes = vec![
+                Sha256::digest(b"shard1").to_vec(),
+                Sha256::digest(b"shard2").to_vec(),
+            ];
+            let invalid_proofs = vec![vec![b"invalid_proof".to_vec()]];
+    
+            let computed_root = validate_merkle_branch(&shard_hashes, &invalid_proofs);
+    
+            assert_eq!(computed_root, Vec::<u8>::new(), "Invalid proof should fail");
+        }
+    }
