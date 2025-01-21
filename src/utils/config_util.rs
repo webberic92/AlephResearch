@@ -41,3 +41,18 @@ pub async fn are_enough_proposals_received() -> bool {
         return false
     }
 }
+
+pub fn update_proposals_in_config(config_path: &str) -> Result<TomlConfig, Box<dyn std::error::Error>> {
+    let mut updated_toml_config = load_config(config_path);
+    if !updated_toml_config.network.proposals.contains(&updated_toml_config.node.id) {
+        updated_toml_config.network.proposals.push(updated_toml_config.node.id);
+        save_config(config_path, &updated_toml_config)?;
+        info!(
+            "Node {} {}: Added to proposals. Current proposals: {:?}",
+            updated_toml_config.node.id,
+            updated_toml_config.network.ip_address,
+            updated_toml_config.network.proposals
+        );
+    }
+    Ok(updated_toml_config)
+}

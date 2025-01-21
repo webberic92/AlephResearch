@@ -1,125 +1,74 @@
-
 use aleph_research::structs::toml_config::TomlConfig;
 use reqwest::Client;
 use sha2::{Digest, Sha256};
-
 use tracing::{error, info};
 use tracing_subscriber;
-use aleph_research::utils::config_util::{are_enough_proposals_received, load_config, save_config};
-// use aleph_research::utils::ip_server_utils:: notify_transaction_submitted;
+
+// Utility imports for configuration and network operations
+use aleph_research::utils::config_util::{
+    are_enough_proposals_received, load_config, save_config, update_proposals_in_config,
+};
 use aleph_research::requests::send_proposals::send_proposals;
-use aleph_research::utils::rbc_utils::{wait_for_all_nodes_health, wait_for_turn};
-use aleph_research::utils::merkle_utils::compute_merkle_root;
+use aleph_research::utils::start_util::{wait_for_all_nodes_health, wait_for_turn};
+use aleph_research::utils::merkle_utils::{
+    compute_merkle_root, split_into_shards, validate_shard_sizes,
+};
 use aleph_research::requests::ip_server_requests::notify_transaction_submitted;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
-
     let toml_config: TomlConfig = load_config("/home/aleph-node/aleph-node-config.toml");
     let client = Client::new();
-
     wait_for_all_nodes_health(&client, &toml_config).await;
     wait_for_turn(&client, &toml_config).await?;
 
+    // Generate deterministic transaction data of the specified size
     let transaction_data = vec![1; toml_config.consensus.transaction_size];
+    info!(
+        "Generated transaction data of size: {} bytes",
+        transaction_data.len()
+    );
+
+    // Split the transaction data into shards for distribution
     let shards = split_into_shards(&transaction_data, toml_config.consensus.data_shards);
-    let (proofs, merkle_root) = compute_proofs_and_merkle_root(&shards);
+    info!(
+        "Transaction data split into {} shards",
+        toml_config.consensus.data_shards
+    );
 
-    // Validate shard size according to protocol constraints
-    for shard in &shards {
-        let is_valid = check_shard_size(shard.len(), toml_config.consensus.batch_size);
-        if !is_valid {
-            error!(
-                "Shard size validation failed. Size: {}, Batch size limit: {}",
-                shard.len(),
-                toml_config.consensus.batch_size
-            );
-        }
-    }
-
-    send_proposals(&client, &toml_config, &shards, &proofs, &merkle_root).await?;
-    let updated_toml_config = update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
-
-    if are_enough_proposals_received().await {
-        // send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
-    }
-
-    // notify_transaction_submitted(&client, &updated_toml_config).await?;
-    Ok(())
-}
-
-
-
-/// Splits transaction data into shards
-fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {
-    let shard_size = transaction_data.len() / data_shards;
-    let shards: Vec<Vec<u8>> = transaction_data
-        .chunks(shard_size)
-        .map(|chunk| chunk.to_vec())
+    // Compute cryptographic proofs (hashes) for each shard
+    let proofs: Vec<Vec<u8>> = shards
+        .iter()
+        .map(|shard| {
+            let hash = Sha256::digest(shard).to_vec();
+            info!("Computed hash for shard: {:?}", hash);
+            hash
+        })
         .collect();
 
-    info!("Transaction data size: {}", transaction_data.len());
-    info!(
-        "Shard sizes: {:?}",
-        shards.iter().map(|s| s.len()).collect::<Vec<_>>()
-    );
-    info!(
-        "Total size of all shards: {}",
-        shards.iter().map(|s| s.len()).sum::<usize>()
-    );
-    assert_eq!(
-        shards.len(),
-        data_shards,
-        "Shard count mismatch: expected {}, found {}",
-        data_shards,
-        shards.len()
-    );
+    // Validate that shard sizes conform to protocol constraints
+    validate_shard_sizes(&shards, toml_config.consensus.batch_size);
 
-    for (i, shard) in shards.iter().enumerate() {
-        info!(
-            "Shard {}: Size = {}, Data = {:?}",
-            i,
-            shard.len(),
-            &shard[0..std::cmp::min(10, shard.len())] // Log only the first 10 bytes for readability
-        );
-    }
-
-    shards
-}
-
-/// Computes Merkle proofs and root from shards
-fn compute_proofs_and_merkle_root(shards: &[Vec<u8>]) -> (Vec<Vec<u8>>, Vec<u8>) {
-    let proofs: Vec<Vec<u8>> = shards.iter().map(|s| {
-        let hash = Sha256::digest(s).to_vec();
-        info!("Computed hash for shard: {:?}", hash);
-        hash
-    }).collect();
-
+    // Compute the Merkle root for the set of shard proofs
     let merkle_root = compute_merkle_root(&proofs);
     info!("Computed Merkle root: {:?}", merkle_root);
 
-    (proofs, merkle_root)
-}
+    // Send proposals (shards, proofs, and Merkle root) to other nodes in the network
+    send_proposals(&client, &toml_config, &shards, &proofs, &merkle_root).await?;
 
+    // Update the proposals field in the configuration file
+    update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
 
-/// Check shard size validity according to protocol constraints
-fn check_shard_size(shard_size: usize, batch_size_limit: usize) -> bool {
-    shard_size <= batch_size_limit
-}
-
-
-pub fn update_proposals_in_config(config_path: &str) -> Result<TomlConfig, Box<dyn std::error::Error>> {
-    let mut updated_toml_config = load_config(config_path);
-    if !updated_toml_config.network.proposals.contains(&updated_toml_config.node.id) {
-        updated_toml_config.network.proposals.push(updated_toml_config.node.id);
-        save_config(config_path, &updated_toml_config)?;
-        info!(
-            "Node {} {}: Added to proposals. Current proposals: {:?}",
-            updated_toml_config.node.id,
-            updated_toml_config.network.ip_address,
-            updated_toml_config.network.proposals
-        );
+    // Check if enough proposals have been received to move to the next phase
+    if are_enough_proposals_received().await {
+        // Logic for sending prevotes is commented out for now
+        // send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
     }
-    Ok(updated_toml_config)
+
+    // Notify that the transaction has been submitted (optional, currently commented out)
+    // notify_transaction_submitted(&client, &updated_toml_config).await?;
+
+    // Indicate successful execution
+    Ok(())
 }
