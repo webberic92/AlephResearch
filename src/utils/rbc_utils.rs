@@ -2,24 +2,9 @@ use reqwest::Client;
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::info;
-use tracing::error;
-use serde_json::json;
+use crate::requests::ip_server_requests::is_node_turn;
+use crate::requests::synchronize_epoch_across_nodes::synchronize_epoch_across_nodes;
 use crate::structs::toml_config::TomlConfig;
-
-
-/// Ensure epoch synchronization across nodes
-pub async fn ensure_epoch_sync(client: &Client, toml_config: &TomlConfig) -> bool {
-    for node_url in &toml_config.network.nodes {
-        let url = format!("http://{}/sync_epoch", node_url);
-        let payload = json!({ "epoch_id": toml_config.consensus.epoch_round_id, "sender": &toml_config.node.id });
-        if let Err(e) = client.post(&url).json(&payload).send().await {
-            error!("Failed to synchronize epoch with node {}: {:?}", node_url, e);
-            return false;
-        }
-    }
-    info!("Epoch {} synchronized across all nodes.", toml_config.consensus.epoch_round_id);
-    true
-}
 
 // Helper functions
 pub async fn check_all_nodes_health(client: &Client, toml_config: &TomlConfig) -> bool {
@@ -51,4 +36,33 @@ pub async fn wait_for_all_nodes_health(client: &Client, toml_config: &TomlConfig
         info!("Some nodes are not healthy. Retrying in 1 second...");
         sleep(Duration::from_secs(1)).await;
     }
+}
+
+pub async fn wait_for_turn(
+    client: &Client,
+    toml_config: &TomlConfig,
+) -> Result<(), Box<dyn std::error::Error>> {
+    info!(
+        "Node {} {}: Waiting for its turn to submit transaction for epoch {}",
+        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
+    );
+
+    loop {
+        if is_node_turn(client, toml_config, toml_config.consensus.epoch_round_id).await {
+            break;
+        }
+
+        synchronize_epoch_across_nodes(client, toml_config).await;
+        sleep(Duration::from_secs(1)).await; // Poll every 1 second
+        info!(
+            "Node {} {}: Retrying transaction submission for epoch {}",
+            toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
+        );
+    }
+
+    info!(
+        "Node {} {}: It's my turn to propose for epoch {}",
+        toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
+    );
+    Ok(())
 }

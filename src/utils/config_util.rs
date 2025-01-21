@@ -20,9 +20,6 @@ pub fn save_config(file_path: &str, toml_config: &TomlConfig) -> Result<(), Box<
 // Check if all proposals have been received
 // ch-RBC proof: Ensures a majority quorum (2f+1) of proposals before moving to prevote.
 // Check if a majority quorum (2f + 1) of proposals has been received
-//TODO: However, the logic in all_proposals_received does not explicitly verify that the proposals come from distinct, non-faulty nodes.
-//TODO: Add logic to ensure proposals are unique and originate from different nodes.
-//TODO: Include safeguards to handle malicious nodes attempting to spam invalid proposals.
 pub async fn are_enough_proposals_received() -> bool {
     let config = load_config("/home/aleph-node/aleph-node-config.toml");
     info!("Node {} {}: CHECKING IF ALL PROPOSALS RECEIVED total nodes == {}", config.node.id,config.network.ip_address,config.node.total_nodes);
@@ -34,5 +31,13 @@ pub async fn are_enough_proposals_received() -> bool {
     info!("Node {} {}: required_quorum == {}", config.node.id,config.network.ip_address,required_quorum);
     info!("Node {} {}: is proposals length {} >= required_quorum {}", config.node.id,config.network.ip_address,config.network.proposals.len(),required_quorum);
 
-    config.network.proposals.len() >= required_quorum
+    if(config.network.proposals.len() >= required_quorum){
+        info!(
+            "Node {} {}: Enough proposals. received to start prevoting form aleph_start.{:?}",
+            config.node.id, config.network.ip_address, config.network.proposals
+        );
+        return true
+    }else{
+        return false
+    }
 }
