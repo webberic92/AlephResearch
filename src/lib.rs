@@ -1,7 +1,7 @@
 pub mod utils{
     pub mod merkle_utils; // Expose the structs module
     pub mod config_util;
-    pub mod rbc_utils; // Expose the structs module
+    pub mod start_util; // Expose the structs module
     pub mod epoch_utils; // Expose the structs module
     pub mod dag_utils; // Expose the structs module
     pub mod errors_util; // Expose the structs module

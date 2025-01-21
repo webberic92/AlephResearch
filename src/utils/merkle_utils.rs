@@ -177,3 +177,52 @@ pub fn reconstruct_unit(
 }
 
 
+/// Splits transaction data into shards
+pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {
+    let shard_size = transaction_data.len() / data_shards;
+    let shards: Vec<Vec<u8>> = transaction_data
+        .chunks(shard_size)
+        .map(|chunk| chunk.to_vec())
+        .collect();
+
+    info!("Transaction data size: {}", transaction_data.len());
+    info!(
+        "Shard sizes: {:?}",
+        shards.iter().map(|s| s.len()).collect::<Vec<_>>()
+    );
+    info!(
+        "Total size of all shards: {}",
+        shards.iter().map(|s| s.len()).sum::<usize>()
+    );
+    assert_eq!(
+        shards.len(),
+        data_shards,
+        "Shard count mismatch: expected {}, found {}",
+        data_shards,
+        shards.len()
+    );
+
+    for (i, shard) in shards.iter().enumerate() {
+        info!(
+            "Shard {}: Size = {}, Data = {:?}",
+            i,
+            shard.len(),
+            &shard[0..std::cmp::min(10, shard.len())] // Log only the first 10 bytes for readability
+        );
+    }
+
+    shards
+}
+
+pub fn validate_shard_sizes(shards: &[Vec<u8>], batch_size_limit: usize) {
+    for shard in shards {
+        let is_valid = shard.len() <= batch_size_limit;
+        if !is_valid {
+            error!(
+                "Shard size validation failed. Size: {}, Batch size limit: {}",
+                shard.len(),
+                batch_size_limit
+            );
+        }
+    }
+}
