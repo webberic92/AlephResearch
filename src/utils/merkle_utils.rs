@@ -56,6 +56,13 @@ pub fn validate_merkle_branch(
     shard_hashes: &[Vec<u8>],
     proofs: &[Vec<Vec<u8>>],
 ) -> Vec<u8> {
+    // Log the number of initial shard hashes and proofs
+    info!(
+        "Validating Merkle branch with {} shard hashes and {} levels of proofs",
+        shard_hashes.len(),
+        proofs.len()
+    );
+
     let mut current_hashes = shard_hashes.to_vec();
 
     // Log initial shard hashes
@@ -79,9 +86,9 @@ pub fn validate_merkle_branch(
             hasher.update(right);
             let combined_hash = hasher.finalize().to_vec();
 
-            // Log each hash computation
+            // Log each hash computation with clarity
             info!(
-                "Level {}: Combining chunk {} -> Left: {:?}, Right: {:?}, Combined: {:?}",
+                "Level {}: Chunk {} -> Left: {:?}, Right: {:?}, Combined: {:?}",
                 level, i, left, right, combined_hash
             );
 
@@ -89,17 +96,35 @@ pub fn validate_merkle_branch(
         }
 
         // Append proof hashes to the next level if provided
-        for proof_hash in proof {
-            info!("Level {}: Adding proof hash: {:?}", level, proof_hash);
-            next_level_hashes.push(proof_hash.clone());
+        if !proof.is_empty() {
+            info!(
+                "Level {}: Adding {} proof hashes to the next level",
+                level,
+                proof.len()
+            );
+            for (j, proof_hash) in proof.iter().enumerate() {
+                info!(
+                    "Level {}: Proof hash {} -> {:?}",
+                    level, j, proof_hash
+                );
+                next_level_hashes.push(proof_hash.clone());
+            }
+        } else {
+            info!("Level {}: No proof hashes provided", level);
         }
+
+        // Log the state of the next level hashes
+        info!(
+            "Level {}: Next level hashes after merging: {:?}",
+            level, next_level_hashes
+        );
 
         current_hashes = next_level_hashes;
     }
 
     // The last remaining hash should be the computed root
     if current_hashes.len() == 1 {
-        info!("Computed Merkle root: {:?}", current_hashes[0]);
+        info!("Successfully computed Merkle root: {:?}", current_hashes[0]);
         current_hashes[0].clone()
     } else {
         error!(
@@ -109,6 +134,7 @@ pub fn validate_merkle_branch(
         vec![] // Return an empty vector to indicate failure
     }
 }
+
 
 
 /// Reconstruct the original unit from shards and validate using proofs
