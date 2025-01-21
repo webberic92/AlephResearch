@@ -48,8 +48,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .collect();
 
     // Validate that shard sizes conform to protocol constraints
-    validate_shard_sizes(&shards, toml_config.consensus.batch_size);
-
+    if let Err(e) = validate_shard_sizes(&shards, toml_config.consensus.transaction_size) {
+        error!("Shard Size Validation failed: {}", e);
+        return Err(e.into());
+    }
+    
     // Compute the Merkle root for the set of shard proofs
     let merkle_root = compute_merkle_root(&proofs);
     info!("Computed Merkle root: {:?}", merkle_root);

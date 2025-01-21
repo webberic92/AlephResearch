@@ -214,15 +214,23 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
     shards
 }
 
-pub fn validate_shard_sizes(shards: &[Vec<u8>], batch_size_limit: usize) {
-    for shard in shards {
-        let is_valid = shard.len() <= batch_size_limit;
-        if !is_valid {
-            error!(
-                "Shard size validation failed. Size: {}, Batch size limit: {}",
-                shard.len(),
-                batch_size_limit
-            );
-        }
+pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Result<(), String> {
+    // Calculate the total size of all shards
+    let total_size: usize = shards.iter().map(|shard| shard.len()).sum();
+
+    // Check if the total size matches the transaction size
+    if total_size != transaction_size {
+        let error_message = format!(
+            "Shard size validation failed. Total shard size: {}, Expected transaction size: {}",
+            total_size, transaction_size
+        );
+        error!("{}", error_message);
+        return Err(error_message); // Return an error if validation fails
     }
+
+    info!(
+        "Shard size validation successful. Total shard size: {} matches transaction size: {}",
+        total_size, transaction_size
+    );
+    Ok(()) // Return Ok if validation passes
 }

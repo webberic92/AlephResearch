@@ -50,3 +50,4 @@ pub async fn ensure_epoch_dag_sync(
     info!("DAG synchronization successful for epoch {}", epoch_id);
     Ok(())
 }
+

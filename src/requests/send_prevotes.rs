@@ -85,3 +85,113 @@ pub async fn send_prevotes(
         Err("One or more PREVOTE messages failed".into())
     }
 }
+
+
+
+
+
+// async fn send_prevotes(
+//     node: &Node,
+//     client: &Client,
+//     epoch_id: u64,
+//     root: &Vec<u8>,
+//     proofs: &Vec<Vec<Vec<u8>>>,
+//     shards: &Vec<Vec<u8>>,
+// ) {
+//     info!(
+//         "Node {} {} All Proposals received: Finalizing epoch {}",
+//         node.id, node.ip_address, epoch_id
+//     );
+
+//     let config = load_config("/home/aleph-node/aleph-node-config.toml");
+
+//     for node_url in &config.network.nodes {
+//         info!(
+//             "Node {} {} NETWORK NODES LOOP NODE URL : {}",
+//             node.id,node.ip_address, node_url
+//         );
+        
+//         synchronize_dag_and_epoch(node, client, epoch_id, node_url).await;
+//         send_prevote(node, client, node_url, epoch_id, root, proofs, shards).await;
+//     }
+
+//     update_epoch_tracker(node, epoch_id).await;
+// }
+
+// // Synchronize DAG and next epoch
+// // Ensures all nodes have a consistent view of the DAG before moving to the next epoch.
+// async fn synchronize_dag_and_epoch(node: &Node, client: &Client, epoch_id: u64, node_url: &String) {
+//     let payload = json!({ "epoch_id": epoch_id });
+//     if let Err(e) = client
+//         .post(format!("http://{}/sync_epoch", node_url))
+//         .json(&payload)
+//         .send()
+//         .await
+//     {
+//         error!("Node {} {} Failed to synchronize epoch {} with {}. Error: {:?}",  node.id,node.ip_address,epoch_id, node_url, e);
+//     } else {
+//         info!("Node {} {} Synchronized epoch {} with {}",  node.id,node.ip_address,epoch_id, node_url);
+//     }
+
+//     if let Err(e) = ensure_dag_synchronization(node, client, epoch_id, node_url).await {
+//         error!("Node {} {} DAG synchronization failed with {} for epoch {}. Error: {:?}",  node.id,node.ip_address,node_url, epoch_id, e);
+//     } else {
+//         info!("Node {} {} DAG synchronized with {} for epoch {}",  node.id,node.ip_address,node_url, epoch_id);
+//     }
+// }
+
+// // Send prevote request
+// // // Sends a prevote message to all nodes as part of the prevote phase.
+// // TODO: Log whether the prevote messages are acknowledged by the recipient nodes for traceability.
+// //  TODO: Add mechanisms to handle and retry failed prevote transmissions.
+// async fn send_prevote(
+//     node: &Node,
+//     client: &Client,
+//     node_url: &str,
+//     epoch_id: u64,
+//     root: &Vec<u8>,
+//     proofs: &Vec<Vec<Vec<u8>>>,
+//     shards: &Vec<Vec<u8>>,
+// ) {
+
+// //     pub shards: Vec<Vec<u8>>, // Multiple shards
+// // pub proofs: Vec<Vec<Vec<u8>>>,
+//     let payload = PrevoteRequest {
+//         sender: node.id,
+//         root: root.clone(),
+//         proofs: proofs.clone(),
+//         epoch_id,
+//         shards: shards.clone(),
+//         node_url: node_url.to_string(),
+//     };
+
+//     match client
+//         .post(format!("http://{}/prevote", node_url))
+//         .json(&payload)
+//         .send()
+//         .await
+//     {
+//         Ok(response) if response.status().is_success() => {
+//             info!("Node {} {} Prevote sent to {}", node.id,node.ip_address, node_url);
+//         }
+//         Ok(response) => {
+//             error!(
+//                 "Node {} {} Failed to send prevote to {}. Status: {}",
+//                 node.id,node.ip_address,node_url, response.status()
+//             );
+//         }
+//         Err(e) => {
+//             error!("Node {} {} Failed to send prevote to {}. Error: {:?}", node.id,node.ip_address, node_url, e);
+//         }
+//     }
+// }
+
+
+
+
+
+
+
+
+
+
