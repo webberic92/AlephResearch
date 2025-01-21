@@ -1,8 +1,8 @@
 use std::fs;
 
-use tracing::info;
+use tracing::{error, info};
 
-use crate::structs::toml_config::TomlConfig;
+use crate::structs::{node::Node, toml_config::TomlConfig};
 
 /// Load configuration
 pub fn load_config(file_path: &str) -> TomlConfig {
@@ -55,4 +55,48 @@ pub fn update_proposals_in_config(config_path: &str) -> Result<TomlConfig, Box<d
         );
     }
     Ok(updated_toml_config)
+}
+
+// Persist the proposal tracker to the TOML file
+pub fn persist_proposal_tracker(proposal_tracker: &Vec<usize>, config_path: &str) {
+    let mut config = load_config(config_path);
+    config.network.proposals = proposal_tracker.clone();
+
+    match save_config(config_path, &config) {
+        Ok(_) => info!("Node {} {} Successfully updated proposal tracker in toml.", config.node.id, config.network.ip_address),
+        Err(e) => error!("Node {} {} Failed to update proposal tracker. Error: {:?}", config.node.id, config.network.ip_address, e),
+    }
+}
+
+// Update the proposal tracker
+// Tracks which nodes have submitted valid proposals to ensure quorum.
+pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) {
+    let config_path = "/home/aleph-node/aleph-node-config.toml";
+    let config = load_config(config_path);
+    let mut proposal_tracker = config.network.proposals.clone();
+    proposal_tracker.push(sender);
+    persist_proposal_tracker( &proposal_tracker, config_path);
+    info!(
+        "Node {} {}  HANDLE PROPOSE: Updated proposal tracker for epoch {}: {:?}",
+        node.id, node.ip_address, epoch_id, proposal_tracker
+    );
+}
+
+// Update the epoch tracker
+// ch-RBC proof: Keeps track of the current epoch and ensures nodes stay synchronized.
+async fn update_epoch_tracker(node: &Node, epoch_id: u64) {
+    let mut epoch_tracker = node.epoch_round_id.lock().await;
+    epoch_tracker.insert(epoch_id + 1);
+    persist_epoch_round_id( epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
+}
+
+// Persist the epoch round ID to the TOML file
+pub async fn persist_epoch_round_id(epoch_id: u64, config_path: &str) {
+    let mut config = load_config(config_path);
+    config.consensus.epoch_round_id = epoch_id + 1;
+
+    match save_config(config_path, &config) {
+        Ok(_) => info!("Node {} {} Successfully updated epoch_round_id = {}.", config.node.id, config.network.ip_address, config.consensus.epoch_round_id),
+        Err(e) => error!("Node {} {} Failed to update epoch_round_id. Error: {:?}", config.node.id, config.network.ip_address, e),
+    }
 }
