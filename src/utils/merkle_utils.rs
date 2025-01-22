@@ -231,5 +231,42 @@ mod tests {
             );
         }
     }
+    #[test]
+fn test_reconstruct_unit() {
+    init_logger();
+
+    // Step 1: Generate 256-byte transaction data
+    let transaction_data: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect(); // 1024 bytes of data
+    let shard_count = 4;
+
+    // Step 2: Split data into shards
+    let shards = split_into_shards(&transaction_data, shard_count);
+
+    // Step 3: Compute hashes for each shard
+    let hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+
+    // Step 4: Compute the Merkle root
+    let root = compute_merkle_root(&hashes);
+
+    // Step 5: Generate Merkle proofs for each shard
+    let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
+        .map(|i| compute_merkle_branch(&hashes, i))
+        .collect();
+
+    // Step 6: Attempt to reconstruct the unit and validate
+    match reconstruct_unit(&shards, &proofs, &root) {
+        Ok(reconstructed_data) => {
+            assert_eq!(
+                reconstructed_data, transaction_data,
+                "Reconstructed data does not match the original transaction data"
+            );
+            info!("Reconstruction and validation succeeded!");
+        }
+        Err(error_message) => {
+            panic!("Reconstruction failed: {}", error_message);
+        }
+    }
+}
+
     
 }
