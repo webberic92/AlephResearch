@@ -46,26 +46,26 @@ pub async fn handle_propose(
 
     // Step 2: Decode Base64-encoded proofs
     let decoded_proofs: Vec<Vec<Vec<u8>>> = match request
-        .proofs
-        .iter()
-        .map(|proof| {
-            proof
-                .iter()
-                .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-                .collect::<Result<Vec<Vec<u8>>, _>>() // Collect decoded hashes into Vec<Vec<u8>>
-        })
-        .collect::<Result<Vec<Vec<Vec<u8>>>, _>>() // Collect all decoded proofs into Vec<Vec<Vec<u8>>>
-    {
-        Ok(decoded) => decoded,
-        Err(e) => {
-            let error_message = format!("Failed to decode proofs: {:?}", e);
-            error!("{}", error_message);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response { status: error_message }),
-            );
-        }
-    };
+    .proofs
+    .iter()
+    .map(|proof| {
+        proof
+            .iter()
+            .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
+            .collect::<Result<Vec<_>, _>>() // Decode individual branch
+    })
+    .collect::<Result<Vec<_>, _>>() // Collect all decoded branches
+{
+    Ok(decoded) => decoded,
+    Err(e) => {
+        let error_message = format!("Failed to decode proofs: {:?}", e);
+        error!("{}", error_message);
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(Response { status: error_message }),
+        );
+    }
+};
 
     // Log decoded proofs
     info!(
