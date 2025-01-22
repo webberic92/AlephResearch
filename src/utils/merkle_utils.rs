@@ -201,19 +201,28 @@ mod tests {
     #[test]
     fn test_validate_merkle_branch_minimal() {
         init_logger();
-        let data = vec![
-            b"shard1".to_vec(),
-            b"shard2".to_vec(),
-            b"shard3".to_vec(),
-            b"shard4".to_vec(),
-        ];
+    
+        // Generate 256-byte transaction data
+        let data: Vec<Vec<u8>> = (0..4)
+            .map(|i| {
+                let mut shard = vec![0; 256];
+                shard[0..6].copy_from_slice(format!("shard{}", i + 1).as_bytes());
+                shard
+            })
+            .collect();
+    
+        // Compute hashes for each shard
         let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
+    
+        // Compute the Merkle root
         let root = compute_merkle_root(&hashes);
-
+    
+        // Generate proofs for each shard
         let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
             .map(|i| compute_merkle_branch(&hashes, i))
             .collect();
-
+    
+        // Validate each shard's proof
         for (i, proof) in proofs.iter().enumerate() {
             assert!(
                 validate_merkle_branch(&hashes, proof, i, &root),
@@ -222,4 +231,5 @@ mod tests {
             );
         }
     }
+    
 }
