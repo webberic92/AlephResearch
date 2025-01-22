@@ -37,7 +37,8 @@ pub async fn handle_propose(
             );
         }
     };
-
+    let encoded_shards: Vec<String> = decoded_shards.iter().map(|shard| general_purpose::STANDARD.encode(shard)).collect();
+    info!("Re-encoded shards: {:?}", encoded_shards);
     // Decode Base64-encoded proofs
     let decoded_proofs: Vec<Vec<Vec<u8>>> = match request
         .proofs
@@ -60,7 +61,8 @@ pub async fn handle_propose(
             );
         }
     };
-
+    info!("Decoded shards: {:?}", decoded_shards);
+    info!("Decoded proofs: {:?}", decoded_proofs);
     // Validate the Merkle branch for each shard
     for (index, _) in decoded_shards.iter().enumerate() {
         let proof = &decoded_proofs[index];

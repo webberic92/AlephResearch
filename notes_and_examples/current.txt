@@ -1,63 +1,128 @@
-h-4.2$ cat /home/aleph-node/logs/node_statusPRIVATE_IP = 10.0.180.193Node registration success.IP Manager not ready, retrying...
-IP Manager not ready, retrying...IP Manager is reachable and all nodes are ready.Retrieved all nodes for nodes (excluding self): "10.0.130.98:30333", "10.0.170.194:30333"[network]
-listen_address = "0.0.0.0:30333"ip_manager_address = "10.0.165.136"ip_address = "10.0.180.193"
-nodes = ["10.0.130.98:30333", "10.0.170.194:30333"]
-proposals = [][consensus]
-batch_size = 1transaction_size = 256 # bytesround_size = 1 # bytes
-epoch_round_id = 1 # bytesdata_shards = 4 # Number of data shards for erasure coding[logging]level = "info"transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"[node]id = 1total_nodes = 3Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbcConfiguration file found at /home/aleph-node/aleph-node-config.tomlAttempting to execute aleph_rbc with configurationWaiting for aleph_rbc to be ready on port 30333
-aleph_rbc not ready, retrying...2025-01-21T03:24:56.777864Z  INFO aleph_rbc: API server running on 0.0.0.0:303332025-01-21T03:24:57.260149Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-21T03:24:57.260178Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 synchronized successfully with node 3
+h-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.151.52
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.128.183:30333", "10.0.129.23:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.134.224"
+ip_address = "10.0.151.52"
+nodes = ["10.0.128.183:30333", "10.0.129.23:30333"]
+proposals = []
+
+[consensus]
+batch_size = 1
+transaction_size = 256 # bytes
+round_size = 1 # bytes
+epoch_round_id = 1 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 1
+total_nodes = 3
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+2025-01-22T01:46:01.404526Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+sh-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.151.52
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.128.183:30333", "10.0.129.23:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.134.224"
+ip_address = "10.0.151.52"
+nodes = ["10.0.128.183:30333", "10.0.129.23:30333"]
+proposals = []
+
+[consensus]
+batch_size = 1
+transaction_size = 256 # bytes
+round_size = 1 # bytes
+epoch_round_id = 1 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 1
+total_nodes = 3
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+2025-01-22T01:46:01.404526Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 1 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
 Attempting to execute aleph_start with configuration
-2025-01-21T03:24:57.797950Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-21T03:24:57.800224Z  INFO aleph_research::utils::start_util: All nodes are healthy!
-2025-01-21T03:24:57.800238Z  INFO aleph_research::utils::start_util: Node 1 10.0.180.193: Waiting for its turn to submit transaction for epoch 1
-2025-01-21T03:24:57.800243Z  INFO aleph_research::requests::ip_server_requests: Node 1: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.165.136:8080/is_turn?node_id=1&epoch_id=1
-2025-01-21T03:24:57.802090Z  INFO aleph_research::requests::ip_server_requests: Node 1: It is the turn for this node to propose for epoch 1
-2025-01-21T03:24:57.802129Z  INFO aleph_research::utils::start_util: Node 1 10.0.180.193: It's my turn to propose for epoch 1
-2025-01-21T03:24:57.802134Z  INFO aleph_start: Generated transaction data of size: 256 bytes
-2025-01-21T03:24:57.802139Z  INFO aleph_research::utils::merkle_utils: Transaction data size: 256
-2025-01-21T03:24:57.802142Z  INFO aleph_research::utils::merkle_utils: Shard sizes: [64, 64, 64, 64]
-2025-01-21T03:24:57.802146Z  INFO aleph_research::utils::merkle_utils: Total size of all shards: 256
-2025-01-21T03:24:57.802150Z  INFO aleph_research::utils::merkle_utils: Shard 0: Size = 64, Data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-2025-01-21T03:24:57.802154Z  INFO aleph_research::utils::merkle_utils: Shard 1: Size = 64, Data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-2025-01-21T03:24:57.802170Z  INFO aleph_research::utils::merkle_utils: Shard 2: Size = 64, Data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-2025-01-21T03:24:57.802173Z  INFO aleph_research::utils::merkle_utils: Shard 3: Size = 64, Data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-2025-01-21T03:24:57.802189Z  INFO aleph_start: Transaction data split into 4 shards
-2025-01-21T03:24:57.802204Z  INFO aleph_start: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802218Z  INFO aleph_start: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802306Z  INFO aleph_start: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802315Z  INFO aleph_start: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802322Z  INFO aleph_research::utils::merkle_utils: Shard size validation successful. Total shard size: 256 matches transaction size: 256
-2025-01-21T03:24:57.802330Z  INFO aleph_start: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-21T03:24:57.802336Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Logging shard hashes before sending proposals for epoch 1
-2025-01-21T03:24:57.802339Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Shard 0 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802388Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Shard 1 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802396Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Shard 2 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802403Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Shard 3 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
-2025-01-21T03:24:57.802409Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.180.193: Sending proposal to 10.0.130.98:30333 for epoch 1
-2025-01-21T03:24:57.802426Z  INFO aleph_research::requests::send_proposals: Serialized proofs: [[124,137,117,225,230,10,92,131,55,242,142,223,140,51,195,177,128,54,11,114,121,100,74,155,193,175,60,81,230,34,11,245],[124,137,117,225,230,10,92,131,55,242,142,223,140,51,195,177,128,54,11,114,121,100,74,155,193,175,60,81,230,34,11,245],[124,137,117,225,230,10,92,131,55,242,142,223,140,51,195,177,128,54,11,114,121,100,74,155,193,175,60,81,230,34,11,245],[124,137,117,225,230,10,92,131,55,242,142,223,140,51,195,177,128,54,11,114,121,100,74,155,193,175,60,81,230,34,11,245]]
-2025-01-21T03:24:57.802429Z  INFO aleph_research::requests::send_proposals: Serialized shards for transmission: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="]
-2025-01-21T03:24:57.802475Z  INFO aleph_research::requests::send_proposals: Payload to node 10.0.130.98:30333: Object {"epoch_id": Number(1), "proofs": Array [Array [Array [Number(124), Number(137), Number(117), Number(225), Number(230), Number(10), Number(92), Number(131), Number(55), Number(242), Number(142), Number(223), Number(140), Number(51), Number(195), Number(177), Number(128), Number(54), Number(11), Number(114), Number(121), Number(100), Number(74), Number(155), Number(193), Number(175), Number(60), Number(81), Number(230), Number(34), Number(11), Number(245)], Array [Number(165), Number(2), Number(56), Number(68), Number(126), Number(77), Number(247), Number(133), Number(244), Number(13), Number(92), Number(79), Number(59), Number(254), Number(145), Number(215), Number(148), Number(43), Number(19), Number(194), Number(167), Number(243), Number(45), Number(111), Number(89), Number(60), Number(68), Number(133), Number(172), Number(255), Number(172), Number(150)]]], "root": Array [Number(76), Number(69), Number(12), Number(196), Number(182), Number(153), Number(238), Number(47), Number(214), Number(246), Number(59), Number(183), Number(10), Number(4), Number(226), Number(175), Number(219),Number(92), Number(73), Number(192), Number(202), Number(11), Number(56), Number(146), Number(99), Number(60), Number(192), Number(114), Number(207), Number(141), Number(159), Number(33)], "sender": Number(1), "shards": Array [Array [Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1), Number(1)]]}
-2025-01-21T03:24:57.807180Z  INFO aleph_research::requests::send_proposals: Raw request body sent to 10.0.130.98:30333: {"epoch_id":1,"proofs":[[[124,137,117,225,230,10,92,131,55,242,142,223,140,51,195,177,128,54,11,114,121,100,74,155,193,175,60,81,230,34,11,245],[165,2,56,68,126,77,247,133,244,13,92,79,59,254,145,215,148,43,19,194,167,243,45,111,89,60,68,133,172,255,172,150]]],"root":[76,69,12,196,182,153,238,47,214,246,59,183,10,4,226,175,219,92,73,192,202,11,56,146,99,60,192,114,207,141,159,33],"sender":1,"shards":[[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]]}
-2025-01-21T03:24:57.807205Z ERROR aleph_research::requests::send_proposals: Node 1: Proposal rejected by 10.0.130.98:30333: {"status":"Node 2 10.0.130.98: Merkle root mismatch for epoch 1. Computed: [97, 14, 4, 131, 74, 191, 110, 207, 70, 234, 65, 214, 22, 169, 66, 211, 213, 126, 153, 56, 104, 70, 100, 147, 12, 41, 49, 122, 226, 185, 18, 246], Expected: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]"}
+2025-01-22T01:46:02.476156Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-22T01:46:02.490937Z  INFO aleph_research::utils::start_util: All nodes are healthy!
+2025-01-22T01:46:02.491348Z  INFO aleph_research::utils::start_util: Node 1 10.0.151.52: Waiting for its turn to submit transaction for epoch 1
+2025-01-22T01:46:02.491357Z  INFO aleph_research::requests::ip_server_requests: Node 1: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.134.224:8080/is_turn?node_id=1&epoch_id=1
+2025-01-22T01:46:02.495397Z  INFO aleph_research::requests::ip_server_requests: Node 1: It is the turn for this node to propose for epoch 1
+2025-01-22T01:46:02.495432Z  INFO aleph_research::utils::start_util: Node 1 10.0.151.52: It's my turn to propose for epoch 1
+2025-01-22T01:46:02.495439Z  INFO aleph_research::utils::create_transaction_data: Generated transaction data of size: 256 bytes
+2025-01-22T01:46:02.495446Z  INFO aleph_research::utils::merkle_utils: Transaction data size: 256
+2025-01-22T01:46:02.495450Z  INFO aleph_research::utils::create_transaction_data: Transaction data split into 4 shards
+2025-01-22T01:46:02.495461Z  INFO aleph_research::utils::create_transaction_data: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495479Z  INFO aleph_research::utils::create_transaction_data: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495486Z  INFO aleph_research::utils::create_transaction_data: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495492Z  INFO aleph_research::utils::create_transaction_data: Computed hash for shard: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495497Z  INFO aleph_research::utils::merkle_utils: Shard size validation successful. Total shard size: 256 matches transaction size: 256
+2025-01-22T01:46:02.495514Z  INFO aleph_research::utils::merkle_utils: Level Pair 0: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245] + [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245] = Combined hash: [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]
+2025-01-22T01:46:02.495531Z  INFO aleph_research::utils::merkle_utils: Level Pair 1: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245] + [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245] = Combined hash: [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]
+2025-01-22T01:46:02.495543Z  INFO aleph_research::utils::merkle_utils: Level Pair 0: [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150] + [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150] = Combined hash: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:46:02.495554Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:46:02.495559Z  INFO aleph_research::utils::create_transaction_data: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:46:02.495565Z  INFO aleph_start: Transaction data created successfully.
+2025-01-22T01:46:02.495568Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Logging shard hashes before sending proposals for epoch 1
+2025-01-22T01:46:02.495572Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Shard 0 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495578Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Shard 1 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495583Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Shard 2 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495588Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Shard 3 Hash: [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495594Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.151.52: Sending proposal to 10.0.128.183:30333 for epoch 1
+2025-01-22T01:46:02.495599Z  INFO aleph_research::utils::merkle_utils: Branch Level: Current Index = 0, Sibling Index = 1, Sibling Hash = [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]
+2025-01-22T01:46:02.495609Z  INFO aleph_research::utils::merkle_utils: Branch Level: Current Index = 0, Sibling Index = 1, Sibling Hash = [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]
+2025-01-22T01:46:02.495616Z  INFO aleph_research::utils::merkle_utils: Computed Merkle branch for index 0: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114,121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
+2025-01-22T01:46:02.495638Z  INFO aleph_research::requests::send_proposals: Serialized shards for payload: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="]
+2025-01-22T01:46:02.495643Z  INFO aleph_research::requests::send_proposals: Serialized proofs for payload: [["fA==", "iQ==", "dQ==", "4Q==", "5g==", "Cg==", "XA==", "gw==", "Nw==", "8g==", "jg==", "3w==", "jA==", "Mw==", "ww==", "sQ==", "gA==", "Ng==", "Cw==", "cg==", "eQ==", "ZA==", "Sg==", "mw==", "wQ==", "rw==", "PA==", "UQ==", "5g==", "Ig==", "Cw==", "9Q=="], ["pQ==", "Ag==", "OA==", "RA==", "fg==", "TQ==", "9w==", "hQ==", "9A==", "DQ==", "XA==", "Tw==", "Ow==", "/g==", "kQ==", "1w==", "lA==", "Kw==", "Ew==", "wg==", "pw==", "8w==", "LQ==", "bw==", "WQ==", "PA==", "RA==", "hQ==", "rA==", "/w==", "rA==", "lg=="]]
+2025-01-22T01:46:02.495652Z  INFO aleph_research::requests::send_proposals: ProposeRequest payload to node 10.0.128.183:30333: ProposeRequest { sender: 1, root: [76, 69, 12, 196, 182, 153, 238, 47, 214,246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33], proofs: [["fA==", "iQ==", "dQ==", "4Q==", "5g==", "Cg==", "XA==", "gw==", "Nw==", "8g==", "jg==","3w==", "jA==", "Mw==", "ww==", "sQ==", "gA==", "Ng==", "Cw==", "cg==", "eQ==", "ZA==", "Sg==", "mw==", "wQ==", "rw==", "PA==", "UQ==", "5g==", "Ig==", "Cw==", "9Q=="], ["pQ==", "Ag==", "OA==", "RA==", "fg==", "TQ==", "9w==", "hQ==", "9A==", "DQ==", "XA==", "Tw==", "Ow==", "/g==", "kQ==", "1w==", "lA==", "Kw==", "Ew==", "wg==", "pw==", "8w==", "LQ==", "bw==", "WQ==", "PA==", "RA==", "hQ==", "rA==", "/w==", "rA==", "lg=="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], epoch_id: 1 }
+2025-01-22T01:46:02.498081Z ERROR aleph_research::requests::send_proposals: Node 1: Proposal rejected by 10.0.128.183:30333: {"status":"Node 2 10.0.128.183: Merkle root mismatch for shard 0 in epoch 1. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]"}
+
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.130.98
+PRIVATE_IP = 10.0.128.183
 Node registration success.
-IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.170.194:30333", "10.0.180.193:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.129.23:30333", "10.0.151.52:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.165.136"
-ip_address = "10.0.130.98"
-nodes = ["10.0.170.194:30333", "10.0.180.193:30333"]
+ip_manager_address = "10.0.134.224"
+ip_address = "10.0.128.183"
+nodes = ["10.0.129.23:30333", "10.0.151.52:30333"]
 proposals = []
 
 [consensus]
@@ -80,13 +145,22 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-01-21T03:24:56.824986Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-01-21T03:24:57.259682Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-21T03:24:57.259711Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 1 synchronized successfully with node 3
-2025-01-21T03:24:57.802952Z  INFO aleph_research::handlers::handle_propose: ***==== Handling PROPOSE REQUEST Node 2 10.0.130.98 from Sender 1 ====***
-2025-01-21T03:24:57.802977Z  INFO aleph_research::handlers::handle_propose: Proofs received for validation: [[[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]]
-2025-01-21T03:24:57.802993Z  INFO aleph_research::utils::merkle_utils: Validating Merkle branch with 1 shard hashes and 1 levels of proofs
-2025-01-21T03:24:57.803004Z  INFO aleph_research::utils::merkle_utils: Successfully computed Merkle root: [97, 14, 4, 131, 74, 191, 110, 207, 70, 234, 65, 214, 22, 169, 66, 211, 213, 126, 153, 56, 104, 70, 100, 147, 12, 41, 49, 122, 226, 185, 18, 246]
-2025-01-21T03:24:57.803018Z ERROR aleph_research::handlers::handle_propose: Node 2 10.0.130.98: Merkle root mismatch for epoch 1. Computed: [97, 14, 4, 131, 74, 191, 110, 207, 70, 234, 65, 214, 22, 169,66, 211, 213, 126, 153, 56, 104, 70, 100, 147, 12, 41, 49, 122, 226, 185, 18, 246], Expected: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146,99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:45:58.708151Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 2 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
+Attempting to execute aleph_start with configuration
+2025-01-22T01:45:59.758003Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-22T01:45:59.765628Z  INFO aleph_research::utils::start_util: Node 10.0.129.23:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.129.23:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-22T01:45:59.765680Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
+2025-01-22T01:46:00.766454Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-22T01:46:00.767056Z  INFO aleph_research::utils::start_util: Node 10.0.129.23:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.129.23:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-22T01:46:00.767081Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
+2025-01-22T01:46:01.767295Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-22T01:46:01.767823Z  INFO aleph_research::utils::start_util: Node 10.0.129.23:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.129.23:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-22T01:46:01.767848Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
+2025-01-22T01:46:02.497728Z  INFO aleph_research::handlers::handle_propose: ***==== Handling PROPOSE REQUEST Node 2 10.0.128.183 from Sender 1 ====***
+2025-01-22T01:46:02.497823Z ERROR aleph_research::utils::merkle_utils: Validation failed. Computed root: [103, 138, 48, 114, 50, 48, 184, 245, 90, 14, 17, 9, 129, 68, 252, 236, 241, 242, 105, 213, 18, 144, 232, 109, 216, 87, 174, 35, 16, 87, 68, 226], Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:46:02.497851Z ERROR aleph_research::handlers::handle_propose: Node 2 10.0.128.183: Merkle root mismatch for shard 0 in epoch 1. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-22T01:46:02.768894Z  INFO aleph_research::utils::start_util: Checking health of all nodes...

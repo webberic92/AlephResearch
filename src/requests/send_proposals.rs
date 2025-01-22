@@ -19,6 +19,7 @@ pub async fn send_proposals(
         toml_config.consensus.epoch_round_id
     );
 
+    // Log shard hashes for debugging
     for (i, hash) in proofs.iter().enumerate() {
         info!(
             "Node {} {}: Shard {} Hash: {:?}",
@@ -34,43 +35,41 @@ pub async fn send_proposals(
             toml_config.node.id, toml_config.network.ip_address, node_url, toml_config.consensus.epoch_round_id
         );
 
-        // Extract shard and corresponding Merkle branch
+        // Extract shard and compute the Merkle branch for this node
         let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&proofs, index % proofs.len())
             .iter()
             .map(|hash| hash.clone())
             .collect();
 
-        let serialized_shards: Vec<String> = shards
+        // Encode shards to Base64 strings
+        let encoded_shards: Vec<String> = shards
             .iter()
             .map(|shard| general_purpose::STANDARD.encode(shard))
             .collect();
 
-        let serialized_proofs: Vec<Vec<String>> = merkle_branch
+        // Encode the Merkle branch to Base64 strings
+        let encoded_proofs: Vec<String> = merkle_branch
             .iter()
-            .map(|branch| {
-                branch
-                    .iter()
-                    .map(|b| general_purpose::STANDARD.encode([*b].as_ref()))
-                    .collect()
-            })
+            .map(|branch| general_purpose::STANDARD.encode(branch))
             .collect();
 
-        info!("Serialized shards for payload: {:?}", serialized_shards);
-        info!("Serialized proofs for payload: {:?}", serialized_proofs);
+        info!("Encoded shards for payload: {:?}", encoded_shards);
+        info!("Encoded proofs for payload: {:?}", encoded_proofs);
 
-        // Prepare ProposeRequest struct
+        // Prepare the ProposeRequest struct
         let propose_request = ProposeRequest {
             sender: toml_config.node.id,
             root: merkle_root.to_vec(),
-            proofs: serialized_proofs,
-            shards: serialized_shards,
+            proofs: vec![encoded_proofs.clone()], // Wrap each proof in a vector
+            shards: encoded_shards.clone(),
             epoch_id: toml_config.consensus.epoch_round_id,
         };
 
         info!("ProposeRequest payload to node {}: {:?}", node_url, propose_request);
 
-        // Send request
-        match client.post(format!("http://{}/propose", node_url))
+        // Send the request
+        match client
+            .post(format!("http://{}/propose", node_url))
             .json(&propose_request)
             .send()
             .await
@@ -122,4 +121,5 @@ pub async fn send_proposals(
         Err("One or more proposals failed".into())
     }
 }
+
 
