@@ -1,7 +1,8 @@
 use axum::Json;
 use base64::{engine::general_purpose, Engine};
+use sha2::Digest;
 use tracing::{error, info};
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
 use crate::{
     structs::{node::Node, requests::ProposeRequest, responses::Response},
     utils::{
@@ -12,20 +13,19 @@ use crate::{
 
 pub async fn handle_propose(
     node: &Node,
-    client: &Client,
     request: ProposeRequest,
 ) -> (StatusCode, Json<Response>) {
     info!(
-        "***==== Handling PROPOSE REQUEST Node {} {} from Sender {} ====***",
+        "*** Handling PROPOSE REQUEST: Node {} {} from Sender {} ***",
         node.id, node.ip_address, request.sender
     );
 
-    // Decode Base64-encoded shards
+    // Step 1: Decode Base64-encoded shards
     let decoded_shards: Vec<Vec<u8>> = match request
         .shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-        .collect::<Result<Vec<_>, _>>()
+        .collect::<Result<Vec<Vec<u8>>, _>>()
     {
         Ok(decoded) => decoded,
         Err(e) => {
@@ -37,9 +37,14 @@ pub async fn handle_propose(
             );
         }
     };
-    let encoded_shards: Vec<String> = decoded_shards.iter().map(|shard| general_purpose::STANDARD.encode(shard)).collect();
-    info!("Re-encoded shards: {:?}", encoded_shards);
-    // Decode Base64-encoded proofs
+
+    // Log decoded shards
+    info!(
+        "Node {}: Decoded shards (Epoch {}): {:?}",
+        node.id, request.epoch_id, decoded_shards
+    );
+
+    // Step 2: Decode Base64-encoded proofs
     let decoded_proofs: Vec<Vec<Vec<u8>>> = match request
         .proofs
         .iter()
@@ -47,9 +52,9 @@ pub async fn handle_propose(
             proof
                 .iter()
                 .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-                .collect::<Result<Vec<_>, _>>()
+                .collect::<Result<Vec<Vec<u8>>, _>>() // Collect decoded hashes into Vec<Vec<u8>>
         })
-        .collect::<Result<Vec<_>, _>>()
+        .collect::<Result<Vec<Vec<Vec<u8>>>, _>>() // Collect all decoded proofs into Vec<Vec<Vec<u8>>>
     {
         Ok(decoded) => decoded,
         Err(e) => {
@@ -61,36 +66,31 @@ pub async fn handle_propose(
             );
         }
     };
+
+    // Log decoded proofs
     info!(
-        "Decoded Shards Received (Node {} Epoch {}): {:?}",
-        node.id, request.epoch_id, decoded_shards
-    );
-    info!(
-        "Decoded Proofs Received (Node {} Epoch {}): {:?}",
+        "Node {}: Decoded proofs (Epoch {}): {:?}",
         node.id, request.epoch_id, decoded_proofs
     );
 
+    // Step 3: Compute shard hashes
+    let shard_hashes: Vec<Vec<u8>> = decoded_shards
+        .iter()
+        .map(|shard| sha2::Sha256::digest(shard).to_vec())
+        .collect();
 
-    if decoded_shards.len() != decoded_proofs.len() {
-        let warning_message = format!(
-            "Node {}: Shard-Proof count mismatch! Shards: {}, Proofs: {}",
-            node.id,
-            decoded_shards.len(),
-            decoded_proofs.len()
-        );
-        error!("{}", warning_message);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response { status: warning_message }),
-        );
-    }
-    // Validate the Merkle branch for each shard
-    for (index, _) in decoded_shards.iter().enumerate() {
-        let proof = &decoded_proofs[index];
-        if !validate_merkle_branch(&decoded_shards, proof, index, &request.root) {
+    // Log shard hashes
+    info!(
+        "Node {}: Computed shard hashes (Epoch {}): {:?}",
+        node.id, request.epoch_id, shard_hashes
+    );
+
+    // Step 4: Validate Merkle branches for each shard
+    for (index, proof) in decoded_proofs.iter().enumerate() {
+        if !validate_merkle_branch(&shard_hashes, proof, index, &request.root) {
             let error_message = format!(
-                "Node {} {}: Merkle root mismatch for shard {} in epoch {}. Expected root: {:?}",
-                node.id, node.ip_address, index, request.epoch_id, request.root
+                "Node {}: Merkle root mismatch for shard {} in epoch {}. Expected root: {:?}",
+                node.id, index, request.epoch_id, request.root
             );
             error!("{}", error_message);
             return (
@@ -101,38 +101,54 @@ pub async fn handle_propose(
     }
 
     info!(
-        "Node {} {}: Merkle root validation passed for all shards in epoch {}",
+        "Node {} {}: All Merkle branches validated successfully for epoch {}",
         node.id, node.ip_address, request.epoch_id
     );
 
-    // Validate reconstruction
-    if let Err(error_message) = reconstruct_unit(&decoded_shards, &decoded_proofs, &request.root) {
-        error!(
-            "Node {} {}: Reconstruction failed for epoch {}: {}",
-            node.id, node.ip_address, request.epoch_id, error_message
-        );
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response { status: error_message }),
-        );
+    // Step 5: Attempt to reconstruct the original data
+    match reconstruct_unit(&decoded_shards, &decoded_proofs, &request.root) {
+        Ok(reconstructed_data) => {
+            info!(
+                "Node {} {}: Reconstruction successful for epoch {}. Reconstructed data: {:?}",
+                node.id, node.ip_address, request.epoch_id, reconstructed_data
+            );
+        }
+        Err(error_message) => {
+            error!(
+                "Node {} {}: Reconstruction failed for epoch {}: {}",
+                node.id, node.ip_address, request.epoch_id, error_message
+            );
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(Response { status: error_message }),
+            );
+        }
     }
 
-    // Update the proposal tracker
+    // Step 6: Update the proposal tracker
+    // Step 6: Update the proposal tracker
     update_proposal_tracker(node, request.sender, request.epoch_id).await;
 
-    // Transition to PREVOTE phase if enough proposals are received
+    info!(
+        "Node {}: Successfully updated proposal tracker for sender {} in epoch {}",
+        node.id, request.sender, request.epoch_id
+    );
+
+
+    // Step 7: Check if enough proposals are received
     if are_enough_proposals_received().await {
         info!(
-            "Node {} {}: Enough proposals received for epoch {}. Transitioning to PREVOTE phase.",
+            "Node {} {}: Transitioning to PREVOTE phase for epoch {}.",
             node.id, node.ip_address, request.epoch_id
         );
     } else {
         info!(
-            "Node {} {}: Waiting for more proposals for epoch {}",
+            "Node {} {}: Waiting for more proposals for epoch {}.",
             node.id, node.ip_address, request.epoch_id
         );
     }
 
+    // Step 8: Return success response
     (
         StatusCode::OK,
         Json(Response {
@@ -143,6 +159,3 @@ pub async fn handle_propose(
         }),
     )
 }
-
-
-
