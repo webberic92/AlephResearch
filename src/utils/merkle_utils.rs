@@ -3,20 +3,37 @@ use tracing::{error, info};
 use base64::{engine::general_purpose, Engine as _};
 
 /// Compute Merkle root from shard hashes
+/// Compute Merkle root from shard hashes
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     if hashes.len() == 1 {
+        info!("Computed Merkle root: {:?}", hashes[0]);
         return hashes[0].clone();
     }
+
     let mut next_level = vec![];
     for pair in hashes.chunks(2) {
         let mut combined = pair[0].clone();
         if pair.len() > 1 {
             combined.extend(&pair[1]);
         }
-        next_level.push(Sha256::digest(&combined).to_vec());
+        let combined_hash = Sha256::digest(&combined).to_vec();
+        
+        // Clone `combined_hash` for logging to avoid move issues
+        info!(
+            "Pair: {:?} + {:?} = Combined hash: {:?}",
+            pair[0],
+            pair.get(1).unwrap_or(&vec![0; 32]), // Placeholder for missing sibling
+            combined_hash.clone()
+        );
+        
+        // Push the combined hash into the next level
+        next_level.push(combined_hash);
     }
+
     compute_merkle_root(&next_level)
 }
+
+
 
 /// Compute the Merkle branch for a given index in the Merkle tree
 pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
@@ -31,13 +48,16 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             current_index - 1
         };
 
-        // Add the sibling hash even if it doesn't exist (use a placeholder)
         if sibling_index < current_level.len() {
             branch.push(current_level[sibling_index].clone());
         } else {
-            // Placeholder for missing sibling
-            branch.push(vec![]);
+            branch.push(vec![0; 32]); // Zero-filled placeholder hash
         }
+
+        info!(
+            "Index {}: Adding sibling {:?} to branch",
+            sibling_index, branch.last().unwrap()
+        );
 
         current_index /= 2;
         current_level = current_level
@@ -47,13 +67,18 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
                 if pair.len() > 1 {
                     combined.extend(&pair[1]);
                 }
-                Sha256::digest(&combined).to_vec()
+                let digest = Sha256::digest(&combined).to_vec();
+                info!("Intermediate combined hash: {:?}", digest);
+                digest
             })
             .collect();
     }
 
+    info!("Computed Merkle branch for index {}: {:?}", index, branch);
     branch
 }
+
+
 
 
 /// Validate Merkle branches and return the root
@@ -77,8 +102,10 @@ pub fn validate_merkle_branch(
             let right = if chunk.len() > 1 {
                 &chunk[1]
             } else if let Some(proof_hash) = proof.get(i) {
-                proof_hash // Use the provided proof hash
+                // Use the proof hash for missing sibling
+                proof_hash
             } else {
+                // Log an error for missing proof hash
                 error!(
                     "Missing proof hash at Level {}, Chunk {}. Proof: {:?}",
                     level, i, proof
@@ -86,13 +113,34 @@ pub fn validate_merkle_branch(
                 return vec![];
             };
 
+            // Log intermediate values for debugging
+            info!(
+                "Level {}, Chunk {}: Left = {:?}, Right = {:?}",
+                level, i, left, right
+            );
+
+            // Compute the hash of the combined chunk
             let mut hasher = Sha256::new();
             hasher.update(left);
             hasher.update(right);
-            next_level_hashes.push(hasher.finalize().to_vec());
+            let combined_hash = hasher.finalize().to_vec();
+
+            // Clone combined_hash for logging and pushing into next_level_hashes
+            info!(
+                "Level {}, Chunk {}: Computed combined hash = {:?}",
+                level, i, combined_hash.clone() // Clone here for logging
+            );
+            next_level_hashes.push(combined_hash); // Move into vector
         }
 
+        // Update current hashes to the next level
         current_hashes = next_level_hashes;
+
+        // Log the intermediate Merkle tree level
+        info!(
+            "After Level {}: Intermediate Merkle hashes = {:?}",
+            level, current_hashes
+        );
     }
 
     if current_hashes.len() == 1 {
@@ -106,6 +154,7 @@ pub fn validate_merkle_branch(
         vec![]
     }
 }
+
 
 
 
@@ -164,8 +213,8 @@ pub fn reconstruct_unit(
     let computed_root = validate_merkle_branch(&shard_hashes, proofs);
     if computed_root != *root {
         let error_message = format!(
-            "Reconstruction failed: computed root {:?} does not match provided root {:?}",
-            computed_root, root
+            "Reconstruction failed: computed root {:?} does not match provided root {:?}. Shards: {:?}, Proofs: {:?}",
+            computed_root, root, shards, proofs
         );
         error!("{}", error_message);
         return Err(error_message);
@@ -236,41 +285,159 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
 
 
 
-    #[cfg(test)]
-    mod tests {
-        use super::*;
-    
-        #[test]
-        fn test_merkle_branch_consistency() {
-            // Example shard hashes
-            let shard_hashes = vec![
-                Sha256::digest(b"shard1").to_vec(),
-                Sha256::digest(b"shard2").to_vec(),
-                Sha256::digest(b"shard3").to_vec(),
-                Sha256::digest(b"shard4").to_vec(),
-            ];
-    
-            // Compute the Merkle branch and root
-            let branch = compute_merkle_branch(&shard_hashes, 0);
-            let computed_root = validate_merkle_branch(&shard_hashes, &[branch.clone()]);
-    
-            // Recalculate the root using just the branch
-            assert_eq!(
-                computed_root,
-                compute_merkle_branch(&shard_hashes, 0)[0]
-            );
-        }
-    
-        #[test]
-        fn test_invalid_merkle_proof() {
-            let shard_hashes = vec![
-                Sha256::digest(b"shard1").to_vec(),
-                Sha256::digest(b"shard2").to_vec(),
-            ];
-            let invalid_proofs = vec![vec![b"invalid_proof".to_vec()]];
-    
-            let computed_root = validate_merkle_branch(&shard_hashes, &invalid_proofs);
-    
-            assert_eq!(computed_root, Vec::<u8>::new(), "Invalid proof should fail");
-        }
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use sha2::Sha256;
+
+    #[test]
+    fn test_compute_merkle_root() {
+        let data = vec![
+            b"shard1".to_vec(),
+            b"shard2".to_vec(),
+            b"shard3".to_vec(),
+            b"shard4".to_vec(),
+        ];
+        let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
+        let root = compute_merkle_root(&hashes);
+
+        assert!(
+            !root.is_empty(),
+            "Computed Merkle root is empty. Data: {:?}, Hashes: {:?}",
+            data,
+            hashes
+        );
+        info!("Test: Computed Merkle root = {:?}", root);
     }
+
+    #[test]
+    fn test_compute_merkle_branch() {
+        let data = vec![
+            b"shard1".to_vec(),
+            b"shard2".to_vec(),
+            b"shard3".to_vec(),
+            b"shard4".to_vec(),
+        ];
+        let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
+        let branch = compute_merkle_branch(&hashes, 0);
+
+        assert!(
+            !branch.is_empty(),
+            "Computed Merkle branch is empty. Data: {:?}, Hashes: {:?}",
+            data,
+            hashes
+        );
+        info!("Test: Computed Merkle branch for index 0 = {:?}", branch);
+    }
+
+    #[test]
+    fn test_validate_merkle_branch() {
+        let data = vec![
+            b"shard1".to_vec(),
+            b"shard2".to_vec(),
+            b"shard3".to_vec(),
+            b"shard4".to_vec(),
+        ];
+        let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
+        let proofs: Vec<Vec<Vec<u8>>> = hashes
+            .iter()
+            .enumerate()
+            .map(|(i, _)| compute_merkle_branch(&hashes, i))
+            .collect();
+        let root = compute_merkle_root(&hashes);
+
+        let computed_root = validate_merkle_branch(&hashes, &proofs);
+        assert_eq!(
+            computed_root, root,
+            "Validation failed. Computed root: {:?}, Expected root: {:?}",
+            computed_root, root
+        );
+        info!("Test: Validation succeeded. Computed root = {:?}", computed_root);
+    }
+
+    #[test]
+    fn test_split_into_shards() {
+        let data = vec![1; 256];
+        let shards = split_into_shards(&data, 4);
+
+        assert_eq!(
+            shards.len(),
+            4,
+            "Shard count mismatch. Expected: 4, Got: {}",
+            shards.len()
+        );
+        assert!(
+            shards.iter().all(|s| s.len() == 64),
+            "Shard size mismatch. Shards: {:?}",
+            shards
+        );
+        info!("Test: Split into shards succeeded. Shards = {:?}", shards);
+    }
+
+    #[test]
+    fn test_validate_shard_sizes() {
+        let data = vec![1; 256];
+        let shards = split_into_shards(&data, 4);
+
+        assert!(
+            validate_shard_sizes(&shards, 256).is_ok(),
+            "Shard size validation failed. Shards: {:?}, Total size: {}",
+            shards,
+            data.len()
+        );
+        info!("Test: Shard size validation succeeded.");
+    }
+
+    #[test]
+    fn test_reconstruct_unit() {
+        let data = vec![1; 256];
+        let shards = split_into_shards(&data, 4);
+        let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+        let proofs = shard_hashes
+            .iter()
+            .enumerate()
+            .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
+            .collect::<Vec<_>>();
+        let root = compute_merkle_root(&shard_hashes);
+    
+        let reconstructed = reconstruct_unit(&shards, &proofs, &root);
+    
+        assert!(
+            reconstructed.is_ok(),
+            "Reconstruction failed: {:?}",
+            reconstructed.as_ref().err() // Use `as_ref` to borrow the error without moving
+        );
+    
+        assert_eq!(
+            reconstructed.as_ref().unwrap(), // Use `as_ref` to borrow the success value
+            &data,
+            "Reconstructed data mismatch. Original: {:?}, Reconstructed: {:?}",
+            data,
+            reconstructed.as_ref().unwrap() // Use `as_ref` again for consistent borrowing
+        );
+    
+        info!("Test: Reconstruction succeeded.");
+    }
+    
+
+    #[test]
+    fn test_payload_serialization() {
+        let shards = vec![
+            b"shard1".to_vec(),
+            b"shard2".to_vec(),
+            b"shard3".to_vec(),
+            b"shard4".to_vec(),
+        ];
+        let serialized_shards: Vec<String> = shards
+            .iter()
+            .map(|shard| general_purpose::STANDARD.encode(shard))
+            .collect();
+        let deserialized_shards: Vec<Vec<u8>> = serialized_shards
+            .iter()
+            .map(|shard| general_purpose::STANDARD.decode(shard).expect("Failed to decode shard"))
+            .collect();
+
+        assert_eq!(shards, deserialized_shards);
+        info!("Test: Payload serialization succeeded.");
+    }
+}

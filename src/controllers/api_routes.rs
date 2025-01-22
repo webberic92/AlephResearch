@@ -16,40 +16,36 @@ use crate::{
 
 pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
-    .route("/propose", post({
-        let node = node.clone();
-        let client = client.clone();
-        move |Json(payload): Json<Value>| {
+        .route("/propose", post({
             let node = node.clone();
             let client = client.clone();
-            async move {
-                match serde_json::from_value::<ProposeRequest>(payload.clone()) {
-                    Ok(parsed_payload) => {
-                        // Handle the proposal and respond with proper HTTP status codes
-                        handle_propose(
-                            &node,
-                            &client,
-                            parsed_payload.sender,
-                            parsed_payload.root,
-                            &parsed_payload.proofs,
-                            &parsed_payload.shards,
-                            parsed_payload.epoch_id,
-                        )
-                        .await
-                    }
-                    Err(e) => {
-                        error!("Failed to deserialize payload: {:?}", e);
-                        (
-                            StatusCode::BAD_REQUEST,
-                            Json(Response {
-                                status: format!("Deserialization error: {:?}", e),
-                            }),
-                        )
+            move |Json(payload): Json<Value>| {
+                let node = node.clone();
+                let client = client.clone();
+                async move {
+                    match serde_json::from_value::<ProposeRequest>(payload) {
+                        Ok(parsed_payload) => {
+                            // Handle the proposal and respond with proper HTTP status codes
+                            handle_propose(
+                                &node,
+                                &client,
+                                parsed_payload, // Pass the parsed ProposeRequest directly
+                            )
+                            .await
+                        }
+                        Err(err) => {
+                            // Handle deserialization error
+                            let error_message = format!("Failed to parse ProposeRequest: {:?}", err);
+                            tracing::error!("{}", error_message);
+                            (
+                                StatusCode::BAD_REQUEST,
+                                Json(Response { status: error_message }),
+                            )
+                        }
                     }
                 }
             }
-        }
-    }))
+        }))  
         .route("/prevote", post({
             let node = node.clone();
             let client = client.clone();

@@ -6,6 +6,7 @@ pub mod utils{
     pub mod dag_utils; // Expose the structs module
     pub mod errors_util; // Expose the structs module
     pub mod recovery_util; // Expose the structs module
+    pub mod create_transaction_data;
 }
 
 pub mod structs{
