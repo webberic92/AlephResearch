@@ -61,8 +61,29 @@ pub async fn handle_propose(
             );
         }
     };
-    info!("Decoded shards: {:?}", decoded_shards);
-    info!("Decoded proofs: {:?}", decoded_proofs);
+    info!(
+        "Decoded Shards Received (Node {} Epoch {}): {:?}",
+        node.id, request.epoch_id, decoded_shards
+    );
+    info!(
+        "Decoded Proofs Received (Node {} Epoch {}): {:?}",
+        node.id, request.epoch_id, decoded_proofs
+    );
+
+
+    if decoded_shards.len() != decoded_proofs.len() {
+        let warning_message = format!(
+            "Node {}: Shard-Proof count mismatch! Shards: {}, Proofs: {}",
+            node.id,
+            decoded_shards.len(),
+            decoded_proofs.len()
+        );
+        error!("{}", warning_message);
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(Response { status: warning_message }),
+        );
+    }
     // Validate the Merkle branch for each shard
     for (index, _) in decoded_shards.iter().enumerate() {
         let proof = &decoded_proofs[index];

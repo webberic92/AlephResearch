@@ -54,8 +54,10 @@ pub async fn send_proposals(
             .collect();
 
         info!("Encoded shards for payload: {:?}", encoded_shards);
-        info!("Encoded proofs for payload: {:?}", encoded_proofs);
-
+        info!(
+            "Node {}: Proposal Payload Details -> Epoch {}, Shards: {:?}, Merkle Branch for Node {}: {:?}",
+            toml_config.node.id, toml_config.consensus.epoch_round_id, encoded_shards, index, encoded_proofs
+        );
         // Prepare the ProposeRequest struct
         let propose_request = ProposeRequest {
             sender: toml_config.node.id,
@@ -81,9 +83,10 @@ pub async fn send_proposals(
                 match status {
                     StatusCode::OK => {
                         info!(
-                            "Node {}: Proposal successfully sent to {}",
-                            toml_config.node.id, node_url
+                            "Node {}: Proposal successfully delivered to Node {} (Epoch {})",
+                            toml_config.node.id, node_url, toml_config.consensus.epoch_round_id
                         );
+                        
                     }
                     StatusCode::BAD_REQUEST => {
                         error!(
