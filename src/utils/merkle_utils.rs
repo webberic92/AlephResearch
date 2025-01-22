@@ -2,7 +2,6 @@ use sha2::{Digest, Sha256};
 use tracing::{error, info};
 use base64::{engine::general_purpose, Engine as _};
 
-/// Compute Merkle root from shard hashes
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     if hashes.len() == 1 {
         info!("Final Merkle root computed: {:?}", hashes[0]);
@@ -12,12 +11,15 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     let next_level: Vec<Vec<u8>> = hashes
         .chunks(2)
         .map(|pair| {
-            let mut combined = pair[0].clone();
-            if pair.len() > 1 {
-                combined.extend(&pair[1]);
+            let combined = if pair.len() == 2 {
+                let mut combined = pair[0].clone();
+                combined.extend(&pair[1]); // Left + Right
+                combined
             } else {
-                combined.extend(vec![0; 32]); // Padding for odd-sized levels
-            }
+                let mut combined = pair[0].clone();
+                combined.extend(vec![0; 32]); // Add padding for odd pairs
+                combined
+            };
             let combined_hash = Sha256::digest(&combined).to_vec();
             info!(
                 "Merkle Root Level {}: Pair {:?} + {:?} = Combined Hash: {:?}",
@@ -33,8 +35,7 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     compute_merkle_root(&next_level)
 }
 
-
-/// Compute the Merkle branch for a given index in the Merkle tree
+// Updated `compute_merkle_branch` with correct combination order
 pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     let mut branch = vec![];
     let mut current_index = index;
@@ -54,7 +55,7 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
         }
 
         info!(
-            "Branch Level {}: Current Index = {}, Sibling Index = {}, Sibling Hash = {:?}",
+            "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
             current_level.len(),
             current_index,
             sibling_index,
@@ -80,7 +81,7 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
-
+/// Validate Merkle branch for a specific index and return the computed root
 /// Validate Merkle branch for a specific index and return the computed root
 pub fn validate_merkle_branch(
     shard_hashes: &[Vec<u8>],
@@ -91,7 +92,13 @@ pub fn validate_merkle_branch(
     let mut current_hash = shard_hashes[index].clone();
     let mut current_index = index;
 
-    for sibling_hash in proofs {
+    // Log the initial state
+    info!(
+        "Starting Merkle branch validation. Initial hash: {:?}, Index: {}, Proofs: {:?}, Expected root: {:?}",
+        current_hash, current_index, proofs, expected_root
+    );
+
+    for (i, sibling_hash) in proofs.iter().enumerate() {
         let mut combined = if current_index % 2 == 0 {
             current_hash.clone()
         } else {
@@ -103,12 +110,23 @@ pub fn validate_merkle_branch(
             current_hash.clone()
         });
 
-        current_hash = Sha256::digest(&combined).to_vec();
+        // Compute the next hash
+        let combined_hash = Sha256::digest(&combined).to_vec();
+        info!(
+            "Step {}: Current index = {}, Sibling hash = {:?}, Combined = {:?}, Combined hash = {:?}",
+            i, current_index, sibling_hash, combined, combined_hash
+        );
+
+        current_hash = combined_hash;
         current_index /= 2;
     }
 
+    // Final validation against the expected root
     if current_hash == expected_root {
-        info!("Validation succeeded. Computed root matches expected root: {:?}", expected_root);
+        info!(
+            "Validation succeeded. Computed root matches expected root: {:?}",
+            expected_root
+        );
         true
     } else {
         error!(
@@ -208,6 +226,24 @@ mod tests {
         let _ = tracing_subscriber::fmt()
             .with_max_level(tracing::Level::INFO)
             .try_init();
+    }
+
+    #[test]
+    fn test_single_node_merkle_tree() {
+        init_logger();
+
+        let hashes = vec![vec![1; 32]];
+        let root = compute_merkle_root(&hashes);
+        assert_eq!(root, hashes[0], "Single node Merkle root mismatch");
+    }
+
+    #[test]
+    fn test_odd_length_merkle_tree() {
+        init_logger();
+
+        let data = vec![vec![1; 32], vec![2; 32], vec![3; 32]];
+        let root = compute_merkle_root(&data);
+        assert!(!root.is_empty(), "Root should not be empty for odd-length tree");
     }
 
     #[test]
