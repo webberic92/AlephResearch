@@ -46,17 +46,22 @@ pub async fn send_proposals(
         );
 
         // Compute Merkle branch for this node
-        let merkle_branch = compute_merkle_branch(&shard_hashes, index);
+        // let merkle_branch = compute_merkle_branch(&shard_hashes, index);
 
         // Encode shards and Merkle branch to Base64 strings
         let encoded_shards: Vec<String> = shards.iter().map(|shard| general_purpose::STANDARD.encode(shard)).collect();
-        let encoded_proofs: Vec<String> = merkle_branch.iter().map(|branch| general_purpose::STANDARD.encode(branch)).collect();
-
+        let encoded_proofs: Vec<Vec<String>> = shard_hashes
+        .iter()
+        .enumerate()
+        .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
+        .map(|branch| branch.iter().map(|b| general_purpose::STANDARD.encode(b)).collect())
+        .collect();
+        
         // Prepare the ProposeRequest
         let propose_request = ProposeRequest {
             sender: toml_config.node.id,
             root: merkle_root.to_vec(),
-            proofs: vec![encoded_proofs], // Wrap proofs in a vector
+            proofs: encoded_proofs, // No additional wrapping
             shards: encoded_shards,
             epoch_id: toml_config.consensus.epoch_round_id,
         };
