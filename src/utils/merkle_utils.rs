@@ -234,6 +234,7 @@ mod tests {
 
         let hashes = vec![vec![1; 32]];
         let root = compute_merkle_root(&hashes);
+        info!("Test single node Merkle tree: Computed root = {:?}", root);
         assert_eq!(root, hashes[0], "Single node Merkle root mismatch");
     }
 
@@ -243,14 +244,14 @@ mod tests {
 
         let data = vec![vec![1; 32], vec![2; 32], vec![3; 32]];
         let root = compute_merkle_root(&data);
+        info!("Test odd-length Merkle tree: Computed root = {:?}", root);
         assert!(!root.is_empty(), "Root should not be empty for odd-length tree");
     }
 
     #[test]
     fn test_validate_merkle_branch_minimal() {
         init_logger();
-    
-        // Generate 256-byte transaction data
+
         let data: Vec<Vec<u8>> = (0..4)
             .map(|i| {
                 let mut shard = vec![0; 256];
@@ -258,172 +259,100 @@ mod tests {
                 shard
             })
             .collect();
-    
-        // Compute hashes for each shard
+
         let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
-    
-        // Compute the Merkle root
         let root = compute_merkle_root(&hashes);
-    
-        // Generate proofs for each shard
+
         let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
             .map(|i| compute_merkle_branch(&hashes, i))
             .collect();
-    
-        // Validate each shard's proof
+
         for (i, proof) in proofs.iter().enumerate() {
+            info!(
+                "Testing validation for shard index {}: Proof = {:?}, Expected root = {:?}",
+                i, proof, root
+            );
             assert!(
                 validate_merkle_branch(&hashes, proof, i, &root),
-                "Validation failed for shard index {}",
-                i
+                "Validation failed for shard index {}. Proof = {:?}, Expected root = {:?}",
+                i, proof, root
             );
         }
+        info!("All minimal Merkle branch validations passed.");
     }
+
     #[test]
-fn test_reconstruct_unit() {
-    init_logger();
+    fn test_reconstruct_unit() {
+        init_logger();
 
-    // Step 1: Generate 256-byte transaction data
-    let transaction_data: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect(); // 1024 bytes of data
-    let shard_count = 4;
+        let transaction_data: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect();
+        let shard_count = 4;
 
-    // Step 2: Split data into shards
-    let shards = split_into_shards(&transaction_data, shard_count);
+        let shards = split_into_shards(&transaction_data, shard_count);
+        let hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+        let root = compute_merkle_root(&hashes);
 
-    // Step 3: Compute hashes for each shard
-    let hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
+        let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
+            .map(|i| compute_merkle_branch(&hashes, i))
+            .collect();
 
-    // Step 4: Compute the Merkle root
-    let root = compute_merkle_root(&hashes);
+        match reconstruct_unit(&shards, &proofs, &root) {
+            Ok(reconstructed_data) => {
+                assert_eq!(
+                    reconstructed_data, transaction_data,
+                    "Reconstructed data does not match the original transaction data"
+                );
+                info!("Reconstruction and validation succeeded!");
+            }
+            Err(error_message) => {
+                error!("Reconstruction failed: {}", error_message);
+                panic!("Reconstruction failed: {}", error_message);
+            }
+        }
+    }
 
-    // Step 5: Generate Merkle proofs for each shard
-    let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
-        .map(|i| compute_merkle_branch(&hashes, i))
-        .collect();
+    #[test]
+    fn test_propose_integration() {
+        init_logger();
+        info!("Starting test_propose_integration...");
 
-    // Step 6: Attempt to reconstruct the unit and validate
-    match reconstruct_unit(&shards, &proofs, &root) {
-        Ok(reconstructed_data) => {
-            assert_eq!(
-                reconstructed_data, transaction_data,
-                "Reconstructed data does not match the original transaction data"
+        let transaction_data = (0..256).map(|i| i as u8).collect::<Vec<_>>();
+        let shard_count = 4;
+
+        let shards = split_into_shards(&transaction_data, shard_count);
+        let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
+        let root = compute_merkle_root(&shard_hashes);
+
+        let proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
+            .map(|i| compute_merkle_branch(&shard_hashes, i))
+            .collect();
+
+        info!("Generated proofs: {:?}", proofs);
+
+        for (i, proof) in proofs.iter().enumerate() {
+            info!(
+                "Validating Merkle branch for shard {}: Proof = {:?}, Expected root = {:?}",
+                i, proof, root
             );
-            info!("Reconstruction and validation succeeded!");
-        }
-        Err(error_message) => {
-            panic!("Reconstruction failed: {}", error_message);
-        }
-    }
-}
-
-#[test]
-fn test_propose_integration() {
-    init_logger();
-    info!("Starting test_propose_integration...");
-
-    // Step 1: Generate transaction data
-    let transaction_data = (0..256).map(|i| i as u8).collect::<Vec<_>>();
-    info!("Generated transaction data (size: {} bytes): {:?}", transaction_data.len(), transaction_data);
-
-    // Step 2: Split transaction data into shards
-    let shard_count = 4;
-    let shards = split_into_shards(&transaction_data, shard_count);
-    info!("Split transaction data into {} shards:", shard_count);
-    for (i, shard) in shards.iter().enumerate() {
-        info!("Shard {} (size: {} bytes): {:?}", i, shard.len(), shard);
-    }
-    info!("Transaction data: {:?}", transaction_data);
-
-    
-    // Step 3: Compute hashes for each shard
-    let shard_hashes: Vec<Vec<u8>> = shards
-        .iter()
-        .map(|shard| Sha256::digest(shard).to_vec())
-        .collect();
-    info!("Computed shard hashes:");
-    for (i, hash) in shard_hashes.iter().enumerate() {
-        info!("Shard {} Hash: {:?}", i, hash);
-    }
-    info!("Computed shard hashes: {:?}", shard_hashes);
-    // Step 4: Compute the Merkle root
-    let root = compute_merkle_root(&shard_hashes);
-    info!("Computed Merkle root: {:?}", root);
-
-    // Step 5: Generate Merkle proofs for each shard
-    let proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
-        .map(|i| compute_merkle_branch(&shard_hashes, i))
-        .collect();
-    info!("Generated Merkle proofs for each shard:");
-    for (i, proof) in proofs.iter().enumerate() {
-        info!("Proof for Shard {}: {:?}", i, proof);
-    }
-    info!("Generated Merkle proofs: {:?}", proofs);
-
-    // Step 6: Encode shards and proofs
-    let encoded_shards: Vec<String> = shards
-        .iter()
-        .map(|shard| general_purpose::STANDARD.encode(shard))
-        .collect();
-    let encoded_proofs: Vec<Vec<String>> = proofs
-        .iter()
-        .map(|proof| {
-            proof
-                .iter()
-                .map(|p| general_purpose::STANDARD.encode(p))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    info!("Encoded shards: {:?}", encoded_shards);
-    info!("Encoded proofs: {:?}", encoded_proofs);
-
-    // Step 7: Decode shards and proofs
-    let decoded_shards: Vec<Vec<u8>> = encoded_shards
-        .iter()
-        .map(|shard| general_purpose::STANDARD.decode(shard).expect("Shard decoding failed"))
-        .collect();
-    let decoded_proofs: Vec<Vec<Vec<u8>>> = encoded_proofs
-        .iter()
-        .map(|proof| {
-            proof
-                .iter()
-                .map(|p| general_purpose::STANDARD.decode(p).expect("Proof decoding failed"))
-                .collect::<Vec<_>>()
-        })
-        .collect();
-    info!("Successfully decoded shards and proofs:");
-    info!("Decoded shards: {:?}", decoded_shards);
-    info!("Decoded proofs: {:?}", decoded_proofs);
-
-    // Step 8: Validate Merkle branches
-    for (i, proof) in decoded_proofs.iter().enumerate() {
-        info!(
-            "Validating Merkle branch for Shard {}: Proof = {:?}, Root = {:?}",
-            i, proof, root
-        );
-        assert!(
-            validate_merkle_branch(&decoded_shards, proof, i, &root),
-            "Validation failed for Shard {}. Proof = {:?}, Expected Root = {:?}",
-            i, proof, root
-        );
-    }
-    info!("All Merkle branches validated successfully!");
-
-    // Step 9: Test reconstruction
-    info!("Starting reconstruction of transaction data...");
-    match reconstruct_unit(&decoded_shards, &decoded_proofs, &root) {
-        Ok(reconstructed_data) => {
-            assert_eq!(
-                reconstructed_data, transaction_data,
-                "Reconstructed data does not match the original transaction data"
+            assert!(
+                validate_merkle_branch(&shard_hashes, proof, i, &root),
+                "Validation failed for Shard {}. Proof = {:?}, Expected root = {:?}",
+                i, proof, root
             );
-            info!("Reconstruction and validation succeeded! Reconstructed data matches the original.");
         }
-        Err(error_message) => {
-            error!("Reconstruction failed: {}", error_message);
-            panic!("Reconstruction failed: {}", error_message);
+
+        match reconstruct_unit(&shards, &proofs, &root) {
+            Ok(reconstructed_data) => {
+                assert_eq!(
+                    reconstructed_data, transaction_data,
+                    "Reconstructed data does not match the original transaction data"
+                );
+                info!("Reconstruction and validation succeeded!");
+            }
+            Err(error_message) => {
+                error!("Reconstruction failed: {}", error_message);
+                panic!("Reconstruction failed: {}", error_message);
+            }
         }
     }
-}
-
-    
 }
