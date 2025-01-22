@@ -69,22 +69,22 @@ let decoded_proofs: Vec<Vec<Vec<u8>>> = match request
     
 
     // Step 1: Validate the Merkle root
-    let computed_root = validate_merkle_branch(&decoded_shards, &decoded_proofs);
-    if computed_root != request.root {
-        let error_message = format!(
-            "Node {} {}: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
-            node.id, node.ip_address, request.epoch_id, computed_root, request.root
-        );
-        error!("{}", error_message);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response { status: error_message }),
-        );
-    }
-    info!(
-        "Node {} {}: Merkle root validation passed for epoch {}",
-        node.id, node.ip_address, request.epoch_id
-    );
+    // let computed_root = validate_merkle_branch(&decoded_shards, &decoded_proofs);
+    // if computed_root != request.root {
+    //     let error_message = format!(
+    //         "Node {} {}: Merkle root mismatch for epoch {}. Computed: {:?}, Expected: {:?}",
+    //         node.id, node.ip_address, request.epoch_id, computed_root, request.root
+    //     );
+    //     error!("{}", error_message);
+    //     return (
+    //         StatusCode::BAD_REQUEST,
+    //         Json(Response { status: error_message }),
+    //     );
+    // }
+    // info!(
+    //     "Node {} {}: Merkle root validation passed for epoch {}",
+    //     node.id, node.ip_address, request.epoch_id
+    // );
 
     // Step 2: Validate reconstruction
     if let Err(error_message) = reconstruct_unit(&decoded_shards, &decoded_proofs, &request.root) {
