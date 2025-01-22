@@ -1,10 +1,9 @@
 use base64::Engine;
 use base64::engine::general_purpose;
 use reqwest::{Client, StatusCode};
-use serde_json::json;
 use tracing::{error, info};
 
-use crate::{structs::toml_config::TomlConfig, utils::merkle_utils::compute_merkle_branch};
+use crate::{structs::{requests::ProposeRequest, toml_config::TomlConfig}, utils::merkle_utils::compute_merkle_branch};
 
 pub async fn send_proposals(
     client: &Client,
@@ -36,7 +35,6 @@ pub async fn send_proposals(
         );
 
         // Extract shard and corresponding Merkle branch
-        let shard = &shards[index % shards.len()];
         let merkle_branch: Vec<Vec<u8>> = compute_merkle_branch(&proofs, index % proofs.len())
             .iter()
             .map(|hash| hash.clone())
@@ -47,34 +45,39 @@ pub async fn send_proposals(
             .map(|shard| general_purpose::STANDARD.encode(shard))
             .collect();
 
-        let serialized_proofs = serde_json::to_string(&proofs)?;
-        info!("Serialized proofs: {}", serialized_proofs);
+        let serialized_proofs: Vec<Vec<String>> = merkle_branch
+            .iter()
+            .map(|branch| {
+                branch
+                    .iter()
+                    .map(|b| general_purpose::STANDARD.encode([*b].as_ref()))
+                    .collect()
+            })
+            .collect();
 
-        info!("Serialized shards for transmission: {:?}", serialized_shards);
-        // Prepare payload
-        let payload = json!({
-            "sender": toml_config.node.id,
-            "shards": vec![shard.clone()],
-            "proofs": vec![merkle_branch],
-            "root": merkle_root.to_vec(),
-            "epoch_id": toml_config.consensus.epoch_round_id,
-        });
+        info!("Serialized shards for payload: {:?}", serialized_shards);
+        info!("Serialized proofs for payload: {:?}", serialized_proofs);
 
-        info!("Payload to node {}: {:?}", node_url, payload);
+        // Prepare ProposeRequest struct
+        let propose_request = ProposeRequest {
+            sender: toml_config.node.id,
+            root: merkle_root.to_vec(),
+            proofs: serialized_proofs,
+            shards: serialized_shards,
+            epoch_id: toml_config.consensus.epoch_round_id,
+        };
+
+        info!("ProposeRequest payload to node {}: {:?}", node_url, propose_request);
 
         // Send request
         match client.post(format!("http://{}/propose", node_url))
-            .json(&payload)
+            .json(&propose_request)
             .send()
             .await
         {
             Ok(res) => {
                 let status = res.status();
                 let response_body = res.text().await.unwrap_or_else(|_| "Failed to read response body".to_string());
-
-                // Log raw request body for debugging
-                let raw_body = serde_json::to_string(&payload)?;
-                info!("Raw request body sent to {}: {}", node_url, raw_body);
 
                 match status {
                     StatusCode::OK => {
@@ -119,3 +122,4 @@ pub async fn send_proposals(
         Err("One or more proposals failed".into())
     }
 }
+
