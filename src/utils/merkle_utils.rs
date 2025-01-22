@@ -268,5 +268,106 @@ fn test_reconstruct_unit() {
     }
 }
 
+    #[test]
+    fn test_propose_integration() {
+        init_logger();
+        info!("Starting test_propose_integration...");
+
+        // Step 1: Generate transaction data
+        let transaction_data = (0..256).map(|i| i as u8).collect::<Vec<_>>();
+        info!("Generated transaction data: {:?}", transaction_data);
+
+        // Step 2: Split transaction data into shards
+        let shard_count = 4;
+        let shards = split_into_shards(&transaction_data, shard_count);
+        info!("Split transaction data into shards:");
+        for (i, shard) in shards.iter().enumerate() {
+            info!("Shard {}: {:?}", i, shard);
+        }
+
+        // Step 3: Compute hashes for each shard
+        let shard_hashes: Vec<Vec<u8>> = shards
+            .iter()
+            .map(|shard| Sha256::digest(shard).to_vec())
+            .collect();
+        info!("Computed shard hashes:");
+        for (i, hash) in shard_hashes.iter().enumerate() {
+            info!("Shard {} Hash: {:?}", i, hash);
+        }
+
+        // Step 4: Compute the Merkle root
+        let root = compute_merkle_root(&shard_hashes);
+        info!("Computed Merkle root: {:?}", root);
+
+        // Step 5: Generate Merkle proofs for each shard
+        let proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
+            .map(|i| compute_merkle_branch(&shard_hashes, i))
+            .collect();
+        info!("Generated Merkle proofs:");
+        for (i, proof) in proofs.iter().enumerate() {
+            info!("Proof for Shard {}: {:?}", i, proof);
+        }
+
+        // Step 6: Encode shards and proofs
+        let encoded_shards: Vec<String> = shards
+            .iter()
+            .map(|shard| general_purpose::STANDARD.encode(shard))
+            .collect();
+        let encoded_proofs: Vec<Vec<String>> = proofs
+            .iter()
+            .map(|proof| {
+                proof
+                    .iter()
+                    .map(|p| general_purpose::STANDARD.encode(p))
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        info!("Encoded shards: {:?}", encoded_shards);
+        info!("Encoded proofs: {:?}", encoded_proofs);
+
+        // Step 7: Decode shards and proofs
+        let decoded_shards: Vec<Vec<u8>> = encoded_shards
+            .iter()
+            .map(|shard| general_purpose::STANDARD.decode(shard).unwrap())
+            .collect();
+        let decoded_proofs: Vec<Vec<Vec<u8>>> = encoded_proofs
+            .iter()
+            .map(|proof| {
+                proof
+                    .iter()
+                    .map(|p| general_purpose::STANDARD.decode(p).unwrap())
+                    .collect::<Vec<_>>()
+            })
+            .collect();
+        info!("Decoded shards and proofs successfully");
+
+        // Step 8: Validate Merkle branches
+        for (i, proof) in decoded_proofs.iter().enumerate() {
+            info!(
+                "Validating Merkle branch for Shard {}: Proof: {:?}, Root: {:?}",
+                i, proof, root
+            );
+            assert!(
+                validate_merkle_branch(&decoded_shards, proof, i, &root),
+                "Validation failed for shard {}",
+                i
+            );
+        }
+        info!("All Merkle branches validated successfully!");
+
+        // Step 9: Test reconstruction
+        match reconstruct_unit(&decoded_shards, &decoded_proofs, &root) {
+            Ok(reconstructed_data) => {
+                assert_eq!(
+                    reconstructed_data, transaction_data,
+                    "Reconstructed data does not match original transaction data"
+                );
+                info!("Reconstruction and validation succeeded!");
+            }
+            Err(error_message) => {
+                panic!("Reconstruction failed: {}", error_message);
+            }
+        }
+    }
     
 }
