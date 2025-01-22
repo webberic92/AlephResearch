@@ -28,7 +28,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                             // Handle the proposal and respond with proper HTTP status codes
                             handle_propose(
                                 &node,
-                                &client,
                                 parsed_payload, // Pass the parsed ProposeRequest directly
                             )
                             .await

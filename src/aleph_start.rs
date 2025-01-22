@@ -27,7 +27,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             info!("Transaction data created successfully.");
 
             // Send proposals
-            send_proposals(&client, &toml_config, &shards, &proofs, &merkle_root).await?;
+            send_proposals(&client, &toml_config, &shards, &merkle_root).await?;
 
             // Update the proposals field in the configuration file
             update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
