@@ -4,7 +4,7 @@ use base64::{engine::general_purpose, Engine as _};
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     if hashes.len() == 1 {
-        info!("Final Merkle root computed: {:?}", hashes[0]);
+        // info!("Final Merkle root computed: {:?}", hashes[0]);
         return hashes[0].clone();
     }
 
@@ -21,13 +21,13 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
                 combined
             };
             let combined_hash = Sha256::digest(&combined).to_vec();
-            info!(
-                "Merkle Root Level {}: Pair {:?} + {:?} = Combined Hash: {:?}",
-                hashes.len(),
-                pair[0],
-                pair.get(1).unwrap_or(&vec![0; 32]),
-                combined_hash
-            );
+            // info!(
+            //     "Merkle Root Level {}: Pair {:?} + {:?} = Combined Hash: {:?}",
+            //     hashes.len(),
+            //     pair[0],
+            //     pair.get(1).unwrap_or(&vec![0; 32]),
+            //     combined_hash
+            // );
             combined_hash
         })
         .collect();
@@ -54,13 +54,13 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             branch.push(vec![0; 32]); // Padding for missing sibling
         }
 
-        info!(
-            "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
-            current_level.len(),
-            current_index,
-            sibling_index,
-            branch.last().unwrap()
-        );
+        // info!(
+        //     "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
+        //     current_level.len(),
+        //     current_index,
+        //     sibling_index,
+        //     branch.last().unwrap()
+        // );
 
         current_index /= 2;
         current_level = current_level
@@ -77,7 +77,7 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             .collect();
     }
 
-    info!("Computed Merkle branch for index {}: {:?}", index, branch);
+    // info!("Computed Merkle branch for index {}: {:?}", index, branch);
     branch
 }
 
@@ -93,10 +93,10 @@ pub fn validate_merkle_branch(
     let mut current_index = index;
 
     // Log the initial state
-    info!(
-        "Starting Merkle branch validation. Initial hash: {:?}, Index: {}, Proofs: {:?}, Expected root: {:?}",
-        current_hash, current_index, proofs, expected_root
-    );
+    // info!(
+    //     "Starting Merkle branch validation. Initial hash: {:?}, Index: {}, Proofs: {:?}, Expected root: {:?}",
+    //     current_hash, current_index, proofs, expected_root
+    // );
 
     for (i, sibling_hash) in proofs.iter().enumerate() {
         let mut combined = if current_index % 2 == 0 {
@@ -112,10 +112,10 @@ pub fn validate_merkle_branch(
 
         // Compute the next hash
         let combined_hash = Sha256::digest(&combined).to_vec();
-        info!(
-            "Step {}: Current index = {}, Sibling hash = {:?}, Combined = {:?}, Combined hash = {:?}",
-            i, current_index, sibling_hash, combined, combined_hash
-        );
+        // info!(
+        //     "Step {}: Current index = {}, Sibling hash = {:?}, Combined = {:?}, Combined hash = {:?}",
+        //     i, current_index, sibling_hash, combined, combined_hash
+        // );
 
         current_hash = combined_hash;
         current_index /= 2;
@@ -123,10 +123,10 @@ pub fn validate_merkle_branch(
 
     // Final validation against the expected root
     if current_hash == expected_root {
-        info!(
-            "Validation succeeded. Computed root matches expected root: {:?}",
-            expected_root
-        );
+        // info!(
+        //     "Validation succeeded. Computed root matches expected root: {:?}",
+        //     expected_root
+        // );
         true
     } else {
         error!(
@@ -144,7 +144,7 @@ pub fn reconstruct_unit(
     proofs: &[Vec<Vec<u8>>],
     root: &[u8], // Expected Merkle root
 ) -> Result<Vec<u8>, String> {
-    info!("Reconstructing unit from shards and verifying Merkle proof");
+    // info!("Reconstructing unit from shards and verifying Merkle proof");
 
     if shards.is_empty() || proofs.is_empty() {
         let error_message = "Reconstruction failed: shards or proofs are empty".to_string();
@@ -186,7 +186,7 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
         .map(|chunk| chunk.to_vec())
         .collect();
 
-    info!("Transaction data size: {}", transaction_data.len());
+    // info!("Transaction data size: {}", transaction_data.len());
     assert_eq!(
         shards.len(),
         data_shards,
