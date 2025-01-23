@@ -19,7 +19,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     let client = Arc::new(Client::new());
 
-    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes));
+    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes, config.network.ip_address));
     let app = initialize_apis(node, client);
 
     let listener = TcpListener::bind(addr).await?;

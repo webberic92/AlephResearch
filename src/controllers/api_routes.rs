@@ -1,7 +1,8 @@
 use axum::{routing::post, Json, Router};
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
+use serde_json::Value;
+use tracing::{error, info};
 use std::sync::Arc;
-use tracing::info;
 
 use crate::{
     handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
@@ -18,60 +19,46 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
         .route("/propose", post({
             let node = node.clone();
             let client = client.clone();
-            move |Json(payload): Json<ProposeRequest>| {
+            move |Json(payload): Json<Value>| {
                 let node = node.clone();
                 let client = client.clone();
                 async move {
-                    handle_propose(
-                        &node,
-                        &client,
-                        payload.sender,
-                        payload.root,
-                        payload.proof,
-                        &payload.shard,
-                        payload.epoch_id,
-                    )
-                    .await;
-                    Json(Response {
-                        status: format!(
-                            "Node {}: Propose accepted from Node {} for epoch {}",
-                            node.id, payload.sender, payload.epoch_id
-                        ),
-                    })
+                    match serde_json::from_value::<ProposeRequest>(payload) {
+                        Ok(parsed_payload) => {
+                            // Handle the proposal and respond with proper HTTP status codes
+                            handle_propose(
+                                &node,
+                                parsed_payload, // Pass the parsed ProposeRequest directly
+                            )
+                            .await
+                        }
+                        Err(err) => {
+                            // Handle deserialization error
+                            let error_message = format!("Failed to parse ProposeRequest: {:?}", err);
+                            tracing::error!("{}", error_message);
+                            (
+                                StatusCode::BAD_REQUEST,
+                                Json(Response { status: error_message }),
+                            )
+                        }
+                    }
                 }
             }
-        }))
+        }))  
         .route("/prevote", post({
             let node = node.clone();
-            let client = client.clone(); // Clone the `client` variable
+            let client = client.clone();
             move |Json(payload): Json<PrevoteRequest>| {
                 let node = node.clone();
+                let client = client.clone();
                 async move {
-                    handle_prevote(
-                        &node,
-                        &client, // Use the cloned `client` variable
-                        payload.sender,
-                        payload.root,
-                        payload.proof,
-                        payload.shard,
-                        payload.epoch_id, // Added `epoch_id` argument
-                        &payload.node_url,
-                        // Updated to use `unit` instead of `shard`
-                    )
-                    .await;
-                    Json(Response {
-                        status: format!(
-                            "Node {}: Prevote accepted from Node {}",
-                            node.id, payload.sender
-                        ),
-                    })
+                    handle_prevote(node, client, payload).await
                 }
             }
         }))
         .route("/commit", post({
             let node = node.clone();
             move |Json(payload): Json<CommitRequest>| {
-                let node = node.clone();
                 async move {
                     handle_commit(
                         &node,
@@ -93,11 +80,6 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
         .route("/sync_epoch", post({
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {
-                let node = node.clone();
-                info!(
-                    "Node {}: ==== Handling SYNC EPOCH request from Node {} ====",
-                    node.id, payload.sender
-                );
                 async move {
                     match handle_sync_epoch(&node, payload.epoch_id, payload.sender).await {
                         Ok(_) => Json(Response {

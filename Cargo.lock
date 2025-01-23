@@ -33,6 +33,7 @@ name = "aleph_research"
 version = "0.1.0"
 dependencies = [
  "axum",
+ "base64",
  "chrono",
  "openssl",
  "reed-solomon-erasure",

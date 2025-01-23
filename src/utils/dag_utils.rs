@@ -122,7 +122,7 @@ pub async fn ensure_dag_synchronization(
     sender: &String,
 ) -> Result<(), String> {
     // Step 1: Check basic DAG synchronization with the target node
-    if let Err(e) = check_dag_sync(client, epoch_id, &sender).await {
+    if let Err(e) = check_dag_sync(client, epoch_id, sender).await {
         return Err(format!(
             "DAG synchronization failed with node {} for epoch {}: {:?}",
             sender, epoch_id, e

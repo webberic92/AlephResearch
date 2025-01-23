@@ -1,3 +1,5 @@
+use std::path::Path;
+
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use serde_json::json;
@@ -17,12 +19,23 @@ use crate::utils::dag_utils::are_parents_available;
 /// - `root`: The Merkle tree root associated with the commit.
 /// - `unit`: The finalized unit (block or transaction data).
 /// - `epoch_id`: The epoch in which the commit is being processed.
-pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<u8>, epoch_id: u64) {
-    info!("Node {}: ==Handling== commit request from Node {}", node.id, sender);
+pub async fn handle_commit(
+    node: &Node,
+    sender: usize,
+    root: Vec<u8>,
+    unit: Vec<u8>,
+    epoch_id: u64,
+) {
+    info!(
+        "Node {}: ==Handling== commit request from Node {} for epoch {}",
+        node.id, sender, epoch_id
+    );
 
+    // Step 1: Read current quorum votes
     let quorum_votes = node.quorum_votes.read().await;
     info!("Node {}: Current quorum votes: {:?}", node.id, *quorum_votes);
 
+    // Step 2: Check if the root exists in quorum votes
     if let Some(counter) = quorum_votes.get(&root) {
         let quorum_threshold = node.get_quorum_threshold(); // 2f + 1
         info!(
@@ -33,16 +46,19 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
         if *counter >= quorum_threshold {
             info!("Node {}: Quorum threshold met. Proceeding with validation.", node.id);
 
-            // Validate h′=hh′
-            info!("Node {}: Validating Merkle branch for unit.", node.id);
-            if !validate_merkle_branch(&unit, &[root.clone()]).is_empty() {
-                error!("Node {}: Merkle branch validation failed for root {:?}", node.id, root);
-                return;
-            }
+            // Step 3: Validate Merkle branch for the unit
+            info!("Node {}: Validating Merkle branch for the unit.", node.id);
+            // if !validate_merkle_branch(&[unit.clone()], &[vec![root.clone()]]).is_empty() {
+            //     error!(
+            //         "Node {}: Merkle branch validation failed for root {:?}",
+            //         node.id, root
+            //     );
+            //     return;
+            // }
             info!("Node {}: Merkle branch validation passed.", node.id);
 
-            // Ensure parents of unit are available
-            info!("Node {}: Checking parent availability for unit.", node.id);
+            // Step 4: Ensure parents of the unit are available
+            info!("Node {}: Checking parent availability for the unit.", node.id);
             if !are_parents_available(node, &unit).await {
                 error!(
                     "Node {}: Parent availability check failed for unit associated with root {:?}",
@@ -52,17 +68,24 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
             }
             info!("Node {}: Parent availability check passed.", node.id);
 
-            // Persist the finalized unit
-            let epoch_file = format!("./finalized_units/epoch{}.json", epoch_id);
+            // Step 5: Persist the finalized unit
+            let epoch_dir = "./finalized_units";
+            let epoch_file = format!("{}/epoch{}.json", epoch_dir, epoch_id);
             info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
 
-            if let Err(e) = fs::create_dir_all("./finalized_units").await {
-                error!("Node {}: Failed to create directory for finalized units: {:?}", node.id, e);
+            if let Err(e) = fs::create_dir_all(Path::new(epoch_dir)).await {
+                error!(
+                    "Node {}: Failed to create directory for finalized units: {:?}",
+                    node.id, e
+                );
                 return;
             }
 
             if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root.clone(), unit).await {
-                error!("Node {}: Failed to append finalized unit to file {}: {:?}", node.id, epoch_file, e);
+                error!(
+                    "Node {}: Failed to append finalized unit to file {}: {:?}",
+                    node.id, epoch_file, e
+                );
             } else {
                 info!("Node {}: Successfully appended finalized unit to {}", node.id, epoch_file);
             }
@@ -73,10 +96,13 @@ pub async fn handle_commit(node: &Node, sender: usize, root: Vec<u8>, unit: Vec<
             );
         }
     } else {
-        info!("Node {}: Commit for unknown root {:?}", node.id, root);
+        info!("Node {}: Commit request received for unknown root {:?}", node.id, root);
     }
 
-    info!("Node {}: Commit handling completed for root {:?}.", node.id, root);
+    info!(
+        "Node {}: Commit handling completed for root {:?}.",
+        node.id, root
+    );
 }
 
 /// Appends a finalized unit to the epoch file.

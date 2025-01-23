@@ -1,14 +1,12 @@
-pub mod generate_keys;
-
 pub mod utils{
     pub mod merkle_utils; // Expose the structs module
     pub mod config_util;
-    pub mod ip_server_utils; // Expose the structs module
-    pub mod rbc_utils; // Expose the structs module
+    pub mod start_util; // Expose the structs module
     pub mod epoch_utils; // Expose the structs module
     pub mod dag_utils; // Expose the structs module
     pub mod errors_util; // Expose the structs module
     pub mod recovery_util; // Expose the structs module
+    pub mod create_transaction_data;
 }
 
 pub mod structs{
@@ -27,4 +25,12 @@ pub mod handlers{
 
 pub mod controllers{
     pub mod api_routes;
+}
+
+pub mod requests{
+    pub mod send_proposals;
+    pub mod send_prevotes;
+    pub mod ip_server_requests;
+    pub mod synchronize_epoch_across_nodes;
+
 }

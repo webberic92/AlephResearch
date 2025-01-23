@@ -14,13 +14,15 @@ pub struct Node {
     pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
     pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>, // Renamed for clarity
     pub dag: Arc<RwLock<HashMap<Vec<u8>, Vec<u8>>>>, // Added for illustration
+    pub ip_address: String, // Added for illustration
 }
 
 impl Node {
-    pub fn new(id: usize, total_nodes: usize) -> Self {
+    pub fn new(id: usize, total_nodes: usize, ip_address: String) -> Self {
         Self {
             id,
             total_nodes,
+            ip_address,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),

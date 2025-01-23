@@ -13,7 +13,7 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 3  # Define the number of instances
+        INSTANCES_NUMBER = 3 # Define the number of instances
         BATCH_SIZE = 1  # Define the number of transactions per node for the test
         TRANSACTION_SIZE = 256 #Bytes
         ROUND_SIZE = 1 
@@ -133,6 +133,7 @@ class TestAleph(Stack):
                 "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
                 "echo 'listen_address = \"0.0.0.0:30333\"' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /home/aleph-node/aleph-node-config.toml",
+                "echo \"ip_address = \\\"$PRIVATE_IP\\\"\" >> /home/aleph-node/aleph-node-config.toml", 
                 "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
                 "echo \"proposals = []\" >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
