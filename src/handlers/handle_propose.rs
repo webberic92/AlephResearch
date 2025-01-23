@@ -17,7 +17,7 @@ pub async fn handle_propose(
 ) -> (StatusCode, Json<Response>) {
     info!(
         "*** Handling PROPOSE REQUEST: Node {} {} from Sender {} ***",
-        node.id, node.ip_address, request.sender
+        node.id, node.ip_address, request.senderId
     );
 
     // Step 1: Decode Base64-encoded shards
@@ -131,11 +131,11 @@ pub async fn handle_propose(
 
     // Step 6: Update the proposal tracker
     // Step 6: Update the proposal tracker
-    update_proposal_tracker(node, request.sender, request.epoch_id).await;
+    update_proposal_tracker(node, request.senderId, request.epoch_id).await;
 
     info!(
         "Node {}: Successfully updated proposal tracker for sender {} in epoch {}",
-        node.id, request.sender, request.epoch_id
+        node.id, request.senderId, request.epoch_id
     );
 
 
@@ -162,7 +162,7 @@ pub async fn handle_propose(
         Json(Response {
             status: format!(
                 "Node {}: Proposal accepted for epoch {} from sender {}",
-                node.id, request.epoch_id, request.sender
+                node.id, request.epoch_id, request.senderId
             ),
         }),
     )
