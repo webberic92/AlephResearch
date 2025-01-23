@@ -6,11 +6,11 @@ use crate::structs::node::Node;
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 /// Logs request URL and payload, returning synchronization status.
-pub async fn check_dag_sync(client: &Client, epoch_id: u64, sender: &str) -> Result<bool, Box<dyn Error>> {
-    let url = format!("{}/dag_sync", sender);
+pub async fn check_dag_sync(client: &Client, epoch_id: u64,senderId: &usize, senderUrl: &String) -> Result<bool, Box<dyn Error>> {
+    let url = format!("{}/dag_sync", senderUrl);
     let payload = json!({
         "epoch_id": epoch_id,
-        "sender": sender // Include the target node URL in the payload
+        "sender": senderId // Include the target node URL in the payload
     });
 
     info!("Sending DAG sync check to URL: {} with payload: {:?}", url, payload);
@@ -21,10 +21,10 @@ pub async fn check_dag_sync(client: &Client, epoch_id: u64, sender: &str) -> Res
     if response.status().is_success() {
         let response_data: serde_json::Value = response.json().await?;
         let in_sync = response_data["in_sync"].as_bool().unwrap_or(false);
-        info!("DAG sync status with {} for epoch {}: {}", sender, epoch_id, in_sync);
+        info!("DAG sync status with {} for epoch {}: {}", senderId, epoch_id, in_sync);
         Ok(in_sync)
     } else {
-        error!("Failed to check DAG sync with {} for epoch {}. Status: {}", sender, epoch_id, response.status());
+        error!("Failed to check DAG sync with {} for epoch {}. Status: {}", senderId, epoch_id, response.status());
         Err(format!(
             "Failed to check DAG sync. Status: {}",
             response.status()
@@ -114,18 +114,18 @@ pub fn get_parents(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
 }
 
 /// Ensures DAG synchronization by checking the current epoch and validating the DAG.
-/// Ensures DAG synchronization by checking the current epoch and validating the DAG.
 pub async fn ensure_dag_synchronization(
     node: &Node, // Pass node as an argument
     client: &Client,
     epoch_id: u64,
-    sender: &String,
+    senderId: &usize,
+    senderUrl: &String,
 ) -> Result<(), String> {
     // Step 1: Check basic DAG synchronization with the target node
-    if let Err(e) = check_dag_sync(client, epoch_id, sender).await {
+    if let Err(e) = check_dag_sync(client, epoch_id, senderId, senderUrl).await {
         return Err(format!(
             "DAG synchronization failed with node {} for epoch {}: {:?}",
-            sender, epoch_id, e
+            senderId, epoch_id, e
         ));
     }
 

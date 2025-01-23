@@ -59,7 +59,7 @@ pub async fn send_proposals(
         
         // Prepare the ProposeRequest
         let propose_request = ProposeRequest {
-            sender: toml_config.node.id,
+            senderId: toml_config.node.id,
             root: merkle_root.to_vec(),
             proofs: encoded_proofs, // No additional wrapping
             shards: encoded_shards,

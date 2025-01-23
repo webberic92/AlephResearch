@@ -22,17 +22,17 @@ pub async fn handle_dag_sync(
 ) -> Json<DAGSyncResponse> {
     info!(
         "Node {}: Received DAG sync request from Node {} for epoch {}",
-        node.id, payload.sender, payload.epoch_id
+        node.id, payload.senderId, payload.epoch_id
     );
 
-    match check_dag_sync(client, payload.epoch_id, &payload.sender).await {
+    match check_dag_sync(client, payload.epoch_id, &payload.senderId, &payload.senderUrl).await {
         Ok(in_sync) => {
             if in_sync {
                 Json(DAGSyncResponse {
                     in_sync: true,
                     message: format!(
                         "Node {}: DAG is in sync with Node {} for epoch {}",
-                        node.id, payload.sender, payload.epoch_id
+                        node.id, payload.senderId, payload.epoch_id
                     ),
                 })
             } else {
@@ -40,7 +40,7 @@ pub async fn handle_dag_sync(
                     in_sync: false,
                     message: format!(
                         "Node {}: DAG is NOT in sync with Node {} for epoch {}",
-                        node.id, payload.sender, payload.epoch_id
+                        node.id, payload.senderId, payload.epoch_id
                     ),
                 })
             }
@@ -48,7 +48,7 @@ pub async fn handle_dag_sync(
         Err(e) => {
             error!(
                 "Node {}: Failed to check DAG sync with Node {} for epoch {}. Error: {:?}",
-                node.id, payload.sender, payload.epoch_id, e
+                node.id, payload.senderId, payload.epoch_id, e
             );
             Json(DAGSyncResponse {
                 in_sync: false,

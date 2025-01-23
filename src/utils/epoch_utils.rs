@@ -33,21 +33,21 @@ pub async fn handle_sync_epoch(node: &Node, epoch_id: u64, sender: usize) -> Res
     }
 }
 
-pub async fn ensure_epoch_dag_sync(
-    client: &Client,
-    toml_config: &TomlConfig,
-    epoch_id: u64,
-) -> Result<(), String> {
-    for node_url in &toml_config.network.nodes {
-        info!("Checking DAG synchronization with node {} for epoch {}", node_url, epoch_id);
-        if let Err(e) = check_dag_sync(client, epoch_id, node_url).await {
-            return Err(format!(
-                "Epoch DAG synchronization failed with node {} for epoch {}: {:?}",
-                node_url, epoch_id, e
-            ));
-        }
-    }
-    info!("DAG synchronization successful for epoch {}", epoch_id);
-    Ok(())
-}
+// pub async fn ensure_epoch_dag_sync(
+//     client: &Client,
+//     toml_config: &TomlConfig,
+//     epoch_id: u64,
+// ) -> Result<(), String> {
+//     for node_url in &toml_config.network.nodes {
+//         info!("Checking DAG synchronization with node {} for epoch {}", node_url, epoch_id);
+//         if let Err(e) = check_dag_sync(client, epoch_id, node_url).await {
+//             return Err(format!(
+//                 "Epoch DAG synchronization failed with node {} for epoch {}: {:?}",
+//                 node_url, epoch_id, e
+//             ));
+//         }
+//     }
+//     info!("DAG synchronization successful for epoch {}", epoch_id);
+//     Ok(())
+// }
 

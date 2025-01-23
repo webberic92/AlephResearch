@@ -1,3 +1,4 @@
+use aleph_research::requests::send_prevotes::send_prevotes;
 use aleph_research::structs::toml_config::TomlConfig;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use reqwest::Client;
@@ -30,16 +31,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             send_proposals(&client, &toml_config, &shards, &merkle_root).await?;
 
             // Update the proposals field in the configuration file
-            update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
+            let updated_toml_config =update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
 
             // Check if enough proposals have been received to move to the next phase
             if are_enough_proposals_received().await {
                 // Logic for sending prevotes is commented out for now
-                // send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
                 info!(
                     "Node {} {}: Transitioning to PREVOTE phase from start for epoch {}.",
                     toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
                 );
+                send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
                 info!(
                     "Node {} {}: Simulating PREVOTE and COMMIT LOGIC for epoch {}.",
                     toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id

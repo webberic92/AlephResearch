@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct ProposeRequest {
-    pub sender: usize,               // ID of the node sending the proposal
+    pub senderId: usize,               // ID of the node sending the proposal
     pub root: Vec<u8>,               // Merkle root of the tree
     pub proofs: Vec<Vec<String>>,    // Base64-encoded Merkle proofs for each shard
     pub shards: Vec<String>,         // Base64-encoded data shards for the proposal
@@ -10,14 +10,14 @@ pub struct ProposeRequest {
 }
 
 
-#[derive(Serialize,Deserialize,Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct PrevoteRequest {
-    pub sender: usize,
-    pub root: Vec<u8>,
-    pub proofs: Vec<Vec<Vec<u8>>>,
-    pub shards: Vec<Vec<u8>>,
+    pub senderId: usize,
+    pub root: Vec<u8>,               // Merkle root of the tree
+    pub proofs: Vec<Vec<String>>,    // Base64-encoded Merkle proofs for each shard
+    pub shards: Vec<String>,   
     pub epoch_id: u64,
-    pub node_url: String,
+    pub senderUrl: String
 }
 
 #[derive(Deserialize)]
@@ -41,6 +41,7 @@ pub struct DAGSyncRequest {
     pub epoch_id: u64,
     
     /// The ID of the node making the request.
-    pub sender: String,
+    pub senderId: usize,
+    pub senderUrl: String,
 }
 
