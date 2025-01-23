@@ -7,22 +7,22 @@ pub fn create_transaction_data(
 ) -> Result<(Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<u8>), Box<dyn std::error::Error>> {
     
     let transaction_data = vec![1; toml_config.consensus.transaction_size];
-    info!(
-        "Generated transaction data of size: {} bytes",
-        transaction_data.len()
-    );
+    // info!(
+    //     "Generated transaction data of size: {} bytes",
+    //     transaction_data.len()
+    // );
 
     let shards = split_into_shards(&transaction_data, toml_config.consensus.data_shards);
-    info!(
-        "Transaction data split into {} shards",
-        toml_config.consensus.data_shards
-    );
+    // info!(
+    //     "Transaction data split into {} shards",
+    //     toml_config.consensus.data_shards
+    // );
 
     let proofs: Vec<Vec<u8>> = shards
         .iter()
         .map(|shard| {
             let hash = Sha256::digest(shard).to_vec();
-            info!("Computed hash for shard: {:?}", hash);
+            // info!("Computed hash for shard: {:?}", hash);
             hash
         })
         .collect();

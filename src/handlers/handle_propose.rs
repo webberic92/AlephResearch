@@ -39,10 +39,10 @@ pub async fn handle_propose(
     };
 
     // Log decoded shards
-    info!(
-        "Node {}: Decoded shards (Epoch {}): {:?}",
-        node.id, request.epoch_id, decoded_shards
-    );
+    // info!(
+    //     "Node {}: Decoded shards (Epoch {}): {:?}",
+    //     node.id, request.epoch_id, decoded_shards
+    // );
 
     // Step 2: Decode Base64-encoded proofs
     let decoded_proofs: Vec<Vec<Vec<u8>>> = match request
@@ -80,10 +80,10 @@ pub async fn handle_propose(
         .collect();
 
     // Log shard hashes
-    info!(
-        "Node {}: Computed shard hashes (Epoch {}): {:?}",
-        node.id, request.epoch_id, shard_hashes
-    );
+    // info!(
+    //     "Node {}: Computed shard hashes (Epoch {}): {:?}",
+    //     node.id, request.epoch_id, shard_hashes
+    // );
 
     // Step 4: Validate Merkle branches for each shard
     for (index, proof) in decoded_proofs.iter().enumerate() {
@@ -108,9 +108,13 @@ pub async fn handle_propose(
     // Step 5: Attempt to reconstruct the original data
     match reconstruct_unit(&decoded_shards, &decoded_proofs, &request.root) {
         Ok(reconstructed_data) => {
+            // info!(
+            //     "Node {} {}: Reconstruction successful for epoch {}. Reconstructed data: {:?}",
+            //     node.id, node.ip_address, request.epoch_id, reconstructed_data
+            // );
             info!(
-                "Node {} {}: Reconstruction successful for epoch {}. Reconstructed data: {:?}",
-                node.id, node.ip_address, request.epoch_id, reconstructed_data
+                "Node {} {}: Reconstruction successful for epoch {}.",
+                node.id, node.ip_address, request.epoch_id
             );
         }
         Err(error_message) => {
@@ -139,6 +143,10 @@ pub async fn handle_propose(
     if are_enough_proposals_received().await {
         info!(
             "Node {} {}: Transitioning to PREVOTE phase for epoch {}.",
+            node.id, node.ip_address, request.epoch_id
+        );
+        info!(
+            "Node {} {}: SIMULATING PREVOTE and COMMIT phase for epoch {}.",
             node.id, node.ip_address, request.epoch_id
         );
     } else {
