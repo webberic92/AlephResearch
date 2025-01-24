@@ -36,15 +36,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Check if enough proposals have been received to move to the next phase
             if are_enough_proposals_received().await {
                 // Logic for sending prevotes is commented out for now
-                info!(
-                    "Node {} {}: Transitioning to PREVOTE phase from start for epoch {}.",
-                    toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
-                );
                 send_prevotes(&client, &updated_toml_config, &merkle_root, &shards).await?;
-                info!(
-                    "Node {} {}: Simulating PREVOTE and COMMIT LOGIC for epoch {}.",
-                    toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
-                );
             }
 
             // Notify that the transaction has been submitted (optional, currently commented out)
