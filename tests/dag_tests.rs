@@ -4,6 +4,7 @@ use mockito::Matcher;
 use reqwest::Client;
 use serde_json::json;
 use tokio::sync::RwLock;
+use tracing::info;
 use std::{collections::HashMap, sync::Arc};
 use aleph_research::structs::node::Node;
 
@@ -48,20 +49,46 @@ async fn test_check_dag_sync_failure() {
 
 #[tokio::test]
 async fn test_ensure_dag_synchronization_success() {
+    // Mock server response for DAG sync
     let mock_server = mock("POST", "/dag_sync")
+        .match_body(Matcher::PartialJson(json!({
+            "epoch_id": 2,
+            "sender": 2
+        })))
         .with_status(200)
         .with_body(r#"{"in_sync": true}"#)
         .create();
 
+    // Create a Node instance
     let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    {
+        let mut epoch_round_id = node.epoch_round_id.lock().await;
+        epoch_round_id.insert(2);
+    }
+
+    // Set up the HTTP client
     let client = Client::new();
+
+    // Sender details
     let sender_id = &2usize;
     let sender_url = &mockito::server_url();
+
+    // Debugging logs
+    info!("Mock Server URL: {}", sender_url);
+
+    // Call the function being tested
     let result = ensure_dag_synchronization(&node, &client, 2, sender_id, sender_url).await;
 
+    // Debugging output
+    info!("Result of ensure_dag_synchronization: {:?}", result);
+
+    // Assert the result is okay
     assert!(result.is_ok());
+
+    // Verify that the mock server was called
     mock_server.assert();
 }
+
 
 #[tokio::test]
 async fn test_ensure_dag_synchronization_failure_dag_sync() {
