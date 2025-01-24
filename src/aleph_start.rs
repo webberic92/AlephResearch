@@ -17,21 +17,21 @@ use aleph_research::requests::ip_server_requests::notify_transaction_submitted;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
-    let toml_config: TomlConfig = load_config("/home/aleph-node/aleph-node-config.toml");
+    let toml_config: TomlConfig = load_config();
     let client = Client::new();
     wait_for_all_nodes_health(&client, &toml_config).await;
     wait_for_turn(&client, &toml_config).await?;
 
     // Generate transaction data and handle the result
     match create_transaction_data(&toml_config) {
-        Ok((shards, proofs, merkle_root)) => {
+        Ok((shards, merkle_root)) => {
             info!("Transaction data created successfully.");
 
             // Send proposals
             send_proposals(&client, &toml_config, &shards, &merkle_root).await?;
 
             // Update the proposals field in the configuration file
-            let updated_toml_config =update_proposals_in_config("/home/aleph-node/aleph-node-config.toml")?;
+            let updated_toml_config =update_proposals_in_config()?;
 
             // Check if enough proposals have been received to move to the next phase
             if are_enough_proposals_received().await {
@@ -40,7 +40,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                     "Node {} {}: Transitioning to PREVOTE phase from start for epoch {}.",
                     toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
                 );
-                send_prevotes(&client, &updated_toml_config, &merkle_root, &proofs, &shards).await?;
+                send_prevotes(&client, &updated_toml_config, &merkle_root, &shards).await?;
                 info!(
                     "Node {} {}: Simulating PREVOTE and COMMIT LOGIC for epoch {}.",
                     toml_config.node.id, toml_config.network.ip_address, toml_config.consensus.epoch_round_id
@@ -48,7 +48,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             // Notify that the transaction has been submitted (optional, currently commented out)
-             notify_transaction_submitted(&client, &toml_config).await?;
+            //  notify_transaction_submitted(&client, &toml_config).await?;
         }
         Err(e) => {
             error!("Failed to create transaction data: {}", e);

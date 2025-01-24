@@ -56,27 +56,31 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                 }
             }
         }))
-        .route("/commit", post({
-            let node = node.clone();
-            move |Json(payload): Json<CommitRequest>| {
-                async move {
-                    handle_commit(
-                        &node,
-                        payload.sender,
-                        payload.root,
-                        payload.unit, // Added `unit` argument
-                        payload.epoch_id, // Added `epoch_id` argument
-                    )
-                    .await;
-                    Json(Response {
-                        status: format!(
-                            "Node {}: Commit accepted from Node {}",
-                            node.id, payload.sender
-                        ),
-                    })
-                }
-            }
-        }))
+        // .route("/commit", post({
+        //     let node = node.clone();
+        //     let client = client.clone();
+        //     move |Json(payload): Json<CommitRequest>| {
+        //         async move {
+        //             handle_commit(
+        //                 &node,
+        //                 client,
+        //                 payload.sender,
+        //                 payload.root,
+        //                 payload.unit, // Added `unit` argument
+        //                 payload.epoch_id, // Added `epoch_id` argument
+        //                 payload.shard_hashes,
+        //                 payload.proofs,
+        //             )
+        //             .await;
+        //             Json(Response {
+        //                 status: format!(
+        //                     "Node {}: Commit accepted from Node {}",
+        //                     node.id, payload.sender
+        //                 ),
+        //             })
+        //         }
+        //     }
+        // }))
         .route("/sync_epoch", post({
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {

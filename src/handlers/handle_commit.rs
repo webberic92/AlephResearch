@@ -1,108 +1,99 @@
 use std::path::Path;
-
+use std::sync::Arc;
+use reqwest::Client;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use serde_json::json;
 use tracing::{error, info};
+use crate::requests::ip_server_requests::notify_transaction_submitted;
 use crate::structs::node::Node;
+use crate::structs::toml_config;
+use crate::utils::config_util::load_config;
+use crate::utils::dag_utils::{are_parents_available, validate_unit};
 use crate::utils::merkle_utils::validate_merkle_branch;
-use crate::utils::dag_utils::are_parents_available;
 
-/// Handles the commit phase in the Aleph protocol with enhanced validation.
+/// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
 ///
 /// This function finalizes and persists the reconstructed unit if the quorum threshold is reached,
-/// after validating the root and ensuring parents' availability.
+/// after validating the Merkle proof and ensuring the availability of parent nodes.
 ///
 /// # Arguments
 /// - `node`: Reference to the current node.
 /// - `sender`: ID of the node sending the commit request.
 /// - `root`: The Merkle tree root associated with the commit.
-/// - `unit`: The finalized unit (block or transaction data).
+/// - `unit`: The reconstructed unit.
 /// - `epoch_id`: The epoch in which the commit is being processed.
+/// - `shard_hashes`: Hashes of the original shards used to construct the Merkle tree.
+/// - `proofs`: Merkle proofs used for validation.
 pub async fn handle_commit(
     node: &Node,
+    client: Arc<Client>,
     sender: usize,
     root: Vec<u8>,
     unit: Vec<u8>,
     epoch_id: u64,
-) {
+    shard_hashes: Vec<Vec<u8>>,
+    proofs: Vec<Vec<u8>>,
+) -> Result<(), String> {
     info!(
-        "Node {}: ==Handling== commit request from Node {} for epoch {}",
+        "Node {}: Handling commit request from Node {} for epoch {}",
         node.id, sender, epoch_id
     );
 
-    // Step 1: Read current quorum votes
-    let quorum_votes = node.quorum_votes.read().await;
-    info!("Node {}: Current quorum votes: {:?}", node.id, *quorum_votes);
-
-    // Step 2: Check if the root exists in quorum votes
-    if let Some(counter) = quorum_votes.get(&root) {
-        let quorum_threshold = node.get_quorum_threshold(); // 2f + 1
-        info!(
-            "Node {}: Quorum count for root {:?}: {} (threshold: {})",
-            node.id, root, *counter, quorum_threshold
+    // Step 1: Validate the reconstructed unit with the Merkle root
+    info!("Node {}: Validating unit for root {:?}", node.id, root);
+    if let Err(e) = validate_unit(node, &unit, &root, &shard_hashes, &proofs).await {
+        error!(
+            "Node {}: Validation failed for unit with root {:?}: {}",
+            node.id, root, e
         );
+        return Err(e);
+    }
+    info!("Node {}: Unit validation passed for root {:?}", node.id, root);
 
-        if *counter >= quorum_threshold {
-            info!("Node {}: Quorum threshold met. Proceeding with validation.", node.id);
+    // Step 2: Check if parents of the unit are available
+    info!("Node {}: Checking parent availability for the unit.", node.id);
+    if !are_parents_available(node, &unit).await {
+        let error_message = format!(
+            "Node {}: Parent availability check failed for unit associated with root {:?}",
+            node.id, root
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+    info!("Node {}: Parent availability check passed.", node.id);
 
-            // Step 3: Validate Merkle branch for the unit
-            info!("Node {}: Validating Merkle branch for the unit.", node.id);
-            // if !validate_merkle_branch(&[unit.clone()], &[vec![root.clone()]]).is_empty() {
-            //     error!(
-            //         "Node {}: Merkle branch validation failed for root {:?}",
-            //         node.id, root
-            //     );
-            //     return;
-            // }
-            info!("Node {}: Merkle branch validation passed.", node.id);
+    // Step 3: Persist the finalized unit to storage
+    let epoch_dir = "./finalized_units";
+    let epoch_file = format!("{}/epoch{}.json", epoch_dir, epoch_id);
+    info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
 
-            // Step 4: Ensure parents of the unit are available
-            info!("Node {}: Checking parent availability for the unit.", node.id);
-            if !are_parents_available(node, &unit).await {
-                error!(
-                    "Node {}: Parent availability check failed for unit associated with root {:?}",
-                    node.id, root
-                );
-                return;
-            }
-            info!("Node {}: Parent availability check passed.", node.id);
+    if let Err(e) = fs::create_dir_all(Path::new(epoch_dir)).await {
+        let error_message = format!(
+            "Node {}: Failed to create directory for finalized units: {:?}",
+            node.id, e
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
 
-            // Step 5: Persist the finalized unit
-            let epoch_dir = "./finalized_units";
-            let epoch_file = format!("{}/epoch{}.json", epoch_dir, epoch_id);
-            info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
-
-            if let Err(e) = fs::create_dir_all(Path::new(epoch_dir)).await {
-                error!(
-                    "Node {}: Failed to create directory for finalized units: {:?}",
-                    node.id, e
-                );
-                return;
-            }
-
-            if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root.clone(), unit).await {
-                error!(
-                    "Node {}: Failed to append finalized unit to file {}: {:?}",
-                    node.id, epoch_file, e
-                );
-            } else {
-                info!("Node {}: Successfully appended finalized unit to {}", node.id, epoch_file);
-            }
-        } else {
-            info!(
-                "Node {}: Insufficient votes for commit on root {:?} (current: {}, required: {})",
-                node.id, root, *counter, quorum_threshold
-            );
-        }
-    } else {
-        info!("Node {}: Commit request received for unknown root {:?}", node.id, root);
+    if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root.clone(), unit).await {
+        let error_message = format!(
+            "Node {}: Failed to append finalized unit to file {}: {:?}",
+            node.id, epoch_file, e
+        );
+        error!("{}", error_message);
+        return Err(error_message);
     }
 
     info!(
-        "Node {}: Commit handling completed for root {:?}.",
+        "Node {}: Successfully finalized unit for root {:?} and persisted it to file.",
         node.id, root
     );
+    let toml_config = load_config();
+    notify_transaction_submitted(&client, &toml_config).await;
+
+    Ok(())
 }
 
 /// Appends a finalized unit to the epoch file.
@@ -122,7 +113,7 @@ async fn append_finalized_unit(
         Err(_) => {
             info!("Node {}: No existing data found. Initializing new epoch data.", node_id);
             vec![]
-        },
+        }
     };
 
     let unit_entry = json!({
