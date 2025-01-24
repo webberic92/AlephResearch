@@ -9,7 +9,6 @@ pub async fn send_prevotes(
     client: &Client,
     toml_config: &TomlConfig,
     merkle_root: &Vec<u8>,
-    proofs: &Vec<Vec<u8>>, // Merkle branches for each shard
     shards: &Vec<Vec<u8>>, // Data shards
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(

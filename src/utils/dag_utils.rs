@@ -1,8 +1,8 @@
 use std::error::Error;
 use serde_json::json;
-use tracing::{error, info};
+use tracing::{debug, error, info};
 use reqwest::Client;
-use crate::structs::node::Node;
+use crate::{structs::node::Node, utils::merkle_utils::validate_merkle_branch};
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 /// Logs request URL and payload, returning synchronization status.
@@ -134,4 +134,60 @@ pub async fn ensure_dag_synchronization(
 
     Ok(())
 }
+pub async fn validate_unit(
+    node: &Node,
+    unit: &[u8],
+    root: &[u8],
+    shard_hashes: &[Vec<u8>],
+    proofs: &[Vec<u8>],
+) -> Result<(), String> {
+    info!("Node {}: Validating unit with root {:?}", node.id, root);
+
+    // Step 1: Validate Merkle branch
+    if !validate_merkle_branch(shard_hashes, proofs, 0, root) {
+        let error_message = format!(
+            "Node {}: Merkle branch validation failed for root {:?}",
+            node.id, root
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+    info!("Node {}: Merkle branch validation passed for root {:?}", node.id, root);
+
+    // Step 2: Check parent availability
+    if unit.len() < 32 {
+        let error_message = format!(
+            "Node {}: Unit length too short to extract parent hash: length = {}",
+            node.id, unit.len()
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+
+    let parent_hash = &unit[unit.len() - 32..];
+    debug!(
+        "Node {}: Extracted parent hash from unit: {:?}",
+        node.id, parent_hash
+    );
+
+    let dag = node.dag.read().await;
+    debug!("Node {}: DAG contents: {:?}", node.id, dag.keys().collect::<Vec<_>>());
+
+    if !dag.contains_key(parent_hash) {
+        let error_message = format!(
+            "Node {}: Parent availability check failed for parent hash {:?}",
+            node.id, parent_hash
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+
+    info!(
+        "Node {}: Parent availability check passed for parent hash {:?}",
+        node.id, parent_hash
+    );
+
+    Ok(())
+}
+
 

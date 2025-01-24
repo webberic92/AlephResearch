@@ -14,7 +14,6 @@ use crate::{
     },
 };
 
-/// Handles a prevote request in the Aleph protocol.
 pub async fn handle_prevote(
     node: Arc<Node>,
     client: Arc<Client>,
@@ -36,9 +35,7 @@ pub async fn handle_prevote(
         Err(e) => {
             let error_message = format!("Failed to decode shards: {:?}", e);
             error!("{}", error_message);
-            return Json(Response {
-                status: error_message,
-            });
+            return Json(Response { status: error_message });
         }
     };
 
@@ -58,9 +55,7 @@ pub async fn handle_prevote(
         Err(e) => {
             let error_message = format!("Failed to decode proofs: {:?}", e);
             error!("{}", error_message);
-            return Json(Response {
-                status: error_message,
-            });
+            return Json(Response { status: error_message });
         }
     };
 
@@ -72,9 +67,7 @@ pub async fn handle_prevote(
                 node.id, index, payload.root, proof
             );
             error!("{}", error_message);
-            return Json(Response {
-                status: error_message,
-            });
+            return Json(Response { status: error_message });
         }
     }
     info!("Node {}: Merkle branch validation passed.", node.id);
@@ -86,9 +79,7 @@ pub async fn handle_prevote(
             node.id, payload.senderId, e
         );
         error!("{}", error_message);
-        return Json(Response {
-            status: error_message,
-        });
+        return Json(Response { status: error_message });
     }
     info!(
         "Node {}: DAG synchronization successful with {}",
@@ -124,43 +115,48 @@ pub async fn handle_prevote(
         node.id, payload.root, *count
     );
 
-    // // Step 7: Reconstruct and commit
-    // match reconstruct_unit(&decoded_shards, &decoded_proofs, &payload.root) {
-    //     Ok(reconstructed_unit) => {
-    //         info!(
-    //             "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
-    //             node.id, payload.root
-    //         );
-    //         if let Err(e) = handle_commit(
-    //             &node,
-    //             payload.senderId,
-    //             payload.root.clone(),
-    //             reconstructed_unit,
-    //             payload.epoch_id,
-    //         )
-    //         .await
-    //         {
-    //             let error_message = format!(
-    //                 "Node {}: Commit phase failed for root {:?}. Error: {:?}",
-    //                 node.id, payload.root, e
-    //             );
-    //             error!("{}", error_message);
-    //             return Json(Response {
-    //                 status: error_message,
-    //             });
-    //         }
-    //     }
-    //     Err(e) => {
-    //         let error_message = format!(
-    //             "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
-    //             node.id, payload.root, e
-    //         );
-    //         error!("{}", error_message);
-    //         return Json(Response {
-    //             status: error_message,
-    //         });
-    //     }
-    // }
+    // Step 7: Reconstruct and commit
+    let shard_hashes: Vec<Vec<u8>> = decoded_shards
+        .iter()
+        .map(|shard| sha2::Sha256::digest(shard).to_vec())
+        .collect();
+
+    match reconstruct_unit(&decoded_shards, &decoded_proofs, &payload.root) {
+        Ok(reconstructed_unit) => {
+            info!(
+                "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
+                node.id, payload.root
+            );
+
+            if let Err(e) = handle_commit(
+                &node,
+                client,
+                payload.senderId,
+                payload.root.clone(),
+                reconstructed_unit,
+                payload.epoch_id,
+                shard_hashes,
+                decoded_proofs.into_iter().flatten().collect(), // Flatten proofs          
+                  )
+            .await
+            {
+                let error_message = format!(
+                    "Node {}: Commit phase failed for root {:?}. Error: {:?}",
+                    node.id, payload.root, e
+                );
+                error!("{}", error_message);
+                return Json(Response { status: error_message });
+            }
+        }
+        Err(e) => {
+            let error_message = format!(
+                "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
+                node.id, payload.root, e
+            );
+            error!("{}", error_message);
+            return Json(Response { status: error_message });
+        }
+    }
 
     info!(
         "Node {}: Successfully handled PREVOTE REQUEST from Node {}",
@@ -174,3 +170,5 @@ pub async fn handle_prevote(
         ),
     })
 }
+
+

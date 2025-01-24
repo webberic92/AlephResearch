@@ -26,6 +26,8 @@ pub sender: usize,
 pub root: Vec<u8>,
 pub epoch_id: u64,
 pub unit: Vec<u8>,
+pub shard_hashes: Vec<Vec<u8>>,
+pub proofs: Vec<Vec<u8>>,
 }
 
 #[derive(Deserialize)]

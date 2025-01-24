@@ -1,12 +1,16 @@
+use aleph_research::utils::dag_utils::validate_unit;
 use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, ensure_round_sync, get_parents, validate_unit_parents};
 use mockito::mock;
 use mockito::Matcher;
 use reqwest::Client;
 use serde_json::json;
-use tokio::sync::RwLock;
-use tracing::info;
+use tokio::sync::{Mutex, RwLock};
+use tracing::{debug, info};
+use std::collections::HashSet;
 use std::{collections::HashMap, sync::Arc};
 use aleph_research::structs::node::Node;
+use aleph_research::utils::merkle_utils::{compute_merkle_root, compute_merkle_branch};
+use sha2::{Digest, Sha256};
 
 #[tokio::test]
 async fn test_check_dag_sync_success() {
@@ -187,4 +191,86 @@ async fn test_get_parents_failure() {
         result.err().unwrap(),
         "Unit data is too small to contain parent hashes"
     );
+    
 }
+
+
+#[tokio::test]
+async fn test_validate_unit() {
+    // Initialize logger
+    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+
+    // Simulated Node
+    let node = Node {
+        id: 1,
+        total_nodes: 4,
+        quorum_votes: Arc::new(RwLock::new(HashMap::new())),
+        epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
+        finalized_blocks: Arc::new(Mutex::new(HashSet::new())),
+        dag: Arc::new(RwLock::new(HashMap::new())),
+        ip_address: "127.0.0.1:8001".to_string(),
+        proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
+    };
+
+    // Parent setup
+    let parent_unit = vec![9, 8, 7, 6];
+    let parent_unit_hashed = Sha256::digest(&parent_unit).to_vec();
+    let parent_root = compute_merkle_root(&[parent_unit_hashed.clone()]);
+    assert_eq!(
+        parent_root.len(),
+        32,
+        "Parent root must be a 32-byte hash, but got length {}",
+        parent_root.len()
+    );
+    node.dag.write().await.insert(parent_root.clone(), parent_unit.clone());
+
+    // Debugging the parent root
+    debug!(
+        "Test setup: Inserted parent unit with root {:?}",
+        parent_root
+    );
+
+    // Sample data for unit validation
+    let shards = vec![vec![1; 32], vec![2; 32]];
+    let root = compute_merkle_root(&shards);
+    assert_eq!(
+        root.len(),
+        32,
+        "Merkle root must be a 32-byte hash, but got length {}",
+        root.len()
+    );
+    let proofs = compute_merkle_branch(&shards, 0);
+
+    // Valid unit with parent hash appended
+    let mut unit = vec![1, 2, 3, 4];
+    unit.extend_from_slice(&parent_root); // Append the 32-byte parent root to the unit
+
+    // Debugging the constructed unit
+    debug!(
+        "Constructed unit: {:?}, Length = {}",
+        unit,
+        unit.len()
+    );
+
+    // Test validation success
+    assert!(
+        validate_unit(&node, &unit, &root, &shards, &proofs).await.is_ok(),
+        "Validation failed for valid unit."
+    );
+
+    // Test validation failure (missing parents)
+    node.dag.write().await.clear();
+    assert!(
+        validate_unit(&node, &unit, &root, &shards, &proofs).await.is_err(),
+        "Validation passed for unit with missing parents."
+    );
+}
+
+
+
+
+
+
+
+
+

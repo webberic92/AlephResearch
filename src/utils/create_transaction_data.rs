@@ -4,7 +4,7 @@ use crate::{utils::merkle_utils::{split_into_shards, validate_shard_sizes, compu
 
 pub fn create_transaction_data(
     toml_config: &TomlConfig,
-) -> Result<(Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<u8>), Box<dyn std::error::Error>> {
+) -> Result<(Vec<Vec<u8>>, Vec<u8>), Box<dyn std::error::Error>> {
     
     let transaction_data = vec![1; toml_config.consensus.transaction_size];
     // info!(
@@ -35,5 +35,5 @@ pub fn create_transaction_data(
     let merkle_root = compute_merkle_root(&proofs);
     info!("Computed Merkle root: {:?}", merkle_root);
 
-    Ok((shards, proofs, merkle_root))
+    Ok((shards, merkle_root))
 }
