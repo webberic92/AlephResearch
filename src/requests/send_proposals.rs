@@ -4,7 +4,7 @@ use reqwest::{Client, StatusCode};
 use sha2::Digest;
 use tracing::{error, info};
 use crate::{
-    structs::{requests::ProposeRequest, toml_config::TomlConfig},
+    structs::{requests::{BaseRequest, ProposeRequest}, toml_config::TomlConfig},
     utils::merkle_utils::{compute_merkle_branch, compute_merkle_root},
 };
 
@@ -57,13 +57,17 @@ pub async fn send_proposals(
         .map(|branch| branch.iter().map(|b| general_purpose::STANDARD.encode(b)).collect())
         .collect();
         
+        let base_request = BaseRequest {
+            sender_id: toml_config.node.id,
+            epoch_id: toml_config.consensus.epoch_round_id,
+            root: merkle_root.to_vec(),
+        };
+
         // Prepare the ProposeRequest
         let propose_request = ProposeRequest {
-            senderId: toml_config.node.id,
-            root: merkle_root.to_vec(),
+            base: base_request,
             proofs: encoded_proofs, // No additional wrapping
             shards: encoded_shards,
-            epoch_id: toml_config.consensus.epoch_round_id,
         };
 
         // Send the request
