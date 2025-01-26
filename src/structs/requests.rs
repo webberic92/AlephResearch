@@ -43,7 +43,7 @@ pub struct DAGSyncRequest {
     pub epoch_id: u64,
     
     /// The ID of the node making the request.
-    pub senderId: usize,
-    pub senderUrl: String,
+    pub sender_id: usize,
+    pub sender_url: String,
 }
 
