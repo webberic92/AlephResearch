@@ -16,7 +16,7 @@ pub async fn handle_propose(
 ) -> (StatusCode, Json<Response>) {
     info!(
         "*** Handling PROPOSE REQUEST: Node {} {} from Sender {} ***",
-        node.id, node.ip_address, request.senderId
+        node.id, node.ip_address, request.base.sender_id
     );
 
     // Step 1: Decode Base64-encoded shards
@@ -40,7 +40,7 @@ pub async fn handle_propose(
     // Log decoded shards
     // info!(
     //     "Node {}: Decoded shards (Epoch {}): {:?}",
-    //     node.id, request.epoch_id, decoded_shards
+    //     node.id, request.base.epoch_id, decoded_shards
     // );
 
     // Step 2: Decode Base64-encoded proofs
@@ -69,7 +69,7 @@ pub async fn handle_propose(
     // Log decoded proofs
     info!(
         "Node {}: Decoded proofs (Epoch {}): {:?}",
-        node.id, request.epoch_id, decoded_proofs
+        node.id, request.base.epoch_id, decoded_proofs
     );
 
     // Step 3: Compute shard hashes
@@ -81,15 +81,15 @@ pub async fn handle_propose(
     // Log shard hashes
     // info!(
     //     "Node {}: Computed shard hashes (Epoch {}): {:?}",
-    //     node.id, request.epoch_id, shard_hashes
+    //     node.id, request.base.epoch_id, shard_hashes
     // );
 
     // Step 4: Validate Merkle branches for each shard
     for (index, proof) in decoded_proofs.iter().enumerate() {
-        if !validate_merkle_branch(&shard_hashes, proof, index, &request.root) {
+        if !validate_merkle_branch(&shard_hashes, proof, index, &request.base.root) {
             let error_message = format!(
                 "Node {}: Merkle root mismatch for shard {} in epoch {}. Expected root: {:?}",
-                node.id, index, request.epoch_id, request.root
+                node.id, index, request.base.epoch_id, request.base.root
             );
             error!("{}", error_message);
             return (
@@ -101,25 +101,25 @@ pub async fn handle_propose(
 
     info!(
         "Node {} {}: All Merkle branches validated successfully for epoch {}",
-        node.id, node.ip_address, request.epoch_id
+        node.id, node.ip_address, request.base.epoch_id
     );
 
     // Step 5: Attempt to reconstruct the original data
-    match reconstruct_unit(&decoded_shards, &decoded_proofs, &request.root) {
+    match reconstruct_unit(&decoded_shards, &decoded_proofs, &request.base.root) {
         Ok(reconstructed_data) => {
             // info!(
             //     "Node {} {}: Reconstruction successful for epoch {}. Reconstructed data: {:?}",
-            //     node.id, node.ip_address, request.epoch_id, reconstructed_data
+            //     node.id, node.ip_address, request.base.epoch_id, reconstructed_data
             // );
             info!(
                 "Node {} {}: Reconstruction successful for epoch {}.",
-                node.id, node.ip_address, request.epoch_id
+                node.id, node.ip_address, request.base.epoch_id
             );
         }
         Err(error_message) => {
             error!(
                 "Node {} {}: Reconstruction failed for epoch {}: {}",
-                node.id, node.ip_address, request.epoch_id, error_message
+                node.id, node.ip_address, request.base.epoch_id, error_message
             );
             return (
                 StatusCode::BAD_REQUEST,
@@ -130,11 +130,11 @@ pub async fn handle_propose(
 
     // Step 6: Update the proposal tracker
     // Step 6: Update the proposal tracker
-    update_proposal_tracker(node, request.senderId, request.epoch_id).await;
+    update_proposal_tracker(node, request.base.sender_id, request.base.epoch_id).await;
 
     info!(
         "Node {}: Successfully updated proposal tracker for sender {} in epoch {}",
-        node.id, request.senderId, request.epoch_id
+        node.id, request.base.sender_id, request.base.epoch_id
     );
 
 
@@ -142,17 +142,17 @@ pub async fn handle_propose(
     if are_enough_proposals_received().await {
         info!(
             "Node {} {}: Transitioning to PREVOTE phase for epoch {}.",
-            node.id, node.ip_address, request.epoch_id
+            node.id, node.ip_address, request.base.epoch_id
         );
         info!(
             "Node {} {}: SIMULATING PREVOTE and COMMIT phase for epoch {}.",
-            node.id, node.ip_address, request.epoch_id
+            node.id, node.ip_address, request.base.epoch_id
         );
-        // handle_prevote(node, request.epoch_id).await;
+        // handle_prevote(node, request.base.epoch_id).await;
     } else {
         info!(
             "Node {} {}: Waiting for more proposals for epoch {}.",
-            node.id, node.ip_address, request.epoch_id
+            node.id, node.ip_address, request.base.epoch_id
         );
     }
 
@@ -162,7 +162,7 @@ pub async fn handle_propose(
         Json(Response {
             status: format!(
                 "Node {}: Proposal accepted for epoch {} from sender {}",
-                node.id, request.epoch_id, request.senderId
+                node.id, request.base.epoch_id, request.base.sender_id
             ),
         }),
     )

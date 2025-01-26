@@ -1,34 +1,30 @@
 use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct ProposeRequest {
-    pub senderId: usize,               // ID of the node sending the proposal
-    pub root: Vec<u8>,               // Merkle root of the tree
-    pub proofs: Vec<Vec<String>>,    // Base64-encoded Merkle proofs for each shard
-    pub shards: Vec<String>,         // Base64-encoded data shards for the proposal
-    pub epoch_id: u64,               // Epoch ID for the proposal
+pub struct BaseRequest {
+    pub sender_id: usize,  // ID of the node sending the message
+    pub root: Vec<u8>,     // Merkle root of the tree
+    pub epoch_id: u64,     // Epoch ID
 }
 
+#[derive(Serialize, Deserialize, Debug)]
+pub struct ProposeRequest {
+    pub base: BaseRequest,            // Base request fields
+    pub proofs: Vec<Vec<String>>,     // Base64-encoded Merkle proofs for each shard
+    pub shards: Vec<String>,          // Base64-encoded data shards
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct PrevoteRequest {
-    pub senderId: usize,
-    pub root: Vec<u8>,               // Merkle root of the tree
-    pub proofs: Vec<Vec<String>>,    // Base64-encoded Merkle proofs for each shard
-    pub shards: Vec<String>,   
-    pub epoch_id: u64,
-    pub senderUrl: String
+    pub propose: ProposeRequest,      // Embed the ProposeRequest
+    pub sender_url: String,           // URL of the sender
 }
 
-#[derive(Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct CommitRequest {
-pub sender: usize,
-pub root: Vec<u8>,
-pub epoch_id: u64,
-pub unit: Vec<u8>,
-pub shard_hashes: Vec<Vec<u8>>,
-pub proofs: Vec<Vec<u8>>,
+    pub base: BaseRequest,            // Reuse the BaseRequest for commit
 }
+
 
 #[derive(Deserialize)]
 pub struct SyncEpochRequest {
@@ -39,10 +35,7 @@ pub sender: usize,
 /// Represents a request for DAG synchronization.
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DAGSyncRequest {
-    /// The epoch ID for which DAG synchronization is requested.
     pub epoch_id: u64,
-    
-    /// The ID of the node making the request.
     pub sender_id: usize,
     pub sender_url: String,
 }

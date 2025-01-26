@@ -1,7 +1,7 @@
 use reqwest::Client;
 use tracing::{error, info};
 use crate::{
-    structs::{requests::PrevoteRequest, toml_config::TomlConfig}, utils::merkle_utils::compute_merkle_branch,
+    structs::{requests::{BaseRequest, PrevoteRequest, ProposeRequest}, toml_config::TomlConfig}, utils::merkle_utils::compute_merkle_branch,
 };
 use base64::{engine::general_purpose, Engine};
 
@@ -32,14 +32,18 @@ pub async fn send_prevotes(
         .collect();
         let encoded_shard = general_purpose::STANDARD.encode(&shard);
 
-        // Construct the PrevoteRequest payload
+
         let payload = PrevoteRequest {
-            senderId: toml_config.node.id,
-            epoch_id: toml_config.consensus.epoch_round_id,
-            root: merkle_root.clone(),
-            proofs: encoded_proofs, // Base64-encoded proof for this shard
-            shards: vec![encoded_shard], // Base64-encoded shard for this node
-            senderUrl: toml_config.network.ip_address.clone(),
+            propose: ProposeRequest {
+                base: BaseRequest {
+                    sender_id: toml_config.node.id.clone(),
+                    epoch_id: toml_config.consensus.epoch_round_id,
+                    root: merkle_root.clone(),
+                },
+                proofs: encoded_proofs,
+                shards: vec![encoded_shard],
+            },
+            sender_url: toml_config.network.ip_address.clone(),
         };
 
         info!(

@@ -18,10 +18,8 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
         .route("/propose", post({
             let node = node.clone();
-            let client = client.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
-                let client = client.clone();
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
                         Ok(parsed_payload) => {
