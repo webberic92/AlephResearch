@@ -25,7 +25,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Generate transaction data and handle the result
     match create_transaction_data(&toml_config) {
         Ok((shards, merkle_root)) => {
-            info!("Transaction data created successfully.");
+            // info!("Transaction data created successfully.");
 
             // Send proposals
             send_proposals(&client, &toml_config, &shards, &merkle_root).await?;
@@ -39,6 +39,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 send_prevotes(&client, &updated_toml_config, &merkle_root, &shards).await?;
             }
 
+                //might need else here but notify transaction also called in commit
             // Notify that the transaction has been submitted (optional, currently commented out)
             //  notify_transaction_submitted(&client, &toml_config).await?;
         }
