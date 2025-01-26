@@ -37,11 +37,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if are_enough_proposals_received().await {
                 // Logic for sending prevotes is commented out for now
                 send_prevotes(&client, &updated_toml_config, &merkle_root, &shards).await?;
-            }
-
+            }else{
+                
                 //might need else here but notify transaction also called in commit
             // Notify that the transaction has been submitted (optional, currently commented out)
-            //  notify_transaction_submitted(&client, &toml_config).await?;
+             notify_transaction_submitted(&client, &toml_config).await?;
+            }
+
         }
         Err(e) => {
             error!("Failed to create transaction data: {}", e);

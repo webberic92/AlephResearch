@@ -1,28 +1,38 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct BaseRequest {
     pub sender_id: usize,  // ID of the node sending the message
     pub root: Vec<u8>,     // Merkle root of the tree
     pub epoch_id: u64,     // Epoch ID
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct ProposeRequest {
     pub base: BaseRequest,            // Base request fields
     pub proofs: Vec<Vec<String>>,     // Base64-encoded Merkle proofs for each shard
     pub shards: Vec<String>,          // Base64-encoded data shards
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct PrevoteRequest {
     pub propose: ProposeRequest,      // Embed the ProposeRequest
     pub sender_url: String,           // URL of the sender
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+// #[derive(Serialize, Deserialize, Debug,Clone)]
+// pub struct CommitRequest {
+//     pub base: BaseRequest,       // Base fields common to all phases
+//     pub unit: Vec<u8>,           // Reconstructed unit
+//     pub shard_hashes: Vec<Vec<u8>>, // Hashes of the data shards
+//     pub proofs: Vec<Vec<String>>, // Merkle proofs for validation
+// }
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommitRequest {
-    pub base: BaseRequest,            // Reuse the BaseRequest for commit
+    pub base: BaseRequest,       // Base fields common to all phases
+    pub unit: Vec<u8>,           // Reconstructed unit
+    pub proofs: Vec<Vec<String>>, // Reuse Merkle proofs from ProposeRequest
 }
 
 

@@ -100,6 +100,77 @@ mod tests {
     }
 
     #[test]
+    fn test_validate_merkle_branch_complex() {
+        init_logger();
+
+        // Generate mock data shards for testing
+        let data: Vec<Vec<u8>> = (0..8) // Increase complexity with more shards
+            .map(|i| {
+                let mut shard = vec![0; 256]; // Larger shard size
+                shard[0..6].copy_from_slice(format!("shard{}", i + 1).as_bytes());
+                shard
+            })
+            .collect();
+
+        // Compute hashes for each shard
+        let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
+        
+        // Compute the Merkle root for the given data
+        let root = compute_merkle_root(&hashes);
+
+        // Compute Merkle proofs for each shard
+        let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
+            .map(|i| compute_merkle_branch(&hashes, i))
+            .collect();
+
+        // Simulate handle_propose, handle_prevote, and handle_commit phases
+        let mut all_valid = true;
+        for (i, proof) in proofs.iter().enumerate() {
+            info!(
+                "Testing validation for shard index {}: Proof = {:?}, Expected root = {:?}",
+                i, proof, root
+            );
+
+            // Validate the Merkle branch
+            let is_valid = validate_merkle_branch(&hashes, proof, i, &root);
+
+            if !is_valid {
+                error!(
+                    "Validation failed for shard index {}. Proof = {:?}, Expected root = {:?}",
+                    i, proof, root
+                );
+                all_valid = false;
+            }
+        }
+
+        // Ensure all Merkle branches are valid
+        assert!(all_valid, "Some Merkle branch validations failed.");
+        
+        // Mock reconstruction of a unit and its subsequent validation in the commit phase
+        let reconstructed_unit: Vec<u8> = data.concat(); // Concatenate all shards to form the unit
+        let shard_hashes: Vec<Vec<u8>> = reconstructed_unit
+            .chunks(256) // Mock shard size
+            .map(|shard| Sha256::digest(shard).to_vec())
+            .collect();
+
+        let commit_proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
+            .map(|i| compute_merkle_branch(&shard_hashes, i))
+            .collect();
+
+        for (i, proof) in commit_proofs.iter().enumerate() {
+            assert!(
+                validate_merkle_branch(&shard_hashes, proof, i, &root),
+                "Commit phase validation failed for shard index {}.",
+                i
+            );
+        }
+
+        info!("All complex Merkle branch validations passed.");
+    }
+
+
+
+    #[test]
     fn test_propose_integration() {
         init_logger();
         info!("Starting test_propose_integration...");

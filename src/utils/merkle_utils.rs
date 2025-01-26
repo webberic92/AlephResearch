@@ -77,6 +77,49 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
 
 /// Validate Merkle branch for a specific index and return the computed root
 /// Validate Merkle branch for a specific index and return the computed root
+// pub fn validate_merkle_branch(
+//     shard_hashes: &[Vec<u8>],
+//     proofs: &[Vec<u8>],
+//     index: usize,
+//     expected_root: &[u8],
+// ) -> bool {
+//     if index >= shard_hashes.len() {
+//         error!(
+//             "Invalid index: {} (shard_hashes length: {})",
+//             index, shard_hashes.len()
+//         );
+//         return false;
+//     }
+
+//     let mut current_hash = shard_hashes[index].clone();
+//     let mut current_index = index;
+
+//     for sibling_hash in proofs {
+//         let sibling_index = if current_index == 0 {
+//             0 // No valid sibling; default behavior
+//         } else {
+//             current_index - 1
+//         };
+
+//         let mut combined = if current_index % 2 == 0 {
+//             current_hash.clone()
+//         } else {
+//             sibling_hash.clone()
+//         };
+
+//         combined.extend(if current_index % 2 == 0 {
+//             sibling_hash.clone()
+//         } else {
+//             current_hash.clone()
+//         });
+
+//         current_hash = Sha256::digest(&combined).to_vec();
+//         current_index /= 2;
+//     }
+
+//     current_hash == expected_root
+// }
+
 pub fn validate_merkle_branch(
     shard_hashes: &[Vec<u8>],
     proofs: &[Vec<u8>],
@@ -95,23 +138,11 @@ pub fn validate_merkle_branch(
     let mut current_index = index;
 
     for sibling_hash in proofs {
-        let sibling_index = if current_index == 0 {
-            0 // No valid sibling; default behavior
-        } else {
-            current_index - 1
-        };
-
         let mut combined = if current_index % 2 == 0 {
-            current_hash.clone()
+            [current_hash.clone(), sibling_hash.clone()].concat()
         } else {
-            sibling_hash.clone()
+            [sibling_hash.clone(), current_hash.clone()].concat()
         };
-
-        combined.extend(if current_index % 2 == 0 {
-            sibling_hash.clone()
-        } else {
-            current_hash.clone()
-        });
 
         current_hash = Sha256::digest(&combined).to_vec();
         current_index /= 2;
@@ -119,8 +150,6 @@ pub fn validate_merkle_branch(
 
     current_hash == expected_root
 }
-
-
 
 
 /// Reconstruct the original unit from shards and validate using proofs

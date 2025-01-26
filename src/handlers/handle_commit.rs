@@ -1,71 +1,83 @@
 use std::path::Path;
 use std::sync::Arc;
+use base64::Engine;
 use reqwest::Client;
+use sha2::{Digest, Sha256};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use serde_json::json;
 use tracing::{error, info};
 use crate::requests::ip_server_requests::notify_transaction_submitted;
 use crate::structs::node::Node;
+use crate::structs::requests::{BaseRequest, CommitRequest};
 use crate::structs::toml_config;
 use crate::utils::config_util::load_config;
 use crate::utils::dag_utils::{are_parents_available, validate_unit};
+use crate::utils::epoch_utils::update_epoch_to_next_round;
 use crate::utils::merkle_utils::validate_merkle_branch;
 
 /// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
-///
-/// This function finalizes and persists the reconstructed unit if the quorum threshold is reached,
-/// after validating the Merkle proof and ensuring the availability of parent nodes.
-///
-/// # Arguments
-/// - `node`: Reference to the current node.
-/// - `sender`: ID of the node sending the commit request.
-/// - `root`: The Merkle tree root associated with the commit.
-/// - `unit`: The reconstructed unit.
-/// - `epoch_id`: The epoch in which the commit is being processed.
-/// - `shard_hashes`: Hashes of the original shards used to construct the Merkle tree.
-/// - `proofs`: Merkle proofs used for validation.
+
 pub async fn handle_commit(
     node: &Node,
     client: Arc<Client>,
-    sender: usize,
-    root: Vec<u8>,
-    unit: Vec<u8>,
-    epoch_id: u64,
-    shard_hashes: Vec<Vec<u8>>,
-    proofs: Vec<Vec<u8>>,
+    commit_request: CommitRequest,
 ) -> Result<(), String> {
     info!(
         "Node {}: Handling commit request from Node {} for epoch {}",
-        node.id, sender, epoch_id
+        node.id, commit_request.base.sender_id, commit_request.base.epoch_id
     );
 
-    // Step 1: Validate the reconstructed unit with the Merkle root
-    info!("Node {}: Validating unit for root {:?}", node.id, root);
-    if let Err(e) = validate_unit(node, &unit, &root, &shard_hashes, &proofs).await {
-        error!(
-            "Node {}: Validation failed for unit with root {:?}: {}",
-            node.id, root, e
-        );
-        return Err(e);
-    }
-    info!("Node {}: Unit validation passed for root {:?}", node.id, root);
+    // Step 1: Derive shard hashes from the unit
+    let shard_size = 64; // Adjust this based on configuration
+    let shard_hashes: Vec<Vec<u8>> = commit_request
+        .unit
+        .chunks(shard_size)
+        .map(|shard| Sha256::digest(shard).to_vec())
+        .collect();
 
-    // Step 2: Check if parents of the unit are available
+    // Step 2: Validate Merkle branches for each shard
+    for (index, proof) in commit_request.proofs.iter().enumerate() {
+        let decoded_proof: Vec<Vec<u8>> = proof
+            .iter()
+            .map(|p| base64::engine::general_purpose::STANDARD.decode(p.as_bytes()))
+            .collect::<Result<_, _>>()
+            .map_err(|e| {
+                let error_message = format!(
+                    "Node {}: Failed to decode proof for shard {}: {:?}",
+                    node.id, index, e
+                );
+                error!("{}", error_message);
+                error_message
+            })?;
+
+        if !validate_merkle_branch(&shard_hashes, &decoded_proof, index, &commit_request.base.root) {
+            let error_message = format!(
+                "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}",
+                node.id, index, commit_request.base.root
+            );
+            error!("{}", error_message);
+            return Err(error_message);
+        }
+    }
+
+    info!("Node {}: Unit validation passed for root {:?}", node.id, commit_request.base.root);
+
+    // Step 3: Check if parents of the unit are available
     info!("Node {}: Checking parent availability for the unit.", node.id);
-    if !are_parents_available(node, &unit).await {
+    if !are_parents_available(node, &commit_request.unit).await {
         let error_message = format!(
             "Node {}: Parent availability check failed for unit associated with root {:?}",
-            node.id, root
+            node.id, commit_request.base.root
         );
         error!("{}", error_message);
         return Err(error_message);
     }
     info!("Node {}: Parent availability check passed.", node.id);
 
-    // Step 3: Persist the finalized unit to storage
+    // Step 4: Persist the finalized unit to storage
     let epoch_dir = "./finalized_units";
-    let epoch_file = format!("{}/epoch{}.json", epoch_dir, epoch_id);
+    let epoch_file = format!("{}/epoch{}.json", epoch_dir, commit_request.base.epoch_id);
     info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
 
     if let Err(e) = fs::create_dir_all(Path::new(epoch_dir)).await {
@@ -77,7 +89,15 @@ pub async fn handle_commit(
         return Err(error_message);
     }
 
-    if let Err(e) = append_finalized_unit(&epoch_file, node.id, sender, root.clone(), unit).await {
+    if let Err(e) = append_finalized_unit(
+        &epoch_file,
+        node.id,
+        commit_request.base.sender_id,
+        commit_request.base.root.clone(),
+        commit_request.unit,
+    )
+    .await
+    {
         let error_message = format!(
             "Node {}: Failed to append finalized unit to file {}: {:?}",
             node.id, epoch_file, e
@@ -88,10 +108,11 @@ pub async fn handle_commit(
 
     info!(
         "Node {}: Successfully finalized unit for root {:?} and persisted it to file.",
-        node.id, root
+        node.id, commit_request.base.root
     );
     let toml_config = load_config();
-    notify_transaction_submitted(&client, &toml_config).await;
+    update_epoch_to_next_round(&client).await; 
+    let _ = notify_transaction_submitted(&client, &toml_config).await;
 
     Ok(())
 }
@@ -139,3 +160,4 @@ async fn append_finalized_unit(
 
     Ok(())
 }
+
