@@ -8,7 +8,7 @@ use crate::{
     handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
     structs::{
         node::Node,
-        requests::{CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
+        requests::{BaseRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
         responses::Response,
     },
     utils::epoch_utils::handle_sync_epoch,
@@ -18,14 +18,16 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
     Router::new()
         .route("/propose", post({
             let node = node.clone();
+            let client = client.clone();
             move |Json(payload): Json<Value>| {
-                let node = node.clone();
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
                         Ok(parsed_payload) => {
+
                             // Handle the proposal and respond with proper HTTP status codes
                             handle_propose(
-                                &node,
+                                node.clone(),
+                                client.clone(),
                                 parsed_payload, // Pass the parsed ProposeRequest directly
                             )
                             .await
@@ -50,7 +52,8 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                 let node = node.clone();
                 let client = client.clone();
                 async move {
-                    handle_prevote(node, client, payload).await
+                    handle_prevote(node.clone(),
+                    client.clone(), payload).await
                 }
             }
         }))

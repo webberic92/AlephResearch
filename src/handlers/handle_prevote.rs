@@ -7,7 +7,7 @@ use tracing::{debug, error, info};
 use axum::response::IntoResponse;
 use crate::{
     handlers::handle_commit::handle_commit,
-    structs::{node::Node, requests::PrevoteRequest, responses::Response},
+    structs::{node::Node, requests::{CommitRequest, PrevoteRequest}, responses::Response},
     utils::{
         dag_utils::ensure_dag_synchronization,
         merkle_utils::{reconstruct_unit, validate_merkle_branch},
@@ -116,10 +116,10 @@ pub async fn handle_prevote(
     );
 
     // Step 7: Reconstruct and commit
-    let shard_hashes: Vec<Vec<u8>> = decoded_shards
-        .iter()
-        .map(|shard| sha2::Sha256::digest(shard).to_vec())
-        .collect();
+    // let shard_hashes: Vec<Vec<u8>> = decoded_shards
+    //     .iter()
+    //     .map(|shard| sha2::Sha256::digest(shard).to_vec())
+    //     .collect();
 
     match reconstruct_unit(&decoded_shards, &decoded_proofs, &payload.propose.base.root) {
         Ok(reconstructed_unit) => {
@@ -128,15 +128,26 @@ pub async fn handle_prevote(
                 node.id, payload.propose.base.root
             );
 
+            let proofs: Vec<Vec<String>> = decoded_proofs
+                .iter()
+                .map(|proof| {
+                    proof
+                        .iter()
+                        .map(|p| general_purpose::STANDARD.encode(p))
+                        .collect()
+                })
+                .collect();
+            
+            let commit_request = CommitRequest {
+                base: payload.propose.base.clone(),
+                unit: reconstructed_unit,
+                proofs,
+            };
+
             if let Err(e) = handle_commit(
                 &node,
                 client,
-                payload.propose.base.sender_id,
-                payload.propose.base.root.clone(),
-                reconstructed_unit,
-                payload.propose.base.epoch_id,
-                shard_hashes,
-                decoded_proofs.into_iter().flatten().collect(), // Flatten proofs          
+                commit_request.clone()         
                   )
             .await
             {
