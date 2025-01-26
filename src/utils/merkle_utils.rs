@@ -144,10 +144,10 @@ pub fn validate_merkle_branch(
             [sibling_hash.clone(), current_hash.clone()].concat()
         };
 
-        info!(
-            "Node {}: Validation Level {} - Current Hash: {:?}, Sibling Hash: {:?}, Combined Hash: {:?}",
-            level, current_index, current_hash, sibling_hash, combined
-        );
+        // info!(
+        //     "Node {}: Validation Level {} - Current Hash: {:?}, Sibling Hash: {:?}, Combined Hash: {:?}",
+        //     level, current_index, current_hash, sibling_hash, combined
+        // );
 
         current_hash = Sha256::digest(&combined).to_vec();
         current_index /= 2;
@@ -173,36 +173,11 @@ pub fn validate_merkle_branch(
 /// Reconstruct the original unit from shards and validate using proofs
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
-    proofs: &[Vec<Vec<u8>>],
-    root: &[u8], // Expected Merkle root
 ) -> Result<Vec<u8>, String> {
-    // info!("Reconstructing unit from shards and verifying Merkle proof");
-
-    if shards.is_empty() || proofs.is_empty() {
-        let error_message = "Reconstruction failed: shards or proofs are empty".to_string();
+    if shards.is_empty() {
+        let error_message = "Reconstruction failed: shards are empty".to_string();
         error!("{}", error_message);
         return Err(error_message);
-    }
-
-    if shards.len() != proofs.len() {
-        let error_message = format!(
-            "Reconstruction failed: number of shards ({}) does not match number of proofs ({})",
-            shards.len(),
-            proofs.len()
-        );
-        error!("{}", error_message);
-        return Err(error_message);
-    }
-
-    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
-
-    for (i, proof) in proofs.iter().enumerate() {
-        if !validate_merkle_branch(&shard_hashes, proof, i, root) {
-            return Err(format!(
-                "Validation failed for shard index {}. Proof: {:?}, Root: {:?}",
-                i, proof, root
-            ));
-        }
     }
 
     let reconstructed_unit = shards.concat();
