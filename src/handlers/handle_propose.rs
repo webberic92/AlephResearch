@@ -41,10 +41,10 @@ pub async fn handle_propose(
     };
 
     // Log decoded shards
-    // info!(
-    //     "Node {}: Decoded shards (Epoch {}): {:?}",
-    //     node.id, propose_request.base.epoch_id, decoded_shards
-    // );
+    info!(
+        "Node {}: Decoded shards (Epoch {}): {:?}",
+        node.id, propose_request.base.epoch_id, decoded_shards
+    );
 
     // Step 2: Decode Base64-encoded proofs
     let decoded_proofs: Vec<Vec<Vec<u8>>> = match propose_request
@@ -82,10 +82,10 @@ pub async fn handle_propose(
         .collect();
 
     // Log shard hashes
-    // info!(
-    //     "Node {}: Computed shard hashes (Epoch {}): {:?}",
-    //     node.id, propose_request.base.epoch_id, shard_hashes
-    // );
+    info!(
+        "Node {}:  handle proposes (validate_merkle_branch) should work  shard hashes {:?} decoded proofs, {:?}, root {:?}",
+        node.id, shard_hashes, decoded_proofs, propose_request.base.root
+    );
 
     // Step 4: Validate Merkle branches for each shard
     for (index, proof) in decoded_proofs.iter().enumerate() {
@@ -143,12 +143,21 @@ pub async fn handle_propose(
 
     // Step 7: Check if enough proposals are received
     if are_enough_proposals_received().await {
+        info!(
+            "Propose Phase - Node {}: Shards: {:?}, Proofs: {:?}, Root: {:?}",
+            node.id, decoded_shards, decoded_proofs, propose_request.base.root
+        );
+
+
 
         let prevote_request = PrevoteRequest {
             propose: propose_request.clone(), // Clone the value
             sender_url: node.ip_address.clone(),
         };
-
+        info!(
+            "Node {}: sending prevote in epoch {} from handle_propose : prevote_request payload {:?}",
+            node.id, propose_request.base.epoch_id, prevote_request.clone()
+        );
         handle_prevote(node.clone(), client.clone(), prevote_request).await;
     } else {
         info!(

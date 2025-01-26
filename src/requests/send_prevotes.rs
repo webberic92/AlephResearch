@@ -47,8 +47,8 @@ pub async fn send_prevotes(
         };
 
         info!(
-            "Node {}: Sending prevote to {}. Payload: {:?}",
-            toml_config.node.id, node_url, payload
+            "Node {} {}: Sending prevote to {}. Payload: {:?}",
+            toml_config.node.id, toml_config.network.ip_address, node_url, payload
         );
 
         // Send the request
