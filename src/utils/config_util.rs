@@ -82,21 +82,18 @@ pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) 
     );
 }
 
-// Update the epoch tracker
-// ch-RBC proof: Keeps track of the current epoch and ensures nodes stay synchronized.
-async fn update_epoch_tracker(node: &Node, epoch_id: u64) {
-    let mut epoch_tracker = node.epoch_round_id.lock().await;
-    epoch_tracker.insert(epoch_id + 1);
-    persist_epoch_round_id( epoch_id, "/home/aleph-node/aleph-node-config.toml").await;
-}
 
 // Persist the epoch round ID to the TOML file
-pub async fn persist_epoch_round_id(epoch_id: u64, config_path: &str) {
+pub async fn persist_epoch_round_id(epoch_id: u64) -> Result<(), std::io::Error> {
+    // Load the current TOML configuration
     let mut config = load_config();
-    config.consensus.epoch_round_id = epoch_id + 1;
 
-    match save_config( &config) {
-        Ok(_) => info!("Node {} {} Successfully updated epoch_round_id = {}.", config.node.id, config.network.ip_address, config.consensus.epoch_round_id),
-        Err(e) => error!("Node {} {} Failed to update epoch_round_id. Error: {:?}", config.node.id, config.network.ip_address, e),
-    }
+    // Update the epoch ID
+    config.consensus.epoch_round_id = epoch_id;
+
+    // Save the updated configuration back to the TOML file
+    let _ = save_config(&config);
+
+    info!("Persisted updated epoch ID {} to TOML file.", epoch_id);
+    Ok(())
 }

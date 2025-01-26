@@ -127,7 +127,7 @@ pub async fn handle_prevote(
                 "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
                 node.id, payload.propose.base.root
             );
-
+    
             let proofs: Vec<Vec<String>> = decoded_proofs
                 .iter()
                 .map(|proof| {
@@ -143,14 +143,12 @@ pub async fn handle_prevote(
                 unit: reconstructed_unit,
                 proofs,
             };
-
+    
             if let Err(e) = handle_commit(
                 &node,
-                client,
-                commit_request.clone()         
-                  )
-            .await
-            {
+                client.clone(),
+                commit_request.clone()
+            ).await {
                 let error_message = format!(
                     "Node {}: Commit phase failed for root {:?}. Error: {:?}",
                     node.id, payload.propose.base.root, e
@@ -158,6 +156,42 @@ pub async fn handle_prevote(
                 error!("{}", error_message);
                 return Json(Response { status: error_message });
             }
+    
+            // Epoch transition logic
+            let current_epoch = payload.propose.base.epoch_id;
+            let new_epoch = current_epoch + 1;
+    
+            info!(
+                "Node {}: Finalized Epoch {}. Transitioning to Epoch {}.",
+                node.id, current_epoch, new_epoch
+            );
+    
+            // Broadcast new epoch to other nodes
+            // for node_url in node..nodes.clone() {
+                let sync_url = format!("{}/sync_epoch", node.ip_address);
+                let payload = serde_json::json!({
+                    "epoch_id": new_epoch,
+                    "sender": node.id,
+                });
+    
+                match client.post(&sync_url).json(&payload).send().await {
+                    Ok(response) if response.status().is_success() => {
+                        info!("Successfully synced epoch {} with node at {}", new_epoch, node.ip_address);
+                    }
+                    Ok(response) => {
+                        error!(
+                            "Failed to sync epoch {} with node at {}: HTTP {}",
+                            new_epoch, node.ip_address, response.status()
+                        );
+                    }
+                    Err(e) => {
+                        error!(
+                            "Error syncing epoch {} with node at {}: {:?}",
+                            new_epoch, node.ip_address, e
+                        );
+                    }
+                }
+            // }
         }
         Err(e) => {
             let error_message = format!(
