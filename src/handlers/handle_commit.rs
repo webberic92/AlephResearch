@@ -13,7 +13,6 @@ use crate::structs::requests::{BaseRequest, CommitRequest};
 use crate::structs::toml_config;
 use crate::utils::config_util::load_config;
 use crate::utils::dag_utils::{are_parents_available, validate_unit};
-use crate::utils::epoch_utils::update_epoch_to_next_round;
 use crate::utils::merkle_utils::validate_merkle_branch;
 
 /// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
@@ -111,9 +110,8 @@ pub async fn handle_commit(
         node.id, commit_request.base.root
     );
     let toml_config = load_config();
-    update_epoch_to_next_round(&client).await; 
-    let _ = notify_transaction_submitted(&client, &toml_config).await;
-
+    // let _ = notify_transaction_submitted(&client, &toml_config).await;
+    // we might move the above to behind epoch sync...
     Ok(())
 }
 
