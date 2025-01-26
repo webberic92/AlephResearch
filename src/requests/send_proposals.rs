@@ -14,12 +14,12 @@ pub async fn send_proposals(
     shards: &[Vec<u8>],
     merkle_root: &[u8],
 ) -> Result<(), Box<dyn std::error::Error>> {
-    info!(
-        "Node {} {}: Preparing to send proposals for epoch {}",
-        toml_config.node.id,
-        toml_config.network.ip_address,
-        toml_config.consensus.epoch_round_id
-    );
+    // info!(
+    //     "Node {} {}: Preparing to send proposals for epoch {}",
+    //     toml_config.node.id,
+    //     toml_config.network.ip_address,
+    //     toml_config.consensus.epoch_round_id
+    // );
 
     // Compute shard hashes
     let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| sha2::Sha256::digest(shard).to_vec()).collect();

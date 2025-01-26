@@ -33,7 +33,7 @@ pub async fn are_enough_proposals_received() -> bool {
 
     if(config.network.proposals.len() >= required_quorum){
         info!(
-            "Node {} {}: Enough proposals. received to start prevoting form aleph_start.{:?}",
+            "Node {} {}: Enough proposals. received to start prevoting form aleph_start. Proposals array = {:?}",
             config.node.id, config.network.ip_address, config.network.proposals
         );
         return true

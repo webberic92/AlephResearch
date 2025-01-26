@@ -4,11 +4,10 @@ use sha2::Digest;
 use tracing::{error, info};
 use reqwest::StatusCode;
 use crate::{
-    structs::{node::Node, requests::ProposeRequest, responses::Response},
-    utils::{
+    handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::ProposeRequest, responses::Response}, utils::{
         config_util::{are_enough_proposals_received, update_proposal_tracker},
         merkle_utils::{reconstruct_unit, validate_merkle_branch},
-    },
+    }
 };
 
 pub async fn handle_propose(
@@ -149,6 +148,7 @@ pub async fn handle_propose(
             "Node {} {}: SIMULATING PREVOTE and COMMIT phase for epoch {}.",
             node.id, node.ip_address, request.epoch_id
         );
+        // handle_prevote(node, request.epoch_id).await;
     } else {
         info!(
             "Node {} {}: Waiting for more proposals for epoch {}.",

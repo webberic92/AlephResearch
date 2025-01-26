@@ -195,10 +195,10 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
         return Err(error_message);
     }
 
-    info!(
-        "Shard size validation successful. Total shard size: {} matches transaction size: {}",
-        total_size, transaction_size
-    );
+    // info!(
+    //     "Shard size validation successful. Total shard size: {} matches transaction size: {}",
+    //     total_size, transaction_size
+    // );
     Ok(())
 }
 
