@@ -33,7 +33,7 @@ pub async fn are_enough_proposals_received() -> bool {
 
     if(config.network.proposals.len() >= required_quorum){
         info!(
-            "Node {} {}: Enough proposals. received to start prevoting form aleph_start. Proposals array = {:?}",
+            "Node {} {}: Enough proposals. received to start prevoting. Proposals array = {:?}",
             config.node.id, config.network.ip_address, config.network.proposals
         );
         return true
@@ -77,7 +77,7 @@ pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) 
     proposal_tracker.push(sender);
     persist_proposal_tracker( &proposal_tracker, config_path);
     info!(
-        "Node {} {}  HANDLE PROPOSE: Updated proposal tracker for epoch {}: {:?}",
+        "Node {} {} Updated proposal tracker for epoch {}: node ID list {:?}",
         node.id, node.ip_address, epoch_id, proposal_tracker
     );
 }

@@ -137,19 +137,37 @@ pub fn validate_merkle_branch(
     let mut current_hash = shard_hashes[index].clone();
     let mut current_index = index;
 
-    for sibling_hash in proofs {
-        let mut combined = if current_index % 2 == 0 {
+    for (level, sibling_hash) in proofs.iter().enumerate() {
+        let combined = if current_index % 2 == 0 {
             [current_hash.clone(), sibling_hash.clone()].concat()
         } else {
             [sibling_hash.clone(), current_hash.clone()].concat()
         };
 
+        info!(
+            "Node {}: Validation Level {} - Current Hash: {:?}, Sibling Hash: {:?}, Combined Hash: {:?}",
+            level, current_index, current_hash, sibling_hash, combined
+        );
+
         current_hash = Sha256::digest(&combined).to_vec();
         current_index /= 2;
     }
 
+    if current_hash == expected_root {
+        info!(
+            "Validation succeeded: Final root matches expected root. Computed: {:?}, Expected: {:?}",
+            current_hash, expected_root
+        );
+    } else {
+        error!(
+            "Validation failed: Final root does not match expected root. Computed: {:?}, Expected: {:?}",
+            current_hash, expected_root
+        );
+    }
+
     current_hash == expected_root
 }
+
 
 
 /// Reconstruct the original unit from shards and validate using proofs

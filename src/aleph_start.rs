@@ -35,6 +35,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Check if enough proposals have been received to move to the next phase
             if are_enough_proposals_received().await {
+                info!(
+                    "Node {}: sending prevote in epoch {} from handle start",
+                 updated_toml_config.node.id, updated_toml_config.consensus.epoch_round_id
+                );
                 // Logic for sending prevotes is commented out for now
                 send_prevotes(&client, &updated_toml_config, &merkle_root, &shards).await?;
             }else{
