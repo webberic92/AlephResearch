@@ -1,17 +1,20 @@
 use std::error::Error;
-use serde_json::json;
 use tracing::{debug, error, info};
 use reqwest::Client;
-use crate::{structs::node::Node, utils::merkle_utils::validate_merkle_branch};
+use crate::{structs::{node::Node, requests::DAGSyncRequest}, utils::merkle_utils::validate_merkle_branch};
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 /// Logs request URL and payload, returning synchronization status.
 pub async fn check_dag_sync(client: &Client, epoch_id: u64,sender_id: &usize, sender_url: &String) -> Result<bool, Box<dyn Error>> {
     let url = format!("{}/dag_sync", sender_url);
-    let payload = json!({
-        "epoch_id": epoch_id,
-        "sender": sender_id // Include the target node URL in the payload
-    });
+    
+
+ // Create the payload using the DAGSyncRequest struct
+    let payload = DAGSyncRequest {
+        epoch_id,
+        sender_id: *sender_id,
+        sender_url: sender_url.clone(),
+    };
 
     info!("Sending DAG sync check to URL: {} with payload: {:?}", url, payload);
 

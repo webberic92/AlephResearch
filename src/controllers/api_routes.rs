@@ -124,6 +124,7 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                 let node = node.clone();
                 let client = client.clone();
                 async move {
+                    info!("*** outside handler DAG SYNC REQUEST: Node {} {} from Sender {} ***", node.id, node.ip_address, payload.sender_id);
                     handle_dag_sync(&node, &client, axum::Json(payload)).await
                 }
             }

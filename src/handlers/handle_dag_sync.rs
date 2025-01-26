@@ -21,7 +21,7 @@ pub async fn handle_dag_sync(
     Json(payload): Json<DAGSyncRequest>, // Deserialize the payload automatically
 ) -> Json<DAGSyncResponse> {
     info!(
-        "Node {}: Received DAG sync request from Node {} for epoch {}",
+        "Node {}: INSIDE Handler Received DAG sync request from Node {} for epoch {} about to call check dag sync",
         node.id, payload.sender_id, payload.epoch_id
     );
 

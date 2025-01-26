@@ -60,10 +60,10 @@ pub async fn handle_prevote(
     };
 
 
-    info!(
-        "Prevote Phase - Node {}: Shards: {:?}, Proofs: {:?}, Root: {:?}",
-        node.id, decoded_shards, decoded_proofs, prevote_request.propose.base.root
-    );
+    // info!(
+    //     "Prevote Phase - Node {}: Shards: {:?}, Proofs: {:?}, Root: {:?}",
+    //     node.id, decoded_shards, decoded_proofs, prevote_request.propose.base.root
+    // );
 
 
     
@@ -72,10 +72,10 @@ pub async fn handle_prevote(
     .map(|shard| sha2::Sha256::digest(shard).to_vec())
     .collect();
 
-    info!(
-        "Node {}: handle prevotes (validate_merkle_branch)  DOES NOT work  shard hashes {:?} decoded proofs, {:?}, root {:?}",
-        node.id, shard_hashes, decoded_proofs, prevote_request.propose.base.root
-    );
+    // info!(
+    //     "Node {}: handle prevotes (validate_merkle_branch)  DOES NOT work  shard hashes {:?} decoded proofs, {:?}, root {:?}",
+    //     node.id, shard_hashes, decoded_proofs, prevote_request.propose.base.root
+    // );
     // Step 3: Validate Merkle Branches for each shard
     for (index, proof) in decoded_proofs.iter().enumerate() {
         if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
@@ -88,6 +88,9 @@ pub async fn handle_prevote(
         }
     }
     info!("Node {}: Merkle branch validation passed.", node.id);
+
+
+    info!("Node {}: handle prevote calling ensuredag_synchronization. epoch {} sender {} senderurl {}", node.id, prevote_request.propose.base.epoch_id, &prevote_request.propose.base.sender_id, &prevote_request.sender_url);
 
     // Step 4: Ensure DAG synchronization
     if let Err(e) = ensure_dag_synchronization(&node, &client, prevote_request.propose.base.epoch_id, &prevote_request.propose.base.sender_id, &prevote_request.sender_url).await {
@@ -138,7 +141,7 @@ pub async fn handle_prevote(
     //     .map(|shard| sha2::Sha256::digest(shard).to_vec())
     //     .collect();
 
-    match reconstruct_unit(&decoded_shards, &decoded_proofs, &prevote_request.propose.base.root) {
+    match reconstruct_unit(&decoded_shards) {
         Ok(reconstructed_unit) => {
             info!(
                 "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
