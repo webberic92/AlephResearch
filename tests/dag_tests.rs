@@ -168,19 +168,30 @@ async fn test_validate_unit_parents_failure() {
 
 #[tokio::test]
 async fn test_get_parents_success() {
-    let unit = vec![0; 96];
-    let parent1 = vec![1; 32];
-    let parent2 = vec![2; 32];
-    let mut unit_with_parents = unit.clone();
-    unit_with_parents.splice(64..96, parent1.iter().chain(parent2.iter()).cloned());
+    // Simulating a unit with two parent hashes (each 32 bytes)
+    let mut unit = vec![0; 64]; // Mock data before the parents
+    let parent1 = vec![1; 32]; // First parent hash
+    let parent2 = vec![2; 32]; // Second parent hash
+    unit.extend(parent1.iter()); // Add first parent hash to unit
+    unit.extend(parent2.iter()); // Add second parent hash to unit
 
-    let result = get_parents(&unit_with_parents);
+    // Call get_parents and ensure success
+    let result = get_parents(&unit);
     assert!(result.is_ok());
-    let parents = result.unwrap();
+
+    // Extract parents and validate
+    let flat_parents = result.unwrap();
+    const HASH_SIZE: usize = 32;
+    let parents: Vec<Vec<u8>> = flat_parents
+        .chunks(HASH_SIZE)
+        .map(|chunk| chunk.to_vec())
+        .collect();
+
     assert_eq!(parents.len(), 2);
     assert_eq!(parents[0], parent1);
     assert_eq!(parents[1], parent2);
 }
+
 
 #[tokio::test]
 async fn test_get_parents_failure() {

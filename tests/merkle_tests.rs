@@ -72,24 +72,53 @@ mod tests {
     #[test]
     fn test_reconstruct_unit() {
         init_logger();
-
+    
+        // Original transaction data
         let transaction_data: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect();
         let shard_count = 4;
-
+    
+        // Split the transaction data into shards
         let shards = split_into_shards(&transaction_data, shard_count);
+    
+        // Compute hashes and Merkle root
         let hashes: Vec<Vec<u8>> = shards.iter().map(|s| Sha256::digest(s).to_vec()).collect();
         let root = compute_merkle_root(&hashes);
-
-        let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
-            .map(|i| compute_merkle_branch(&hashes, i))
-            .collect();
-
-        match reconstruct_unit(&shards, &proofs, &root) {
-            Ok(reconstructed_data) => {
+    
+        // Mock parent hashes (assuming 2 parents, each 32 bytes)
+        let parent1 = vec![1; 32];
+        let parent2 = vec![2; 32];
+        let parent_hashes = vec![parent1.clone(), parent2.clone()];
+    
+        // Flatten parent hashes into a single Vec<u8> (expected by reconstruct_unit)
+        let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
+    
+        // Mock epoch ID
+        let epoch_id = 1;
+    
+        // Attempt to reconstruct the unit
+        match reconstruct_unit(&shards, epoch_id, flat_parent_hashes.clone()) {
+            Ok(reconstructed_unit) => {
+                // Validate reconstructed data matches original shards concatenation
+                let expected_data: Vec<u8> = shards.concat();
                 assert_eq!(
-                    reconstructed_data, transaction_data,
-                    "Reconstructed data does not match the original transaction data"
+                    reconstructed_unit.data, expected_data,
+                    "Reconstructed data does not match the concatenated shards"
                 );
+    
+                // Validate Merkle root
+                assert_eq!(
+                    reconstructed_unit.root, root,
+                    "Reconstructed Merkle root does not match the computed root"
+                );
+    
+                // Validate parents (convert reconstructed parents back to Vec<Vec<u8>> for comparison)
+                let reconstructed_parents: Vec<Vec<u8>> = reconstructed_unit.parents.clone();
+    
+                assert_eq!(
+                    reconstructed_parents, parent_hashes,
+                    "Reconstructed parents do not match the provided parents"
+                );
+    
                 info!("Reconstruction and validation succeeded!");
             }
             Err(error_message) => {
@@ -98,6 +127,8 @@ mod tests {
             }
         }
     }
+    
+    
 
     #[test]
     fn test_validate_merkle_branch_complex() {
@@ -174,20 +205,26 @@ mod tests {
     fn test_propose_integration() {
         init_logger();
         info!("Starting test_propose_integration...");
-
+    
+        // Original transaction data
         let transaction_data = (0..256).map(|i| i as u8).collect::<Vec<_>>();
         let shard_count = 4;
-
+    
+        // Split the transaction data into shards
         let shards = split_into_shards(&transaction_data, shard_count);
+    
+        // Compute hashes and Merkle root
         let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
         let root = compute_merkle_root(&shard_hashes);
-
+    
+        // Generate Merkle proofs
         let proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
             .map(|i| compute_merkle_branch(&shard_hashes, i))
             .collect();
-
+    
         info!("Generated proofs: {:?}", proofs);
-
+    
+        // Validate Merkle branches
         for (i, proof) in proofs.iter().enumerate() {
             info!(
                 "Validating Merkle branch for shard {}: Proof = {:?}, Expected root = {:?}",
@@ -199,13 +236,45 @@ mod tests {
                 i, proof, root
             );
         }
-
-        match reconstruct_unit(&shards, &proofs, &root) {
-            Ok(reconstructed_data) => {
+    
+        // Mock parent hashes (assuming 2 parents, each 32 bytes)
+        // let parent1 = vec![1; 32];
+        // let parent2 = vec![2; 32];
+        // let parent_hashes = vec![parent1.clone(), parent2.clone()];
+        let parent1 = vec![1; 32];
+        let parent2 = vec![2; 32];
+        let parent_hashes = vec![parent1.clone(), parent2.clone()];
+    
+        // Flatten parent hashes into a single Vec<u8> (expected by reconstruct_unit)
+        let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
+    
+        // Mock epoch ID
+        let epoch_id = 1;
+    
+        // Attempt to reconstruct the unit
+        match reconstruct_unit(&shards, epoch_id, flat_parent_hashes.clone()) {
+            Ok(reconstructed_unit) => {
+                // Validate reconstructed data matches original transaction data
                 assert_eq!(
-                    reconstructed_data, transaction_data,
+                    reconstructed_unit.data, transaction_data,
                     "Reconstructed data does not match the original transaction data"
                 );
+    
+                // Validate Merkle root
+                assert_eq!(
+                    reconstructed_unit.root, root,
+                    "Reconstructed Merkle root does not match the computed root"
+                );
+    
+                // Validate reconstructed parents
+                let reconstructed_parents: Vec<Vec<u8>> = reconstructed_unit.parents.clone();
+
+    
+                assert_eq!(
+                    reconstructed_parents, parent_hashes,
+                    "Reconstructed parents do not match the provided parents"
+                );
+    
                 info!("Reconstruction and validation succeeded!");
             }
             Err(error_message) => {
@@ -214,5 +283,6 @@ mod tests {
             }
         }
     }
+    
 }
 

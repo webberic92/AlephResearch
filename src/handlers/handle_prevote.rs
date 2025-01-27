@@ -7,31 +7,49 @@ use tracing::{debug, error, info};
 use axum::response::IntoResponse;
 use crate::{
     handlers::handle_commit::handle_commit,
-    structs::{node::Node, requests::{CommitRequest, PrevoteRequest}, responses::Response},
+    structs::{
+        node::Node,
+        requests::{CommitRequest, PrevoteRequest},
+        responses::Response,
+    },
     utils::{
-        dag_utils::ensure_dag_synchronization,
+        dag_utils::{validate_unit_parents, ensure_dag_synchronization},
         merkle_utils::{reconstruct_unit, validate_merkle_branch},
     },
 };
 
+/// Handles a PREVOTE request.
+///
+/// # Parameters
+/// - `node`: The current node.
+/// - `client`: HTTP client for making network requests.
+/// - `prevote_request`: The received PREVOTE request.
+///
+/// # Returns
+/// - JSON response indicating success or failure.
 pub async fn handle_prevote(
     node: Arc<Node>,
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> impl IntoResponse {
     info!(
-        " Node {} {} : Received PrevoteRequest from node {} : {} with epoch {:?}",
-        node.id, node.ip_address, prevote_request.propose.base.sender_id, prevote_request.sender_url, prevote_request.propose.base.epoch_id
+        "Node {} {}: Received PREVOTE request from Node {} at {} for epoch {}.",
+        node.id,
+        node.ip_address,
+        prevote_request.propose.base.sender_id,
+        prevote_request.sender_url,
+        prevote_request.propose.base.epoch_id
     );
 
     // Step 1: Decode Base64-encoded shards
-    let decoded_shards: Vec<Vec<u8>> = match prevote_request.propose
+    let decoded_shards = match prevote_request
+        .propose
         .shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
         .collect::<Result<Vec<Vec<u8>>, _>>()
     {
-        Ok(decoded) => decoded,
+        Ok(shards) => shards,
         Err(e) => {
             let error_message = format!("Failed to decode shards: {:?}", e);
             error!("{}", error_message);
@@ -40,7 +58,8 @@ pub async fn handle_prevote(
     };
 
     // Step 2: Decode Base64-encoded proofs
-    let decoded_proofs: Vec<Vec<Vec<u8>>> = match prevote_request.propose
+    let decoded_proofs = match prevote_request
+        .propose
         .proofs
         .iter()
         .map(|proof| {
@@ -51,7 +70,7 @@ pub async fn handle_prevote(
         })
         .collect::<Result<Vec<_>, _>>() // Collect all decoded branches
     {
-        Ok(decoded) => decoded,
+        Ok(proofs) => proofs,
         Err(e) => {
             let error_message = format!("Failed to decode proofs: {:?}", e);
             error!("{}", error_message);
@@ -59,41 +78,15 @@ pub async fn handle_prevote(
         }
     };
 
-
-    // info!(
-    //     "Prevote Phase - Node {}: Shards: {:?}, Proofs: {:?}, Root: {:?}",
-    //     node.id, decoded_shards, decoded_proofs, prevote_request.propose.base.root
-    // );
-
-
-    
-    let shard_hashes: Vec<Vec<u8>> = decoded_shards
-    .iter()
-    .map(|shard| sha2::Sha256::digest(shard).to_vec())
-    .collect();
-
-    // info!(
-    //     "Node {}: handle prevotes (validate_merkle_branch)  DOES NOT work  shard hashes {:?} decoded proofs, {:?}, root {:?}",
-    //     node.id, shard_hashes, decoded_proofs, prevote_request.propose.base.root
-    // );
-    // Step 3: Validate Merkle Branches for each shard
-    for (index, proof) in decoded_proofs.iter().enumerate() {
-        if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
-            let error_message = format!(
-                "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}, Proof: {:?}",
-                node.id, index, prevote_request.propose.base.root, proof
-            );
-            error!("{}", error_message);
-            return Json(Response { status: error_message });
-        }
-    }
-    info!("Node {}: Merkle branch validation passed.", node.id);
-
-
-    info!("Node {}: handle prevote calling ensuredag_synchronization. epoch {} sender {} senderurl {}", node.id, prevote_request.propose.base.epoch_id, &prevote_request.propose.base.sender_id, &prevote_request.sender_url);
-
-    // Step 4: Ensure DAG synchronization
-    if let Err(e) = ensure_dag_synchronization(&node, &client, prevote_request.propose.base.epoch_id, &prevote_request.propose.base.sender_id, &prevote_request.sender_url).await {
+    // Step 3: ensure dag sync
+    if let Err(e) = ensure_dag_synchronization(
+        &node,
+        &client,
+        prevote_request.propose.base.epoch_id,
+        &prevote_request.propose.base.sender_id,
+        &prevote_request.sender_url,
+    )
+    .await {
         let error_message = format!(
             "Node {}: DAG synchronization failed with node {}. Error: {:?}",
             node.id, prevote_request.propose.base.sender_id, e
@@ -102,117 +95,43 @@ pub async fn handle_prevote(
         return Json(Response { status: error_message });
     }
     info!(
-        "Node {}: DAG synchronization successful with {}",
-        node.id, prevote_request.propose.base.sender_id
+        "Node {}: DAG synchronization successful for epoch {}.",
+        node.id, prevote_request.propose.base.epoch_id
     );
 
-    // Step 5: Update quorum votes
-    let mut quorum_votes = node.quorum_votes.write().await;
-    let count = quorum_votes.entry(prevote_request.propose.base.root.clone()).or_insert(0);
-    *count += 1;
 
-    debug!(
-        "Node {}: Updated quorum votes for root {:?}: {}",
-        node.id, prevote_request.propose.base.root, *count
-    );
 
-    // Step 6: Check quorum threshold
-    if *count < node.get_quorum_threshold() {
-        info!(
-            "Node {}: Prevote accepted for root {:?}. Current votes: {}",
-            node.id, prevote_request.propose.base.root, *count
-        );
-        return Json(Response {
-            status: format!(
-                "Node {}: Prevote accepted for root {:?}",
-                node.id, prevote_request.propose.base.root
-            ),
-        });
-    }
 
-    info!(
-        "Node {}: Quorum reached for root {:?} with {} votes",
-        node.id, prevote_request.propose.base.root, *count
-    );
+    // Step 4: Compute shard hashes
+    let shard_hashes: Vec<Vec<u8>> = decoded_shards
+        .iter()
+        .map(|shard| sha2::Sha256::digest(shard).to_vec())
+        .collect();
 
-    // Step 7: Reconstruct and commit
-    // let shard_hashes: Vec<Vec<u8>> = decoded_shards
-    //     .iter()
-    //     .map(|shard| sha2::Sha256::digest(shard).to_vec())
-    //     .collect();
-
-    match reconstruct_unit(&decoded_shards) {
-        Ok(reconstructed_unit) => {
-            info!(
-                "Node {}: Reconstruction successful for root {:?}. Proceeding to commit.",
-                node.id, prevote_request.propose.base.root
+    // Step 5: Validate Merkle Branches
+    for (index, proof) in decoded_proofs.iter().enumerate() {
+        if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
+            let error_message = format!(
+                "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}.",
+                node.id, index, prevote_request.propose.base.root
             );
-    
-            let proofs: Vec<Vec<String>> = decoded_proofs
-                .iter()
-                .map(|proof| {
-                    proof
-                        .iter()
-                        .map(|p| general_purpose::STANDARD.encode(p))
-                        .collect()
-                })
-                .collect();
-            
-            let commit_request = CommitRequest {
-                base: prevote_request.propose.base.clone(),
-                unit: reconstructed_unit,
-                proofs,
-            };
-    
-            if let Err(e) = handle_commit(
-                &node,
-                client.clone(),
-                commit_request.clone()
-            ).await {
-                let error_message = format!(
-                    "Node {}: Commit phase failed for root {:?}. Error: {:?}",
-                    node.id, prevote_request.propose.base.root, e
-                );
-                error!("{}", error_message);
-                return Json(Response { status: error_message });
-            }
-    
-            // Epoch transition logic
-            let current_epoch = prevote_request.propose.base.epoch_id;
-            let new_epoch = current_epoch + 1;
-    
-            info!(
-                "Node {}: Finalized Epoch {}. Transitioning to Epoch {}.",
-                node.id, current_epoch, new_epoch
-            );
-    
-            // Broadcast new epoch to other nodes
-            // for node_url in node..nodes.clone() {
-                let sync_url = format!("{}/sync_epoch", node.ip_address);
-                let prevote_request = serde_json::json!({
-                    "epoch_id": new_epoch,
-                    "sender": node.id,
-                });
-    
-                match client.post(&sync_url).json(&prevote_request).send().await {
-                    Ok(response) if response.status().is_success() => {
-                        info!("Successfully synced epoch {} with node at {}", new_epoch, node.ip_address);
-                    }
-                    Ok(response) => {
-                        error!(
-                            "Failed to sync epoch {} with node at {}: HTTP {}",
-                            new_epoch, node.ip_address, response.status()
-                        );
-                    }
-                    Err(e) => {
-                        error!(
-                            "Error syncing epoch {} with node at {}: {:?}",
-                            new_epoch, node.ip_address, e
-                        );
-                    }
-                }
-            // }
+            error!("{}", error_message);
+            return Json(Response { status: error_message });
         }
+    }
+    // info!("Node {}: Merkle branch validation passed.", node.id);
+
+    // Step 6: Reconstruct the unit
+    let parents = shard_hashes
+        .iter()
+        .flat_map(|hash| hash.clone()) // Flatten to a single Vec<u8>
+        .collect();
+    let reconstructed_unit = match reconstruct_unit(
+        &decoded_shards,
+        prevote_request.propose.base.epoch_id,
+        parents,
+    ) {
+        Ok(unit) => unit,
         Err(e) => {
             let error_message = format!(
                 "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
@@ -221,19 +140,60 @@ pub async fn handle_prevote(
             error!("{}", error_message);
             return Json(Response { status: error_message });
         }
+    };
+
+    // Step 7: Validate parents
+    if let Err(e) = validate_unit_parents(&node, &reconstructed_unit.data).await {
+        let error_message = format!(
+            "Node {}: Parent validation failed for root {:?}. Error: {}",
+            node.id, prevote_request.propose.base.root, e
+        );
+        error!("{}", error_message);
+        return Json(Response { status: error_message });
     }
 
-    info!(
-        "Node {}: Successfully handled PREVOTE REQUEST from Node {}",
-        node.id, prevote_request.propose.base.sender_id
+    // Step 8: Check quorum threshold and commit
+    let mut quorum_votes = node.quorum_votes.write().await;
+    let count = quorum_votes
+        .entry(prevote_request.propose.base.root.clone())
+        .or_insert(0);
+    *count += 1;
+
+    debug!(
+        "Node {}: Updated quorum votes for root {:?}: {}",
+        node.id, prevote_request.propose.base.root, *count
     );
+
+    if *count >= node.get_quorum_threshold() {
+        // Proceed to commit phase
+        let commit_request = CommitRequest {
+            base: prevote_request.propose.base.clone(),
+            unit: reconstructed_unit.data.clone(), // Use the `data` field of the reconstructed unit
+            proofs: decoded_proofs
+                .iter()
+                .map(|proof| proof.iter().map(|p| general_purpose::STANDARD.encode(p)).collect())
+                .collect(),
+        };
+
+        if let Err(e) = handle_commit(&node, commit_request).await {
+            let error_message = format!(
+                "Node {}: Commit phase failed for root {:?}. Error: {:?}",
+                node.id, prevote_request.propose.base.root, e
+            );
+            error!("{}", error_message);
+            return Json(Response { status: error_message });
+        }
+    }
+
+    // info!(
+    //     "Node {}: Successfully handled PREVOTE REQUEST from Node {}.",
+    //     node.id, prevote_request.propose.base.sender_id
+    // );
 
     Json(Response {
         status: format!(
-            "Node {}: Prevote successfully handled for sender Node {}",
+            "Node {}: Prevote successfully handled for sender Node {}.",
             node.id, prevote_request.propose.base.sender_id
         ),
     })
 }
-
-

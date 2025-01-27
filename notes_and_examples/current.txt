@@ -1,0 +1,16 @@
+Final Workflow for DAG Synchronization
+
+    On Receiving a Proposal:
+        Validate the proposal size.
+        Wait until the DAG reaches the required round before sending prevote.
+
+    On Sending Prevote:
+        Ensure local DAG is in sync for one round lower than the prevote round.
+
+    On Handling DAG Sync Requests:
+        Handle external sync requests with handle_dag_sync but avoid redundant checks.
+
+    On Reconstructing and Committing:
+        Ensure all parent units are received and committed before multicasting commit messages.
+
+By restructuring these calls, you'll align closer with the ch-RBC protocol, reducing redundancy and improving efficiency.

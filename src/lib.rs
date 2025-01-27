@@ -13,6 +13,7 @@ pub mod structs{
     pub mod requests;
     pub mod responses;
     pub mod node;
+    pub mod dag;
 }
 
 pub mod handlers{
