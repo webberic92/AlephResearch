@@ -1,4 +1,4 @@
-use aleph_research::utils::dag_utils::validate_unit;
+use aleph_research::utils::dag_utils::{are_parents_available, ensure_round_sync, validate_unit};
 use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, get_parents, validate_unit_parents};
 use base64::Engine;
 use mockito::mock;
@@ -10,7 +10,7 @@ use tracing::{debug, info};
 use std::collections::HashSet;
 use std::{collections::HashMap, sync::Arc};
 use aleph_research::structs::node::Node;
-use aleph_research::utils::merkle_utils::{compute_merkle_root, compute_merkle_branch};
+use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, validate_merkle_branch};
 use sha2::{Digest, Sha256};
 
 #[tokio::test]
@@ -346,12 +346,75 @@ async fn test_validate_unit() {
 }
 
 
+#[tokio::test]
+async fn test_ensure_round_sync_success() {
+    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    {
+        let mut epoch_round_id = node.epoch_round_id.lock().await;
+        epoch_round_id.insert(2);
+    }
 
+    let result = ensure_round_sync(&node, 3).await;
+    assert!(result.is_ok());
+}
 
+#[tokio::test]
+async fn test_ensure_round_sync_failure() {
+    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    {
+        let mut epoch_round_id = node.epoch_round_id.lock().await;
+        epoch_round_id.insert(1);
+    }
 
+    let result = ensure_round_sync(&node, 3).await;
+    assert!(result.is_err());
+    assert_eq!(
+        result.unwrap_err(),
+        "Node 1: DAG not synchronized to round 2 for prevote (current round: 1)"
+    );
+}
 
+#[tokio::test]
+async fn test_are_parents_available_success() {
+    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let parent_hash = vec![1; 32];
 
+    {
+        let mut dag_write = node.dag.write().await;
+        dag_write.insert(parent_hash.clone(), vec![]);
+    }
 
+    let mut unit = vec![1];
+    unit.extend_from_slice(&parent_hash);
 
+    let result = are_parents_available(&node, &unit).await;
+    assert!(result);
+}
 
+#[tokio::test]
+async fn test_are_parents_available_failure() {
+    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let unit = vec![1; 32];
+
+    let result = are_parents_available(&node, &unit).await;
+    assert!(!result);
+}
+
+#[tokio::test]
+async fn test_validate_merkle_branch_success() {
+    let shards = vec![vec![1; 32], vec![2; 32]];
+    let root = compute_merkle_root(&shards);
+    let proofs = compute_merkle_branch(&shards, 0);
+
+    assert!(validate_merkle_branch(&shards, &proofs, 0, &root));
+}
+
+#[tokio::test]
+async fn test_validate_merkle_branch_failure() {
+    let shards = vec![vec![1; 32], vec![2; 32]];
+    let root = compute_merkle_root(&shards);
+    let invalid_proofs = vec![vec![0; 32]];
+
+    assert!(!validate_merkle_branch(&shards, &invalid_proofs, 0, &root));
+}
 
