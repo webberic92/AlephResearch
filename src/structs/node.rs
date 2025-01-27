@@ -49,4 +49,9 @@ impl Node {
             info!("Node {}: Block {:?} is already finalized.", self.id, block);
         }
     }
+
+    pub async fn is_unit_committed(&self, unit_id: &Vec<u8>) -> bool {
+        let finalized_blocks = self.finalized_blocks.lock().await;
+        finalized_blocks.contains(unit_id)
+    }
 }

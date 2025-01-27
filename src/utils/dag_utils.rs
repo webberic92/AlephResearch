@@ -2,6 +2,7 @@ use std::error::Error;
 use tracing::{debug, error, info};
 use reqwest::Client;
 use crate::{structs::{node::Node, requests::DAGSyncRequest}, utils::merkle_utils::validate_merkle_branch};
+use base64::{engine::general_purpose, Engine};
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 /// Logs request URL and payload, returning synchronization status.
@@ -53,16 +54,8 @@ pub async fn ensure_round_sync(node: &Node, target_round: u64) -> Result<(), Str
     Ok(())
 }
 
-/// Validates that all parents of a unit are present in the local DAG.
-pub async fn validate_unit_parents(node: &Node, unit: &[u8]) -> Result<(), String> {
-    if !are_parents_available(node, unit).await {
-        return Err(format!("Node {}: Missing parents for unit", node.id));
-    }
-    info!("Node {}: All parents for unit are available.", node.id);
-    Ok(())
-}
 
-/// Checks if the parents of a given unit are available in the local DAG.
+// /// Checks if the parents of a given unit are available in the local DAG.
 pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     info!("Node {}: Checking parent availability for unit", node.id);
 
@@ -75,10 +68,25 @@ pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
         }
     };
 
+    // Convert the flat `Vec<u8>` into a set of parent hashes (32-byte chunks)
+    const HASH_SIZE: usize = 32; // Assuming each parent hash is 32 bytes
+    if parent_hashes.len() % HASH_SIZE != 0 {
+        error!(
+            "Node {}: Invalid parent hashes length: {}",
+            node.id, parent_hashes.len()
+        );
+        return false;
+    }
+
+    let parents: Vec<Vec<u8>> = parent_hashes
+        .chunks(HASH_SIZE) // Split into 32-byte chunks
+        .map(|chunk| chunk.to_vec()) // Convert each chunk into a Vec<u8>
+        .collect();
+
     // Check if each parent hash is present in the local DAG
-    let dag_read = node.dag.read().await; // Assuming `dag` is a `RwLock`-protected HashMap
-    for parent_hash in parent_hashes {
-        if !dag_read.contains_key(&parent_hash) {
+    let dag_read = node.dag.read().await; // Assuming `dag` is a `RwLock`-protected HashMap<Vec<u8>, Vec<u8>>
+    for parent_hash in &parents {
+        if !dag_read.contains_key(parent_hash) {
             error!(
                 "Node {}: Parent with hash {:?} is missing in the local DAG",
                 node.id, parent_hash
@@ -91,30 +99,70 @@ pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     true
 }
 
-/// Mock implementation to extract parent hashes from the unit.
-/// Replace with actual logic for your protocol.
-pub fn get_parents(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
+
+
+
+
+pub async fn validate_unit_parents(node: &Node, unit: &[u8]) -> Result<(), String> {
+    // Extract parent hashes using `get_parents`
+    let parent_hashes = match get_parents(unit) {
+        Ok(hashes) => hashes, // `hashes` is Vec<Vec<u8>> (binary format)
+        Err(e) => {
+            let error_message = format!(
+                "Node {}: Failed to extract parent hashes from unit. Error: {}",
+                node.id, e
+            );
+            error!("{}", error_message);
+            return Err(error_message);
+        }
+    };
+
+    // Check if all parents are present in the local DAG
+        if !node.is_unit_committed(&parent_hashes).await {
+            let error_message = format!(
+                "Node {}: Parent hash {:?} is not committed in the local DAG.",
+                node.id, parent_hashes
+            );
+            error!("{}", error_message);
+            return Err(error_message);
+        }
+
+    info!(
+        "Node {}: All parents are available and committed for the unit.",
+        node.id
+    );
+    Ok(())
+}
+
+
+pub fn get_parents(unit: &[u8]) -> Result<Vec<u8>, String> {
     if unit.is_empty() {
         return Err("Unit is empty".to_string());
     }
 
-    // Assuming parents are stored as concatenated hashes at the end of the unit
-    let parent_count = 2; // Example: each unit has 2 parents
-    let parent_size = 32; // Example: each hash is 32 bytes
-
-    if unit.len() < parent_count * parent_size {
-        return Err("Unit data is too small to contain parent hashes".to_string());
+    // Parse the unit to extract the parent count and parent hashes
+    if unit.len() < 1 {
+        return Err("Unit data too short to extract parent count".to_string());
     }
 
-    let mut parents = vec![];
-    let start = unit.len() - (parent_count * parent_size);
-    for i in 0..parent_count {
-        let offset = start + (i * parent_size);
-        parents.push(unit[offset..offset + parent_size].to_vec());
+    // Step 1: Extract parent count
+    let parent_count = unit[0] as usize; // Assume the first byte represents the number of parents
+
+    // Step 2: Calculate the expected size of the parent hashes
+    let parent_size = 32; // Assume each parent hash is 32 bytes
+    let parent_data_size = parent_count * parent_size;
+
+    if unit.len() < 1 + parent_data_size {
+        return Err("Unit data too short to contain all parent hashes".to_string());
     }
+
+    // Step 3: Extract parent hashes into a single flat Vec<u8>
+    let start = 1; // Parent data starts immediately after the parent count byte
+    let parents = unit[start..start + parent_data_size].to_vec();
 
     Ok(parents)
 }
+
 
 /// Ensures DAG synchronization by checking the current epoch and validating the DAG.
 pub async fn ensure_dag_synchronization(
@@ -194,3 +242,31 @@ pub async fn validate_unit(
 }
 
 
+pub async fn ensure_all_parents_committed(
+    node: &Node,
+    parents: &[String], // Parent hashes in Base64 format
+    root: &[u8],
+) -> Result<(), String> {
+    for parent in parents {
+        // Decode the parent ID from Base64
+        let parent_bytes = match base64::engine::general_purpose::STANDARD.decode(parent) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                return Err(format!(
+                    "Failed to decode parent ID {}: {:?}",
+                    parent, e
+                ));
+            }
+        };
+
+        // Check if the parent unit is committed
+        if !node.is_unit_committed(&parent_bytes).await {
+            return Err(format!(
+                "Parent unit {} not committed for root {:?}",
+                parent, // Use the original string for readable error messages
+                base64::engine::general_purpose::STANDARD.encode(root), // Convert root to readable format
+            ));
+        }
+    }
+    Ok(())
+}

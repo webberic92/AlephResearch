@@ -11,7 +11,8 @@ pub struct BaseRequest {
 pub struct ProposeRequest {
     pub base: BaseRequest,            // Base request fields
     pub proofs: Vec<Vec<String>>,     // Base64-encoded Merkle proofs for each shard
-    pub shards: Vec<String>,          // Base64-encoded data shards
+    pub shards: Vec<String>,    
+    // pub parents: Vec<u8>,         // Base64-encoded parent hashes      // Base64-encoded data shards
 }
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
@@ -20,13 +21,6 @@ pub struct PrevoteRequest {
     pub sender_url: String,           // URL of the sender
 }
 
-// #[derive(Serialize, Deserialize, Debug,Clone)]
-// pub struct CommitRequest {
-//     pub base: BaseRequest,       // Base fields common to all phases
-//     pub unit: Vec<u8>,           // Reconstructed unit
-//     pub shard_hashes: Vec<Vec<u8>>, // Hashes of the data shards
-//     pub proofs: Vec<Vec<String>>, // Merkle proofs for validation
-// }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommitRequest {

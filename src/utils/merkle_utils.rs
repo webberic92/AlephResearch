@@ -1,7 +1,7 @@
 use sha2::{Digest, Sha256};
 use tracing::{error, info};
-use base64::{engine::general_purpose, Engine as _};
 
+use crate::structs::dag::ReconstructedUnit;
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     let mut current_level = hashes.to_vec();
@@ -75,50 +75,6 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
     branch
 }
 
-/// Validate Merkle branch for a specific index and return the computed root
-/// Validate Merkle branch for a specific index and return the computed root
-// pub fn validate_merkle_branch(
-//     shard_hashes: &[Vec<u8>],
-//     proofs: &[Vec<u8>],
-//     index: usize,
-//     expected_root: &[u8],
-// ) -> bool {
-//     if index >= shard_hashes.len() {
-//         error!(
-//             "Invalid index: {} (shard_hashes length: {})",
-//             index, shard_hashes.len()
-//         );
-//         return false;
-//     }
-
-//     let mut current_hash = shard_hashes[index].clone();
-//     let mut current_index = index;
-
-//     for sibling_hash in proofs {
-//         let sibling_index = if current_index == 0 {
-//             0 // No valid sibling; default behavior
-//         } else {
-//             current_index - 1
-//         };
-
-//         let mut combined = if current_index % 2 == 0 {
-//             current_hash.clone()
-//         } else {
-//             sibling_hash.clone()
-//         };
-
-//         combined.extend(if current_index % 2 == 0 {
-//             sibling_hash.clone()
-//         } else {
-//             current_hash.clone()
-//         });
-
-//         current_hash = Sha256::digest(&combined).to_vec();
-//         current_index /= 2;
-//     }
-
-//     current_hash == expected_root
-// }
 
 pub fn validate_merkle_branch(
     shard_hashes: &[Vec<u8>],
@@ -154,10 +110,10 @@ pub fn validate_merkle_branch(
     }
 
     if current_hash == expected_root {
-        info!(
-            "Validation succeeded: Final root matches expected root. Computed: {:?}, Expected: {:?}",
-            current_hash, expected_root
-        );
+        // info!(
+        //     "Validation succeeded: Final root matches expected root. Computed: {:?}, Expected: {:?}",
+        //     current_hash, expected_root
+        // );
     } else {
         error!(
             "Validation failed: Final root does not match expected root. Computed: {:?}, Expected: {:?}",
@@ -173,17 +129,44 @@ pub fn validate_merkle_branch(
 /// Reconstruct the original unit from shards and validate using proofs
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
-) -> Result<Vec<u8>, String> {
+    epoch_id: u64,
+    parent_hashes: Vec<u8>, // Flat parent hashes in binary format
+) -> Result<ReconstructedUnit, String> {
     if shards.is_empty() {
-        let error_message = "Reconstruction failed: shards are empty".to_string();
-        error!("{}", error_message);
-        return Err(error_message);
+        return Err("Reconstruction failed: shards are empty".to_string());
     }
 
-    let reconstructed_unit = shards.concat();
-    info!("Successfully reconstructed unit and verified Merkle root");
+    // Combine shards to reconstruct the unit data
+    let data = shards.concat();
+
+    // Compute the Merkle root for the reconstructed data
+    let root = Sha256::digest(&data).to_vec();
+
+    // Split flat parent hashes into individual hashes (32 bytes each)
+    const HASH_SIZE: usize = 32;
+    if parent_hashes.len() % HASH_SIZE != 0 {
+        return Err(format!(
+            "Invalid parent hashes size: expected multiple of {}, got {}",
+            HASH_SIZE, parent_hashes.len()
+        ));
+    }
+
+    let parents: Vec<Vec<u8>> = parent_hashes
+        .chunks(HASH_SIZE)
+        .map(|chunk| chunk.to_vec())
+        .collect();
+
+    // Construct the ReconstructedUnit object
+    let reconstructed_unit = ReconstructedUnit {
+        data,
+        root,
+        parents,
+        epoch_id,
+    };
+
     Ok(reconstructed_unit)
 }
+
 
 /// Splits transaction data into shards
 pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {
@@ -203,7 +186,25 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
     );
 
     shards
-}
+}/// Splits transaction data into shards
+// pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {
+//     let shard_size = transaction_data.len() / data_shards;
+//     let shards: Vec<Vec<u8>> = transaction_data
+//         .chunks(shard_size)
+//         .map(|chunk| chunk.to_vec())
+//         .collect();
+
+//     // info!("Transaction data size: {}", transaction_data.len());
+//     assert_eq!(
+//         shards.len(),
+//         data_shards,
+//         "Shard count mismatch: expected {}, found {}",
+//         data_shards,
+//         shards.len()
+//     );
+
+//     shards
+// }
 
 /// Validate shard sizes
 pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Result<(), String> {
