@@ -1,9 +1,8 @@
 use std::sync::Arc;
 
-use reqwest::Client;
 use tracing::{error, info};
 
-use crate::{structs::{node::Node, toml_config::TomlConfig}, utils::{config_util::{load_config, persist_epoch_round_id}, dag_utils::check_dag_sync}};
+use crate::{structs::{node::Node, toml_config::TomlConfig}, utils::{config_util::{load_config, persist_epoch_round_id}}};
 
 pub async fn ensure_no_overlap(node: &Node, epoch_id: u64) -> Result<(), &'static str> {
     info!("Node {}: Detecting if there is overlap for epoch {}", node.id, epoch_id);

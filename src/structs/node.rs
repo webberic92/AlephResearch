@@ -50,8 +50,13 @@ impl Node {
         }
     }
 
-    pub async fn is_unit_committed(&self, unit_id: &Vec<u8>) -> bool {
+    pub async fn is_unit_committed(&self, unit_ids: &[Vec<u8>]) -> bool {
         let finalized_blocks = self.finalized_blocks.lock().await;
-        finalized_blocks.contains(unit_id)
+        for unit_id in unit_ids {
+            if !finalized_blocks.contains(unit_id) {
+                return false;
+            }
+        }
+        true
     }
 }
