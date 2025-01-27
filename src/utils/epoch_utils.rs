@@ -55,9 +55,10 @@ pub async fn handle_sync_epoch(node: &Node, epoch_id: u64, sender: usize) -> Res
 
 
 //THIS IS ONLY IN TESTS RN
-pub async fn update_epoch_to_next_round(client: &Arc<Client>) {
+pub async fn update_epoch_to_next_round(client: &Arc<reqwest::Client>, path: Option<&str>) {
+    let toml_config = load_config(path);
     // Retrieve the current epoch ID from the TOML configuration
-    let toml_config = load_config();
+    // let toml_config = load_config(None);
     let mut current_epoch_id = toml_config.consensus.epoch_round_id;
 
     // Increment the epoch ID

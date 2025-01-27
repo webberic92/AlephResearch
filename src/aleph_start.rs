@@ -17,7 +17,7 @@ use aleph_research::requests::ip_server_requests::notify_transaction_submitted;
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
-    let toml_config: TomlConfig = load_config();
+    let toml_config: TomlConfig = load_config(None);
     let client = Client::new();
     wait_for_all_nodes_health(&client, &toml_config).await;
     wait_for_turn(&client, &toml_config).await?;
