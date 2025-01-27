@@ -15,7 +15,7 @@ use structs::node::Node;
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     tracing_subscriber::fmt().init();
 
-    let config = load_config();
+    let config = load_config(None);
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     let client = Arc::new(Client::new());
 
