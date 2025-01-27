@@ -1,7 +1,4 @@
-use std::path::Path;
-use std::sync::Arc;
 use base64::Engine;
-use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -99,15 +96,10 @@ pub async fn handle_commit(
         error!("{}", error_message);
         return Err(error_message);
     }
-
-    info!("Node {}: Successfully finalized and persisted unit for root {:?}",
-        node.id, commit_request.base.root
-    );
-
     Ok(())
 }
 
-/// Writes the finalized unit to the epoch file.
+// Writes the finalized unit to the epoch file.
 async fn write_finalized_unit(
     epoch_file: &str,
     unit_entry: serde_json::Value,

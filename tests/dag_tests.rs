@@ -1,5 +1,5 @@
 use aleph_research::utils::dag_utils::validate_unit;
-use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, ensure_round_sync, get_parents, validate_unit_parents};
+use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, get_parents, validate_unit_parents};
 use mockito::mock;
 use mockito::Matcher;
 use reqwest::Client;

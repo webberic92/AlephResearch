@@ -1,14 +1,14 @@
 use axum::{routing::post, Json, Router};
 use reqwest::{Client, StatusCode};
 use serde_json::Value;
-use tracing::{error, info};
+use tracing::info;
 use std::sync::Arc;
 
 use crate::{
-    handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
+    handlers::{ handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
     structs::{
         node::Node,
-        requests::{BaseRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
+        requests::{ DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
         responses::Response,
     },
     utils::epoch_utils::handle_sync_epoch,
