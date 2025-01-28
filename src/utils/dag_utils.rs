@@ -145,14 +145,10 @@ pub async fn validate_unit_parents(node: &Node, unit_data: &[u8]) -> Result<(), 
 
     if dag.is_empty() {
         info!(
-            "Node {}: DAG is empty or not populated. Skipping parent validation.",
+            "Node {}: DAG is empty because its first round proposal Skipping parent validation.",
             node.id
         );
-        return Err(format!(
-            "Node {}: Parent unit {:?} not committed in DAG.",
-            node.id,
-            &unit_data[1..33] // First parent hash
-        ));
+        return Ok(())
     }
 
     // Extract all parent hashes at once
