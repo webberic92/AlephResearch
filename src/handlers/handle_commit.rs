@@ -1,4 +1,7 @@
+use std::sync::Arc;
+
 use base64::Engine;
+use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
@@ -7,11 +10,13 @@ use tracing::{error, info};
 use crate::structs::node::Node;
 use crate::structs::requests:: CommitRequest;
 use crate::utils::dag_utils::are_parents_available;
+use crate::utils::epoch_utils::update_epoch_to_next_round;
 use crate::utils::merkle_utils::validate_merkle_branch;
 
 /// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
 pub async fn handle_commit(
     node: &Node,
+    client: Arc<Client>,
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     info!(
@@ -96,6 +101,7 @@ pub async fn handle_commit(
         error!("{}", error_message);
         return Err(error_message);
     }
+    update_epoch_to_next_round(client, None).await;
     Ok(())
 }
 

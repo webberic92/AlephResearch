@@ -1,8 +1,9 @@
 use std::sync::Arc;
 
+use reqwest::Client;
 use tracing::{error, info};
 
-use crate::{structs::{node::Node, toml_config::TomlConfig}, utils::{config_util::{load_config, persist_epoch_round_id}}};
+use crate::{structs::{node::Node, toml_config::TomlConfig}, utils::config_util::{load_config, persist_epoch_round_id, save_config}};
 
 pub async fn ensure_no_overlap(node: &Node, epoch_id: u64) -> Result<(), &'static str> {
     info!("Node {}: Detecting if there is overlap for epoch {}", node.id, epoch_id);
@@ -54,15 +55,26 @@ pub async fn handle_sync_epoch(node: &Node, epoch_id: u64, sender: usize) -> Res
 
 
 //THIS IS ONLY IN TESTS RN
-pub async fn update_epoch_to_next_round(client: &Arc<reqwest::Client>, path: Option<&str>) {
-    let toml_config = load_config(path);
+pub async fn update_epoch_to_next_round(client: Arc<Client>, path: Option<&str>) {
+    // Load the TOML configuration
+    let mut toml_config = load_config(path);
+    
     // Retrieve the current epoch ID from the TOML configuration
-    // let toml_config = load_config(None);
     let mut current_epoch_id = toml_config.consensus.epoch_round_id;
 
     // Increment the epoch ID
     current_epoch_id += 1;
     info!("Updated epoch to the next round: {}", current_epoch_id);
+
+    // Update the TOML configuration with the new epoch ID
+    toml_config.consensus.epoch_round_id = current_epoch_id;
+
+    // Persist the updated TOML configuration back to the file
+    if let Err(e) = save_config(&toml_config, path) {
+        error!("Failed to save updated epoch ID to TOML file: {:?}", e);
+        return;
+    }
+    info!("Persisted updated epoch ID {} to TOML file.", current_epoch_id);
 
     // Broadcast the updated epoch to all nodes
     let all_node_urls = toml_config.network.nodes.clone(); // Assume node_urls is a list of all nodes
@@ -75,7 +87,10 @@ pub async fn update_epoch_to_next_round(client: &Arc<reqwest::Client>, path: Opt
 
         match client.post(&sync_url).json(&payload).send().await {
             Ok(response) if response.status().is_success() => {
-                info!("Successfully synced epoch {} with node at {}", current_epoch_id, node_url);
+                info!(
+                    "Successfully synced epoch {} with node at {}",
+                    current_epoch_id, node_url
+                );
             }
             Ok(response) => {
                 error!(
@@ -94,6 +109,7 @@ pub async fn update_epoch_to_next_round(client: &Arc<reqwest::Client>, path: Opt
         }
     }
 }
+
 
 // pub async fn update_proposal_tracker(node: &Node, sender_id: usize, epoch_id: u64) {
 //     let mut tracker = node.proposal_tracker.lock().await;

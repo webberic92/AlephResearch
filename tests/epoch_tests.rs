@@ -59,7 +59,7 @@ mod tests {
         std::fs::write(temp_config_path, config_content).expect("Failed to write temporary config");
     
         let client = Arc::new(ClientBuilder::new().build().unwrap());
-        update_epoch_to_next_round(&client.clone(), Some(temp_config_path)).await;
+        update_epoch_to_next_round(client.clone(), Some(temp_config_path)).await;
     
         std::fs::remove_file(temp_config_path).expect("Failed to clean up test config");
     }
@@ -102,7 +102,7 @@ mod tests {
         };
     
         let toml_config = load_config(Some(temp_config_path));
-        update_epoch_to_next_round(&client.clone(), Some(temp_config_path)).await;
+        update_epoch_to_next_round(client.clone(), Some(temp_config_path)).await;
     
         let new_epoch_id = toml_config.consensus.epoch_round_id + 1;
         assert_eq!(new_epoch_id, 6);
