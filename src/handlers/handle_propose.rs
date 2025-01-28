@@ -8,7 +8,7 @@ use crate::{
     handlers::handle_prevote::handle_prevote,
     structs::{
         node::Node,
-        requests::{PrevoteRequest, ProposeRequest},
+        requests::{BaseRequest, PrevoteRequest, ProposeRequest},
         responses::Response,
     },
     utils::{
@@ -127,13 +127,32 @@ pub async fn handle_propose(
     }
 
     // --- Step 7: Prevote transition (if quorum is reached) ---
-    if are_enough_proposals_received().await {
-        let prevote_request = PrevoteRequest {
-            propose: propose_request.clone(),
-            sender_url: node.ip_address.clone(),
-        };
+
+        if are_enough_proposals_received().await {
+            // Construct PrevoteRequest for Node 2
+            let prevote_request = PrevoteRequest {
+                propose: ProposeRequest {
+                    base: BaseRequest {
+                        sender_id: node.id,                     // This is Node 2's ID
+                        root: propose_request.base.root.clone(), // This is the root received from Node 1
+                        epoch_id: propose_request.base.epoch_id, // This is the epoch ID from Node 1
+                    },
+                    proofs: propose_request.proofs.clone(),     // Proofs from Node 1's proposal
+                    shards: propose_request.shards.clone(),     // Shards from Node 1's proposal
+                },
+                sender_url: node.ip_address.clone(),            // This is Node 2's IP
+            };
+        
+            // Transition to the Prevote phase
+            handle_prevote(node.clone(), client.clone(), prevote_request).await;
+
+        //THIS WAS NODE 1s payload when it should of been node 2s.
+        // let prevote_request = PrevoteRequest {
+        //     propose: propose_request.clone(),
+        //     sender_url: node.ip_address.clone(),
+        // };
         // Transition to the Prevote phase
-        handle_prevote(node.clone(), client.clone(), prevote_request).await;
+        // handle_prevote(node.clone(), client.clone(), prevote_request).await;
     } else {
         info!(
             "Node {} {}: Waiting for more proposals for epoch {}.",

@@ -1,5 +1,5 @@
-use aleph_research::utils::dag_utils::{are_parents_available, ensure_round_sync, validate_unit};
-use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, get_parents, validate_unit_parents};
+use aleph_research::utils::dag_utils::{are_parents_available, ensure_round_sync, get_parent_hashes, validate_unit};
+use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, validate_unit_parents};
 use base64::Engine;
 use mockito::mock;
 use mockito::Matcher;
@@ -143,35 +143,24 @@ async fn test_ensure_dag_synchronization_failure_round_sync() {
 
 #[tokio::test]
 async fn test_validate_unit_parents_success() {
-    // Create a unit with parent count and parent hashes
     let mut unit = vec![2]; // Parent count: 2
     unit.extend(vec![1; 32]); // First parent hash
     unit.extend(vec![2; 32]); // Second parent hash
 
-    // Prepare the DAG and finalized blocks
     let mut dag = HashMap::new();
     dag.insert(vec![1; 32], vec![]); // First parent
     dag.insert(vec![2; 32], vec![]); // Second parent
 
-    let mut finalized_blocks = HashSet::new();
-    finalized_blocks.insert(vec![1; 32]); // First parent finalized
-    finalized_blocks.insert(vec![2; 32]); // Second parent finalized
-
-    // Create a Node and populate its DAG and finalized blocks
     let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
     {
         let mut dag_write = node.dag.write().await;
         *dag_write = dag;
     }
-    {
-        let mut finalized_write = node.finalized_blocks.lock().await;
-        *finalized_write = finalized_blocks;
-    }
 
-    // Call the method and assert success
     let result = validate_unit_parents(&node, &unit).await;
     assert!(result.is_ok(), "Validation failed with result: {:?}", result);
 }
+
 
 
 
@@ -182,7 +171,7 @@ async fn test_validate_unit_parents_failure() {
     let mut unit = vec![1]; // Parent count: 1
     unit.extend(vec![1; 32]); // First parent hash
 
-    // Prepare an empty DAG and finalized blocks
+    // Prepare an empty DAG
     let dag = HashMap::new(); // No parents in the DAG
     let finalized_blocks = HashSet::new(); // No finalized blocks
 
@@ -199,16 +188,26 @@ async fn test_validate_unit_parents_failure() {
 
     // Call the method and assert failure
     let result = validate_unit_parents(&node, &unit).await;
-    assert!(result.is_err(), "Validation unexpectedly succeeded");
+
+    assert!(
+        result.is_err(),
+        "Validation unexpectedly succeeded for unit: {:?}",
+        unit
+    );
 
     // Validate the error message
     let expected_error = format!(
-        "Parent unit {} not committed for root {:?}",
-        base64::engine::general_purpose::STANDARD.encode(vec![1; 32]), // Encoded parent hash
-        base64::engine::general_purpose::STANDARD.encode(&unit),       // Encoded unit root
+        "Node {}: Parent unit {:?} not committed in DAG.",
+        node.id,
+        vec![1; 32], // Raw parent hash
     );
-    assert_eq!(result.unwrap_err(), expected_error);
+    assert_eq!(
+        result.unwrap_err(),
+        expected_error,
+        "Unexpected error message"
+    );
 }
+
 
 
 
@@ -221,17 +220,12 @@ async fn test_get_parents_success() {
     unit.extend(&parent1); // Add first parent hash
     unit.extend(&parent2); // Add second parent hash
 
-    // Call get_parents and ensure success
-    let result = get_parents(&unit);
-    assert!(result.is_ok(), "get_parents failed with result: {:?}", result);
+    // Call get_parent_hashes and ensure success
+    let result = get_parent_hashes(&unit);
+    assert!(result.is_ok(), "get_parent_hashes failed with result: {:?}", result);
 
-    // Extract parents and validate
-    let flat_parents = result.unwrap();
-    const HASH_SIZE: usize = 32;
-    let parents: Vec<Vec<u8>> = flat_parents
-        .chunks(HASH_SIZE)
-        .map(|chunk| chunk.to_vec())
-        .collect();
+    // Extract parents from the result
+    let parents = result.unwrap();
 
     // Ensure the number of parents and their values are correct
     assert_eq!(parents.len(), 2, "Unexpected number of parents");
@@ -247,7 +241,7 @@ async fn test_get_parents_failure() {
     let unit = vec![1]; // Indicates 1 parent but no space for the hash
 
     // Call get_parents and ensure it fails
-    let result = get_parents(&unit);
+    let result = get_parent_hashes(&unit);
     assert!(result.is_err(), "get_parents unexpectedly succeeded");
 
     // Validate the error message

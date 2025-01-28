@@ -126,12 +126,13 @@ pub async fn handle_prevote(
         .iter()
         .flat_map(|hash| hash.clone()) // Flatten to a single Vec<u8>
         .collect();
+
     let reconstructed_unit = match reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.epoch_id,
         parents,
     ) {
-        Ok(unit) => unit,
+        Ok(reconstructed_unit) => reconstructed_unit,
         Err(e) => {
             let error_message = format!(
                 "Node {}: Reconstruction failed for root {:?}. Error: {:?}",
@@ -140,8 +141,13 @@ pub async fn handle_prevote(
             error!("{}", error_message);
             return Json(Response { status: error_message });
         }
+
     };
 
+            info!(
+            "Node {}: Successfully reconstructed unit for root {:?} UNIT : {:?}.",
+            node.id, prevote_request.propose.base.root, reconstructed_unit
+        );
     // Step 7: Validate parents
     if let Err(e) = validate_unit_parents(&node, &reconstructed_unit.data).await {
         let error_message = format!(

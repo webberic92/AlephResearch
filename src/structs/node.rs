@@ -4,7 +4,6 @@ use std::{
 };
 use tokio::sync::{Mutex, RwLock};
 use tracing::info;
-
 #[derive(Debug, Clone)]
 pub struct Node {
     pub id: usize,
@@ -13,8 +12,8 @@ pub struct Node {
     pub epoch_round_id: Arc<Mutex<HashSet<u64>>>,
     pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
     pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>, // Renamed for clarity
-    pub dag: Arc<RwLock<HashMap<Vec<u8>, Vec<u8>>>>, // Added for illustration
-    pub ip_address: String, // Added for illustration
+    pub dag: Arc<RwLock<HashMap<Vec<u8>, Vec<u8>>>>,   // DAG to store parent-child relationships
+    pub ip_address: String,                           // Added for illustration
 }
 
 impl Node {
@@ -27,7 +26,7 @@ impl Node {
             epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
             finalized_blocks: Arc::new(Mutex::new(HashSet::new())), // Updated name
-            dag: Arc::new(RwLock::new(HashMap::new())), // Added for illustration
+            dag: Arc::new(RwLock::new(HashMap::new())),             // DAG initialization
         }
     }
 
@@ -60,3 +59,4 @@ impl Node {
         true
     }
 }
+
