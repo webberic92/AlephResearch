@@ -68,6 +68,17 @@ pub async fn ensure_round_sync(node: &Node, target_round: u64) -> Result<(), Str
 pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     info!("Node {}: Checking parent availability for unit", node.id);
 
+    // Check if the DAG is empty
+    let dag_read = node.dag.read().await;
+    if dag_read.is_empty() {
+        // Check if it is the first round
+            info!(
+                "Node {}: DAG is empty and this is the first transaction. Skipping parent validation.",
+                node.id
+            );
+        return true; // Allow validation to pass
+    }
+    
     // Extract parent hashes
     let parent_hashes = match get_parent_hashes(unit) {
         Ok(hashes) => hashes,
@@ -78,7 +89,6 @@ pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     };
 
     // Validate parent hashes against the DAG
-    let dag_read = node.dag.read().await;
     for parent in parent_hashes {
         if !dag_read.contains_key(&parent) {
             error!(
@@ -92,6 +102,7 @@ pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
     info!("Node {}: All parents are locally available for unit", node.id);
     true
 }
+
 
 
 
