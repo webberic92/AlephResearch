@@ -7,6 +7,7 @@ use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use serde_json::json;
 use tracing::{error, info};
+use crate::requests::ip_server_requests::notify_transaction_submitted;
 use crate::structs::node::Node;
 use crate::structs::requests:: CommitRequest;
 use crate::utils::dag_utils::are_parents_available;
@@ -102,6 +103,7 @@ pub async fn handle_commit(
         return Err(error_message);
     }
     update_epoch_to_next_round(client, None).await;
+    // notify_transaction_submitted(&client, toml_config).await;
     Ok(())
 }
 

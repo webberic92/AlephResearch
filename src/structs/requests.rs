@@ -30,7 +30,7 @@ pub struct CommitRequest {
 }
 
 
-#[derive(Deserialize)]
+#[derive(Deserialize,Serialize)]
 pub struct SyncEpochRequest {
 pub epoch_id: u64,
 pub sender: usize,

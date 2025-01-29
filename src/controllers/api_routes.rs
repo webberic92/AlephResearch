@@ -5,10 +5,10 @@ use tracing::info;
 use std::sync::Arc;
 
 use crate::{
-    handlers::{ handle_prevote::handle_prevote, handle_propose::handle_propose, handle_dag_sync::handle_dag_sync},
+    handlers::{ handle_commit::handle_commit, handle_dag_sync::handle_dag_sync, handle_prevote::handle_prevote, handle_propose::handle_propose},
     structs::{
         node::Node,
-        requests::{ DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
+        requests::{ CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
         responses::Response,
     },
     utils::epoch_utils::handle_sync_epoch,
@@ -57,31 +57,26 @@ pub fn initialize_apis(node: Arc<Node>, client: Arc<Client>) -> Router {
                 }
             }
         }))
-        // .route("/commit", post({
-        //     let node = node.clone();
-        //     let client = client.clone();
-        //     move |Json(payload): Json<CommitRequest>| {
-        //         async move {
-        //             handle_commit(
-        //                 &node,
-        //                 client,
-        //                 payload.sender,
-        //                 payload.root,
-        //                 payload.unit, // Added `unit` argument
-        //                 payload.epoch_id, // Added `epoch_id` argument
-        //                 payload.shard_hashes,
-        //                 payload.proofs,
-        //             )
-        //             .await;
-        //             Json(Response {
-        //                 status: format!(
-        //                     "Node {}: Commit accepted from Node {}",
-        //                     node.id, payload.sender
-        //                 ),
-        //             })
-        //         }
-        //     }
-        // }))
+        .route("/commit", post({
+            let node = node.clone();
+            let client = client.clone();
+            move |Json(payload): Json<CommitRequest>| {
+                async move {
+                    let _ = handle_commit(
+                        &node,
+                        client,
+                        payload.clone(),
+                    )
+                    .await;
+                    Json(Response {
+                        status: format!(
+                            "Node {}: Commit accepted from Node {}",
+                            node.id, payload.base.sender_id
+                        ),
+                    })
+                }
+            }
+        }))
         .route("/sync_epoch", post({
             let node = node.clone();
             move |Json(payload): Json<SyncEpochRequest>| {

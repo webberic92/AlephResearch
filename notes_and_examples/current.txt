@@ -1,14 +1,16 @@
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.187.41
+h-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.139.191
 Node registration success.
 IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.157.176:30333", "10.0.162.236:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.147.255:30333", "10.0.171.67:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.179.77"
-ip_address = "10.0.187.41"
-nodes = ["10.0.157.176:30333", "10.0.162.236:30333"]
+ip_manager_address = "10.0.140.172"
+ip_address = "10.0.139.191"
+nodes = ["10.0.147.255:30333", "10.0.171.67:30333"]
 proposals = []
 
 [consensus]
@@ -31,67 +33,78 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-01-28T03:55:57.359912Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-01-29T01:06:53.233906Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-01-29T01:06:54.172736Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:54.172765Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 synchronized successfully with node 3
+2025-01-29T01:06:54.174247Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 1 to TOML file.
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 1 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
 Attempting to execute aleph_start with configuration
-2025-01-28T03:55:58.381633Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:55:58.383917Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:55:58.384006Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:55:59.385198Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:55:59.386137Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:55:59.386156Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:56:00.387353Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:56:00.388644Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:56:00.388672Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:56:01.277976Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
-2025-01-28T03:56:01.278005Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 synchronized successfully with node 2
-2025-01-28T03:56:01.278918Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 1 to TOML file.
-2025-01-28T03:56:01.389999Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:56:01.391857Z  INFO aleph_research::utils::start_util: All nodes are healthy!
-2025-01-28T03:56:01.391875Z  INFO aleph_research::utils::start_util: Node 1 10.0.187.41: Waiting for its turn to submit transaction for epoch 1
-2025-01-28T03:56:01.391889Z  INFO aleph_research::requests::ip_server_requests: Node 1: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.179.77:8080/is_turn?node_id=1&epoch_id=1
-2025-01-28T03:56:01.394574Z  INFO aleph_research::requests::ip_server_requests: Node 1: It is the turn for this node to propose for epoch 1
-2025-01-28T03:56:01.394596Z  INFO aleph_research::utils::start_util: Node 1 10.0.187.41: It's my turn to propose for epoch 1
-2025-01-28T03:56:01.394602Z  INFO aleph_research::utils::merkle_utils: Shards split into 4 parts: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-2025-01-28T03:56:01.394734Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.394752Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
-2025-01-28T03:56:01.394761Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
-2025-01-28T03:56:01.394767Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.394773Z  INFO aleph_research::utils::create_transaction_data: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.394779Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.187.41: Preparing to send proposals for epoch 1
-2025-01-28T03:56:01.394786Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.394806Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
-2025-01-28T03:56:01.394815Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
-2025-01-28T03:56:01.394821Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.394826Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.187.41: Sending proposal to 10.0.157.176:30333 for epoch 1
-2025-01-28T03:56:01.407529Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal successfully delivered to Node 10.0.157.176:30333 (Epoch 1).
-2025-01-28T03:56:01.407574Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.187.41: Sending proposal to 10.0.162.236:30333 for epoch 1
-2025-01-28T03:56:01.409852Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal successfully delivered to Node 10.0.162.236:30333 (Epoch 1).
-2025-01-28T03:56:01.409899Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.187.41: Successfully sent all proposals for epoch 1.
-2025-01-28T03:56:01.410152Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: Added to proposals. Current proposals: [1]
-2025-01-28T03:56:01.410201Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
-2025-01-28T03:56:01.410206Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: FAULTY NODES ALLOWED == 0
-2025-01-28T03:56:01.410209Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: required_quorum == 1
-2025-01-28T03:56:01.410212Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: is proposals length 1 >= required_quorum 1
-2025-01-28T03:56:01.410216Z  INFO aleph_research::utils::config_util: Node 1 10.0.187.41: Enough proposals. received to start prevoting. Proposals array = [1]
-2025-01-28T03:56:01.410220Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.187.41: Starting SEND PREVOTE phase
-2025-01-28T03:56:01.410223Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.187.41: Preparing to send prevote to 10.0.157.176:30333.
-2025-01-28T03:56:01.413559Z  INFO aleph_research::requests::send_prevotes: Node 1: Prevote successfully sent to 10.0.157.176:30333.
-2025-01-28T03:56:01.413602Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.187.41: Preparing to send prevote to 10.0.162.236:30333.
-2025-01-28T03:56:01.414319Z  INFO aleph_research::requests::send_prevotes: Node 1: Prevote successfully sent to 10.0.162.236:30333.
-2025-01-28T03:56:01.414358Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.187.41: All PREVOTE messages sent successfully.
-2025-01-28T03:56:01.651362Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-28T03:56:01.651390Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 2 synchronized successfully with node 3
-2025-01-28T03:56:01.651761Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 2 to TOML file.
-2025-01-28T03:56:02.283100Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
-2025-01-28T03:56:02.283128Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 2
-2025-01-28T03:56:02.660333Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-28T03:56:02.660359Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 2 already synchronized with 3
-2025-01-28T03:56:03.286885Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
-2025-01-28T03:56:03.286912Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 2
+2025-01-29T01:06:54.267511Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-29T01:06:54.270479Z  INFO aleph_research::utils::start_util: All nodes are healthy!
+2025-01-29T01:06:54.271220Z  INFO aleph_research::utils::start_util: Node 1 10.0.139.191: Waiting for its turn to submit transaction for epoch 1
+2025-01-29T01:06:54.271228Z  INFO aleph_research::requests::ip_server_requests: Node 1: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.140.172:8080/is_turn?node_id=1&epoch_id=1
+2025-01-29T01:06:54.272921Z  INFO aleph_research::requests::ip_server_requests: Node 1: It is the turn for this node to propose for epoch 1
+2025-01-29T01:06:54.272980Z  INFO aleph_research::utils::start_util: Node 1 10.0.139.191: It's my turn to propose for epoch 1
+2025-01-29T01:06:54.272994Z  INFO aleph_research::utils::merkle_utils: Shards split into 4 parts: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+2025-01-29T01:06:54.273042Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.273262Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
+2025-01-29T01:06:54.273296Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
+2025-01-29T01:06:54.273302Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.273308Z  INFO aleph_research::utils::create_transaction_data: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.273314Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.139.191: Preparing to send proposals for epoch 1
+2025-01-29T01:06:54.273321Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.273336Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
+2025-01-29T01:06:54.273345Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
+2025-01-29T01:06:54.273350Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+
+
+
+NODE 1 SENDS PROPOSALS
+
+
+2025-01-29T01:06:54.273355Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.139.191: Sending proposal to 10.0.147.255:30333 for epoch 1
+2025-01-29T01:06:54.277077Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal successfully delivered to Node 10.0.147.255:30333 (Epoch 1).
+2025-01-29T01:06:54.277108Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.139.191: Sending proposal to 10.0.171.67:30333 for epoch 1
+2025-01-29T01:06:54.279547Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal successfully delivered to Node 10.0.171.67:30333 (Epoch 1).
+2025-01-29T01:06:54.279572Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.139.191: Successfully sent all proposals for epoch 1.
+
+
+
+NODE 1 sends prevotes....
+
+2025-01-29T01:06:54.280096Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: Added to proposals. Current proposals: [1]
+2025-01-29T01:06:54.280245Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
+2025-01-29T01:06:54.280256Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: FAULTY NODES ALLOWED == 0
+2025-01-29T01:06:54.280259Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: required_quorum == 1
+2025-01-29T01:06:54.280262Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: is proposals length 1 >= required_quorum 1
+2025-01-29T01:06:54.280265Z  INFO aleph_research::utils::config_util: Node 1 10.0.139.191: Enough proposals. received to start prevoting. Proposals array = [1]
+2025-01-29T01:06:54.280270Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.139.191: Starting SEND PREVOTE phase
+2025-01-29T01:06:54.280273Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.139.191: Preparing to send prevote to 10.0.147.255:30333.
+2025-01-29T01:06:54.283810Z  INFO aleph_research::requests::send_prevotes: Node 1: Prevote successfully sent to 10.0.147.255:30333.
+2025-01-29T01:06:54.283840Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.139.191: Preparing to send prevote to 10.0.171.67:30333.
+2025-01-29T01:06:54.285719Z  INFO aleph_research::requests::send_prevotes: Node 1: Prevote successfully sent to 10.0.171.67:30333.
+2025-01-29T01:06:54.285751Z  INFO aleph_research::requests::send_prevotes: Node 1 10.0.139.191: All PREVOTE messages sent successfully.
+
+
+
+
+Node 2 must of commited because  node 1 now gets a proposal to sync epoch to epoch 2 now..
+
+2025-01-29T01:06:55.145370Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-29T01:06:55.145397Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 2 synchronized successfully with node 2
+2025-01-29T01:06:55.145661Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 2 to TOML file.
+
+
+THIS continues on.... node 2 is on epoch 2 and node 3 is trying to sync with epoch 1 still...
+
+2025-01-29T01:06:55.182978Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:55.183006Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 1 already synchronized with 3
+2025-01-29T01:06:56.150329Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-29T01:06:56.150357Z  INFO aleph_research::utils::epoch_utils: Node 1: Epoch 2 already synchronized with 2
+2025-01-29T01:06:56.189459Z  INFO aleph_research::utils::epoch_utils: Node 1: ==== Handling SYNC EPOCH request from Node 3 ====
 
 
 
@@ -116,15 +129,19 @@ Attempting to execute aleph_start with configuration
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.157.176
+PRIVATE_IP = 10.0.171.67
 Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.162.236:30333", "10.0.187.41:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.139.191:30333", "10.0.147.255:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.179.77"
-ip_address = "10.0.157.176"
-nodes = ["10.0.162.236:30333", "10.0.187.41:30333"]
+ip_manager_address = "10.0.140.172"
+ip_address = "10.0.171.67"
+nodes = ["10.0.139.191:30333", "10.0.147.255:30333"]
 proposals = []
 
 [consensus]
@@ -147,82 +164,92 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-01-28T03:55:56.217857Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-01-29T01:06:54.123779Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-01-29T01:06:54.175714Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:54.175741Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 1 synchronized successfully with node 3
+2025-01-29T01:06:54.177537Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 1 to TOML file.
+
+
+Hanlding propose from node 1.
+
+2025-01-29T01:06:54.277575Z  INFO aleph_research::handlers::handle_propose: *** Handling PROPOSE REQUEST: Node 2 10.0.171.67 from Sender 1 ***
+2025-01-29T01:06:54.277629Z  INFO aleph_research::handlers::handle_propose: Node 2 10.0.171.67: All Merkle branches validated successfully for epoch 1
+2025-01-29T01:06:54.277931Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67 Successfully updated proposal tracker in toml.
+2025-01-29T01:06:54.277937Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67 Updated proposal tracker for epoch 1: node ID list [1]
+2025-01-29T01:06:54.277942Z  INFO aleph_research::handlers::handle_propose: Node 2: Successfully updated proposal tracker for sender 1 in epoch 1
+2025-01-29T01:06:54.277953Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.171.67/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url":String("10.0.171.67")}
+2025-01-29T01:06:54.277981Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.278043Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
+2025-01-29T01:06:54.278048Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67: FAULTY NODES ALLOWED == 0
+2025-01-29T01:06:54.278051Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67: required_quorum == 1
+2025-01-29T01:06:54.278054Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67: is proposals length 1 >= required_quorum 1
+2025-01-29T01:06:54.278057Z  INFO aleph_research::utils::config_util: Node 2 10.0.171.67: Enough proposals. received to start prevoting. Proposals array = [1]
+2025-01-29T01:06:54.278063Z  INFO aleph_research::handlers::handle_prevote: Node 2 10.0.171.67: Received PREVOTE request from Node 2 at 10.0.171.67 for epoch 1.
+2025-01-29T01:06:54.278076Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.171.67/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(2), "sender_url":String("10.0.171.67")}
+2025-01-29T01:06:54.278087Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.278091Z  INFO aleph_research::handlers::handle_prevote: Node 2: DAG synchronization successful.
+2025-01-29T01:06:54.278113Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.278131Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
+2025-01-29T01:06:54.278140Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
+2025-01-29T01:06:54.278146Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.278151Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60,192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.278174Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.278188Z  INFO aleph_research::utils::dag_utils: Node 2: DAG length is: 0
+2025-01-29T01:06:54.278193Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is empty because its first round proposal Skipping parent validation.
+2025-01-29T01:06:54.278197Z  INFO aleph_research::handlers::handle_prevote: Node 2: Quorum votes updated for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]: 1.
+2025-01-29T01:06:54.278203Z  INFO aleph_research::handlers::handle_prevote: Node 2: Quorum threshold met. Preparing commit for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
+2025-01-29T01:06:54.278211Z  INFO aleph_research::handlers::handle_commit: Node 2: Handling commit request from Node 2 for epoch 1
+2025-01-29T01:06:54.278228Z  INFO aleph_research::handlers::handle_commit: Node 2: Merkle branch validation passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.278234Z  INFO aleph_research::utils::dag_utils: Node 2: Checking parent availability for unit
+2025-01-29T01:06:54.278237Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is empty and this is the first transaction. Skipping parent validation.
+2025-01-29T01:06:54.278240Z  INFO aleph_research::handlers::handle_commit: Node 2: Parent availability check passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219,92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.278246Z  INFO aleph_research::handlers::handle_commit: Node 2: Persisting finalized unit to file: /home/aleph-node/logs/finalized_units/epoch1.json
+
+epoch1 json is persisted but when syncing epoch back to node 1 gets error.... but node 1 says success in logs above?
+
+2025-01-29T01:06:54.278852Z  INFO aleph_research::utils::epoch_utils: Updated epoch to the next round: 2
+2025-01-29T01:06:54.279289Z  INFO aleph_research::utils::epoch_utils: Persisted updated epoch ID 2 to TOML file.
+2025-01-29T01:06:54.279302Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.139.191:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
+2025-01-29T01:06:54.279310Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.147.255:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
+
+
+
+It is now handling prevote from node 1, but node 1 already proposed to node 2 and node 2 handled it and moved on to prevote and commit because 1 node of 3 was enough to do so according to ch-rbc
+what is supposed to happen here according to ch-rbc?
+
+2025-01-29T01:06:54.284481Z  INFO aleph_research::handlers::handle_prevote: Node 2 10.0.171.67: Received PREVOTE request from Node 1 at 10.0.139.191 for epoch 1.
+2025-01-29T01:06:54.284509Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.139.191/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url": String("10.0.139.191")}
+2025-01-29T01:06:54.284528Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.284532Z  INFO aleph_research::handlers::handle_prevote: Node 2: DAG synchronization successful.
+2025-01-29T01:06:54.284541Z ERROR aleph_research::handlers::handle_prevote: Node 2: Merkle root mismatch for shard 0. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 2 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
 Attempting to execute aleph_start with configuration
-2025-01-28T03:55:57.263570Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:55:57.265012Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:55:57.265048Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:55:58.266243Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:55:58.266871Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:55:58.266896Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:55:59.268359Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:55:59.268951Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:55:59.268975Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:56:00.269810Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:56:00.270410Z  INFO aleph_research::utils::start_util: Node 10.0.162.236:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.162.236:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
-2025-01-28T03:56:00.270434Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
-2025-01-28T03:56:01.270925Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:56:01.273575Z  INFO aleph_research::utils::start_util: All nodes are healthy!
-2025-01-28T03:56:01.273601Z  INFO aleph_research::utils::start_util: Node 2 10.0.157.176: Waiting for its turn to submit transaction for epoch 1
-2025-01-28T03:56:01.273608Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.179.77:8080/is_turn?node_id=2&epoch_id=1
-2025-01-28T03:56:01.275935Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 1
-2025-01-28T03:56:01.279268Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 1 synchronized across all nodes.
-2025-01-28T03:56:01.395482Z  INFO aleph_research::handlers::handle_propose: *** Handling PROPOSE REQUEST: Node 2 10.0.157.176 from Sender 1 ***
-2025-01-28T03:56:01.395553Z  INFO aleph_research::handlers::handle_propose: Node 2 10.0.157.176: All Merkle branches validated successfully for epoch 1
-2025-01-28T03:56:01.397046Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176 Successfully updated proposal tracker in toml.
-2025-01-28T03:56:01.397063Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176 Updated proposal tracker for epoch 1: node ID list [1]
-2025-01-28T03:56:01.397071Z  INFO aleph_research::handlers::handle_propose: Node 2: Successfully updated proposal tracker for sender 1 in epoch 1
-2025-01-28T03:56:01.397082Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.157.176/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url": String("10.0.157.176")}
-2025-01-28T03:56:01.397117Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.397258Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
-2025-01-28T03:56:01.397265Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176: FAULTY NODES ALLOWED == 0
-2025-01-28T03:56:01.397269Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176: required_quorum == 1
-2025-01-28T03:56:01.397274Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176: is proposals length 1 >= required_quorum 1
-2025-01-28T03:56:01.397278Z  INFO aleph_research::utils::config_util: Node 2 10.0.157.176: Enough proposals. received to start prevoting. Proposals array = [1]
-2025-01-28T03:56:01.397287Z  INFO aleph_research::handlers::handle_prevote: Node 2 10.0.157.176: Received PREVOTE request from Node 2 at 10.0.157.176 for epoch 1.
-2025-01-28T03:56:01.397301Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.157.176/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(2), "sender_url": String("10.0.157.176")}
-2025-01-28T03:56:01.397310Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.397404Z  INFO aleph_research::handlers::handle_prevote: Node 2: DAG synchronization successful.
-2025-01-28T03:56:01.397440Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.397473Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
-2025-01-28T03:56:01.397486Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
-2025-01-28T03:56:01.397494Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.397502Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60,192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.397536Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.397555Z  INFO aleph_research::utils::dag_utils: Node 2: DAG length is: 0
-2025-01-28T03:56:01.397560Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is empty because its first round proposal Skipping parent validation.
-2025-01-28T03:56:01.397567Z  INFO aleph_research::handlers::handle_prevote: Node 2: Quorum votes updated for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]: 1.
-2025-01-28T03:56:01.397576Z  INFO aleph_research::handlers::handle_prevote: Node 2: Quorum threshold met. Preparing commit for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
-2025-01-28T03:56:01.397591Z  INFO aleph_research::handlers::handle_commit: Node 2: Handling commit request from Node 2 for epoch 1
-2025-01-28T03:56:01.397620Z  INFO aleph_research::handlers::handle_commit: Node 2: Merkle branch validation passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.397629Z  INFO aleph_research::utils::dag_utils: Node 2: Checking parent availability for unit
-2025-01-28T03:56:01.397633Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is empty and this is the first transaction. Skipping parent validation.
-2025-01-28T03:56:01.397638Z  INFO aleph_research::handlers::handle_commit: Node 2: Parent availability check passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219,92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.397647Z  INFO aleph_research::handlers::handle_commit: Node 2: Persisting finalized unit to file: /home/aleph-node/logs/finalized_units/epoch1.json
-2025-01-28T03:56:01.406142Z  INFO aleph_research::utils::epoch_utils: Updated epoch to the next round: 2
-2025-01-28T03:56:01.407163Z  INFO aleph_research::utils::epoch_utils: Persisted updated epoch ID 2 to TOML file.
-2025-01-28T03:56:01.407191Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.162.236:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
-2025-01-28T03:56:01.407202Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.187.41:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
-2025-01-28T03:56:01.410786Z  INFO aleph_research::handlers::handle_prevote: Node 2 10.0.157.176: Received PREVOTE request from Node 1 at 10.0.187.41 for epoch 1.
-2025-01-28T03:56:01.410825Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.187.41/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url":String("10.0.187.41")}
-2025-01-28T03:56:01.410850Z  INFO aleph_research::utils::dag_utils: Node 2: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.410856Z  INFO aleph_research::handlers::handle_prevote: Node 2: DAG synchronization successful.
-2025-01-28T03:56:01.410872Z ERROR aleph_research::handlers::handle_prevote: Node 2: Merkle root mismatch for shard 0. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
-2025-01-28T03:56:01.646088Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-28T03:56:01.646123Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 2 synchronized successfully with node 3
-2025-01-28T03:56:01.646596Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 2 to TOML file.
-2025-01-28T03:56:02.280510Z  INFO aleph_research::utils::start_util: Node 2 10.0.157.176: Retrying transaction submission for epoch 1
-2025-01-28T03:56:02.280541Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.179.77:8080/is_turn?node_id=2&epoch_id=1
-2025-01-28T03:56:02.281989Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 1
-2025-01-28T03:56:02.283354Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 1 synchronized across all nodes.
-2025-01-28T03:56:02.659714Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
-2025-01-28T03:56:02.659749Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 2 already synchronized with 3
-2025-01-28T03:56:03.283899Z  INFO aleph_research::utils::start_util: Node 2 10.0.157.176: Retrying transaction submission for epoch 1
-2025-01-28T03:56:03.283935Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.179.77:8080/is_turn?node_id=2&epoch_id=1
+2025-01-29T01:06:55.140969Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-29T01:06:55.143814Z  INFO aleph_research::utils::start_util: All nodes are healthy!
+2025-01-29T01:06:55.143833Z  INFO aleph_research::utils::start_util: Node 2 10.0.171.67: Waiting for its turn to submit transaction for epoch 2
+2025-01-29T01:06:55.143839Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 2 at URL: http://10.0.140.172:8080/is_turn?node_id=2&epoch_id=2
+2025-01-29T01:06:55.145034Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 2
+2025-01-29T01:06:55.147485Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 2 synchronized across all nodes.
+2025-01-29T01:06:55.183826Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:55.183855Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 1 already synchronized with 3
+2025-01-29T01:06:56.148695Z  INFO aleph_research::utils::start_util: Node 2 10.0.171.67: Retrying transaction submission for epoch 2
+2025-01-29T01:06:56.148732Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 2 at URL: http://10.0.140.172:8080/is_turn?node_id=2&epoch_id=2
+2025-01-29T01:06:56.149950Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 2
+2025-01-29T01:06:56.151449Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 2 synchronized across all nodes.
+2025-01-29T01:06:56.190209Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:56.190236Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 1 already synchronized with 3
+2025-01-29T01:06:57.152641Z  INFO aleph_research::utils::start_util: Node 2 10.0.171.67: Retrying transaction submission for epoch 2
+2025-01-29T01:06:57.152676Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 2 at URL: http://10.0.140.172:8080/is_turn?node_id=2&epoch_id=2
+2025-01-29T01:06:57.154294Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 2
+2025-01-29T01:06:57.155612Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 2 synchronized across all nodes.
+2025-01-29T01:06:57.196434Z  INFO aleph_research::utils::epoch_utils: Node 2: ==== Handling SYNC EPOCH request from Node 3 ====
+2025-01-29T01:06:57.196461Z  INFO aleph_research::utils::epoch_utils: Node 2: Epoch 1 already synchronized with 3
+2025-01-29T01:06:58.156830Z  INFO aleph_research::utils::start_util: Node 2 10.0.171.67: Retrying transaction submission for epoch 2
+2025-01-29T01:06:58.156862Z  INFO aleph_research::requests::ip_server_requests: Node 2: Checking if it's the turn for node to propose for epoch 2 at URL: http://10.0.140.172:8080/is_turn?node_id=2&epoch_id=2
+2025-01-29T01:06:58.158012Z  WARN aleph_research::requests::ip_server_requests: Node 2: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 2, Received Epoch ID = 2
 
 
 
@@ -234,16 +261,177 @@ Attempting to execute aleph_start with configuration
 
 
 
+Summary of Required Changes
+
+    Fix the sync_url construction to ensure valid URLs are sent. (DONE)
+    Modify the proposal and prevote logic to wait for a quorum before moving to the next phase.
+    Add a synchronization mechanism to ensure all nodes are ready before advancing epochs.
+    Update handle_prevote to ignore messages for outdated epochs.
 
 
 
 
 
 
+In the case of 3 nodes, where the fault tolerance parameter f=0f=0 (i.e., no faulty nodes are allowed), the Ch-RBC consensus protocol simplifies due to the small network size. Let’s break down the logic step by step:
+Ch-RBC Logic for 3 Nodes
+
+    Fault Tolerance Parameter (ff):
+        N=3N=3, f=0f=0.
+        Quorum for proposals = N−f=3N−f=3.
+        Quorum for prevotes = N−f=3N−f=3.
+
+    Proposal Phase:
+        Each node must receive a proposal from all N−f=3N−f=3 nodes before moving to the prevote phase.
+        For Node 1, this means:
+            Node 1 sends its proposal.
+            Node 1 should wait to receive proposals from Node 2 and Node 3 before moving to prevote.
+        For Node 2 (or Node 3), after receiving the proposal from Node 1:
+            Node 2 must wait to receive proposals from Node 1 and Node 3 before moving to prevote.
+
+    Prevote Phase:
+        Each node sends prevote messages after receiving all proposals (i.e., quorum).
+        A node moves to the commit phase when it receives N−f=3N−f=3 prevotes.
+
+    Commit Phase:
+        Once a node commits, it finalizes the transaction and:
+            Updates the epoch ID.
+            Broadcasts the finalized unit to all nodes.
+        Other nodes synchronize their epoch once they receive the finalized unit.
+
+How This Works with 3 Nodes
+Step-by-Step Flow:
+
+    Node 1 Proposes:
+        Node 1 sends its proposal to Node 2 and Node 3.
+        Node 1 waits for proposals from Node 2 and Node 3.
+
+    Node 2 Receives Proposal:
+        Node 2 receives the proposal from Node 1.
+        Node 2 sends its own proposal to Node 1 and Node 3.
+        Node 2 waits for proposals from Node 1 and Node 3.
+
+    Node 3 Receives Proposals:
+        Node 3 receives proposals from Node 1 and Node 2.
+        Node 3 sends its own proposal to Node 1 and Node 2.
+        Node 3 waits for proposals from Node 1 and Node 2.
+
+    Prevote Phase:
+        After all nodes receive 33 proposals (quorum), they move to the prevote phase.
+        Each node sends a prevote message to all other nodes.
+
+    Commit Phase:
+        After all nodes receive 33 prevotes (quorum), they move to the commit phase.
+        Each node finalizes the unit and moves to the next epoch.
+
+Key Implementation Points
+
+    Waiting for Quorum:
+        Nodes must not transition phases (e.g., from proposal to prevote) until they receive the quorum (N−f=3N−f=3) of proposals or prevotes.
+
+    Validation of Proposals and Prevotes:
+        Ensure that proposals and prevotes are valid and correspond to the current epoch.
+
+    Handling Epoch Synchronization:
+        Ensure that all nodes finalize the same unit before advancing to the next epoch.
+
+    Logs and State Tracking:
+        Keep clear logs for each phase (proposal, prevote, commit).
+        Track the state of each node (e.g., how many proposals/prevotes it has received).
+
+Expected Behavior for 3 Nodes
+Node 1:
+
+    Proposes.
+    Waits to receive proposals from Node 2 and Node 3.
+    Moves to prevote after receiving all proposals.
+    Waits to receive prevotes from Node 2 and Node 3.
+    Commits and finalizes the unit.
+
+Node 2:
+
+    Receives proposal from Node 1.
+    Proposes.
+    Waits to receive proposals from Node 1 and Node 3.
+    Moves to prevote after receiving all proposals.
+    Waits to receive prevotes from Node 1 and Node 3.
+    Commits and finalizes the unit.
+
+Node 3:
+
+    Receives proposals from Node 1 and Node 2.
+    Proposes.
+    Waits to receive proposals from Node 1 and Node 2.
+    Moves to prevote after receiving all proposals.
+    Waits to receive prevotes from Node 1 and Node 2.
+    Commits and finalizes the unit.
 
 
 
 
+    Correct Workflow for 3 Nodes
+Proposal Phase
+
+    Node 1 Proposes:
+        Node 1 sends its proposal to Node 2 and Node 3.
+        Node 1 does not send or wait for proposals again from itself.
+
+    Node 2 Receives Proposal:
+        Node 2 receives the proposal from Node 1.
+        Node 2 sends its own proposal to Node 1 and Node 3.
+        Node 2 now has:
+            Proposal from itself.
+            Proposal from Node 1.
+        Node 2 only waits for Node 3's proposal (to complete the quorum).
+
+    Node 3 Receives Proposal:
+        Node 3 receives proposals from Node 1 and Node 2.
+        Node 3 sends its own proposal to Node 1 and Node 2.
+        Node 3 now has:
+            Proposal from itself.
+            Proposal from Node 1.
+            Proposal from Node 2.
+        Node 3 does not wait for any more proposals (quorum satisfied).
+
+    Node 1 Completes Quorum:
+        Node 1 receives proposals from Node 2 and Node 3.
+        Node 1 now has:
+            Proposal from itself.
+            Proposal from Node 2.
+            Proposal from Node 3.
+        Node 1 moves to the Prevote phase.
+
+    Node 2 Completes Quorum:
+        Node 2 receives the proposal from Node 3.
+        Node 2 now has:
+            Proposal from itself.
+            Proposal from Node 1.
+            Proposal from Node 3.
+        Node 2 moves to the Prevote phase.
+
+Prevote Phase
+
+    Each node sends its prevote message to all other nodes once it has received proposals from all nodes (quorum = N−f=3N−f=3).
+    Each node tracks the prevotes it receives. For example:
+        Node 1 receives prevotes from Node 2 and Node 3.
+        Node 2 receives prevotes from Node 1 and Node 3.
+        Node 3 receives prevotes from Node 1 and Node 2.
+
+Commit Phase
+
+    A node moves to the commit phase after receiving prevotes from all N−f=3N−f=3 nodes (quorum).
+    During the commit phase:
+        Each node finalizes the unit for the epoch.
+        The finalized unit is persisted locally or broadcasted.
+    After committing, the node moves to the next epoch.
+
+Corrections to Previous Logic
+
+    Node 2 doesn’t wait for duplicate proposals from Node 1 and Node 3.
+        It already received Node 1’s proposal and only needs Node 3’s proposal to satisfy quorum.
+
+    Node 3 doesn’t wait for duplicate proposals from Node 1 and Node 2.
+        It already has all proposals after sending its own.
 
 
 
@@ -260,16 +448,15 @@ Attempting to execute aleph_start with configuration
 
 
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.162.236
+PRIVATE_IP = 10.0.147.255
 Node registration success.
-IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.157.176:30333", "10.0.187.41:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.139.191:30333", "10.0.171.67:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.179.77"
-ip_address = "10.0.162.236"
-nodes = ["10.0.157.176:30333", "10.0.187.41:30333"]
+ip_manager_address = "10.0.140.172"
+ip_address = "10.0.147.255"
+nodes = ["10.0.139.191:30333", "10.0.171.67:30333"]
 proposals = []
 
 [consensus]
@@ -292,62 +479,80 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-01-28T03:56:00.542084Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-01-28T03:56:01.276379Z  INFO aleph_research::utils::epoch_utils: Node 3: ==== Handling SYNC EPOCH request from Node 2 ====
-2025-01-28T03:56:01.276410Z  INFO aleph_research::utils::epoch_utils: Node 3: Epoch 1 synchronized successfully with node 2
-2025-01-28T03:56:01.277420Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 1 to TOML file.
-2025-01-28T03:56:01.408129Z  INFO aleph_research::handlers::handle_propose: *** Handling PROPOSE REQUEST: Node 3 10.0.162.236 from Sender 1 ***
-2025-01-28T03:56:01.408180Z  INFO aleph_research::handlers::handle_propose: Node 3 10.0.162.236: All Merkle branches validated successfully for epoch 1
-2025-01-28T03:56:01.408570Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236 Successfully updated proposal tracker in toml.
-2025-01-28T03:56:01.408579Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236 Updated proposal tracker for epoch 1: node ID list [1]
-2025-01-28T03:56:01.408585Z  INFO aleph_research::handlers::handle_propose: Node 3: Successfully updated proposal tracker for sender 1 in epoch 1
-2025-01-28T03:56:01.408598Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.162.236/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url": String("10.0.162.236")}
-2025-01-28T03:56:01.408628Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.408699Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
-2025-01-28T03:56:01.408703Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236: FAULTY NODES ALLOWED == 0
-2025-01-28T03:56:01.408706Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236: required_quorum == 1
-2025-01-28T03:56:01.408709Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236: is proposals length 1 >= required_quorum 1
-2025-01-28T03:56:01.408712Z  INFO aleph_research::utils::config_util: Node 3 10.0.162.236: Enough proposals. received to start prevoting. Proposals array = [1]
-2025-01-28T03:56:01.408718Z  INFO aleph_research::handlers::handle_prevote: Node 3 10.0.162.236: Received PREVOTE request from Node 3 at 10.0.162.236 for epoch 1.
-2025-01-28T03:56:01.408730Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.162.236/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(3), "sender_url": String("10.0.162.236")}
-2025-01-28T03:56:01.408742Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.408746Z  INFO aleph_research::handlers::handle_prevote: Node 3: DAG synchronization successful.
-2025-01-28T03:56:01.408768Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.408786Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
-2025-01-28T03:56:01.408795Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
-2025-01-28T03:56:01.408801Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.408807Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60,192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.408829Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-01-28T03:56:01.408843Z  INFO aleph_research::utils::dag_utils: Node 3: DAG length is: 0
-2025-01-28T03:56:01.408846Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is empty because its first round proposal Skipping parent validation.
-2025-01-28T03:56:01.408852Z  INFO aleph_research::handlers::handle_prevote: Node 3: Quorum votes updated for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]: 1.
-2025-01-28T03:56:01.408858Z  INFO aleph_research::handlers::handle_prevote: Node 3: Quorum threshold met. Preparing commit for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
-2025-01-28T03:56:01.408866Z  INFO aleph_research::handlers::handle_commit: Node 3: Handling commit request from Node 3 for epoch 1
-2025-01-28T03:56:01.408884Z  INFO aleph_research::handlers::handle_commit: Node 3: Merkle branch validation passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.408889Z  INFO aleph_research::utils::dag_utils: Node 3: Checking parent availability for unit
-2025-01-28T03:56:01.408893Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is empty and this is the first transaction. Skipping parent validation.
-2025-01-28T03:56:01.408896Z  INFO aleph_research::handlers::handle_commit: Node 3: Parent availability check passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219,92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
-2025-01-28T03:56:01.408902Z  INFO aleph_research::handlers::handle_commit: Node 3: Persisting finalized unit to file: /home/aleph-node/logs/finalized_units/epoch1.json
-2025-01-28T03:56:01.409452Z  INFO aleph_research::utils::epoch_utils: Updated epoch to the next round: 2
-2025-01-28T03:56:01.409592Z  INFO aleph_research::utils::epoch_utils: Persisted updated epoch ID 2 to TOML file.
-2025-01-28T03:56:01.409608Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.157.176:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
-2025-01-28T03:56:01.409623Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.187.41:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
-2025-01-28T03:56:01.414089Z  INFO aleph_research::handlers::handle_prevote: Node 3 10.0.162.236: Received PREVOTE request from Node 1 at 10.0.187.41 for epoch 1.
-2025-01-28T03:56:01.414126Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.187.41/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url":String("10.0.187.41")}
-2025-01-28T03:56:01.414143Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
-2025-01-28T03:56:01.414147Z  INFO aleph_research::handlers::handle_prevote: Node 3: DAG synchronization successful.
-2025-01-28T03:56:01.414157Z ERROR aleph_research::handlers::handle_prevote: Node 3: Merkle root mismatch for shard 0. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
+2025-01-29T01:06:51.107698Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 3 IT SHOULD NOT HAVE MOVED ON TO aleph_start YET
 Attempting to execute aleph_start with configuration
-2025-01-28T03:56:01.616285Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-01-28T03:56:01.627426Z  INFO aleph_research::utils::start_util: All nodes are healthy!
-2025-01-28T03:56:01.630332Z  INFO aleph_research::utils::start_util: Node 3 10.0.162.236: Waiting for its turn to submit transaction for epoch 2
-2025-01-28T03:56:01.631487Z  INFO aleph_research::requests::ip_server_requests: Node 3: Checking if it's the turn for node to propose for epoch 2 at URL: http://10.0.179.77:8080/is_turn?node_id=3&epoch_id=2
-2025-01-28T03:56:01.643458Z  WARN aleph_research::requests::ip_server_requests: Node 3: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 3, Received Epoch ID = 2
-2025-01-28T03:56:01.655516Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 2 synchronized across all nodes.
-2025-01-28T03:56:02.282494Z  INFO aleph_research::utils::epoch_utils: Node 3: ==== Handling SYNC EPOCH request from Node 2 ====
-2025-01-28T03:56:02.282521Z  INFO aleph_research::utils::epoch_utils: Node 3: Epoch 1 already synchronized with 2
-2025-01-28T03:56:02.656733Z  INFO aleph_research::utils::start_util: Node 3 10.0.162.236: Retrying transaction submission for epoch 2
+2025-01-29T01:06:52.153292Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-29T01:06:52.154605Z  INFO aleph_research::utils::start_util: Node 10.0.139.191:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.139.191:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-29T01:06:52.154643Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
+2025-01-29T01:06:53.156240Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-29T01:06:53.156959Z  INFO aleph_research::utils::start_util: Node 10.0.139.191:30333 health check failed with error: reqwest::Error { kind: Request, url: "http://10.0.139.191:30333/health", source: hyper_util::client::legacy::Error(Connect, ConnectError("tcp connect error", Os { code: 111, kind: ConnectionRefused, message: "Connection refused" })) }
+2025-01-29T01:06:53.156983Z  INFO aleph_research::utils::start_util: Some nodes are not healthy. Retrying in 1 second...
+2025-01-29T01:06:54.157770Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-01-29T01:06:54.169316Z  INFO aleph_research::utils::start_util: All nodes are healthy!
+2025-01-29T01:06:54.169344Z  INFO aleph_research::utils::start_util: Node 3 10.0.147.255: Waiting for its turn to submit transaction for epoch 1
+2025-01-29T01:06:54.169352Z  INFO aleph_research::requests::ip_server_requests: Node 3: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.140.172:8080/is_turn?node_id=3&epoch_id=1
+2025-01-29T01:06:54.172249Z  WARN aleph_research::requests::ip_server_requests: Node 3: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 3, Received Epoch ID = 1
+2025-01-29T01:06:54.178794Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 1 synchronized across all nodes.
+2025-01-29T01:06:54.273664Z  INFO aleph_research::handlers::handle_propose: *** Handling PROPOSE REQUEST: Node 3 10.0.147.255 from Sender 1 ***
+2025-01-29T01:06:54.273748Z  INFO aleph_research::handlers::handle_propose: Node 3 10.0.147.255: All Merkle branches validated successfully for epoch 1
+2025-01-29T01:06:54.275102Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255 Successfully updated proposal tracker in toml.
+2025-01-29T01:06:54.275119Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255 Updated proposal tracker for epoch 1: node ID list [1]
+2025-01-29T01:06:54.275127Z  INFO aleph_research::handlers::handle_propose: Node 3: Successfully updated proposal tracker for sender 1 in epoch 1
+2025-01-29T01:06:54.275138Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.147.255/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url": String("10.0.147.255")}
+2025-01-29T01:06:54.275178Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.275320Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255: CHECKING IF ALL PROPOSALS RECEIVED total nodes == 3
+2025-01-29T01:06:54.275327Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255: FAULTY NODES ALLOWED == 0
+2025-01-29T01:06:54.275331Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255: required_quorum == 1
+2025-01-29T01:06:54.275336Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255: is proposals length 1 >= required_quorum 1
+2025-01-29T01:06:54.275341Z  INFO aleph_research::utils::config_util: Node 3 10.0.147.255: Enough proposals. received to start prevoting. Proposals array = [1]
+2025-01-29T01:06:54.275351Z  INFO aleph_research::handlers::handle_prevote: Node 3 10.0.147.255: Received PREVOTE request from Node 3 at 10.0.147.255 for epoch 1.
+2025-01-29T01:06:54.275364Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.147.255/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(3), "sender_url": String("10.0.147.255")}
+2025-01-29T01:06:54.275374Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.275379Z  INFO aleph_research::handlers::handle_prevote: Node 3: DAG synchronization successful.
+2025-01-29T01:06:54.275482Z  INFO aleph_research::utils::merkle_utils: Initial level for Merkle root computation: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.275593Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45,111, 89, 60, 68, 133, 172, 255, 172, 150], [165, 2, 56, 68, 126, 77, 247, 133, 244, 13, 92, 79, 59, 254, 145, 215, 148, 43, 19, 194, 167, 243, 45, 111, 89, 60, 68, 133, 172, 255, 172, 150]]
+2025-01-29T01:06:54.275607Z  INFO aleph_research::utils::merkle_utils: Next level of Merkle tree: [[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56,146, 99, 60, 192, 114, 207, 141, 159, 33]]
+2025-01-29T01:06:54.275629Z  INFO aleph_research::utils::merkle_utils: Computed Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.275643Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60,192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.275677Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-01-29T01:06:54.275698Z  INFO aleph_research::utils::dag_utils: Node 3: DAG length is: 0
+2025-01-29T01:06:54.275703Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is empty because its first round proposal Skipping parent validation.
+2025-01-29T01:06:54.275709Z  INFO aleph_research::handlers::handle_prevote: Node 3: Quorum votes updated for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]: 1.
+2025-01-29T01:06:54.275718Z  INFO aleph_research::handlers::handle_prevote: Node 3: Quorum threshold met. Preparing commit for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
+2025-01-29T01:06:54.275731Z  INFO aleph_research::handlers::handle_commit: Node 3: Handling commit request from Node 3 for epoch 1
+2025-01-29T01:06:54.275761Z  INFO aleph_research::handlers::handle_commit: Node 3: Merkle branch validation passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.275770Z  INFO aleph_research::utils::dag_utils: Node 3: Checking parent availability for unit
+2025-01-29T01:06:54.275774Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is empty and this is the first transaction. Skipping parent validation.
+2025-01-29T01:06:54.275779Z  INFO aleph_research::handlers::handle_commit: Node 3: Parent availability check passed for root [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219,92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-01-29T01:06:54.275788Z  INFO aleph_research::handlers::handle_commit: Node 3: Persisting finalized unit to file: /home/aleph-node/logs/finalized_units/epoch1.json
+2025-01-29T01:06:54.276452Z  INFO aleph_research::utils::epoch_utils: Updated epoch to the next round: 2
+2025-01-29T01:06:54.276707Z  INFO aleph_research::utils::epoch_utils: Persisted updated epoch ID 2 to TOML file.
+2025-01-29T01:06:54.276724Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.139.191:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
+2025-01-29T01:06:54.276733Z ERROR aleph_research::utils::epoch_utils: Error syncing epoch 2 with node at 10.0.171.67:30333: reqwest::Error { kind: Builder, source: RelativeUrlWithoutBase }
+2025-01-29T01:06:54.280957Z  INFO aleph_research::handlers::handle_prevote: Node 3 10.0.147.255: Received PREVOTE request from Node 1 at 10.0.139.191 for epoch 1.
+2025-01-29T01:06:54.281340Z  INFO aleph_research::utils::dag_utils: Sending DAG sync check to URL: 10.0.139.191/dag_sync with payload: Object {"epoch_id": Number(1), "sender_id": Number(1), "sender_url": String("10.0.139.191")}
+2025-01-29T01:06:54.281360Z  INFO aleph_research::utils::dag_utils: Node 3: DAG is synchronized to round 0 or beyond.
+2025-01-29T01:06:54.281365Z  INFO aleph_research::handlers::handle_prevote: Node 3: DAG synchronization successful.
+2025-01-29T01:06:54.281380Z ERROR aleph_research::handlers::handle_prevote: Node 3: Merkle root mismatch for shard 0. Expected root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33].
+2025-01-29T01:06:55.146333Z  INFO aleph_research::utils::epoch_utils: Node 3: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-29T01:06:55.146407Z  INFO aleph_research::utils::epoch_utils: Node 3: Epoch 2 synchronized successfully with node 2
+2025-01-29T01:06:55.147110Z  INFO aleph_research::utils::config_util: Persisted updated epoch ID 2 to TOML file.
+2025-01-29T01:06:55.180135Z  INFO aleph_research::utils::start_util: Node 3 10.0.147.255: Retrying transaction submission for epoch 1
+2025-01-29T01:06:55.180172Z  INFO aleph_research::requests::ip_server_requests: Node 3: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.140.172:8080/is_turn?node_id=3&epoch_id=1
+2025-01-29T01:06:55.182427Z  WARN aleph_research::requests::ip_server_requests: Node 3: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 3, Received Epoch ID = 1
+2025-01-29T01:06:55.183982Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 1 synchronized across all nodes.
+2025-01-29T01:06:56.150943Z  INFO aleph_research::utils::epoch_utils: Node 3: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-29T01:06:56.150975Z  INFO aleph_research::utils::epoch_utils: Node 3: Epoch 2 already synchronized with 2
+2025-01-29T01:06:56.185360Z  INFO aleph_research::utils::start_util: Node 3 10.0.147.255: Retrying transaction submission for epoch 1
+2025-01-29T01:06:56.185397Z  INFO aleph_research::requests::ip_server_requests: Node 3: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.140.172:8080/is_turn?node_id=3&epoch_id=1
+2025-01-29T01:06:56.188725Z  WARN aleph_research::requests::ip_server_requests: Node 3: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 3, Received Epoch ID = 1
+2025-01-29T01:06:56.190537Z  INFO aleph_research::requests::synchronize_epoch_across_nodes: Epoch 1 synchronized across all nodes.
+2025-01-29T01:06:57.155199Z  INFO aleph_research::utils::epoch_utils: Node 3: ==== Handling SYNC EPOCH request from Node 2 ====
+2025-01-29T01:06:57.155230Z  INFO aleph_research::utils::epoch_utils: Node 3: Epoch 2 already synchronized with 2
+2025-01-29T01:06:57.192130Z  INFO aleph_research::utils::start_util: Node 3 10.0.147.255: Retrying transaction submission for epoch 1
+2025-01-29T01:06:57.192165Z  INFO aleph_research::requests::ip_server_requests: Node 3: Checking if it's the turn for node to propose for epoch 1 at URL: http://10.0.140.172:8080/is_turn?node_id=3&epoch_id=1
+2025-01-29T01:06:57.195252Z  WARN aleph_research::requests::ip_server_requests: Node 3: Turn check failed with status 403. Details: Error = Not your turn., Expected Node ID = 1, Expected Epoch ID = 1, Received Node ID = 3, Received Epoch ID = 1
