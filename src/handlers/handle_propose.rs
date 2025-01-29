@@ -146,13 +146,6 @@ pub async fn handle_propose(
             // Transition to the Prevote phase
             handle_prevote(node.clone(), client.clone(), prevote_request).await;
 
-        //THIS WAS NODE 1s payload when it should of been node 2s.
-        // let prevote_request = PrevoteRequest {
-        //     propose: propose_request.clone(),
-        //     sender_url: node.ip_address.clone(),
-        // };
-        // Transition to the Prevote phase
-        // handle_prevote(node.clone(), client.clone(), prevote_request).await;
     } else {
         info!(
             "Node {} {}: Waiting for more proposals for epoch {}.",
