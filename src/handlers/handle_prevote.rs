@@ -3,18 +3,17 @@ use base64::{engine::general_purpose, Engine};
 use reqwest::Client;
 use sha2::Digest;
 use std::sync::Arc;
-use tracing::{ error, info};
+use tracing::{ error, info, warn};
 use axum::response::IntoResponse;
 use crate::{
     handlers::handle_commit::handle_commit,
     structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
-        responses::Response,
+        responses::Response, toml_config,
     },
     utils::{
-        dag_utils::{validate_unit_parents, ensure_dag_synchronization},
-        merkle_utils::{reconstruct_unit, validate_merkle_branch},
+        config_util::load_config, dag_utils::{ensure_dag_synchronization, validate_unit_parents}, merkle_utils::{reconstruct_unit, validate_merkle_branch}
     },
 };
 
@@ -40,6 +39,25 @@ pub async fn handle_prevote(
         prevote_request.sender_url,
         prevote_request.propose.base.epoch_id
     );
+    
+    let toml_config= load_config(None);
+    if prevote_request.propose.base.epoch_id != toml_config.consensus.epoch_round_id {
+        warn!(
+            "Node {}: Received prevote for outdated epoch {} from Node {}. Current epoch: {}",
+            node.id,
+            prevote_request.propose.base.epoch_id,
+            prevote_request.propose.base.sender_id,
+            toml_config.consensus.epoch_round_id
+        );
+        return Json(Response {
+            status: format!(
+                "Epoch {} is already committed. Current epoch is {}.",
+                prevote_request.propose.base.epoch_id,
+                toml_config.consensus.epoch_round_id
+            ),
+        });
+    }
+
 
     // Step 1: Decode Base64-encoded shards
     let decoded_shards = match prevote_request
