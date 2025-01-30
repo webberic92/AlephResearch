@@ -1,0 +1,29 @@
+In ch-RBC, the number of proposals and prevotes required depends on the total number of nodes NN and the fault tolerance parameter ff, which represents the maximum number of faulty nodes allowed.
+
+From the ch-RBC protocol in the uploaded document, the key steps for reliable broadcast include:
+
+    Proposal Phase:
+        Each node must receive N−fN−f valid proposals before moving to the prevote phase.
+
+    Prevote Phase:
+        Each node must multicast a prevote after receiving N−fN−f proposals.
+        A node moves to the commit phase once it receives 2f+12f+1 valid prevotes.
+
+    Commit Phase:
+        A node multicasts a commit message after validating and reconstructing the proposal.
+        The node outputs the unit when it receives 2f+12f+1 commit messages.
+
+Using these rules, let's determine the required number of proposals and prevotes for different values of NN:
+Nodes NN	Fault Tolerance ff	Proposals Needed (N−f)(N−f)	Prevotes Needed (2f+1)(2f+1)
+3	0	3	1
+4	1	3	3
+5	1	4	3
+6	2	4	5
+Explanation:
+
+    For N=3,f=0N=3,f=0: Since no faults are allowed, all nodes must send a proposal. Only one prevote is needed to satisfy quorum.
+    For N=4,f=1N=4,f=1: The protocol tolerates one faulty node, requiring 3 proposals to proceed. The quorum for prevotes is 3.
+    For N=5,f=1N=5,f=1: With one faulty node, at least 4 proposals are needed to advance, and 3 prevotes are required.
+    For N=6,f=2N=6,f=2: Since the protocol tolerates two faults, 4 proposals are needed, and 5 prevotes are required for safety.
+
+Let me know if you want to extend this table for more values of NN!

@@ -2,7 +2,7 @@ use aleph_research::requests::send_prevotes::send_prevotes;
 use aleph_research::structs::toml_config::TomlConfig;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use reqwest::Client;
-use tracing::{error, info};
+use tracing::error;
 use tracing_subscriber;
 
 // Utility imports for configuration and network operations

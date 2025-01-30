@@ -8,10 +8,10 @@ use crate::structs::{node::Node, requests::SyncEpochRequest};
 
 /// Updates the epoch in the local node state.
 pub async fn update_local_epoch(node: Arc<RwLock<Node>>) -> u64 {
-    let mut next_epoch_id: u64;
+    let next_epoch_id: u64;
     {
         // Acquire a write lock to update the epoch ID
-        let mut node_state = node.write().await;
+        let node_state = node.write().await;
         let mut current_epoch = node_state.current_epoch.lock().await;
         let mut epoch_round_id = node_state.epoch_round_id.lock().await;
 
