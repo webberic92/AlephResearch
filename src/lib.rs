@@ -21,6 +21,7 @@ pub mod handlers{
     pub mod handle_prevote;
     pub mod handle_commit;
     pub mod handle_dag_sync;
+    pub mod handle_sync_epoch;
 }
 
 pub mod controllers{

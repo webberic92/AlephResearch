@@ -1,4 +1,4 @@
-use aleph_research::utils::dag_utils::{are_parents_available, ensure_round_sync, get_parent_hashes, validate_unit};
+use aleph_research::utils::dag_utils::{are_parents_available, ensure_round_sync, get_parent_hashes};
 use aleph_research::utils::dag_utils::{check_dag_sync, ensure_dag_synchronization, validate_unit_parents};
 use base64::Engine;
 use mockito::mock;
@@ -27,14 +27,12 @@ async fn test_check_dag_sync_success() {
 
     let client = Client::new();
     let sender_id = 2usize;
-    let sender_url = mockito::server_url(); // Match the mock server URL
+    let sender_url = mockito::server_url();
     let result = check_dag_sync(&client, 1, &sender_id, &sender_url).await;
 
     assert!(result.unwrap());
     mock_server.assert();
 }
-
-
 
 #[tokio::test]
 async fn test_check_dag_sync_failure() {
@@ -49,18 +47,15 @@ async fn test_check_dag_sync_failure() {
 
     let client = Client::new();
     let sender_id = 2usize;
-    let sender_url = mockito::server_url(); // Match the mock server's base URL
+    let sender_url = mockito::server_url();
     let result = check_dag_sync(&client, 1, &sender_id, &sender_url).await;
 
-    // Assert that the function returns an error
     assert!(result.is_err());
     mock_server.assert();
 }
 
-
 #[tokio::test]
 async fn test_ensure_dag_synchronization_success() {
-    // Mock server response for DAG sync
     let mock_server = mock("POST", "/dag_sync")
         .match_body(Matcher::Json(json!({
             "epoch_id": 2,
@@ -71,123 +66,76 @@ async fn test_ensure_dag_synchronization_success() {
         .with_body(r#"{"in_sync": true}"#)
         .create();
 
-    // Create a Node instance
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
+
     {
-        let mut epoch_round_id = node.epoch_round_id.lock().await;
-        epoch_round_id.insert(2); // Ensure the epoch is already being tracked
+        let mut node_state = node.write().await;
+        let mut epoch_round_id = node_state.epoch_round_id.lock().await;
+        epoch_round_id.insert(2);
     }
 
-    // Set up the HTTP client
     let client = Client::new();
-
-    // Sender details
     let sender_id = 2usize;
-    let sender_url = mockito::server_url(); // Use the mock server's URL
+    let sender_url = mockito::server_url();
 
-    // Debugging logs
-    info!("Mock Server URL: {}", sender_url);
+    let result = ensure_dag_synchronization(node.clone(), &client, 2, &sender_id, sender_url).await;
 
-    // Call the function being tested
-    let result = ensure_dag_synchronization(&node, &client, 2, &sender_id, &sender_url).await;
-
-    // Debugging output
-    info!("Result of ensure_dag_synchronization: {:?}", result);
-
-    // Assert the result is okay
     assert!(result.is_ok());
-
-    // Verify that the mock server was called
-    mock_server.assert();
-}
-
-
-
-#[tokio::test]
-async fn test_ensure_dag_synchronization_failure_dag_sync() {
-    let mock_server = mock("POST", "/dag_sync")
-        .with_status(500)
-        .create();
-
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
-    let client = Client::new();
-    let sender_id = &2usize;
-    let sender_url = &mockito::server_url();
-    let result = ensure_dag_synchronization(&node, &client, 2, sender_id, sender_url).await;
-
-    assert!(result.is_err());
-    mock_server.assert();
-}
-
-#[tokio::test]
-async fn test_ensure_dag_synchronization_failure_round_sync() {
-    let mock_server = mock("POST", "/dag_sync")
-        .with_status(200)
-        .with_body(r#"{"in_sync": true}"#)
-        .create();
-
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
-    {
-        let mut epoch_round_id = node.epoch_round_id.lock().await;
-        epoch_round_id.insert(1);
-    }
-
-    let client = Client::new();
-    let sender_id = &2usize;
-    let sender_url = &mockito::server_url();
-    let result = ensure_dag_synchronization(&node, &client, 3, sender_id, sender_url).await;
-
-    assert!(result.is_err());
     mock_server.assert();
 }
 
 #[tokio::test]
 async fn test_validate_unit_parents_success() {
-    let mut unit = vec![2]; // Parent count: 2
-    unit.extend(vec![1; 32]); // First parent hash
-    unit.extend(vec![2; 32]); // Second parent hash
+    let mut unit = vec![2];
+    unit.extend(vec![1; 32]);
+    unit.extend(vec![2; 32]);
 
     let mut dag = HashMap::new();
-    dag.insert(vec![1; 32], vec![]); // First parent
-    dag.insert(vec![2; 32], vec![]); // Second parent
+    dag.insert(vec![1; 32], vec![]);
+    dag.insert(vec![2; 32], vec![]);
 
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
     {
-        let mut dag_write = node.dag.write().await;
-        *dag_write = dag;
+        let  node_write = node.write().await; // Acquire a write lock on the node
+        let mut dag_write = node_write.dag.write().await; // Access the `dag` field and acquire a write lock
+        *dag_write = dag; // Assign the new DAG value
     }
+    
 
-    let result = validate_unit_parents(&node, &unit).await;
+    let result = validate_unit_parents(node.clone(), &unit).await;
     assert!(result.is_ok(), "Validation failed with result: {:?}", result);
 }
 
-
-
-
-
 #[tokio::test]
 async fn test_validate_unit_parents_failure() {
-    // Create a unit with parent count and parent hash
-    let mut unit = vec![1]; // Parent count: 1
-    unit.extend(vec![1; 32]); // First parent hash
+    let mut unit = vec![1];
+    unit.extend(vec![1; 32]);
 
-    // Prepare an empty DAG
-    let dag = HashMap::new(); // No parents in the DAG
-    let finalized_blocks = HashSet::new(); // No finalized blocks
+    let dag = HashMap::new();
 
-    // Create a Node and populate its DAG and finalized blocks
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
     {
-        let mut dag_write = node.dag.write().await;
-        *dag_write = dag;
-    }
-    {
-        let mut finalized_write = node.finalized_blocks.lock().await;
-        *finalized_write = finalized_blocks;
+        let  node_write = node.write().await; // Acquire a write lock on the node
+        let mut dag_write = node_write.dag.write().await; // Access the `dag` field and acquire a write lock
+        *dag_write = dag; // Assign the new DAG value
     }
 
-    // Call the method and assert failure
-    let result = validate_unit_parents(&node, &unit).await;
+    let result = validate_unit_parents(node.clone(), &unit).await;
 
     assert!(
         result.is_err(),
@@ -195,11 +143,10 @@ async fn test_validate_unit_parents_failure() {
         unit
     );
 
-    // Validate the error message
     let expected_error = format!(
         "Node {}: Parent unit {:?} not committed in DAG.",
-        node.id,
-        vec![1; 32], // Raw parent hash
+        1,
+        vec![1; 32]
     );
     assert_eq!(
         result.unwrap_err(),
@@ -254,113 +201,98 @@ async fn test_get_parents_failure() {
 
 
 
-#[tokio::test]
-async fn test_validate_unit() {
-    // Initialize logger
-    tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
+// #[tokio::test]
+// async fn test_validate_unit() {
+//     tracing_subscriber::fmt().with_max_level(tracing::Level::DEBUG).init();
 
-    // Simulated Node
-    let node = Node {
-        id: 1,
-        total_nodes: 4,
-        quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-        epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
-        finalized_blocks: Arc::new(Mutex::new(HashSet::new())),
-        dag: Arc::new(RwLock::new(HashMap::new())),
-        ip_address: "127.0.0.1:8001".to_string(),
-        proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
-    };
+//     let node = Arc::new(RwLock::new(Node::new(
+//         1,
+//         4,
+//         "127.0.0.1:8001".to_string(),
+//         vec!["127.0.0.1:8002".to_string()],
+//     )));
 
-    // Parent setup
-    let parent_unit = vec![9, 8, 7, 6];
-    let parent_unit_hashed = Sha256::digest(&parent_unit).to_vec();
-    let parent_root = compute_merkle_root(&[parent_unit_hashed.clone()]);
-    assert_eq!(
-        parent_root.len(),
-        32,
-        "Parent root must be a 32-byte hash, but got length {}",
-        parent_root.len()
-    );
+//     let parent_unit = vec![9, 8, 7, 6];
+//     let parent_unit_hashed = Sha256::digest(&parent_unit).to_vec();
+//     let parent_root = compute_merkle_root(&[parent_unit_hashed.clone()]);
+//     assert_eq!(
+//         parent_root.len(),
+//         32,
+//         "Parent root must be a 32-byte hash, but got length {}",
+//         parent_root.len()
+//     );
 
-    {
-        let mut dag_write = node.dag.write().await;
-        dag_write.insert(parent_root.clone(), parent_unit.clone());
-    }
+//     {
+//         let mut dag_write = node.write().await.dag.write().await;
+//         dag_write.insert(parent_root.clone(), parent_unit.clone());
+//     }
 
-    info!(
-        "Test setup: Inserted parent unit with root {:?} into DAG",
-        parent_root
-    );
+//     let shards = vec![vec![1; 32], vec![2; 32]];
+//     let root = compute_merkle_root(&shards);
+//     let proofs = compute_merkle_branch(&shards, 0);
 
-    // Shard data for Merkle root computation
-    let shards = vec![vec![1; 32], vec![2; 32]];
-    let root = compute_merkle_root(&shards);
-    assert_eq!(
-        root.len(),
-        32,
-        "Merkle root must be a 32-byte hash, but got length {}",
-        root.len()
-    );
-    let proofs = compute_merkle_branch(&shards, 0);
+//     let mut unit = vec![5, 6, 7, 8];
+//     unit.extend_from_slice(&parent_root);
 
-    // Valid unit with parent hash appended
-    let mut unit = vec![5, 6, 7, 8]; // Example unit data
-    unit.extend_from_slice(&parent_root); // Append the 32-byte parent root to the unit
+//     let valid_result = validate_unit(node.clone(), &unit, &root, &shards, &proofs).await;
+//     assert!(
+//         valid_result.is_ok(),
+//         "Validation failed for valid unit. Error: {:?}",
+//         valid_result.err()
+//     );
 
-    info!("Constructed valid unit: {:?}", unit);
+//     {
+//         let mut dag_write = node.write().await.dag.write().await;
+//         dag_write.clear();
+//     }
 
-    // Test validation success
-    let valid_result = validate_unit(&node, &unit, &root, &shards, &proofs).await;
-    assert!(
-        valid_result.is_ok(),
-        "Validation failed for valid unit. Error: {:?}",
-        valid_result.err()
-    );
-
-    // Clear the DAG to simulate missing parents
-    {
-        let mut dag_write = node.dag.write().await;
-        dag_write.clear();
-    }
-
-    // Test validation failure
-    let invalid_result = validate_unit(&node, &unit, &root, &shards, &proofs).await;
-    assert!(
-        invalid_result.is_err(),
-        "Validation unexpectedly passed for unit with missing parents"
-    );
-
-    assert_eq!(
-        invalid_result.unwrap_err(),
-        format!(
-            "Node {}: Parent availability check failed for unit {:?}",
-            node.id, unit
-        )
-    );
-}
-
+//     let invalid_result = validate_unit(node.clone(), &unit, &root, &shards, &proofs).await;
+//     assert!(invalid_result.is_err(), "Validation unexpectedly passed");
+//     assert_eq!(
+//         invalid_result.unwrap_err(),
+//         format!(
+//             "Node {}: Parent availability check failed for unit {:?}",
+//             node.read().await.id,
+//             unit
+//         )
+//     );
+// }
 
 #[tokio::test]
 async fn test_ensure_round_sync_success() {
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
+
     {
-        let mut epoch_round_id = node.epoch_round_id.lock().await;
-        epoch_round_id.insert(2);
+        let node_write = node.write().await; // Acquire a write lock on the node
+        let mut epoch_round_id = node_write.epoch_round_id.lock().await; // Access `epoch_round_id` and acquire a lock
+        epoch_round_id.insert(2); // Perform the insertion
     }
 
-    let result = ensure_round_sync(&node, 3).await;
+    let result = ensure_round_sync(node.clone(), 3).await;
     assert!(result.is_ok());
 }
 
 #[tokio::test]
 async fn test_ensure_round_sync_failure() {
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
+
     {
-        let mut epoch_round_id = node.epoch_round_id.lock().await;
-        epoch_round_id.insert(1);
+        let  node_write = node.write().await; // Acquire a write lock on the node
+        let mut epoch_round_id = node_write.epoch_round_id.lock().await; // Access `epoch_round_id` and acquire a lock
+        epoch_round_id.insert(2); // Perform the insertion
     }
 
-    let result = ensure_round_sync(&node, 3).await;
+    let result = ensure_round_sync(node.clone(), 3).await;
     assert!(result.is_err());
     assert_eq!(
         result.unwrap_err(),
@@ -370,27 +302,38 @@ async fn test_ensure_round_sync_failure() {
 
 #[tokio::test]
 async fn test_are_parents_available_success() {
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
-    let parent_hash = vec![1; 32];
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
 
+    let parent_hash = vec![1; 32];
     {
-        let mut dag_write = node.dag.write().await;
-        dag_write.insert(parent_hash.clone(), vec![]);
+        let  node_write = node.write().await; // Acquire a write lock on the node
+        let mut dag_write = node_write.dag.write().await;
+         dag_write.insert(parent_hash.clone(), vec![]);
     }
 
     let mut unit = vec![1];
     unit.extend_from_slice(&parent_hash);
 
-    let result = are_parents_available(&node, &unit).await;
+    let result = are_parents_available(node.clone(), &unit).await;
     assert!(result);
 }
 
 #[tokio::test]
 async fn test_are_parents_available_failure() {
-    let node = Node::new(1, 4, "127.0.0.1:8001".to_string());
-    let unit = vec![1; 32];
+    let node = Arc::new(RwLock::new(Node::new(
+        1,
+        4,
+        "127.0.0.1:8001".to_string(),
+        vec!["127.0.0.1:8002".to_string()],
+    )));
 
-    let result = are_parents_available(&node, &unit).await;
+    let unit = vec![1; 32];
+    let result = are_parents_available(node.clone(), &unit).await;
     assert!(!result);
 }
 

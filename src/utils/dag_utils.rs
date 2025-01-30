@@ -1,4 +1,5 @@
-use std::{collections::HashMap, error::Error};
+use std::{error::Error, sync::Arc};
+use tokio::sync::RwLock;
 use tracing::{ error, info};
 use reqwest::Client;
 use base64::{engine::general_purpose, Engine};
@@ -45,133 +46,119 @@ pub async fn check_dag_sync(
 }
 
 /// Ensures that the DAG has reached the required round before progressing.
-pub async fn ensure_round_sync(node: &Node, target_round: u64) -> Result<(), String> {
+pub async fn ensure_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Result<(), String> {
+    // Access the current round by locking the `epoch_round_id`
     let current_round = {
-        let epoch_round_id = node.epoch_round_id.lock().await;
-        *epoch_round_id.iter().max().unwrap_or(&0)
+        let node_state = node.read().await; // Lock the `RwLock` for read access
+        let epoch_round_id = node_state.epoch_round_id.lock().await; // Lock the Mutex inside the Node
+        *epoch_round_id.iter().max().unwrap_or(&0) // Get the maximum epoch_round_id or default to 0
     };
 
+    // Ensure synchronization to the required round
     if current_round < target_round - 1 {
-        return Err(format!(
+        let error_message = format!(
             "Node {}: DAG not synchronized to round {} for prevote (current round: {})",
-            node.id, target_round - 1, current_round
-        ));
+            node.read().await.id, // Access `id` from the read-locked Node
+            target_round - 1,
+            current_round
+        );
+        return Err(error_message);
     }
+
     info!(
         "Node {}: DAG is synchronized to round {} or beyond.",
-        node.id, target_round - 1
+        node.read().await.id, // Access `id` from the read-locked Node
+        target_round - 1
     );
     Ok(())
 }
 
+
 /// Checks if the parents of a given unit are available in the local DAG.
-pub async fn are_parents_available(node: &Node, unit: &[u8]) -> bool {
-    info!("Node {}: Checking parent availability for unit", node.id);
+pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool {
+    let node_state = node.read().await;
+
+    info!("Node {}: Checking parent availability for unit", node_state.id);
 
     // Check if the DAG is empty
-    let dag_read = node.dag.read().await;
-    if dag_read.is_empty() {
+    if node_state.dag.read().await.is_empty() {
         // Check if it is the first round
-            info!(
-                "Node {}: DAG is empty and this is the first transaction. Skipping parent validation.",
-                node.id
-            );
+        info!(
+            "Node {}: DAG is empty and this is the first transaction. Skipping parent validation.",
+            node_state.id
+        );
         return true; // Allow validation to pass
     }
-    
+
     // Extract parent hashes
     let parent_hashes = match get_parent_hashes(unit) {
         Ok(hashes) => hashes,
         Err(e) => {
-            error!("Node {}: Failed to extract parents from unit. Error: {:?}", node.id, e);
+            error!(
+                "Node {}: Failed to extract parents from unit. Error: {:?}",
+                node_state.id, e
+            );
             return false;
         }
     };
 
     // Validate parent hashes against the DAG
+    let dag_read = node_state.dag.read().await;
     for parent in parent_hashes {
         if !dag_read.contains_key(&parent) {
             error!(
                 "Node {}: Parent with hash {:?} is missing in the local DAG",
-                node.id, parent
+                node_state.id, parent
             );
             return false;
         }
     }
 
-    info!("Node {}: All parents are locally available for unit", node.id);
+    info!("Node {}: All parents are locally available for unit", node_state.id);
     true
 }
 
 
 
+pub async fn validate_unit_parents(node: Arc<RwLock<Node>>, unit_data: &[u8]) -> Result<(), String> {
+    // Acquire a read lock for the node to access the DAG
+    let node_state = node.read().await;
 
-
-
-
-// pub async fn validate_unit_parents(node: &Node, unit_data: &[u8]) -> Result<(), String> {
-//     // Check if DAG is empty or unpopulated
-//     let dag = node.dag.read().await; // Access the DAG
-
-//     info!(
-//         "Node {}: DAG length is: {}",
-//         node.id, dag.len()
-//     );
-
-//     if dag.is_empty() {
-//         info!(
-//             "Node {}: DAG is empty or not populated. Skipping parent validation.",
-//             node.id
-//         );
-//         return Ok(()); // Allow parent validation to pass
-//     }
-
-//     // Extract all parent hashes at once
-//     let parent_hashes = get_parent_hashes(unit_data)?;
-//     info!("Node {}: Extracted parent hashes: {:?}", node.id, parent_hashes);
-
-//     // Validate each parent hash against the DAG
-//     for parent in &parent_hashes {
-//         if !dag.contains_key(parent) {
-//             return Err(format!(
-//                 "Node {}: Parent unit {:?} not committed in DAG.",
-//                 node.id, parent
-//             ));
-//         }
-//     }
-
-//     Ok(())
-// }
-
-
-
-pub async fn validate_unit_parents(node: &Node, unit_data: &[u8]) -> Result<(), String> {
-    // Check if DAG is empty or unpopulated
-    let dag = node.dag.read().await; // Access the DAG
+    // Access the DAG
+    let dag = node_state.dag.read().await;
 
     info!(
         "Node {}: DAG length is: {}",
-        node.id, dag.len()
+        node_state.id,
+        dag.len()
     );
 
     if dag.is_empty() {
         info!(
-            "Node {}: DAG is empty because its first round proposal Skipping parent validation.",
-            node.id
+            "Node {}: DAG is empty because it's the first round proposal. Skipping parent validation.",
+            node_state.id
         );
-        return Ok(())
+        return Ok(());
     }
 
     // Extract all parent hashes at once
-    let parent_hashes = get_parent_hashes(unit_data)?;
-    info!("Node {}: Extracted parent hashes: {:?}", node.id, parent_hashes);
+    let parent_hashes = match get_parent_hashes(unit_data) {
+        Ok(hashes) => hashes,
+        Err(e) => {
+            let error_message = format!("Node {}: Failed to extract parent hashes. Error: {:?}", node_state.id, e);
+            error!("{}", error_message);
+            return Err(error_message);
+        }
+    };
+
+    info!("Node {}: Extracted parent hashes: {:?}", node_state.id, parent_hashes);
 
     // Validate each parent hash against the DAG
     for parent in &parent_hashes {
         if !dag.contains_key(parent) {
             return Err(format!(
                 "Node {}: Parent unit {:?} not committed in DAG.",
-                node.id, parent
+                node_state.id, parent
             ));
         }
     }
@@ -236,52 +223,13 @@ pub async fn ensure_all_parents_committed(
 
 /// Ensures DAG synchronization by validating epoch and DAG state.
 pub async fn ensure_dag_synchronization(
-    node: &Node,
+    node: Arc<RwLock<Node>>,
     client: &Client,
     epoch_id: u64,
     sender_id: &usize,
-    sender_url: &String,
+    sender_url: String,
 ) -> Result<(), String> {
-    let _ = check_dag_sync(client, epoch_id, sender_id, sender_url).await;
+    let _ = check_dag_sync(client, epoch_id, sender_id, &sender_url).await;
     ensure_round_sync(node, epoch_id).await?;
-    Ok(())
-}
-pub async fn validate_unit(
-    node: &Node,
-    unit: &[u8],
-    root: &[u8],
-    shard_hashes: &[Vec<u8>],
-    proofs: &[Vec<u8>],
-) -> Result<(), String> {
-    // Step 1: Validate Merkle branch
-    if !validate_merkle_branch(shard_hashes, proofs, 0, root) {
-        return Err(format!(
-            "Node {}: Merkle branch validation failed for root {:?}",
-            node.id, root
-        ));
-    }
-
-    info!(
-        "Node {}: Merkle branch validation passed for root {:?}",
-        node.id, root
-    );
-
-    // Step 2: Check parent availability
-    let parent_hash = &unit[unit.len() - 32..];
-    {
-        let dag_read = node.dag.read().await;
-        if !dag_read.contains_key(parent_hash) {
-            return Err(format!(
-                "Node {}: Parent availability check failed for unit {:?}",
-                node.id, unit
-            ));
-        }
-    }
-
-    info!(
-        "Node {}: Parent availability check passed for unit {:?}",
-        node.id, unit
-    );
-
     Ok(())
 }
