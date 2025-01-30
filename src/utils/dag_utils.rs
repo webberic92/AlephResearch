@@ -3,10 +3,8 @@ use tokio::sync::RwLock;
 use tracing::{ error, info};
 use reqwest::Client;
 use base64::{engine::general_purpose, Engine};
-use crate::{
-    structs::node::Node,
-    utils::merkle_utils::validate_merkle_branch,
-};
+use crate::
+    structs::node::Node;
 
 /// Checks whether the local DAG is synchronized with the target node's DAG.
 pub async fn check_dag_sync(

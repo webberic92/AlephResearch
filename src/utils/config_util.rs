@@ -1,8 +1,7 @@
-use std::fs;
 
 use tracing::{error, info};
 
-use crate::structs::{node::Node, toml_config::TomlConfig};
+use crate::structs::toml_config::TomlConfig;
 
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
@@ -34,7 +33,7 @@ pub async fn are_enough_proposals_received() -> bool {
     info!("Node {} {}: required_quorum == {}", config.node.id,config.network.ip_address,required_quorum);
     info!("Node {} {}: is proposals length {} >= required_quorum {}", config.node.id,config.network.ip_address,config.network.proposals.len(),required_quorum);
 
-    if(config.network.proposals.len() >= required_quorum){
+    if config.network.proposals.len() >= required_quorum {
         info!(
             "Node {} {}: Enough proposals. received to start prevoting. Proposals array = {:?}",
             config.node.id, config.network.ip_address, config.network.proposals
@@ -70,20 +69,6 @@ pub fn persist_proposal_tracker(proposal_tracker: &Vec<usize>) {
         Err(e) => error!("Node {} {} Failed to update proposal tracker. Error: {:?}", config.node.id, config.network.ip_address, e),
     }
 }
-
-// Update the proposal tracker
-// Tracks which nodes have submitted valid proposals to ensure quorum.
-// pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) {
-//     let config = load_config(None);
-//     let mut proposal_tracker = config.network.proposals.clone();
-//     proposal_tracker.push(sender);
-//     persist_proposal_tracker( &proposal_tracker);
-//     info!(
-//         "Node {} {} Updated proposal tracker for epoch {}: node ID list {:?}",
-//         node.id, node.ip_address, epoch_id, proposal_tracker
-//     );
-// }
-
 
 // Persist the epoch round ID to the TOML file
 pub async fn persist_epoch_round_id(epoch_id: u64) -> Result<(), std::io::Error> {
