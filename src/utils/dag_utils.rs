@@ -55,7 +55,7 @@ pub async fn ensure_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Re
     };
 
     // Ensure synchronization to the required round
-    if current_round < target_round - 1 {
+    if current_round < target_round - 1 { // ✅ Fix: Use `<` instead of `<=`
         let error_message = format!(
             "Node {}: DAG not synchronized to round {} for prevote (current round: {})",
             node.read().await.id, // Access `id` from the read-locked Node
@@ -74,21 +74,12 @@ pub async fn ensure_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Re
 }
 
 
+
 /// Checks if the parents of a given unit are available in the local DAG.
 pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool {
     let node_state = node.read().await;
 
     info!("Node {}: Checking parent availability for unit", node_state.id);
-
-    // Check if the DAG is empty
-    if node_state.dag.read().await.is_empty() {
-        // Check if it is the first round
-        info!(
-            "Node {}: DAG is empty and this is the first transaction. Skipping parent validation.",
-            node_state.id
-        );
-        return true; // Allow validation to pass
-    }
 
     // Extract parent hashes
     let parent_hashes = match get_parent_hashes(unit) {
@@ -102,8 +93,25 @@ pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool
         }
     };
 
-    // Validate parent hashes against the DAG
+    // If the DAG is empty and there are no parents, allow validation to pass.
     let dag_read = node_state.dag.read().await;
+    if dag_read.is_empty() {
+        if parent_hashes.is_empty() {
+            info!(
+                "Node {}: DAG is empty, and the unit has no parents. Skipping parent validation.",
+                node_state.id
+            );
+            return true;
+        } else {
+            info!(
+                "Node {}: DAG is empty, but the unit has parents. Validation should fail.",
+                node_state.id
+            );
+            return false; // ❌ If parents exist, but DAG is empty, return false.
+        }
+    }
+
+    // Validate parent hashes against the DAG
     for parent in parent_hashes {
         if !dag_read.contains_key(&parent) {
             error!(
@@ -117,6 +125,7 @@ pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool
     info!("Node {}: All parents are locally available for unit", node_state.id);
     true
 }
+
 
 
 
