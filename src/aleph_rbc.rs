@@ -19,7 +19,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     let client = Arc::new(Client::new());
 
-    let node = Arc::new(Node::new(config.node.id, config.node.total_nodes, config.network.ip_address));
+    // let node = Arc::new(Node::new(config.node.id, config.node.total_nodes, config.network.ip_address));
+    // Wrap the Node inside RwLock and then Arc
+    let node = Arc::new(tokio::sync::RwLock::new(Node::new(
+            config.node.id,
+            config.node.total_nodes,
+            config.network.ip_address,
+            config.network.nodes
+        )));
+
     let app = initialize_apis(node, client);
 
     let listener = TcpListener::bind(addr).await?;

@@ -73,16 +73,16 @@ pub fn persist_proposal_tracker(proposal_tracker: &Vec<usize>) {
 
 // Update the proposal tracker
 // Tracks which nodes have submitted valid proposals to ensure quorum.
-pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) {
-    let config = load_config(None);
-    let mut proposal_tracker = config.network.proposals.clone();
-    proposal_tracker.push(sender);
-    persist_proposal_tracker( &proposal_tracker);
-    info!(
-        "Node {} {} Updated proposal tracker for epoch {}: node ID list {:?}",
-        node.id, node.ip_address, epoch_id, proposal_tracker
-    );
-}
+// pub async fn update_proposal_tracker(node: &Node, sender: usize, epoch_id: u64) {
+//     let config = load_config(None);
+//     let mut proposal_tracker = config.network.proposals.clone();
+//     proposal_tracker.push(sender);
+//     persist_proposal_tracker( &proposal_tracker);
+//     info!(
+//         "Node {} {} Updated proposal tracker for epoch {}: node ID list {:?}",
+//         node.id, node.ip_address, epoch_id, proposal_tracker
+//     );
+// }
 
 
 // Persist the epoch round ID to the TOML file

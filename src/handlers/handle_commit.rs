@@ -2,36 +2,37 @@ use std::sync::Arc;
 
 use base64::Engine;
 use reqwest::Client;
-use sha2::{Digest, Sha256};
+use sha2::Digest;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
-use serde_json::json;
+use tokio::sync::RwLock;
 use tracing::{error, info};
-use crate::requests::ip_server_requests::notify_transaction_submitted;
 use crate::structs::node::Node;
 use crate::structs::requests:: CommitRequest;
 use crate::utils::dag_utils::are_parents_available;
-use crate::utils::epoch_utils::update_epoch_to_next_round;
+use crate::utils::epoch_utils::{broadcast_epoch_update, update_local_epoch};
+// use crate::utils::epoch_utils::update_epoch_to_next_round;
 use crate::utils::merkle_utils::validate_merkle_branch;
 
 /// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
 pub async fn handle_commit(
-    node: &Node,
+    node: Arc<RwLock<Node>>,
     client: Arc<Client>,
     commit_request: CommitRequest,
 ) -> Result<(), String> {
+    // Log the incoming request
+    let node_id = node.read().await.id;
     info!(
         "Node {}: Handling commit request from Node {} for epoch {}",
-        node.id, commit_request.base.sender_id, commit_request.base.epoch_id
+        node_id, commit_request.base.sender_id, commit_request.base.epoch_id
     );
 
     // Step 1: Derive shard hashes from the unit
-    // Derive hashes of shards for validation
     let shard_size = 64; // Size of each shard
     let shard_hashes: Vec<Vec<u8>> = commit_request
         .unit
         .chunks(shard_size)
-        .map(|shard| Sha256::digest(shard).to_vec())
+        .map(|shard| sha2::Sha256::digest(shard).to_vec())
         .collect();
 
     // Step 2: Validate Merkle branches for each shard
@@ -43,7 +44,7 @@ pub async fn handle_commit(
             .map_err(|e| {
                 let error_message = format!(
                     "Node {}: Failed to decode proof for shard {}: {:?}",
-                    node.id, index, e
+                    node_id, index, e
                 );
                 error!("{}", error_message);
                 error_message
@@ -52,42 +53,42 @@ pub async fn handle_commit(
         if !validate_merkle_branch(&shard_hashes, &decoded_proof, index, &commit_request.base.root) {
             let error_message = format!(
                 "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}",
-                node.id, index, commit_request.base.root
+                node_id, index, commit_request.base.root
             );
             error!("{}", error_message);
             return Err(error_message);
         }
     }
-    info!("Node {}: Merkle branch validation passed for root {:?}", node.id, commit_request.base.root);
+    info!("Node {}: Merkle branch validation passed for root {:?}", node_id, commit_request.base.root);
 
     // Step 3: Check parent availability
-    // Verify that all parent units are present in the DAG
-    if !are_parents_available(node, &commit_request.unit).await {
+    if !are_parents_available(node.clone(), &commit_request.unit).await {
         let error_message = format!(
             "Node {}: Parent availability check failed for unit associated with root {:?}",
-            node.id, commit_request.base.root
+            node_id, commit_request.base.root
         );
         error!("{}", error_message);
         return Err(error_message);
     }
-    info!("Node {}: Parent availability check passed for root {:?}", node.id, commit_request.base.root);
+    info!("Node {}: Parent availability check passed for root {:?}", node_id, commit_request.base.root);
 
     // Step 4: Persist the finalized unit to storage
     let epoch_dir = "/home/aleph-node/logs/finalized_units";
     let epoch_file = format!("{}/epoch{}.json", epoch_dir, commit_request.base.epoch_id);
-    info!("Node {}: Persisting finalized unit to file: {}", node.id, epoch_file);
 
-    if let Err(e) = fs::create_dir_all(epoch_dir).await {
+    info!("Node {}: Persisting finalized unit to file: {}", node_id, epoch_file);
+
+    if let Err(e) = tokio::fs::create_dir_all(epoch_dir).await {
         let error_message = format!(
             "Node {}: Failed to create directory for finalized units: {:?}",
-            node.id, e
+            node_id, e
         );
         error!("{}", error_message);
         return Err(error_message);
     }
 
-    let unit_entry = json!({
-        "node_id": node.id,
+    let unit_entry = serde_json::json!({
+        "node_id": node_id,
         "sender": commit_request.base.sender_id,
         "root": commit_request.base.root.clone(),
         "unit": commit_request.unit,
@@ -97,13 +98,20 @@ pub async fn handle_commit(
     if let Err(e) = write_finalized_unit(&epoch_file, unit_entry).await {
         let error_message = format!(
             "Node {}: Failed to write finalized unit to file {}: {:?}",
-            node.id, epoch_file, e
+            node_id, epoch_file, e
         );
         error!("{}", error_message);
         return Err(error_message);
     }
-    update_epoch_to_next_round(client, None).await;
-    // notify_transaction_submitted(&client, toml_config).await;
+
+    // Step 5: Update the epoch to the next round
+    let new_epoch_id = update_local_epoch(node.clone()).await;
+    // Broadcast the epoch update to other nodes
+    if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
+        error!("Failed to broadcast epoch update: {}", e);
+    }
+
+    info!("Node {}: Successfully handled commit request.", node_id);
     Ok(())
 }
 
