@@ -12,11 +12,7 @@ use crate::{
         requests::{BaseRequest, PrevoteRequest, ProposeRequest},
         responses::Response,
     },
-    utils::{
-        dag_utils::ensure_dag_synchronization,
-        merkle_utils::validate_merkle_branch,
-    },
-};
+    utils::merkle_utils::validate_merkle_branch};
 
 /// Handles an incoming proposal request in the ch-RBC protocol.
 pub async fn handle_propose(
@@ -126,7 +122,7 @@ pub async fn handle_propose(
     }
 
     // --- Step 6: Prevote transition (if proposal count is reached) ---
-    if proposal_count >= required_proposals {
+    if proposal_count > 0 {
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node.read().await.id, proposal_count, required_proposals, propose_request.base.epoch_id
