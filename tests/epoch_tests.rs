@@ -30,7 +30,7 @@ mod tests {
             let node_read = node.read().await;
             let updated_epoch = *node_read.current_epoch.lock().await;
             assert_eq!(updated_epoch, 1);
-            assert!(node_read.epoch_round_id.lock().await.contains(&1));
+            assert!(*node_read.current_epoch.lock().await == 1);
         }
 
         assert_eq!(new_epoch, 1);

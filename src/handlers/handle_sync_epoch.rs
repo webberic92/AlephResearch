@@ -25,11 +25,11 @@ pub async fn handle_sync_epoch(
 
     {
         let node_write = node.write().await;
-        let mut tracker = node_write.epoch_round_id.lock().await;
+        let mut current_epoch = node_write.current_epoch.lock().await;
 
-        if tracker.contains(&payload.epoch_id) {
+        if *current_epoch == payload.epoch_id {
             info!(
-                "Node {}: Epoch {} already synchronized from Node {}",
+                "Node {}: Already at Epoch {} from Node {}. No update required.",
                 node_id, payload.epoch_id, payload.sender
             );
             return (
@@ -41,16 +41,29 @@ pub async fn handle_sync_epoch(
                     ),
                 }),
             );
+        } else if *current_epoch > payload.epoch_id {
+            info!(
+                "Node {}: Received an outdated Epoch {} from Node {}. Current Epoch is {}.",
+                node_id, payload.epoch_id, payload.sender, *current_epoch
+            );
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(Response {
+                    status: format!(
+                        "Node {}: Outdated Epoch {} received from {}. Current Epoch: {}",
+                        node_id, payload.epoch_id, payload.sender, *current_epoch
+                    ),
+                }),
+            );
         }
 
-        // Update the tracker
-        tracker.insert(payload.epoch_id);
+        // Update to the new epoch if it's ahead
+        info!(
+            "Node {}: Updating epoch from {} to {} based on request from Node {}.",
+            node_id, *current_epoch, payload.epoch_id, payload.sender
+        );
+        *current_epoch = payload.epoch_id;
     }
-
-    info!(
-        "Node {}: Epoch {} synchronized successfully from Node {}",
-        node_id, payload.epoch_id, payload.sender
-    );
 
     // Persist the updated epoch to configuration
     if let Err(e) = persist_epoch_round_id(payload.epoch_id).await {
@@ -75,3 +88,4 @@ pub async fn handle_sync_epoch(
         }),
     )
 }
+

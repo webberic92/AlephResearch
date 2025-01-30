@@ -9,16 +9,15 @@ use crate::structs::{node::Node, requests::SyncEpochRequest};
 /// Updates the epoch in the local node state.
 pub async fn update_local_epoch(node: Arc<RwLock<Node>>) -> u64 {
     let next_epoch_id: u64;
+
     {
         // Acquire a write lock to update the epoch ID
         let node_state = node.write().await;
         let mut current_epoch = node_state.current_epoch.lock().await;
-        let mut epoch_round_id = node_state.epoch_round_id.lock().await;
 
-        // Increment the current epoch ID and add it to the tracker
+        // Increment the epoch ID
         next_epoch_id = *current_epoch + 1;
         *current_epoch = next_epoch_id;
-        epoch_round_id.insert(next_epoch_id);
 
         info!(
             "Node {}: Updated local epoch to the next round: {}",
@@ -28,6 +27,7 @@ pub async fn update_local_epoch(node: Arc<RwLock<Node>>) -> u64 {
 
     next_epoch_id
 }
+
 
 /// Broadcasts the updated epoch to all nodes.
 pub async fn broadcast_epoch_update(

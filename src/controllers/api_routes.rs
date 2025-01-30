@@ -140,7 +140,7 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             async move {
                 let node_read = node.read().await;
                 let quorum_votes = node_read.quorum_votes.read().await;
-                let epoch_round_id = node_read.epoch_round_id.lock().await;
+                let epoch_round_id = node_read.current_epoch.lock().await;
     
                 Json(Response {
                     status: format!(

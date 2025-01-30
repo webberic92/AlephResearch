@@ -9,7 +9,6 @@ pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
     pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    pub epoch_round_id: Arc<Mutex<HashSet<u64>>>, // Tracks synchronized epochs
     pub current_epoch: Arc<Mutex<u64>>,          // Tracks the current epoch explicitly
     pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
     pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>, 
@@ -30,8 +29,7 @@ impl Node {
             total_nodes,
             ip_address,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            epoch_round_id: Arc::new(Mutex::new(HashSet::new())),
-            current_epoch: Arc::new(Mutex::new(0)), // Start with epoch ID 0
+            current_epoch: Arc::new(Mutex::new(1)), // Start with epoch ID 1
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),
             finalized_blocks: Arc::new(Mutex::new(HashSet::new())), 
             dag: Arc::new(RwLock::new(HashMap::new())),             
