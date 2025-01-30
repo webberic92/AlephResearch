@@ -5,6 +5,7 @@ use mockito::Matcher;
 use reqwest::Client;
 use serde_json::json;
 use tokio::sync::RwLock;
+use tracing::info;
 use std::{collections::HashMap, sync::Arc};
 use aleph_research::structs::node::Node;
 use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, validate_merkle_branch};
@@ -71,8 +72,8 @@ async fn test_ensure_dag_synchronization_success() {
 
     {
         let node_state = node.write().await;
-        let mut epoch_round_id = node_state.epoch_round_id.lock().await;
-        epoch_round_id.insert(2);
+        let mut epoch_round_id = node_state.current_epoch.lock().await;
+        *epoch_round_id = 2;
     }
 
     let client = Client::new();
@@ -196,9 +197,9 @@ async fn test_ensure_round_sync_success() {
     )));
 
     {
-        let node_write = node.write().await; // Acquire a write lock on the node
-        let mut epoch_round_id = node_write.epoch_round_id.lock().await; // Access `epoch_round_id`
-        epoch_round_id.insert(2); // Ensure it contains `2`
+        let node_state = node.write().await;
+        let mut epoch_round_id = node_state.current_epoch.lock().await;
+        *epoch_round_id = 2;
     }
 
     let result = ensure_round_sync(node.clone(), 3).await;
@@ -221,18 +222,34 @@ async fn test_ensure_round_sync_failure() {
     )));
 
     {
-        let node_write = node.write().await;
-        let mut epoch_round_id = node_write.epoch_round_id.lock().await;
-        epoch_round_id.insert(1); // Initialize with `1` instead of `2`
+        let node_state = node.write().await;
+        let mut epoch_round_id = node_state.current_epoch.lock().await;
+        *epoch_round_id = 2;
+        info!("Test: Set current_epoch to {}", *epoch_round_id); // Debugging
     }
 
-    let result = ensure_round_sync(node.clone(), 3).await;
-    assert!(result.is_err());
+    {
+        let node_state = node.read().await;
+        let epoch_round_id = node_state.current_epoch.lock().await;
+        info!(
+            "Test: Confirming current_epoch before calling ensure_round_sync: {}",
+            *epoch_round_id
+        );
+    }
+
+    let result = ensure_round_sync(node.clone(), 4).await;  // Ensure failure
+    assert!(result.is_err(), "Expected ensure_round_sync to fail, but it succeeded.");
     assert_eq!(
         result.unwrap_err(),
-        "Node 1: DAG not synchronized to round 2 for prevote (current round: 1)"
+        format!(
+            "Node 1: DAG not synchronized to round {} for prevote (current round: {})",
+            3, // target_round - 1 (4 - 1)
+            2  // Matches expected `current_epoch`
+        )
     );
 }
+
+
 
 #[tokio::test]
 async fn test_are_parents_available_success() {

@@ -45,31 +45,36 @@ pub async fn check_dag_sync(
 
 /// Ensures that the DAG has reached the required round before progressing.
 pub async fn ensure_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Result<(), String> {
-    // Access the current round by locking the `epoch_round_id`
-    let current_round = {
-        let node_state = node.read().await; // Lock the `RwLock` for read access
-        let epoch_round_id = node_state.epoch_round_id.lock().await; // Lock the Mutex inside the Node
-        *epoch_round_id.iter().max().unwrap_or(&0) // Get the maximum epoch_round_id or default to 0
+    let (current_round, node_id) = {
+        let node_state = node.read().await;
+        let epoch_round_id = node_state.current_epoch.lock().await;
+        (*epoch_round_id, node_state.id)
     };
 
+    info!("Node {}: Current epoch: {}, Target round: {}", node_id, current_round, target_round);
+
     // Ensure synchronization to the required round
-    if current_round < target_round - 1 { // ✅ Fix: Use `<` instead of `<=`
+    if current_round < target_round - 1 {  // Change back to `<`
         let error_message = format!(
             "Node {}: DAG not synchronized to round {} for prevote (current round: {})",
-            node.read().await.id, // Access `id` from the read-locked Node
+            node_id,
             target_round - 1,
             current_round
         );
+        error!("{}", error_message);
         return Err(error_message);
     }
 
     info!(
         "Node {}: DAG is synchronized to round {} or beyond.",
-        node.read().await.id, // Access `id` from the read-locked Node
+        node_id,
         target_round - 1
     );
     Ok(())
 }
+
+
+
 
 
 
