@@ -41,7 +41,7 @@ pub async fn broadcast_epoch_update(
     };
 
     for node_url in node_urls {
-        let sync_url = format!("{}/sync_epoch", node_url); // ✅ Fixed double http:// issue
+        let sync_url = format!("http://{}/sync_epoch", node_url); // ✅ Fixed double http:// issue
 
         let sync_epoch_request = SyncEpochRequest {
             epoch_id,

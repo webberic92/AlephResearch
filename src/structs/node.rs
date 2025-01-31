@@ -42,7 +42,15 @@ impl Node {
     }
     
     pub fn get_quorum_threshold(&self) -> usize {
-        2 * self.get_fault_tolerance_threshold() + 1 // 2f + 1: Quorum for consensus
+        let f = (self.total_nodes.saturating_sub(1)) / 3;
+        let quorum = 2 * f + 1;
+    
+        info!(
+            "Node {}: Total nodes: {}, Fault tolerance f: {}, Required quorum: {}",
+            self.id, self.total_nodes, f, quorum
+        );
+    
+        quorum
     }
     
     pub async fn is_quorum_reached(&self, epoch_id: u64) -> bool {
@@ -53,7 +61,10 @@ impl Node {
             .get(&epoch_id.to_be_bytes().to_vec()) // Get vote count for the epoch
             .cloned() // Clone the value to avoid holding the lock
             .unwrap_or(0); // Default to 0 if no votes exist
-
+        info!(
+            "Node {}: Checking quorum for epoch {}. Votes: {}, Threshold: {}",
+            self.id, epoch_id, vote_count, quorum_threshold
+        );
         vote_count >= quorum_threshold // Check if vote count satisfies the quorum
     }
 

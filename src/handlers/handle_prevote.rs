@@ -1,87 +1,71 @@
-use axum::Json;
 use base64::Engine;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use sha2::Digest;
-use tokio::sync::RwLock;
-use std::sync::Arc;
-use tracing::{ error, info, warn};
+use tokio::{sync::RwLock, time::timeout};
+use std::{sync::Arc, time::Duration};
+use tracing::{error, info, warn};
 use crate::{
     handlers::handle_commit::handle_commit,
     structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
-        responses::Response
     },
     utils::{
-        dag_utils::{ensure_dag_synchronization, validate_unit_parents}, merkle_utils::{reconstruct_unit, validate_merkle_branch}
+        dag_utils::{ensure_dag_synchronization, validate_unit_parents},
+        merkle_utils::{reconstruct_unit, validate_merkle_branch},
     },
 };
+
+/// Handles an incoming PREVOTE request in the ch-RBC protocol.
 pub async fn handle_prevote(
     node: Arc<RwLock<Node>>,
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
-) -> (StatusCode, Json<Response>) {
-    // Log the incoming request
+) -> Result<(), String> {
     info!(
-        "Node {}: Handling PREVOTE request from Node {}",
-        node.read().await.id,
-        prevote_request.propose.base.sender_id
+        "test PREVOTE entering",
+    );
+    let node_id = node.read().await.id;
+
+    info!(
+        "Node {}: Handling PREVOTE request from Node {} for epoch {}",
+        node_id, prevote_request.propose.base.sender_id, prevote_request.propose.base.epoch_id
     );
 
     // --- Step 1: Validate the epoch ---
     let current_epoch = {
-        // Acquire the read lock for the node
-        let node_state = node.read().await;
-    
-        // Acquire the lock for current_epoch within the read scope
-        let current_epoch_guard = node_state.current_epoch.lock().await;
-    
-        // Dereference the MutexGuard to get the current epoch
-        *current_epoch_guard
+        let node_state = match timeout(Duration::from_secs(5), node.read()).await {
+            Ok(state) => state,
+            Err(_) => {
+                error!("Node {}: Timeout while acquiring read lock!", node_id);
+                return Err("Timeout while acquiring read lock".to_string());
+            }
+        };
+
+        let current_epoch_lock = node_state.current_epoch.lock().await;
+        *current_epoch_lock
     };
-    
+
     if prevote_request.propose.base.epoch_id != current_epoch {
-        warn!(
-            "Node {}: Received prevote for outdated epoch {} from Node {}. Current epoch: {}",
-            node.read().await.id,
-            prevote_request.propose.base.epoch_id,
-            prevote_request.propose.base.sender_id,
-            current_epoch
+        let error_message = format!(
+            "Node {}: Received prevote for outdated epoch {}. Current epoch is {}",
+            node_id, prevote_request.propose.base.epoch_id, current_epoch
         );
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response {
-                status: format!(
-                    "Epoch {} is already committed. Current epoch is {}.",
-                    prevote_request.propose.base.epoch_id,
-                    current_epoch
-                ),
-            }),
-        );
+        warn!("{}", error_message);
+        return Err(error_message);
     }
 
     // --- Step 2: Decode Base64-encoded shards ---
-    let decoded_shards = match prevote_request
+    let decoded_shards: Vec<Vec<u8>> = prevote_request
         .propose
         .shards
         .iter()
         .map(|shard| base64::engine::general_purpose::STANDARD.decode(shard.as_bytes()))
-        .collect::<Result<Vec<Vec<u8>>, _>>()
-    {
-        Ok(shards) => shards,
-        Err(e) => {
-            error!("Node {}: Failed to decode shards: {:?}", node.read().await.id, e);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response {
-                    status: format!("Shard decoding failed: {:?}", e),
-                }),
-            );
-        }
-    };
+        .collect::<Result<_, _>>()
+        .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
 
     // --- Step 3: Decode Base64-encoded proofs ---
-    let decoded_proofs = match prevote_request
+    let decoded_proofs: Vec<Vec<Vec<u8>>> = prevote_request
         .propose
         .proofs
         .iter()
@@ -92,18 +76,7 @@ pub async fn handle_prevote(
                 .collect::<Result<Vec<_>, _>>() // Decode individual branch
         })
         .collect::<Result<Vec<_>, _>>() // Collect all decoded branches
-    {
-        Ok(proofs) => proofs,
-        Err(e) => {
-            error!("Node {}: Failed to decode proofs: {:?}", node.read().await.id, e);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response {
-                    status: format!("Proof decoding failed: {:?}", e),
-                }),
-            );
-        }
-    };
+        .map_err(|e| format!("Node {}: Failed to decode proofs: {:?}", node_id, e))?;
 
     // --- Step 4: Ensure DAG synchronization ---
     if let Err(e) = ensure_dag_synchronization(
@@ -116,18 +89,13 @@ pub async fn handle_prevote(
     .await
     {
         let error_message = format!(
-            "Node {}: DAG synchronization failed with Node {}. Error: {:?}",
-            node.read().await.id,
-            prevote_request.propose.base.sender_id,
-            e
+            "Node {}: DAG synchronization failed. Error: {:?}",
+            node_id, e
         );
         error!("{}", error_message);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response { status: error_message }),
-        );
+        return Err(error_message);
     }
-    info!("Node {}: DAG synchronization successful.", node.read().await.id);
+    info!("Node {}: DAG synchronization successful.", node_id);
 
     // --- Step 5: Compute shard hashes ---
     let shard_hashes: Vec<Vec<u8>> = decoded_shards
@@ -139,131 +107,115 @@ pub async fn handle_prevote(
     for (index, proof) in decoded_proofs.iter().enumerate() {
         if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
             let error_message = format!(
-                "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}.",
-                node.read().await.id, index, prevote_request.propose.base.root
+                "Node {}: Merkle root mismatch for shard {}.",
+                node_id, index
             );
             error!("{}", error_message);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response {
-                    status: "Merkle root mismatch.".to_string(),
-                }),
-            );
+            return Err(error_message);
         }
     }
 
     // --- Step 7: Reconstruct the unit ---
     let parents = shard_hashes.iter().flat_map(|hash| hash.clone()).collect();
-    let reconstructed_unit = match reconstruct_unit(
+    let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.epoch_id,
         parents,
-    ) {
-        Ok(unit) => unit,
-        Err(e) => {
-            let error_message = format!(
-                "Node {}: Reconstruction failed. Error: {:?}",
-                node.read().await.id, e
-            );
-            error!("{}", error_message);
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response {
-                    status: format!("Reconstruction failed: {:?}", e),
-                }),
-            );
-        }
-    };
+    )
+    .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
 
     // --- Step 8: Validate parents ---
     if let Err(e) = validate_unit_parents(node.clone(), &reconstructed_unit.data).await {
-        let node_id = {
-            // Acquire the read lock once and extract the ID
-            let node_state = node.read().await;
-            node_state.id
-        };
-    
         let error_message = format!(
             "Node {}: Parent validation failed. Error: {:?}",
             node_id, e
         );
         error!("{}", error_message);
-        return (
-            StatusCode::BAD_REQUEST,
-            Json(Response {
-                status: format!("Parent validation failed: {:?}", e),
-            }),
-        );
+        return Err(error_message);
     }
 
     // --- Step 9: Update quorum votes ---
-    {
-        let node_state = node.write().await;
-        let mut quorum_votes = node_state.quorum_votes.write().await;
-        let epoch_key = prevote_request.propose.base.root.clone();
-        let vote_count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
-        *vote_count += 1;
+    let should_commit = {
+        let epoch_id = prevote_request.propose.base.epoch_id;
+        let epoch_key = epoch_id.to_be_bytes().to_vec();
+
+        let vote_count = {
+            let node_state = match timeout(Duration::from_secs(5), node.write()).await {
+                Ok(state) => state,
+                Err(_) => {
+                    error!("Node {}: Timeout while acquiring write lock!", node_id);
+                    return Err("Timeout while acquiring write lock".to_string());
+                }
+            };
+
+            // Lock only the `quorum_votes` field
+            let mut quorum_votes = node_state.quorum_votes.write().await;
+            let vote_count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
+            *vote_count += 1;
+
+            info!(
+                "Node {}: Updated quorum votes for epoch {}. Current votes: {}",
+                node_id, epoch_id, *vote_count
+            );
+
+            // Returning the vote count so it can be used after the lock is released
+            *vote_count
+        }; // <- Locks automatically released here
+
+        // Perform quorum check separately
+        let node_clone = node.clone();
+        let quorum_threshold = node_clone.read().await.get_quorum_threshold();
+        let is_quorum = node_clone.read().await.is_quorum_reached(epoch_id).await;
 
         info!(
-            "Node {}: Updated quorum votes for root {:?}. Current votes: {}",
-            node_state.id, epoch_key, *vote_count
+            "Node {}: Checking quorum for epoch {}. Required quorum: {}, Current votes: {}",
+            node_id, epoch_id, quorum_threshold, vote_count
         );
 
-        drop(quorum_votes);
-        drop(node_state);
-    }
+        is_quorum
+    };
 
     // --- Step 10: Check quorum and handle commit ---
-    let node_state = node.write().await;
-    if node_state.is_quorum_reached(prevote_request.propose.base.epoch_id).await {
+    if should_commit {
         info!(
             "Node {}: Quorum reached for epoch {}. Transitioning to commit.",
-            node_state.id, prevote_request.propose.base.epoch_id
+            node_id, prevote_request.propose.base.epoch_id
         );
 
         let commit_request = CommitRequest {
             base: prevote_request.propose.base.clone(),
             unit: reconstructed_unit.data.clone(),
-            proofs: decoded_proofs
-                .iter()
-                .map(|proof| {
-                    proof
-                        .iter()
-                        .map(|p| base64::engine::general_purpose::STANDARD.encode(p))
-                        .collect()
-                })
-                .collect(),
+            proofs: decoded_proofs.iter().map(|proof| {
+                proof.iter().map(|p| base64::engine::general_purpose::STANDARD.encode(p)).collect()
+            }).collect(),
         };
 
         if let Err(e) = handle_commit(node.clone(), client.clone(), commit_request).await {
             let error_message = format!(
                 "Node {}: Commit phase failed for epoch {}. Error: {:?}",
-                node_state.id, prevote_request.propose.base.epoch_id, e
+                node_id, prevote_request.propose.base.epoch_id, e
             );
             error!("{}", error_message);
-            return (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                Json(Response { status: error_message }),
-            );
+            return Err(error_message);
         }
     } else {
         info!(
-            "Node {}: Quorum not yet reached for epoch {}.",
-            node_state.id, prevote_request.propose.base.epoch_id
+            "Node {}: Quorum not yet reached for epoch {}. Required: {}, Current votes: {}",
+            node_id, prevote_request.propose.base.epoch_id,
+            node.read().await.get_quorum_threshold(),
+            node.read().await.quorum_votes.read().await
+                .get(&prevote_request.propose.base.epoch_id.to_be_bytes().to_vec())
+                .cloned().unwrap_or(0)
         );
     }
 
-    // --- Step 11: Return success response ---
-    (
-        StatusCode::OK,
-        Json(Response {
-            status: format!(
-                "Node {}: Prevote successfully handled for epoch {} from sender {}",
-                node_state.id,
-                prevote_request.propose.base.epoch_id,
-                prevote_request.propose.base.sender_id
-            ),
-        }),
-    )
-}
 
+
+    // --- Step 11: Return success response ---
+    info!(
+        "Node {}: Prevote successfully handled for epoch {}.",
+        node_id, prevote_request.propose.base.epoch_id
+    );
+
+    Ok(())
+}

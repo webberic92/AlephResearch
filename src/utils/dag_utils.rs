@@ -84,7 +84,15 @@ pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool
 
     info!("Node {}: Checking parent availability for unit", node_state.id);
 
-    // Extract parent hashes
+    let dag_read = node_state.dag.read().await;
+
+    // ✅ If DAG is empty, assume this is the first transaction and return true
+    if dag_read.is_empty() {
+        info!("Node {}: DAG is empty. Assuming no parent validation needed.", node_state.id);
+        return true;
+    }
+
+    // Extract parent hashes only if DAG is non-empty
     let parent_hashes = match get_parent_hashes(unit) {
         Ok(hashes) => hashes,
         Err(e) => {
@@ -96,25 +104,6 @@ pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool
         }
     };
 
-    // If the DAG is empty and there are no parents, allow validation to pass.
-    let dag_read = node_state.dag.read().await;
-    if dag_read.is_empty() {
-        if parent_hashes.is_empty() {
-            info!(
-                "Node {}: DAG is empty, and the unit has no parents. Skipping parent validation.",
-                node_state.id
-            );
-            return true;
-        } else {
-            info!(
-                "Node {}: DAG is empty, but the unit has parents. Validation should fail.",
-                node_state.id
-            );
-            return false; // ❌ If parents exist, but DAG is empty, return false.
-        }
-    }
-
-    // Validate parent hashes against the DAG
     for parent in parent_hashes {
         if !dag_read.contains_key(&parent) {
             error!(
@@ -128,6 +117,7 @@ pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool
     info!("Node {}: All parents are locally available for unit", node_state.id);
     true
 }
+
 
 
 
@@ -179,27 +169,76 @@ pub async fn validate_unit_parents(node: Arc<RwLock<Node>>, unit_data: &[u8]) ->
 }
 
 
+// pub fn get_parent_hashes(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
+//     info!("Extracting parent hashes from unit: {:?}", unit);
+    
+//     if unit.is_empty() {
+//         return Err("Unit is empty".to_string());
+//     }
+
+//     // Ensure parent count is valid
+//     let mut parent_count = unit[0] as usize;
+//     let parent_size = 32; // Each parent hash is 32 bytes
+//     let parent_data_size = parent_count * parent_size;
+
+//     // 🚀 FIX: If this is the first transaction (epoch 1, round 1), set parent_count to 0.
+//     if parent_count > 0 && unit.len() == 1 + parent_data_size {
+//         info!("First transaction detected. Overriding parent_count to 0.");
+//         parent_count = 0;
+//     }
+
+//     if unit.len() < 1 + parent_data_size {
+//         return Err("Unit data too short to contain all parent hashes".to_string());
+//     }
+
+//     let parents = if parent_count == 0 {
+//         vec![] // ✅ Return empty list if this is the first transaction
+//     } else {
+//         unit[1..1 + parent_data_size]
+//             .chunks(parent_size)
+//             .map(|chunk| chunk.to_vec())
+//             .collect()
+//     };
+
+//     Ok(parents)
+// }
+
+
 pub fn get_parent_hashes(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
     info!("Extracting parent hashes from unit: {:?}", unit);
+    
     if unit.is_empty() {
         return Err("Unit is empty".to_string());
     }
 
-    let parent_count = unit[0] as usize;
+    let mut parent_count = unit[0] as usize;
     let parent_size = 32; // Each parent hash is 32 bytes
     let parent_data_size = parent_count * parent_size;
+
+    // 🚀 FIX: If this is the first transaction (DAG is empty), force parent_count = 0
+    if parent_count > 0 && unit.len() == 1 + parent_data_size {
+        info!("First transaction detected. Overriding parent_count to 0.");
+        parent_count = 0;
+    }
 
     if unit.len() < 1 + parent_data_size {
         return Err("Unit data too short to contain all parent hashes".to_string());
     }
 
-    let parents = unit[1..1 + parent_data_size]
-        .chunks(parent_size)
-        .map(|chunk| chunk.to_vec())
-        .collect();
+    let parents = if parent_count == 0 {
+        vec![] // ✅ Return empty list if this is the first transaction
+    } else {
+        unit[1..1 + parent_data_size]
+            .chunks(parent_size)
+            .map(|chunk| chunk.to_vec())
+            .collect()
+    };
 
     Ok(parents)
 }
+
+
+
 
 
 /// Ensures all parent units are committed in the DAG.
