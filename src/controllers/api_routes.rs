@@ -16,7 +16,6 @@ use crate::{
 
 pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     Router::new()
-    
     .route("/propose", post({
         let node = node.clone(); // Clone the Arc to move it into the closure
         let client = client.clone(); // Clone the Arc to move it into the closure
@@ -27,12 +26,22 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
                 match serde_json::from_value::<ProposeRequest>(payload) {
                     Ok(parsed_payload) => {
                         // Handle the proposal and respond with proper HTTP status codes
-                        handle_propose(
-                            node,               // Pass the cloned Arc<RwLock<Node>>
-                            client,             // Pass the cloned Arc<Client>
-                            parsed_payload,     // Pass the parsed ProposeRequest directly
-                        )
-                        .await
+                        match handle_propose(node, client, parsed_payload).await {
+                            Ok(_) => (
+                                StatusCode::OK,
+                                Json(Response {
+                                    status: "Proposal successfully handled.".to_string(),
+                                }),
+                            ),
+                            Err(e) => {
+                                let error_message = format!("Failed to handle proposal: {:?}", e);
+                                tracing::error!("{}", error_message);
+                                (
+                                    StatusCode::INTERNAL_SERVER_ERROR,
+                                    Json(Response { status: error_message }),
+                                )
+                            }
+                        }
                     }
                     Err(err) => {
                         // Handle deserialization error
@@ -47,23 +56,33 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-
     .route("/prevote", post({
-        let node = node.clone(); // Clone the Arc to move it into the closure
-        let client = client.clone(); // Clone the Arc to move it into the closure
+        let node = node.clone(); // Clone the Arc for the node
+        let client = client.clone(); // Clone the Arc for the client
         move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
             let client = client.clone(); // Clone Arc for each request
             async move {
+                // Parse the JSON payload into the `PrevoteRequest` struct
                 match serde_json::from_value::<PrevoteRequest>(payload) {
                     Ok(parsed_payload) => {
                         // Handle the prevote and respond with proper HTTP status codes
-                        handle_prevote(
-                            node,               // Pass the cloned Arc<RwLock<Node>>
-                            client,             // Pass the cloned Arc<Client>
-                            parsed_payload,     // Pass the parsed PrevoteRequest directly
-                        )
-                        .await
+                        match handle_prevote(node, client, parsed_payload).await {
+                            Ok(_) => (
+                                StatusCode::OK,
+                                Json(Response {
+                                    status: "Prevote successfully handled.".to_string(),
+                                }),
+                            ),
+                            Err(e) => {
+                                let error_message = format!("Failed to handle prevote: {:?}", e);
+                                tracing::error!("{}", error_message);
+                                (
+                                    StatusCode::INTERNAL_SERVER_ERROR,
+                                    Json(Response { status: error_message }),
+                                )
+                            }
+                        }
                     }
                     Err(err) => {
                         // Handle deserialization error
@@ -78,7 +97,6 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-
     .route("/commit", post({
         let node = node.clone(); // Clone the Arc for the node
         let client = client.clone(); // Clone the Arc for the client
@@ -120,7 +138,6 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-
     .route("/sync_epoch", post({
         let node = node.clone(); // Clone the Arc for the node
         move |Json(payload): Json<SyncEpochRequest>| {
@@ -132,7 +149,6 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-    
     .route("/health", axum::routing::get({
         let node = node.clone(); // Clone the Arc for the node
         move || {
@@ -151,7 +167,6 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-    
     .route("/dag_sync", post({
         let node = node.clone(); // Clone the Arc for the node
         let client = client.clone(); // Clone the Arc for the client

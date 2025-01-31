@@ -150,24 +150,45 @@ async fn test_validate_unit_parents_failure() {
 #[tokio::test]
 async fn test_get_parents_success() {
     // Create a unit with a parent count and parent hashes
-    let mut unit = vec![2]; // Parent count: 2
-    let parent1 = vec![1; 32]; // First parent hash
-    let parent2 = vec![2; 32]; // Second parent hash
-    unit.extend(&parent1); // Add first parent hash
-    unit.extend(&parent2); // Add second parent hash
+    let parent_count = 2; // Expected number of parents
+    let mut unit = vec![parent_count as u8]; // Parent count as first byte
+    
+    let parent1 = vec![1; 32]; // First parent hash (32 bytes)
+    let parent2 = vec![2; 32]; // Second parent hash (32 bytes)
 
-    // Call get_parent_hashes and ensure success
+    unit.extend_from_slice(&parent1); // Append first parent hash
+    unit.extend_from_slice(&parent2); // Append second parent hash
+
+    // **Print debug information**
+    println!("Constructed unit: {:?}", unit);
+    println!("First byte (parent count): {}", unit[0]);
+    println!(
+        "Expected parent data size: {}, Actual unit size: {}",
+        parent_count * 32,
+        unit.len()
+    );
+
+    // **Ensure unit structure is correct**
+    assert_eq!(unit.len(), 1 + (parent_count * 32), "Unexpected unit length");
+
+    // Call get_parent_hashes() and check result
     let result = get_parent_hashes(&unit);
+    println!("Extracted parents: {:?}", result);
+
     assert!(result.is_ok(), "get_parent_hashes failed with result: {:?}", result);
 
-    // Extract parents from the result
     let parents = result.unwrap();
+    println!("Extracted parents (after unwrap): {:?} (Length: {})", parents, parents.len());
 
-    // Ensure the number of parents and their values are correct
-    assert_eq!(parents.len(), 2, "Unexpected number of parents");
+    // Ensure correct number of parents were extracted
+    assert_eq!(parents.len(), parent_count, "Unexpected number of parents");
+
+    // Ensure extracted parents match original
     assert_eq!(parents[0], parent1, "First parent hash mismatch");
     assert_eq!(parents[1], parent2, "Second parent hash mismatch");
 }
+
+
 
 
 
