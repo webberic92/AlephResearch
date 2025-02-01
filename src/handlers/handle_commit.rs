@@ -86,8 +86,8 @@ pub async fn handle_commit(
     let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", commit_request.base.epoch_id);
     let unit_entry = serde_json::json!({
         "committing_node_id": node_id,
-        "proposer_id": commit_request.base.proposing_node_id,
-        "root": commit_request.base.root.clone(),
+        "proposer_node_id": commit_request.base.proposing_node_id,
+        "merkle_root": commit_request.base.root.clone(),
         "unit": commit_request.unit,
         "timestamp": chrono::Utc::now().to_rfc3339(),
     });
