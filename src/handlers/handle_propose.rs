@@ -1,4 +1,4 @@
-use std::{future::poll_fn, sync::Arc, time::Duration};
+use std::{sync::Arc, time::Duration};
 use base64::{engine::general_purpose, Engine};
 use sha2::Digest;
 use tokio::{sync::RwLock, time::timeout};
@@ -8,7 +8,7 @@ use crate::{
     handlers::handle_prevote::handle_prevote,
     structs::{
         node::Node,
-        requests::{BaseRequest, PrevoteRequest, ProposeRequest},
+        requests::{PrevoteRequest, ProposeRequest},
     },
     utils::merkle_utils::validate_merkle_branch,
 };
@@ -19,8 +19,13 @@ pub async fn handle_propose(
     client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
-    let node_id = node.read().await.id;
-
+    let node_read = node.read().await; // Acquire the read lock once
+    let node_id = node_read.id;
+    
+    // Acquire the epoch lock and retrieve its value
+    let node_epoch = *node_read.current_epoch.lock().await;
+    drop(node_read); // Explicitly drop the read lock before acquiring the write lock
+    
     // Safely acquire a write lock with a timeout
     let node_state = match timeout(Duration::from_secs(5), node.write()).await {
         Ok(state) => state,
@@ -32,13 +37,20 @@ pub async fn handle_propose(
     
     // Log proposal handling
     info!(
-        "*** Handling PROPOSE REQUEST: Node {} from Sender {} ***",
-        node_id, propose_request.base.proposing_node_id
+        "*** Handling PROPOSE REQUEST: Node {} from Sender {} for epoch {} ***",
+        node_id, propose_request.base.proposing_node_id, propose_request.base.epoch_id
     );
-
+    
+    if propose_request.base.epoch_id < node_epoch {
+        return Err(format!(
+            "Outdated epoch {}, Node {} is on epoch {}",
+            propose_request.base.epoch_id, node_id, node_epoch
+        ).into());
+    }
+    
     // Release the write lock before performing any asynchronous operations
     drop(node_state);
-
+    
     // --- Step 1: Decode Base64-encoded shards ---
     let decoded_shards: Vec<Vec<u8>> = propose_request
         .shards
