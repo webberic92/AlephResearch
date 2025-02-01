@@ -40,7 +40,7 @@ pub async fn handle_commit(
 
     info!(
         "Node {}: Handling commit request from Node {} for epoch {}",
-        node_id, commit_request.base.sender_id, commit_request.base.epoch_id
+        node_id, commit_request.base.proposing_node_id, commit_request.base.epoch_id
     );
 
     // Step 2: Validate Merkle branches (NO LOCK HELD)
@@ -85,8 +85,8 @@ pub async fn handle_commit(
     // Step 4: Persist finalized unit (NO LOCK HELD)
     let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", commit_request.base.epoch_id);
     let unit_entry = serde_json::json!({
-        "node_id": node_id,
-        "sender": commit_request.base.sender_id,
+        "committing_node_id": node_id,
+        "proposer_id": commit_request.base.proposing_node_id,
         "root": commit_request.base.root.clone(),
         "unit": commit_request.unit,
         "timestamp": chrono::Utc::now().to_rfc3339(),

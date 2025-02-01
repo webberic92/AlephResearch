@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct BaseRequest {
-    pub sender_id: usize,  // ID of the node sending the message
+    pub proposing_node_id: usize,  // ID of the node sending the message
     pub root: Vec<u8>,     // Merkle root of the tree
     pub epoch_id: u64,     // Epoch ID
 }

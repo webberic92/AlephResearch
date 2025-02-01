@@ -29,7 +29,7 @@ pub async fn handle_prevote(
 
     info!(
         "Node {}: Handling PREVOTE request from Node {} for epoch {}",
-        node_id, prevote_request.propose.base.sender_id, prevote_request.propose.base.epoch_id
+        node_id, prevote_request.propose.base.proposing_node_id, prevote_request.propose.base.epoch_id
     );
 
     // --- Step 1: Validate the epoch ---
@@ -83,7 +83,7 @@ pub async fn handle_prevote(
         node.clone(),
         &client,
         prevote_request.propose.base.epoch_id,
-        &prevote_request.propose.base.sender_id,
+        &prevote_request.propose.base.proposing_node_id,
         prevote_request.sender_url.clone(),
     )
     .await
