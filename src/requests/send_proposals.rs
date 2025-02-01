@@ -69,7 +69,7 @@ pub async fn send_proposals(
 
         // Prepare the base request metadata
         let base_request = BaseRequest {
-            sender_id: toml_config.node.id,                   // Node ID
+            proposing_node_id: toml_config.node.id,                   // Node ID
             epoch_id: toml_config.consensus.epoch_round_id,   // Current epoch
             root: merkle_root.to_vec(),                       // Merkle root
         };

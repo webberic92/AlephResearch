@@ -1,4 +1,4 @@
-use std::{sync::Arc, time::Duration};
+use std::{future::poll_fn, sync::Arc, time::Duration};
 use base64::{engine::general_purpose, Engine};
 use sha2::Digest;
 use tokio::{sync::RwLock, time::timeout};
@@ -33,7 +33,7 @@ pub async fn handle_propose(
     // Log proposal handling
     info!(
         "*** Handling PROPOSE REQUEST: Node {} from Sender {} ***",
-        node_id, propose_request.base.sender_id
+        node_id, propose_request.base.proposing_node_id
     );
 
     // Release the write lock before performing any asynchronous operations
@@ -102,7 +102,7 @@ pub async fn handle_propose(
         };
 
         let mut proposal_tracker = node_state.proposal_tracker.lock().await;
-        proposal_tracker.insert(propose_request.base.sender_id);
+        proposal_tracker.insert(propose_request.base.proposing_node_id);
 
         let node_count = node_state.total_nodes;
         let f = node_state.get_fault_tolerance_threshold();
@@ -133,15 +133,7 @@ pub async fn handle_propose(
         };
 
         let prevote_request = PrevoteRequest {
-            propose: ProposeRequest {
-                base: BaseRequest {
-                    sender_id: node_state.id,
-                    root: propose_request.base.root.clone(),
-                    epoch_id: propose_request.base.epoch_id,
-                },
-                proofs: propose_request.proofs.clone(),
-                shards: propose_request.shards.clone(),
-            },
+            propose: propose_request.clone(),
             sender_url: node_state.ip_address.clone(),
         };
 
@@ -149,7 +141,7 @@ pub async fn handle_propose(
 
         info!(
             "Node {}: Sending prevote for epoch {} from sender {}",
-            node_id, prevote_request.propose.base.epoch_id, prevote_request.propose.base.sender_id
+            node_id, prevote_request.propose.base.epoch_id, prevote_request.propose.base.proposing_node_id
         );
 
         if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
@@ -169,7 +161,7 @@ pub async fn handle_propose(
 
     info!(
         "Node {}: Proposal successfully handled for epoch {} from sender {}",
-        node_id, propose_request.base.epoch_id, propose_request.base.sender_id
+        node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
     );
     Ok(())
 }

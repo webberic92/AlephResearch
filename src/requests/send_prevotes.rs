@@ -59,7 +59,7 @@ pub async fn send_prevotes(
         let payload = PrevoteRequest {
             propose: ProposeRequest {
                 base: BaseRequest {
-                    sender_id: toml_config.node.id,                   // Sender's node ID
+                    proposing_node_id: toml_config.node.id,                   // Sender's node ID
                     epoch_id: toml_config.consensus.epoch_round_id,   // Current epoch
                     root: merkle_root.clone(),                        // Merkle root
                 },
