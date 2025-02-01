@@ -68,6 +68,8 @@ async fn test_ensure_dag_synchronization_success() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     {
@@ -101,6 +103,8 @@ async fn test_validate_unit_parents_success() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
     {
         let  node_write = node.write().await; // Acquire a write lock on the node
@@ -123,6 +127,8 @@ async fn test_validate_unit_parents_failure() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     {
@@ -215,6 +221,8 @@ async fn test_ensure_round_sync_success() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     {
@@ -240,6 +248,8 @@ async fn test_ensure_round_sync_failure() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     {
@@ -279,6 +289,8 @@ async fn test_are_parents_available_success() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     let parent_hash = vec![1; 32];
@@ -302,6 +314,8 @@ async fn test_are_parents_available_failure() {
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
+        "127.0.0.1:8003".to_string(),
+
     )));
 
     let unit = vec![1; 32];
