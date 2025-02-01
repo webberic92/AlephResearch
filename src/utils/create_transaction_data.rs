@@ -1,21 +1,26 @@
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use sha2::{Digest, Sha256};
 use tracing::{error, info};
-use crate::{utils::merkle_utils::{split_into_shards, validate_shard_sizes, compute_merkle_root}, structs::toml_config::TomlConfig};
+use crate::{structs::node::Node, utils::merkle_utils::{compute_merkle_root, split_into_shards, validate_shard_sizes}};
 
-pub fn create_transaction_data(
-    toml_config: &TomlConfig,
+/// Creates transaction data based on the in-memory node state
+pub async fn create_transaction_data(
 ) -> Result<(Vec<Vec<u8>>, Vec<u8>), Box<dyn std::error::Error>> {
     
-    let transaction_data = vec![1; toml_config.consensus.transaction_size];
+    let transaction_size = 256; // Static since it's defined in TOML, update if needed
+    let data_shards = 4;        // Static since it's defined in TOML, update if needed
+
+    let transaction_data = vec![1; transaction_size];
     // info!(
     //     "Generated transaction data of size: {} bytes",
     //     transaction_data.len()
     // );
 
-    let shards = split_into_shards(&transaction_data, toml_config.consensus.data_shards);
+    let shards = split_into_shards(&transaction_data, data_shards);
     // info!(
     //     "Transaction data split into {} shards",
-    //     toml_config.consensus.data_shards
+    //     data_shards
     // );
 
     let proofs: Vec<Vec<u8>> = shards
@@ -27,7 +32,7 @@ pub fn create_transaction_data(
         })
         .collect();
 
-    if let Err(e) = validate_shard_sizes(&shards, toml_config.consensus.transaction_size) {
+    if let Err(e) = validate_shard_sizes(&shards, transaction_size) {
         error!("Shard size validation failed: {}", e);
         return Err(e.into());
     }

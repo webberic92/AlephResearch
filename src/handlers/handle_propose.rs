@@ -19,38 +19,27 @@ pub async fn handle_propose(
     client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
-    let node_read = node.read().await; // Acquire the read lock once
-    let node_id = node_read.id;
-    
-    // Acquire the epoch lock and retrieve its value
-    let node_epoch = *node_read.current_epoch.lock().await;
-    drop(node_read); // Explicitly drop the read lock before acquiring the write lock
-    
-    // Safely acquire a write lock with a timeout
-    let node_state = match timeout(Duration::from_secs(5), node.write()).await {
-        Ok(state) => state,
-        Err(_) => {
-            error!("Node {}: Timeout while acquiring write lock!", node_id);
-            return Err("Timeout while acquiring write lock".to_string());
-        }
-    };
-    
-    // Log proposal handling
-    info!(
-        "*** Handling PROPOSE REQUEST: Node {} from Sender {} for epoch {} ***",
-        node_id, propose_request.base.proposing_node_id, propose_request.base.epoch_id
-    );
-    
+    let node_id;
+    let node_epoch;
+
+    {
+        let node_read = node.read().await;
+        node_id = node_read.id;
+        node_epoch = *node_read.current_epoch.lock().await;
+        info!(
+            "Node {}: Received proposal for epoch {} from sender {}",
+            node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
+        );
+    } // 🔴 Drop read lock before acquiring write lock
+
+    // --- Epoch Validation ---
     if propose_request.base.epoch_id < node_epoch {
         return Err(format!(
-            "Outdated epoch {}, Node {} is on epoch {}",
-            propose_request.base.epoch_id, node_id, node_epoch
-        ).into());
+            "Node {}: Outdated epoch {} received, current epoch is {}",
+            node_id, propose_request.base.epoch_id, node_epoch
+        ));
     }
-    
-    // Release the write lock before performing any asynchronous operations
-    drop(node_state);
-    
+
     // --- Step 1: Decode Base64-encoded shards ---
     let decoded_shards: Vec<Vec<u8>> = propose_request
         .shards
@@ -71,7 +60,7 @@ pub async fn handle_propose(
             proof
                 .iter()
                 .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-                .collect::<Result<Vec<_>, _>>() 
+                .collect::<Result<Vec<_>, _>>()
         })
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| {
@@ -103,9 +92,10 @@ pub async fn handle_propose(
     // --- Step 5: Update proposal tracker ---
     let proposal_count;
     let required_proposals;
+
     {
         // Safely acquire a write lock with a timeout
-        let node_state = match timeout(Duration::from_secs(5), node.write()).await {
+        let node_write = match timeout(Duration::from_secs(5), node.write()).await {
             Ok(state) => state,
             Err(_) => {
                 error!("Node {}: Timeout while acquiring write lock!", node_id);
@@ -113,20 +103,20 @@ pub async fn handle_propose(
             }
         };
 
-        let mut proposal_tracker = node_state.proposal_tracker.lock().await;
+        let mut proposal_tracker = node_write.proposal_tracker.lock().await;
         proposal_tracker.insert(propose_request.base.proposing_node_id);
 
-        let node_count = node_state.total_nodes;
-        let f = node_state.get_fault_tolerance_threshold();
+        let node_count = node_write.total_nodes;
+        let f = node_write.get_fault_tolerance_threshold();
         required_proposals = node_count - f;
 
         proposal_count = proposal_tracker.len();
 
         info!(
             "Node {}: Updated proposal tracker. Current proposals: {}/{}",
-            node_state.id, proposal_count, required_proposals
+            node_write.id, proposal_count, required_proposals
         );
-    }
+    } // 🔴 Drop write lock here before checking for quorum
 
     // --- Step 6: Prevote transition (if quorum is reached) ---
     if proposal_count > 0 {
@@ -136,20 +126,21 @@ pub async fn handle_propose(
         );
 
         // Re-acquire write lock to prepare prevote request
-        let node_state = match timeout(Duration::from_secs(5), node.write()).await {
-            Ok(state) => state,
-            Err(_) => {
-                error!("Node {}: Timeout while acquiring write lock!", node_id);
-                return Err("Timeout while acquiring write lock".to_string());
-            }
-        };
+        let prevote_request;
+        {
+            let node_write = match timeout(Duration::from_secs(5), node.write()).await {
+                Ok(state) => state,
+                Err(_) => {
+                    error!("Node {}: Timeout while acquiring write lock!", node_id);
+                    return Err("Timeout while acquiring write lock".to_string());
+                }
+            };
 
-        let prevote_request = PrevoteRequest {
-            propose: propose_request.clone(),
-            sender_url: node_state.ip_address.clone(),
-        };
-
-        drop(node_state); // Release lock before async call
+            prevote_request = PrevoteRequest {
+                propose: propose_request.clone(),
+                sender_url: node_write.ip_address.clone(),
+            };
+        } // 🔴 Drop write lock before async call
 
         info!(
             "Node {}: Sending prevote for epoch {} from sender {}",

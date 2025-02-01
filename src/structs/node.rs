@@ -13,7 +13,8 @@ pub struct Node {
     pub proposal_tracker: Arc<Mutex<HashSet<usize>>>,
     pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>, 
     pub dag: Arc<RwLock<HashMap<Vec<u8>, Vec<u8>>>>,   
-    pub ip_address: String,                           
+    pub ip_address: String, 
+    pub ip_manager_address: String,                                                     
     pub nodes: Vec<String>,                                 // Added for illustration
 }
 
@@ -23,11 +24,13 @@ impl Node {
         total_nodes: usize,
         ip_address: String,
         nodes: Vec<String>, 
+        ip_manager_address: String,
     ) -> Self {
         Self {
             id,
             total_nodes,
             ip_address,
+            ip_manager_address,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
             current_epoch: Arc::new(Mutex::new(1)), // Start with epoch ID 1
             proposal_tracker: Arc::new(Mutex::new(HashSet::new())),

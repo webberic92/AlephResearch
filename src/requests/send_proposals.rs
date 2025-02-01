@@ -3,9 +3,10 @@ use base64::Engine;
 use reqwest::{Client, StatusCode};
 use sha2::Digest;
 use tracing::{error, info};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 use crate::{
-    structs::{requests::{BaseRequest, ProposeRequest}, toml_config::TomlConfig},
-    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root},
+    structs::{node::Node, requests::{BaseRequest, ProposeRequest}}, utils::merkle_utils::{compute_merkle_branch, compute_merkle_root}
 };
 
 /// Sends proposal messages to all nodes in the network.
@@ -13,15 +14,17 @@ use crate::{
 /// Assumes all nodes are honest (no need for redundant validation).
 pub async fn send_proposals(
     client: &Client,
-    toml_config: &TomlConfig,
+    node: Arc<RwLock<Node>>, 
     shards: &[Vec<u8>],
     merkle_root: &[u8],
 ) -> Result<(), Box<dyn std::error::Error>> {
+    let node_read = node.read().await; 
+
     info!(
         "Node {} {}: Preparing to send proposals for epoch {}",
-        toml_config.node.id,
-        toml_config.network.ip_address,
-        toml_config.consensus.epoch_round_id
+        node_read.id,
+        node_read.ip_address,
+        *node_read.current_epoch.lock().await
     );
 
     // Step 1: Compute hashes for all shards
@@ -44,13 +47,13 @@ pub async fn send_proposals(
     let mut all_successful = true;
 
     // Step 3: Iterate through all nodes in the network
-    for node_url in &toml_config.network.nodes {
+    for node_url in &node_read.nodes {
         info!(
             "Node {} {}: Sending proposal to {} for epoch {}",
-            toml_config.node.id,
-            toml_config.network.ip_address,
+            node_read.id,
+            node_read.ip_address,
             node_url,
-            toml_config.consensus.epoch_round_id
+            *node_read.current_epoch.lock().await
         );
 
         // Encode shards for transport
@@ -69,9 +72,9 @@ pub async fn send_proposals(
 
         // Prepare the base request metadata
         let base_request = BaseRequest {
-            proposing_node_id: toml_config.node.id,                   // Node ID
-            epoch_id: toml_config.consensus.epoch_round_id,   // Current epoch
-            root: merkle_root.to_vec(),                       // Merkle root
+            proposing_node_id: node_read.id,       // Node ID
+            epoch_id: *node_read.current_epoch.lock().await, // Current epoch
+            root: merkle_root.to_vec(),            // Merkle root
         };
 
         // Construct the proposal request
@@ -92,14 +95,14 @@ pub async fn send_proposals(
             Ok(res) if res.status() == StatusCode::OK => {
                 info!(
                     "Node {}: Proposal successfully delivered to Node {} (Epoch {}).",
-                    toml_config.node.id, node_url, toml_config.consensus.epoch_round_id
+                    node_read.id, node_url, *node_read.current_epoch.lock().await
                 );
             }
             // Log failure if the proposal is rejected or fails to send
             Ok(res) => {
                 error!(
                     "Node {}: Proposal failed for {}. Status: {}. Response: {}",
-                    toml_config.node.id,
+                    node_read.id,
                     node_url,
                     res.status(),
                     res.text().await.unwrap_or_else(|_| "No response body".to_string())
@@ -110,7 +113,7 @@ pub async fn send_proposals(
             Err(e) => {
                 error!(
                     "Node {}: Network error while sending proposal to {}: {:?}",
-                    toml_config.node.id, node_url, e
+                    node_read.id, node_url, e
                 );
                 all_successful = false;
             }
@@ -121,14 +124,12 @@ pub async fn send_proposals(
     if all_successful {
         info!(
             "Node {} {}: Successfully sent all proposals for epoch {}.",
-            toml_config.node.id,
-            toml_config.network.ip_address,
-            toml_config.consensus.epoch_round_id
+            node_read.id,
+            node_read.ip_address,
+            *node_read.current_epoch.lock().await
         );
         Ok(())
     } else {
         Err("One or more proposals failed.".into())
     }
 }
-
-

@@ -86,7 +86,7 @@ class TestAleph(Stack):
 
                 # Continue setup for Aleph node
                 "aws s3 cp s3://aleph-research/aleph_rbc /home/aleph-node/ --quiet",
-                "aws s3 cp s3://aleph-research/aleph_start /home/aleph-node/ --quiet",
+                # "aws s3 cp s3://aleph-research/aleph_start /home/aleph-node/ --quiet",
                 "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
 
@@ -211,16 +211,16 @@ class TestAleph(Stack):
                 "    exit 1;",
                 "fi",
 
-                f"echo 'Done with aleph_rbc loop for node {i + 1} IT SHOULD NOT HAVE MOVED ON TO aleph_start YET' >> /home/aleph-node/logs/node_status;",
+                f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /home/aleph-node/logs/node_status;",
 
             )
 
             # Part 4: Start Aleph Node and Monitor Logs
-            ec2_instance.user_data.add_commands(                
-                # Start the Aleph testing
-                "echo 'Attempting to execute aleph_start with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/aleph_start --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
-            )
+            # ec2_instance.user_data.add_commands(                
+            #     # Start the Aleph testing
+            #     "echo 'Attempting to execute aleph_start with configuration' >> /home/aleph-node/logs/node_status;",
+            #     "/home/aleph-node/aleph_start --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
+            # )
 
             # Output the instance ID for debugging
             CfnOutput(self, f"InstanceIdOutput{i+1}",

@@ -13,7 +13,9 @@ mod tests {
             1, 
             4, 
             "127.0.0.1:8001".to_string(),
-            vec!["127.0.0.1:8002".to_string()]
+            vec!["127.0.0.1:8002".to_string()],
+            "127.0.0.1:8003".to_string(),
+
         )));
 
         // Initial epoch
@@ -50,7 +52,9 @@ mod tests {
             1, 
             4, 
             "127.0.0.1:8001".to_string(),
-            vec![server_url()] // Use the mock server URL
+            vec![server_url()],
+            "127.0.0.1:8003".to_string(),
+
         )));
 
         let epoch_id = 1;
@@ -77,7 +81,9 @@ mod tests {
             1, 
             4, 
             "127.0.0.1:8001".to_string(),
-            vec![server_url()]
+            vec![server_url()],
+            "127.0.0.1:8003".to_string(),
+
         )));
 
         let epoch_id = 1;
@@ -98,7 +104,9 @@ mod tests {
             1, 
             4, 
             "127.0.0.1:8001".to_string(),
-            vec![invalid_url.to_string()] // Invalid URL to trigger failure
+            vec![invalid_url.to_string()],
+            "127.0.0.1:8003".to_string(),
+
         )));
 
         let epoch_id = 1;
