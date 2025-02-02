@@ -1,135 +1,111 @@
 use base64::engine::general_purpose;
 use base64::Engine;
+use futures::future::join_all;
 use reqwest::{Client, StatusCode};
 use sha2::Digest;
 use tracing::{error, info};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest}}, utils::merkle_utils::{compute_merkle_branch, compute_merkle_root}
+    structs::{node::Node, requests::{BaseRequest, ProposeRequest}}, 
+    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root}
 };
 
+
 /// Sends proposal messages to all nodes in the network.
-/// According to ch-RBC, this phase involves distributing shards, Merkle proofs, and metadata.
-/// Assumes all nodes are honest (no need for redundant validation).
 pub async fn send_proposals(
     client: &Client,
     node: Arc<RwLock<Node>>, 
     shards: &[Vec<u8>],
     merkle_root: &[u8],
-) -> Result<(), Box<dyn std::error::Error>> {
+) -> Result<(), anyhow::Error> {  // ✅ Use anyhow::Error
+
     let node_read = node.read().await; 
 
+    let epoch = *node_read.current_epoch.lock().await;
     info!(
-        "Node {} {}: Preparing to send proposals for epoch {}",
-        node_read.id,
-        node_read.ip_address,
-        *node_read.current_epoch.lock().await
+        "Node {} {}: Preparing to send proposals for epoch {} to nodes: {:?}",
+        node_read.id, node_read.ip_address, epoch, node_read.nodes
     );
 
-    // Step 1: Compute hashes for all shards
     let shard_hashes: Vec<Vec<u8>> = shards
         .iter()
         .map(|shard| sha2::Sha256::digest(shard).to_vec())
         .collect();
 
-    // Step 2: Validate the provided Merkle root
     let computed_root = compute_merkle_root(&shard_hashes);
     if computed_root != merkle_root {
-        return Err(format!(
-            "Computed Merkle root does not match the provided root.\nComputed: {:?}\nProvided: {:?}",
+        return Err(anyhow::anyhow!(
+            "Computed Merkle root does not match provided root.\nComputed: {:?}\nProvided: {:?}",
             computed_root, merkle_root
-        )
-        .into());
+        ));
     }
 
-    // Flag to track success for all proposals
-    let mut all_successful = true;
+    let encoded_shards: Vec<String> = shards
+        .iter()
+        .map(|shard| general_purpose::STANDARD.encode(shard))
+        .collect();
 
-    // Step 3: Iterate through all nodes in the network
-    for node_url in &node_read.nodes {
-        info!(
-            "Node {} {}: Sending proposal to {} for epoch {}",
-            node_read.id,
-            node_read.ip_address,
-            node_url,
-            *node_read.current_epoch.lock().await
-        );
+    let encoded_proofs: Vec<Vec<String>> = shard_hashes
+        .iter()
+        .enumerate()
+        .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
+        .map(|branch| branch.iter().map(|b|  general_purpose::STANDARD.encode(b)).collect())
+        .collect();
 
-        // Encode shards for transport
-        let encoded_shards: Vec<String> = shards
-            .iter()
-            .map(|shard| general_purpose::STANDARD.encode(shard))
-            .collect();
+    let base_request = BaseRequest {
+        proposing_node_id: node_read.id,
+        epoch_id: epoch,
+        root: merkle_root.to_vec(),
+    };
 
-        // Compute and encode Merkle proofs for each shard
-        let encoded_proofs: Vec<Vec<String>> = shard_hashes
-            .iter()
-            .enumerate()
-            .map(|(i, _)| compute_merkle_branch(&shard_hashes, i)) // Compute branch for the shard
-            .map(|branch| branch.iter().map(|b| general_purpose::STANDARD.encode(b)).collect()) // Encode proof
-            .collect();
+    let propose_request = ProposeRequest {
+        base: base_request,
+        proofs: encoded_proofs.clone(),
+        shards: encoded_shards.clone(),
+    };
 
-        // Prepare the base request metadata
-        let base_request = BaseRequest {
-            proposing_node_id: node_read.id,       // Node ID
-            epoch_id: *node_read.current_epoch.lock().await, // Current epoch
-            root: merkle_root.to_vec(),            // Merkle root
-        };
+    drop(node_read);  // 🔥 Release lock before async calls
 
-        // Construct the proposal request
-        let propose_request = ProposeRequest {
-            base: base_request,
-            proofs: encoded_proofs,   // Merkle proofs for each shard
-            shards: encoded_shards,   // Shards for the proposal
-        };
+    let futures: Vec<_> = node.read().await.nodes.iter().map(|node_url| {
+        let client = client.clone();
+        let propose_request = propose_request.clone();
+        let node_url = node_url.clone();
 
-        // Step 4: Send the proposal to the target node
-        match client
-            .post(format!("http://{}/propose", node_url)) // Target node's endpoint
-            .json(&propose_request)                      // Proposal payload
-            .send()
-            .await
-        {
-            // Log success if the proposal is delivered
-            Ok(res) if res.status() == StatusCode::OK => {
-                info!(
-                    "Node {}: Proposal successfully delivered to Node {} (Epoch {}).",
-                    node_read.id, node_url, *node_read.current_epoch.lock().await
-                );
-            }
-            // Log failure if the proposal is rejected or fails to send
-            Ok(res) => {
-                error!(
-                    "Node {}: Proposal failed for {}. Status: {}. Response: {}",
-                    node_read.id,
-                    node_url,
-                    res.status(),
-                    res.text().await.unwrap_or_else(|_| "No response body".to_string())
-                );
-                all_successful = false;
-            }
-            // Log network error
-            Err(e) => {
-                error!(
-                    "Node {}: Network error while sending proposal to {}: {:?}",
-                    node_read.id, node_url, e
-                );
-                all_successful = false;
+        async move {
+            info!("Node sending proposal to {} for epoch {}", node_url, propose_request.base.epoch_id);
+
+            match client.post(format!("http://{}/propose", node_url))
+                .json(&propose_request)
+                .send()
+                .await
+            {
+                Ok(res) if res.status().is_success() => {
+                    info!("Proposal successfully delivered to Node {} (Epoch {}).", node_url, propose_request.base.epoch_id);
+                    Ok(())
+                }
+                Ok(res) => {
+                    let err_msg = format!("Proposal failed for {}. Status: {}. Response: {}", 
+                        node_url, res.status(), res.text().await.unwrap_or_else(|_| "No response body".to_string()));
+                    error!("{}", err_msg);
+                    Err(anyhow::anyhow!(err_msg))
+                }
+                Err(e) => {
+                    let err_msg = format!("Network error while sending proposal to {}: {:?}", node_url, e);
+                    error!("{}", err_msg);
+                    Err(anyhow::anyhow!(err_msg))
+                }
             }
         }
-    }
+    }).collect();
 
-    // Step 5: Final status check
-    if all_successful {
-        info!(
-            "Node {} {}: Successfully sent all proposals for epoch {}.",
-            node_read.id,
-            node_read.ip_address,
-            *node_read.current_epoch.lock().await
-        );
+    let results = join_all(futures).await;
+
+    if results.iter().all(|res| res.is_ok()) {
+        info!("Successfully sent all proposals for epoch {}.", epoch);
         Ok(())
     } else {
-        Err("One or more proposals failed.".into())
+        Err(anyhow::anyhow!("One or more proposals failed."))
     }
 }
+

@@ -22,6 +22,7 @@ pub async fn handle_propose(
     let node_id;
     let node_epoch;
 
+    // ✅ Step 1: Read node state first, NO LOCKING
     {
         let node_read = node.read().await;
         node_id = node_read.id;
@@ -30,7 +31,7 @@ pub async fn handle_propose(
             "Node {}: Received proposal for epoch {} from sender {}",
             node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
         );
-    } // 🔴 Drop read lock before acquiring write lock
+    } // 🔴 Drop read lock immediately
 
     // --- Epoch Validation ---
     if propose_request.base.epoch_id < node_epoch {
@@ -40,61 +41,48 @@ pub async fn handle_propose(
         ));
     }
 
-    // --- Step 1: Decode Base64-encoded shards ---
+    // ✅ Step 2: Decode Base64-encoded shards OUTSIDE any lock
     let decoded_shards: Vec<Vec<u8>> = propose_request
         .shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
         .collect::<Result<Vec<Vec<u8>>, _>>()
-        .map_err(|e| {
-            let error_message = format!("Failed to decode shards: {:?}", e);
-            error!("{}", error_message);
-            error_message
-        })?;
+        .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-    // --- Step 2: Decode Base64-encoded proofs ---
+    // ✅ Step 3: Decode proofs OUTSIDE any lock
     let decoded_proofs: Vec<Vec<Vec<u8>>> = propose_request
         .proofs
         .iter()
         .map(|proof| {
-            proof
-                .iter()
+            proof.iter()
                 .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
                 .collect::<Result<Vec<_>, _>>()
         })
         .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| {
-            let error_message = format!("Failed to decode proofs: {:?}", e);
-            error!("{}", error_message);
-            error_message
-        })?;
+        .map_err(|e| format!("Failed to decode proofs: {:?}", e))?;
 
-    // --- Step 3: Compute shard hashes ---
+    // ✅ Step 4: Compute shard hashes (NO LOCK needed)
     let shard_hashes: Vec<Vec<u8>> = decoded_shards
         .iter()
         .map(|shard| sha2::Sha256::digest(shard).to_vec())
         .collect();
 
-    // --- Step 4: Validate Merkle branches ---
+    // ✅ Step 5: Validate Merkle branches OUTSIDE lock
     for (index, proof) in decoded_proofs.iter().enumerate() {
         if !validate_merkle_branch(&shard_hashes, proof, index, &propose_request.base.root) {
-            let error_message = format!(
+            return Err(format!(
                 "Node {}: Merkle root mismatch for shard {}. Expected root: {:?}",
                 node_id, index, propose_request.base.root
-            );
-            error!("{}", error_message);
-            return Err(error_message);
+            ));
         }
     }
 
     info!("Node {}: All Merkle branches validated successfully.", node_id);
 
-    // --- Step 5: Update proposal tracker ---
+    // ✅ Step 6: Acquire a write lock **ONLY FOR SHORT UPDATE**
     let proposal_count;
     let required_proposals;
-
     {
-        // Safely acquire a write lock with a timeout
         let node_write = match timeout(Duration::from_secs(5), node.write()).await {
             Ok(state) => state,
             Err(_) => {
@@ -116,36 +104,23 @@ pub async fn handle_propose(
             "Node {}: Updated proposal tracker. Current proposals: {}/{}",
             node_write.id, proposal_count, required_proposals
         );
-    } // 🔴 Drop write lock here before checking for quorum
+    } // 🔴 Drop write lock immediately
 
-    // --- Step 6: Prevote transition (if quorum is reached) ---
-    if proposal_count > 0 {
+    // ✅ Step 7: Check quorum and send prevote **outside of lock**
+    if proposal_count >= 1 {
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
         );
 
-        // Re-acquire write lock to prepare prevote request
         let prevote_request;
         {
-            let node_write = match timeout(Duration::from_secs(5), node.write()).await {
-                Ok(state) => state,
-                Err(_) => {
-                    error!("Node {}: Timeout while acquiring write lock!", node_id);
-                    return Err("Timeout while acquiring write lock".to_string());
-                }
-            };
-
+            let node_read = node.read().await;
             prevote_request = PrevoteRequest {
                 propose: propose_request.clone(),
-                sender_url: node_write.ip_address.clone(),
+                sender_url: node_read.ip_address.clone(),
             };
-        } // 🔴 Drop write lock before async call
-
-        info!(
-            "Node {}: Sending prevote for epoch {} from sender {}",
-            node_id, prevote_request.propose.base.epoch_id, prevote_request.propose.base.proposing_node_id
-        );
+        } // 🔴 Drop read lock immediately
 
         if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
             error!(
