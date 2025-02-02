@@ -62,13 +62,14 @@ async fn test_ensure_dag_synchronization_success() {
         .with_status(200)
         .with_body(r#"{"in_sync": true}"#)
         .create();
-
+        
     let node = Arc::new(RwLock::new(Node::new(
         1,
         4,
         "127.0.0.1:8001".to_string(),
         vec!["127.0.0.1:8002".to_string()],
         "127.0.0.1:8003".to_string(),
+        client.clone(),
 
     )));
 

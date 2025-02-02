@@ -1,9 +1,10 @@
+use anyhow::Error;
 use reqwest::Client;
 use tokio::sync::RwLock;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::info;
+use tracing::{error, info};
 use crate::requests::ip_server_requests::is_node_turn;
 use crate::requests::synchronize_epoch_across_nodes::synchronize_epoch_across_nodes;
 use crate::structs::node::Node;
@@ -34,51 +35,71 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) ->
 
 
 
-pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) {
-    loop {
-        info!("Checking health of all nodes...");
-        let all_healthy = check_all_nodes_health(client, node.clone()).await;
+pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
+    let max_retries = 10; // Max attempts
+    let mut attempts = 0;
 
-        if all_healthy {
-            info!("All nodes are healthy!");
-            break;
+    while attempts < max_retries {
+        info!("Checking health of all nodes...");
+        let node_read = node.read().await;
+
+        let mut all_healthy = true;
+
+        for node_url in &node_read.nodes {
+            let health_url = format!("http://{}/health", node_url);
+            match client.get(&health_url).send().await {
+                Ok(response) if response.status().is_success() => {
+                    info!("Node {} is healthy.", node_url);
+                }
+                _ => {
+                    error!("Node {} health check failed. Retrying...", node_url);
+                    all_healthy = false;
+                }
+            }
         }
 
-        info!("Some nodes are not healthy. Retrying in 1 second...");
-        sleep(Duration::from_secs(1)).await;
+        if all_healthy {
+            info!("All nodes are healthy.");
+            return Ok(());
+        }
+
+        attempts += 1;
+        sleep(Duration::from_secs(3)).await;
     }
+
+    Err(Error::msg("Timeout waiting for all nodes to become healthy"))
 }
 
 
 
-pub async fn wait_for_turn(
-    client: &Client,
-    node: Arc<RwLock<Node>>,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
+    info!("entering waiting for turn");
     let node_read = node.read().await;
     let node_id = node_read.id;
     let ip_address = &node_read.ip_address;
 
     let current_epoch = {
         let epoch_guard = node_read.current_epoch.lock().await;
-        *epoch_guard // Extract the value
+        *epoch_guard  // ✅ Get epoch early and release lock
     };
 
     info!(
-        "Node {} {}: Waiting for its turn to submit transaction for epoch {}",
+        "Node {} {}: Waiting for its turn to propose for epoch {}",
         node_id, ip_address, current_epoch
     );
 
     loop {
+        // ✅ **Check turn WITHOUT holding a lock**
         if is_node_turn(client, node.clone()).await {
             break;
         }
 
+        // ✅ Synchronize **only if needed**
         synchronize_epoch_across_nodes(client, node.clone()).await;
         sleep(Duration::from_secs(1)).await;
 
         info!(
-            "Node {} {}: Retrying transaction submission for epoch {}",
+            "Node {} {}: Retrying turn check for epoch {}",
             node_id, ip_address, current_epoch
         );
     }
