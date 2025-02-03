@@ -9,12 +9,20 @@ use crate::{
 };
 
 /// ✅ **Fixed: Now using `anyhow::Error` to ensure errors are `Send + Sync`**
-pub async fn create_transaction_data() -> Result<(Vec<Vec<u8>>, Vec<u8>), Error> {
+pub async fn create_transaction_data(id: usize) -> Result<(Vec<Vec<u8>>, Vec<u8>), Error> {
     
     let transaction_size = 256; // Static since it's defined in TOML, update if needed
     let data_shards = 4;        // Static since it's defined in TOML, update if needed
 
-    let transaction_data = vec![1; transaction_size];
+    let node_id: u8 = match id.try_into() {
+        Ok(value) => value,
+        Err(_) => {
+            error!("Node ID {} is out of range for u8!", id);
+            return Err(anyhow::anyhow!("Node ID {} is too large for u8", id));
+        }
+    };
+    
+    let transaction_data = vec![node_id; transaction_size];
 
     let shards = split_into_shards(&transaction_data, data_shards);
 

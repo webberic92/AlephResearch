@@ -72,30 +72,11 @@ pub async fn handle_propose(
 
     info!("Node {}: All Merkle branches validated successfully.", node_id);
 
-    // ✅ Step 4: Acquire a write lock **ONLY FOR SHORT UPDATE**
-    let proposal_count;
-    let required_proposals;
-    {
-        info!("Node {}: Attempting to acquire write lock for proposal tracker update...", node_id);
+    // ✅ Step 4: Directly Call `update_proposal_tracker` Without Outer Write Lock
+    let (proposal_count, required_proposals) =
+        Node::update_proposal_tracker(node.clone(), propose_request.base.proposing_node_id).await?;
 
-        let mut node_write = match timeout(Duration::from_secs(5), node.write()).await {
-            Ok(state) => state,
-            Err(_) => {
-                error!("Node {}: Timeout while acquiring write lock!", node_id);
-                return Err("Timeout while acquiring write lock".to_string());
-            }
-        };
-
-        let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-        proposal_tracker.insert(propose_request.base.proposing_node_id);
-        proposal_count = proposal_tracker.len();
-
-        let node_count = node_write.total_nodes;
-        let f = node_write.get_fault_tolerance_threshold();
-        required_proposals = node_count - f;
-    } // 🔴 Drop locks immediately
-
-    if proposal_count >= 1 {
+    if proposal_count >= required_proposals {
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
@@ -109,12 +90,6 @@ pub async fn handle_propose(
             }
         };
 
-        // ❌ BEFORE: Errors were lost
-        // if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
-        //     error!("Node {}: Failed to handle prevote for epoch {}. Error: {:?}", node_id, propose_request.base.epoch_id, e);
-        // }
-
-        // ✅ FIXED: Return error properly if prevote (or commit) fails
         handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
             error!(
                 "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
@@ -130,4 +105,5 @@ pub async fn handle_propose(
     );
     Ok(())
 }
+
 

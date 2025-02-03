@@ -3,7 +3,7 @@ use std::{
     sync::Arc,
 };
 use reqwest::Client;
-use tokio::sync::{Mutex, RwLock, mpsc::{self, Sender, Receiver}};
+use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex, RwLock};
 use tracing::{error, info};
 use crate::handlers::handle_propose::handle_propose;
 
@@ -134,4 +134,53 @@ impl Node {
         }
         true
     }
+
+
+    pub async fn update_proposal_tracker(
+        node: Arc<RwLock<Node>>,
+        proposing_node_id: usize,
+    ) -> Result<(usize, usize), String> {
+        let node_id;
+        
+        // ✅ Store the read lock in a variable first (instead of calling `node.read().await` multiple times)
+        let node_read = node.read().await;
+        node_id = node_read.id;
+    
+        info!("Node {}: Attempting to acquire write lock for proposal tracker update...", node_id);
+    
+        // ✅ **Acquire ONLY the proposal tracker lock, NOT the full node write lock**
+        let proposal_count;
+        let required_proposals;
+    
+        {
+            let mut proposal_tracker = node_read.proposal_tracker.lock().await;
+    
+            // Log before updating
+            info!(
+                "Node {}: Current proposals before update: {:?}",
+                node_id, proposal_tracker
+            );
+    
+            // Insert new proposal
+            proposal_tracker.insert(proposing_node_id);
+            proposal_count = proposal_tracker.len();
+        } // 🔴 Drop proposal tracker lock immediately
+    
+        // ✅ Read `total_nodes` & `fault_tolerance_threshold` from **stored read lock**
+        let node_count = node_read.total_nodes;
+        let f = node_read.get_fault_tolerance_threshold();
+        required_proposals = node_count - f;
+    
+        // 🔴 Read lock is automatically dropped here
+    
+        info!(
+            "Node {}: Proposal added from Node {}. Updated proposal count: {}. Required proposals for consensus: {}.",
+            node_id, proposing_node_id, proposal_count, required_proposals
+        );
+    
+        Ok((proposal_count, required_proposals))
+    }
+    
+    
+
 }
