@@ -22,9 +22,8 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
-    info!(
-        "test PREVOTE entering",
-    );
+    info!("test PREVOTE entering");
+
     let node_id = node.read().await.id;
 
     info!(
@@ -34,52 +33,39 @@ pub async fn handle_prevote(
 
     // --- Step 1: Validate the epoch ---
     let current_epoch = {
-        let node_state = match timeout(Duration::from_secs(5), node.read()).await {
-            Ok(state) => state,
-            Err(_) => {
-                error!("Node {}: Timeout while acquiring read lock!", node_id);
-                return Err("Timeout while acquiring read lock".to_string());
-            }
-        };
+        let node_state = timeout(Duration::from_secs(5), node.read()).await
+            .map_err(|_| format!("Node {}: Timeout while acquiring read lock in handle prevote Step 1!", node_id))?;
 
         let current_epoch_lock = node_state.current_epoch.lock().await;
         *current_epoch_lock
     };
 
     if prevote_request.propose.base.epoch_id != current_epoch {
-        let error_message = format!(
+        return Err(format!(
             "Node {}: Received prevote for outdated epoch {}. Current epoch is {}",
             node_id, prevote_request.propose.base.epoch_id, current_epoch
-        );
-        warn!("{}", error_message);
-        return Err(error_message);
+        ));
     }
 
     // --- Step 2: Decode Base64-encoded shards ---
-    let decoded_shards: Vec<Vec<u8>> = prevote_request
-        .propose
-        .shards
+    let decoded_shards = prevote_request.propose.shards
         .iter()
         .map(|shard| base64::engine::general_purpose::STANDARD.decode(shard.as_bytes()))
-        .collect::<Result<_, _>>()
+        .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
 
     // --- Step 3: Decode Base64-encoded proofs ---
-    let decoded_proofs: Vec<Vec<Vec<u8>>> = prevote_request
-        .propose
-        .proofs
+    let decoded_proofs = prevote_request.propose.proofs
         .iter()
-        .map(|proof| {
-            proof
-                .iter()
-                .map(|p| base64::engine::general_purpose::STANDARD.decode(p.as_bytes()))
-                .collect::<Result<Vec<_>, _>>() // Decode individual branch
-        })
-        .collect::<Result<Vec<_>, _>>() // Collect all decoded branches
+        .map(|proof| proof.iter()
+            .map(|p| base64::engine::general_purpose::STANDARD.decode(p.as_bytes()))
+            .collect::<Result<Vec<_>, _>>()
+        )
+        .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode proofs: {:?}", node_id, e))?;
 
     // --- Step 4: Ensure DAG synchronization ---
-    if let Err(e) = ensure_dag_synchronization(
+    ensure_dag_synchronization(
         node.clone(),
         &client,
         prevote_request.propose.base.epoch_id,
@@ -87,31 +73,26 @@ pub async fn handle_prevote(
         prevote_request.sender_url.clone(),
     )
     .await
-    {
-        let error_message = format!(
-            "Node {}: DAG synchronization failed. Error: {:?}",
-            node_id, e
-        );
-        error!("{}", error_message);
-        return Err(error_message);
-    }
+    .map_err(|e| {
+        let err_msg = format!("Node {}: DAG synchronization failed. Error: {:?}", node_id, e);
+        error!("{}", err_msg);
+        err_msg
+    })?;
+
     info!("Node {}: DAG synchronization successful.", node_id);
 
     // --- Step 5: Compute shard hashes ---
-    let shard_hashes: Vec<Vec<u8>> = decoded_shards
-        .iter()
+    let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
         .map(|shard| sha2::Sha256::digest(shard).to_vec())
         .collect();
 
     // --- Step 6: Validate Merkle branches ---
     for (index, proof) in decoded_proofs.iter().enumerate() {
         if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
-            let error_message = format!(
+            return Err(format!(
                 "Node {}: Merkle root mismatch for shard {}.",
                 node_id, index
-            );
-            error!("{}", error_message);
-            return Err(error_message);
+            ));
         }
     }
 
@@ -125,14 +106,11 @@ pub async fn handle_prevote(
     .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
 
     // --- Step 8: Validate parents ---
-    if let Err(e) = validate_unit_parents(node.clone(), &reconstructed_unit.data).await {
-        let error_message = format!(
-            "Node {}: Parent validation failed. Error: {:?}",
-            node_id, e
-        );
-        error!("{}", error_message);
-        return Err(error_message);
-    }
+    validate_unit_parents(node.clone(), &reconstructed_unit.data).await.map_err(|e| {
+        let err_msg = format!("Node {}: Parent validation failed. Error: {:?}", node_id, e);
+        error!("{}", err_msg);
+        err_msg
+    })?;
 
     // --- Step 9: Update quorum votes ---
     let should_commit = {
@@ -140,15 +118,9 @@ pub async fn handle_prevote(
         let epoch_key = epoch_id.to_be_bytes().to_vec();
 
         let vote_count = {
-            let node_state = match timeout(Duration::from_secs(5), node.write()).await {
-                Ok(state) => state,
-                Err(_) => {
-                    error!("Node {}: Timeout while acquiring write lock!", node_id);
-                    return Err("Timeout while acquiring write lock".to_string());
-                }
-            };
+            let node_state = timeout(Duration::from_secs(5), node.write()).await
+                .map_err(|_| format!("Node {}: Timeout while acquiring write lock in prevote step 9!", node_id))?;
 
-            // Lock only the `quorum_votes` field
             let mut quorum_votes = node_state.quorum_votes.write().await;
             let vote_count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
             *vote_count += 1;
@@ -158,14 +130,11 @@ pub async fn handle_prevote(
                 node_id, epoch_id, *vote_count
             );
 
-            // Returning the vote count so it can be used after the lock is released
             *vote_count
-        }; // <- Locks automatically released here
+        };
 
-        // Perform quorum check separately
-        let node_clone = node.clone();
-        let quorum_threshold = node_clone.read().await.get_quorum_threshold();
-        let is_quorum = node_clone.read().await.is_quorum_reached(epoch_id).await;
+        let quorum_threshold = node.read().await.get_quorum_threshold();
+        let is_quorum = node.read().await.is_quorum_reached(epoch_id).await;
 
         info!(
             "Node {}: Checking quorum for epoch {}. Required quorum: {}, Current votes: {}",
@@ -185,19 +154,19 @@ pub async fn handle_prevote(
         let commit_request = CommitRequest {
             base: prevote_request.propose.base.clone(),
             unit: reconstructed_unit.data.clone(),
-            proofs: decoded_proofs.iter().map(|proof| {
-                proof.iter().map(|p| base64::engine::general_purpose::STANDARD.encode(p)).collect()
-            }).collect(),
+            proofs: decoded_proofs.iter()
+                .map(|proof| proof.iter().map(|p| base64::engine::general_purpose::STANDARD.encode(p)).collect())
+                .collect(),
         };
 
-        if let Err(e) = handle_commit(node.clone(), client.clone(), commit_request).await {
-            let error_message = format!(
+        handle_commit(node.clone(), client.clone(), commit_request).await.map_err(|e| {
+            let err_msg = format!(
                 "Node {}: Commit phase failed for epoch {}. Error: {:?}",
                 node_id, prevote_request.propose.base.epoch_id, e
             );
-            error!("{}", error_message);
-            return Err(error_message);
-        }
+            error!("{}", err_msg);
+            err_msg
+        })?;
     } else {
         info!(
             "Node {}: Quorum not yet reached for epoch {}. Required: {}, Current votes: {}",
@@ -208,8 +177,6 @@ pub async fn handle_prevote(
                 .cloned().unwrap_or(0)
         );
     }
-
-
 
     // --- Step 11: Return success response ---
     info!(
