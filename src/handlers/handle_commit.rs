@@ -85,10 +85,11 @@ pub async fn handle_commit(
     // Step 4: Persist finalized unit (NO LOCK HELD)
     let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", commit_request.base.epoch_id);
     let unit_entry = serde_json::json!({
+        "epoch_id": commit_request.base.epoch_id,
+        "timestamp": chrono::Utc::now().to_rfc3339(),
         "proposer_node_id": commit_request.base.proposing_node_id,
         "merkle_root": commit_request.base.root.clone(),
         "unit": commit_request.unit,
-        "timestamp": chrono::Utc::now().to_rfc3339(),
     });
 
     if let Err(e) = write_finalized_unit(&epoch_file, unit_entry).await {
@@ -100,13 +101,10 @@ pub async fn handle_commit(
         return Err(error_message);
     }
 
-    info!("before Update local epoch to the next round");
 
     // Step 5: Update epoch (NO LOCK HELD)
     let new_epoch_id = update_local_epoch(node.clone()).await;
-    info!("after Update local epoch to the next round");
 
-    info!("before broadcast_epoch_update");
 
     // Step 6: Broadcast epoch update (NO LOCK HELD)
     if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
@@ -114,8 +112,6 @@ pub async fn handle_commit(
     } else {
         info!("Node {}: Successfully broadcasted epoch update.", node_id);
     }
-    info!("after broadcast_epoch_update");
-
     info!("Node {}: Successfully handled commit request.", node_id);
     Ok(())
 }

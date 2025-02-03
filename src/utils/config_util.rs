@@ -19,30 +19,6 @@ pub fn save_config(toml_config: &TomlConfig, path: Option<&str>) -> Result<(), B
     Ok(())
 }
 
-// Check if all proposals have been received
-// ch-RBC proof: Ensures a majority quorum (2f+1) of proposals before moving to prevote.
-// Check if a majority quorum (2f + 1) of proposals has been received
-pub async fn are_enough_proposals_received() -> bool {
-    let config = load_config( None);
-    info!("Node {} {}: CHECKING IF ALL PROPOSALS RECEIVED total nodes == {}", config.node.id,config.network.ip_address,config.node.total_nodes);
-
-    let faulty_nodes = (config.node.total_nodes - 1) / 3; // f = ⌊(N-1)/3⌋
-    info!("Node {} {}: FAULTY NODES ALLOWED == {}", config.node.id,config.network.ip_address,faulty_nodes);
-
-    let required_quorum = 2 * faulty_nodes + 1; //2F+1
-    info!("Node {} {}: required_quorum == {}", config.node.id,config.network.ip_address,required_quorum);
-    info!("Node {} {}: is proposals length {} >= required_quorum {}", config.node.id,config.network.ip_address,config.network.proposals.len(),required_quorum);
-
-    if config.network.proposals.len() >= required_quorum {
-        info!(
-            "Node {} {}: Enough proposals. received to start prevoting. Proposals array = {:?}",
-            config.node.id, config.network.ip_address, config.network.proposals
-        );
-        return true
-    }else{
-        return false
-    }
-}
 
 pub fn update_proposals_in_config() -> Result<TomlConfig, Box<dyn std::error::Error>> {
     let mut updated_toml_config = load_config( None);
@@ -57,30 +33,4 @@ pub fn update_proposals_in_config() -> Result<TomlConfig, Box<dyn std::error::Er
         );
     }
     Ok(updated_toml_config)
-}
-
-// Persist the proposal tracker to the TOML file
-pub fn persist_proposal_tracker(proposal_tracker: &Vec<usize>) {
-    let mut config = load_config(None);
-    config.network.proposals = proposal_tracker.clone();
-
-    match save_config(&config,None) {
-        Ok(_) => info!("Node {} {} Successfully updated proposal tracker in toml.", config.node.id, config.network.ip_address),
-        Err(e) => error!("Node {} {} Failed to update proposal tracker. Error: {:?}", config.node.id, config.network.ip_address, e),
-    }
-}
-
-// Persist the epoch round ID to the TOML file
-pub async fn persist_epoch_round_id(epoch_id: u64) -> Result<(), std::io::Error> {
-    // Load the current TOML configuration
-    let mut config = load_config(None);
-
-    // Update the epoch ID
-    config.consensus.epoch_round_id = epoch_id;
-
-    // Save the updated configuration back to the TOML file
-    let _ = save_config(&config,None);
-
-    info!("Persisted updated epoch ID {} to TOML file.", epoch_id);
-    Ok(())
 }

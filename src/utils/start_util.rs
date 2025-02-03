@@ -73,7 +73,7 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>)
 
 
 pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
-    info!("Entering waiting for turn");
+    // info!("Entering waiting for turn");
 
     let (node_id, ip_address, current_epoch) = {
         let node_read = node.read().await;
