@@ -31,8 +31,8 @@ pub async fn handle_commit(
         let node_state = match timeout(Duration::from_secs(5), node.read()).await {
             Ok(state) => state,
             Err(_) => {
-                error!("Timeout while acquiring read lock!");
-                return Err("Timeout while acquiring read lock".to_string());
+                error!("Timeout while acquiring read lock commit step 1!");
+                return Err("Timeout while acquiring read lock commit step 1".to_string());
             }
         };
         node_id = node_state.id;
@@ -85,7 +85,6 @@ pub async fn handle_commit(
     // Step 4: Persist finalized unit (NO LOCK HELD)
     let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", commit_request.base.epoch_id);
     let unit_entry = serde_json::json!({
-        "committing_node_id": node_id,
         "proposer_node_id": commit_request.base.proposing_node_id,
         "merkle_root": commit_request.base.root.clone(),
         "unit": commit_request.unit,
@@ -101,13 +100,21 @@ pub async fn handle_commit(
         return Err(error_message);
     }
 
+    info!("before Update local epoch to the next round");
+
     // Step 5: Update epoch (NO LOCK HELD)
     let new_epoch_id = update_local_epoch(node.clone()).await;
+    info!("after Update local epoch to the next round");
+
+    info!("before broadcast_epoch_update");
 
     // Step 6: Broadcast epoch update (NO LOCK HELD)
     if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
-        error!("Failed to broadcast epoch update: {}", e);
+        error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
+    } else {
+        info!("Node {}: Successfully broadcasted epoch update.", node_id);
     }
+    info!("after broadcast_epoch_update");
 
     info!("Node {}: Successfully handled commit request.", node_id);
     Ok(())

@@ -73,15 +73,13 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>)
 
 
 pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
-    info!("entering waiting for turn");
-    let node_read = node.read().await;
-    let node_id = node_read.id;
-    let ip_address = &node_read.ip_address;
+    info!("Entering waiting for turn");
 
-    let current_epoch = {
-        let epoch_guard = node_read.current_epoch.lock().await;
-        *epoch_guard  // ✅ Get epoch early and release lock
-    };
+    let (node_id, ip_address, current_epoch) = {
+        let node_read = node.read().await;
+        let epoch = *node_read.current_epoch.lock().await;
+        (node_read.id, node_read.ip_address.clone(), epoch)
+    }; // 🔴 Drop lock immediately
 
     info!(
         "Node {} {}: Waiting for its turn to propose for epoch {}",
@@ -89,19 +87,11 @@ pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(
     );
 
     loop {
-        // ✅ **Check turn WITHOUT holding a lock**
         if is_node_turn(client, node.clone()).await {
             break;
         }
 
-        // ✅ Synchronize **only if needed**
-        synchronize_epoch_across_nodes(client, node.clone()).await;
         sleep(Duration::from_secs(1)).await;
-
-        info!(
-            "Node {} {}: Retrying turn check for epoch {}",
-            node_id, ip_address, current_epoch
-        );
     }
 
     info!(
@@ -110,3 +100,4 @@ pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(
     );
     Ok(())
 }
+
