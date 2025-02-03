@@ -43,7 +43,7 @@ async fn main() -> Result<()> {
         }
     });
 
-    
+
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
 
@@ -56,7 +56,7 @@ async fn execute_transaction_logic(
     node: Arc<RwLock<Node>>, 
     client: Arc<Client>
 ) -> Result<(), anyhow::Error> {  // ✅ Changed to anyhow::Error
-    info!("🚀 Entering execute_transaction_logic");
+    // info!("🚀 Entering execute_transaction_logic");
 
     wait_for_all_nodes_health(&client, node.clone()).await?;
 
@@ -66,12 +66,12 @@ async fn execute_transaction_logic(
 
     send_proposals(&client, node.clone(), &shards, &merkle_root).await?;
 
-    {
-        let node_write = node.write().await;
-        let mut epoch = node_write.current_epoch.lock().await;
-        *epoch += 1;
-        info!("Updated in-memory epoch to {}", *epoch);
-    }
+    // {
+    //     let node_write = node.write().await;
+    //     let mut epoch = node_write.current_epoch.lock().await;
+    //     *epoch += 1;
+    //     info!("Updated in-memory epoch to {}", *epoch);
+    // }
 
     Ok(())
 }

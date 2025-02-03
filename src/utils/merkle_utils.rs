@@ -6,7 +6,7 @@ use crate::structs::dag::ReconstructedUnit;
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     let mut current_level = hashes.to_vec();
-    info!("Initial level for Merkle root computation: {:?}", current_level);
+    // info!("Initial level for Merkle root computation: {:?}", current_level);
 
     while current_level.len() > 1 {
         current_level = current_level
@@ -26,7 +26,7 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
     }
 
     let root = current_level[0].clone();
-    info!("Computed Merkle root: {:?}", root);
+    // info!("Computed Merkle root: {:?}", root);
     root
 }
 
@@ -49,13 +49,13 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             branch.push(vec![0; 32]); // Padding for missing sibling
         }
 
-        debug!(
-            "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
-            current_level.len(),
-            current_index,
-            sibling_index,
-            branch.last().unwrap()
-        );
+        // debug!(
+        //     "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
+        //     current_level.len(),
+        //     current_index,
+        //     sibling_index,
+        //     branch.last().unwrap()
+        // );
 
         current_index /= 2;
         current_level = current_level
@@ -72,7 +72,7 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
             .collect();
     }
 
-    debug!("Computed Merkle branch for index {}: {:?}", index, branch);
+    // debug!("Computed Merkle branch for index {}: {:?}", index, branch);
     branch
 }
 
@@ -94,19 +94,19 @@ pub fn validate_merkle_branch(
             [sibling_hash.clone(), current_hash.clone()].concat()
         };
 
-        debug!(
-            "Validation Level {}: Current Hash = {:?}, Sibling Hash = {:?}, Combined Hash = {:?}",
-            level, current_hash, sibling_hash, combined
-        );
+        // debug!(
+        //     "Validation Level {}: Current Hash = {:?}, Sibling Hash = {:?}, Combined Hash = {:?}",
+        //     level, current_hash, sibling_hash, combined
+        // );
 
         current_hash = Sha256::digest(&combined).to_vec();
         current_index /= 2;
     }
 
-    debug!(
-        "Validation result: Final hash = {:?}, Expected root = {:?}",
-        current_hash, expected_root
-    );
+    // debug!(
+    //     "Validation result: Final hash = {:?}, Expected root = {:?}",
+    //     current_hash, expected_root
+    // );
 
     current_hash == expected_root
 }
@@ -128,11 +128,11 @@ pub fn reconstruct_unit(
     // Compute the Merkle root using shard hashes
     let root = compute_merkle_root(&shard_hashes);
 
-    info!(
-        "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
-        shards.concat(),
-        root
-    );
+    // info!(
+    //     "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
+    //     shards.concat(),
+    //     root
+    // );
 
     // Split flat parent hashes into individual hashes (32 bytes each)
     const HASH_SIZE: usize = 32;
@@ -166,7 +166,7 @@ pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec
         .map(|chunk| chunk.to_vec())
         .collect();
 
-    info!("Shards split into {} parts: {:?}", data_shards, shards);
+    // info!("Shards split into {} parts: {:?}", data_shards, shards);
     shards
 }
 

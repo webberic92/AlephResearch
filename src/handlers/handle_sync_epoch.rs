@@ -1,91 +1,59 @@
-use tracing::{error, info};
+use tracing::{error, info, warn};
 
-use crate::{structs::node::Node, utils::config_util::persist_epoch_round_id};
 
-use axum::{Json, http::StatusCode};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-use crate::structs::{ requests::SyncEpochRequest, responses::Response};
+use crate::structs::node::Node;
+
+
+
 
 /// Handles an incoming sync epoch request.
-pub async fn handle_sync_epoch(
-    node: Arc<RwLock<Node>>,
-    Json(payload): Json<SyncEpochRequest>,
-) -> (StatusCode, Json<Response>) {
-    let node_id = {
+pub async fn handle_sync_epoch(node: Arc<RwLock<Node>>, sender_epoch: u64) -> Result<(), String> {
+    // Step 1: Read the current epoch and drop the lock early
+    let current_epoch = {
         let node_read = node.read().await;
-        node_read.id
-    };
+        let epoch_guard = node_read.current_epoch.lock().await;
+        *epoch_guard
+    }; // 🔴 Drop both read locks before proceeding
 
-    info!(
-        "Node {}: ==== Handling SYNC EPOCH request from Node {} for Epoch {} ====",
-        node_id, payload.sender, payload.epoch_id
-    );
-
-    {
-        let node_write = node.write().await;
-        let mut current_epoch = node_write.current_epoch.lock().await;
-
-        if *current_epoch == payload.epoch_id {
-            info!(
-                "Node {}: Already at Epoch {} from Node {}. No update required.",
-                node_id, payload.epoch_id, payload.sender
-            );
-            return (
-                StatusCode::OK,
-                Json(Response {
-                    status: format!(
-                        "Node {}: Epoch {} already synchronized from {}",
-                        node_id, payload.epoch_id, payload.sender
-                    ),
-                }),
-            );
-        } else if *current_epoch > payload.epoch_id {
-            info!(
-                "Node {}: Received an outdated Epoch {} from Node {}. Current Epoch is {}.",
-                node_id, payload.epoch_id, payload.sender, *current_epoch
-            );
-            return (
-                StatusCode::BAD_REQUEST,
-                Json(Response {
-                    status: format!(
-                        "Node {}: Outdated Epoch {} received from {}. Current Epoch: {}",
-                        node_id, payload.epoch_id, payload.sender, *current_epoch
-                    ),
-                }),
-            );
-        }
-
-        // Update to the new epoch if it's ahead
-        info!(
-            "Node {}: Updating epoch from {} to {} based on request from Node {}.",
-            node_id, *current_epoch, payload.epoch_id, payload.sender
-        );
-        *current_epoch = payload.epoch_id;
-    }
-
-    // Persist the updated epoch to configuration
-    if let Err(e) = persist_epoch_round_id(payload.epoch_id).await {
+    // Case 1: Out-of-sequence update (skipping epochs)
+    if sender_epoch > current_epoch + 1 {
         let error_message = format!(
-            "Node {}: Failed to persist Epoch {} to TOML: {:?}",
-            node_id, payload.epoch_id, e
+            "Node received an out-of-order epoch update. Expected: {} or {}, but received: {}.",
+            current_epoch, current_epoch + 1, sender_epoch
         );
-        error!("{}", error_message);
-        return (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(Response { status: error_message }),
-        );
+        warn!("{}", error_message);
+        return Err(error_message);
     }
 
-    (
-        StatusCode::OK,
-        Json(Response {
-            status: format!(
-                "Node {}: Epoch {} synchronized successfully from {}",
-                node_id, payload.epoch_id, payload.sender
-            ),
-        }),
-    )
+    // Case 2: Already up-to-date
+    if sender_epoch == current_epoch {
+        info!(
+            "Node: Received epoch sync request for epoch {}, but already at the correct epoch.",
+            sender_epoch
+        );
+        return Ok(());
+    }
+
+    // Step 2: Acquire write lock only when an update is needed
+    {
+        let mut node_write = node.write().await;
+        let mut epoch_guard = node_write.current_epoch.lock().await;
+        info!(
+            "Node: Received valid epoch sync request. Advancing from epoch {} → epoch {}.",
+            *epoch_guard, sender_epoch
+        );
+        *epoch_guard = sender_epoch;
+
+
+    } // 🔴 Drop write lock immediately
+
+    info!("Node: Successfully updated to epoch {}.", sender_epoch);
+    Ok(())
 }
+
+
+
 

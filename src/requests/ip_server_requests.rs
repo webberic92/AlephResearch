@@ -18,10 +18,10 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
         ip_manager_address, node_id, current_epoch
     );
 
-    info!(
-        "Node {}: Checking if it's the turn to propose for epoch {} at URL: {}",
-        node_id, current_epoch, url
-    );
+    // info!(
+    //     "Node {}: Checking if it's the turn to propose for epoch {} at URL: {}",
+    //     node_id, current_epoch, url
+    // );
 
     match client.get(&url).send().await {
         Ok(response) if response.status().is_success() => response.json::<serde_json::Value>().await

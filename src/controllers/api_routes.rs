@@ -140,11 +140,38 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     }))
     .route("/sync_epoch", post({
         let node = node.clone(); // Clone the Arc for the node
-        move |Json(payload): Json<SyncEpochRequest>| {
+        move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
             async move {
-                match handle_sync_epoch(node, Json(payload)).await {
-                    (status, response) => (status, response),
+                match serde_json::from_value::<SyncEpochRequest>(payload) {
+                    Ok(parsed_payload) => {
+                        let sender_epoch = parsed_payload.epoch_id; // Extract epoch ID from request
+    
+                        match handle_sync_epoch(node, sender_epoch).await {
+                            Ok(_) => (
+                                StatusCode::OK,
+                                Json(Response {
+                                    status: format!("Epoch successfully synced to {}", sender_epoch),
+                                }),
+                            ),
+                            Err(err) => {
+                                let error_message = format!("Failed to sync epoch: {:?}", err);
+                                tracing::error!("{}", error_message);
+                                (
+                                    StatusCode::BAD_REQUEST,
+                                    Json(Response { status: error_message }),
+                                )
+                            }
+                        }
+                    }
+                    Err(err) => {
+                        let error_message = format!("Failed to parse SyncEpochRequest: {:?}", err);
+                        tracing::error!("{}", error_message);
+                        (
+                            StatusCode::BAD_REQUEST,
+                            Json(Response { status: error_message }),
+                        )
+                    }
                 }
             }
         }

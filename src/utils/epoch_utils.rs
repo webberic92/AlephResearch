@@ -9,7 +9,7 @@ use crate::structs::{node::Node, requests::SyncEpochRequest};
 
 /// Updates the epoch in the local node state.
 pub async fn update_local_epoch(node: Arc<RwLock<Node>>) -> u64 {
-    info!("Entering Update local epoch to the next round");
+    // info!("Entering Update local epoch to the next round");
 
     let next_epoch_id;
     
@@ -37,7 +37,7 @@ pub async fn update_local_epoch(node: Arc<RwLock<Node>>) -> u64 {
         node_id, next_epoch_id
     );
 
-    info!("Exiting Update local epoch to the next round");
+    // info!("Exiting Update local epoch to the next round");
 
     next_epoch_id
 }
@@ -71,7 +71,10 @@ pub async fn broadcast_epoch_update(
             epoch_id,
             sender: node.read().await.id,
         };
-
+        info!(
+            "Node {}: Broadcasting epoch update for epoch {} to node {}",
+            node.read().await.id, epoch_id, node_url
+        );
         match timeout(Duration::from_secs(5), client.post(&sync_url).json(&sync_epoch_request).send()).await {
             Ok(Ok(response)) if response.status().is_success() => {
                 info!(
