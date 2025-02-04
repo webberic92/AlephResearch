@@ -73,8 +73,9 @@ pub async fn handle_propose(
     info!("Node {}: All Merkle branches validated successfully.", node_id);
 
     // ✅ Step 4: Directly Call `update_proposal_tracker` Without Outer Write Lock
-    let (proposal_count, required_proposals) =
-        Node::update_proposal_tracker(node.clone(), propose_request.base.proposing_node_id).await?;
+    // ✅ Step 4: Call `update_proposal_tracker` to store proposal and check threshold
+    let (proposal_count, required_proposals, stored_proposals) =
+        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
     if proposal_count >= required_proposals {
         info!(
@@ -82,21 +83,29 @@ pub async fn handle_propose(
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
         );
 
-        let prevote_request = {
-            let node_read = node.read().await;
-            PrevoteRequest {
-                propose: propose_request.clone(),
-                sender_url: node_read.ip_address.clone(),
-            }
-        };
-
-        handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
-            error!(
-                "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
-                node_id, propose_request.base.epoch_id, e
+        // ✅ Send prevotes for all stored proposals
+        for stored_propose in stored_proposals {
+            info!(
+                "Node {}: Sending prevote for transaction proposed by Node {}",
+                node_id, stored_propose.base.proposing_node_id
             );
-            format!("Prevote phase failed: {:?}", e)
-        })?;
+
+            let prevote_request = {
+                let node_read = node.read().await;
+                PrevoteRequest {
+                    propose: stored_propose.clone(),
+                    sender_url: node_read.ip_address.clone(),
+                }
+            };
+
+            handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
+                error!(
+                    "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
+                    node_id, stored_propose.base.epoch_id, e
+                );
+                format!("Prevote phase failed: {:?}", e)
+            })?;
+        }
     }
 
     info!(
@@ -105,5 +114,7 @@ pub async fn handle_propose(
     );
     Ok(())
 }
+
+
 
 

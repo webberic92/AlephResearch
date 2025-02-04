@@ -6,20 +6,19 @@ use base64::Engine;
 use reqwest::Client;
 use serde_json::Value;
 use sha2::Digest;
-use tokio::fs::{self, OpenOptions};
+use tokio::fs::{ self, OpenOptions };
 use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
 use tokio::time::timeout;
-use tracing::{error, info};
+use tracing::{ error, info };
 use crate::structs::node::Node;
-use crate::structs::requests:: CommitRequest;
+use crate::structs::requests::CommitRequest;
 use crate::utils::dag_utils::are_parents_available;
-use crate::utils::epoch_utils::{broadcast_epoch_update, update_local_epoch};
-// use crate::utils::epoch_utils::update_epoch_to_next_round;
+use crate::utils::epoch_utils::{ broadcast_epoch_update, update_local_epoch };
 use crate::utils::merkle_utils::validate_merkle_branch;
 
-/// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
-/// Handles the commit phase in the Aleph protocol based on the ch-RBC proof.
+/// **🔥 Handles the commit phase in the Aleph protocol**
+/// - Ensures multiple transactions are committed before advancing the epoch.
 pub async fn handle_commit(
     node: Arc<RwLock<Node>>,
     client: Arc<Client>,
@@ -27,6 +26,8 @@ pub async fn handle_commit(
 ) -> Result<(), String> {
     // Step 1: Read Node ID (Drop lock after reading)
     let node_id;
+    let epoch_id = commit_request.base.epoch_id; // ✅ Store epoch ID before acquiring write lock
+
     {
         let node_state = match timeout(Duration::from_secs(5), node.read()).await {
             Ok(state) => state,
@@ -40,7 +41,7 @@ pub async fn handle_commit(
 
     info!(
         "Node {}: Handling commit request from Node {} for epoch {}",
-        node_id, commit_request.base.proposing_node_id, commit_request.base.epoch_id
+        node_id, commit_request.base.proposing_node_id, epoch_id
     );
 
     // Step 2: Validate Merkle branches (NO LOCK HELD)
@@ -57,7 +58,10 @@ pub async fn handle_commit(
             .map(|p| base64::engine::general_purpose::STANDARD.decode(p.as_bytes()))
             .collect::<Result<_, _>>()
             .map_err(|e| {
-                let error_message = format!("Node {}: Failed to decode proof {}: {:?}", node_id, index, e);
+                let error_message = format!(
+                    "Node {}: Failed to decode proof {}: {:?}",
+                    node_id, index, e
+                );
                 error!("{}", error_message);
                 error_message
             })?;
@@ -83,9 +87,9 @@ pub async fn handle_commit(
     }
 
     // Step 4: Persist finalized unit (NO LOCK HELD)
-    let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", commit_request.base.epoch_id);
+    let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", epoch_id);
     let unit_entry = serde_json::json!({
-        "epoch_id": commit_request.base.epoch_id,
+        "epoch_id": epoch_id,
         "timestamp": chrono::Utc::now().to_rfc3339(),
         "proposer_node_id": commit_request.base.proposing_node_id,
         "merkle_root": commit_request.base.root.clone(),
@@ -101,28 +105,49 @@ pub async fn handle_commit(
         return Err(error_message);
     }
 
+    // Step 5: Update Proposal Tracker & Check Commit Status
+    let should_advance_epoch;
+    {
+        let node_write = node.write().await;
+        node_write.finalized_blocks.lock().await.insert(commit_request.base.root.clone());
 
-    // Step 5: Update epoch (NO LOCK HELD)
-    let new_epoch_id = update_local_epoch(node.clone()).await;
+        let total_committed = node_write.finalized_blocks.lock().await.len();
+        let expected_commits = node_write.total_nodes;
 
+        info!(
+            "Node {}: Total committed transactions for epoch {}: {}/{}",
+            node_id, epoch_id, total_committed, expected_commits
+        );
 
-    // Step 6: Broadcast epoch update (NO LOCK HELD)
-    if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
-        error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
-    } else {
-        info!("Node {}: Successfully broadcasted epoch update.", node_id);
+        // ✅ **Only decide to advance epoch inside the lock, but release it before calling update_local_epoch**
+        should_advance_epoch = total_committed >= expected_commits;
+    } // 🔴 Drop write lock immediately
+
+    // ✅ Step 6: Update epoch and broadcast (NO LOCKS HELD)
+    if should_advance_epoch {
+        info!("Node {}: Advancing to next epoch...", node_id);
+
+        let new_epoch_id = update_local_epoch(node.clone()).await; // ✅ No locks held here
+
+        if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
+            error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
+        } else {
+            info!("Node {}: Successfully broadcasted epoch update.", node_id);
+        }
     }
+
     info!("Node {}: Successfully handled commit request.", node_id);
     Ok(())
 }
 
-// Writes the finalized unit to the epoch file.
+
+// **Writes the finalized unit to the epoch file**
 async fn write_finalized_unit(
     epoch_file: &str,
-    unit_entry: Value,
+    unit_entry: Value
 ) -> Result<(), Box<dyn std::error::Error>> {
     let path = Path::new(epoch_file);
-    
+
     // Ensure parent directory exists
     if let Some(parent_dir) = path.parent() {
         if !parent_dir.exists() {
@@ -145,11 +170,9 @@ async fn write_finalized_unit(
         .write(true)
         .create(true)
         .truncate(true)
-        .open(epoch_file)
-        .await?;
+        .open(epoch_file).await?;
 
-    file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes())
-        .await?;
+    file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes()).await?;
     info!("Successfully wrote finalized unit to file: {}", epoch_file);
     Ok(())
 }
