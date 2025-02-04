@@ -72,56 +72,40 @@ pub async fn handle_propose(
 
     info!("Node {}: All Merkle branches validated successfully.", node_id);
 
-    // ✅ Step 4: Acquire a write lock **ONLY FOR SHORT UPDATE**
-    let proposal_count;
-    let required_proposals;
-    {
-        info!("Node {}: Attempting to acquire write lock for proposal tracker update...", node_id);
+    // ✅ Step 4: Directly Call `update_proposal_tracker` Without Outer Write Lock
+    // ✅ Step 4: Call `update_proposal_tracker` to store proposal and check threshold
+    let (proposal_count, required_proposals, stored_proposals) =
+        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
-        let mut node_write = match timeout(Duration::from_secs(5), node.write()).await {
-            Ok(state) => state,
-            Err(_) => {
-                error!("Node {}: Timeout while acquiring write lock!", node_id);
-                return Err("Timeout while acquiring write lock".to_string());
-            }
-        };
-
-        let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-        proposal_tracker.insert(propose_request.base.proposing_node_id);
-        proposal_count = proposal_tracker.len();
-
-        let node_count = node_write.total_nodes;
-        let f = node_write.get_fault_tolerance_threshold();
-        required_proposals = node_count - f;
-    } // 🔴 Drop locks immediately
-
-    if proposal_count >= 1 {
+    if proposal_count >= required_proposals {
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
         );
 
-        let prevote_request = {
-            let node_read = node.read().await;
-            PrevoteRequest {
-                propose: propose_request.clone(),
-                sender_url: node_read.ip_address.clone(),
-            }
-        };
-
-        // ❌ BEFORE: Errors were lost
-        // if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
-        //     error!("Node {}: Failed to handle prevote for epoch {}. Error: {:?}", node_id, propose_request.base.epoch_id, e);
-        // }
-
-        // ✅ FIXED: Return error properly if prevote (or commit) fails
-        handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
-            error!(
-                "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
-                node_id, propose_request.base.epoch_id, e
+        // ✅ Send prevotes for all stored proposals
+        for stored_propose in stored_proposals {
+            info!(
+                "Node {}: Sending prevote for transaction proposed by Node {}",
+                node_id, stored_propose.base.proposing_node_id
             );
-            format!("Prevote phase failed: {:?}", e)
-        })?;
+
+            let prevote_request = {
+                let node_read = node.read().await;
+                PrevoteRequest {
+                    propose: stored_propose.clone(),
+                    sender_url: node_read.ip_address.clone(),
+                }
+            };
+
+            handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
+                error!(
+                    "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
+                    node_id, stored_propose.base.epoch_id, e
+                );
+                format!("Prevote phase failed: {:?}", e)
+            })?;
+        }
     }
 
     info!(
@@ -130,4 +114,7 @@ pub async fn handle_propose(
     );
     Ok(())
 }
+
+
+
 
