@@ -1,14 +1,13 @@
 use base64::engine::general_purpose;
 use base64::Engine;
 use futures::future::join_all;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use sha2::Digest;
 use tracing::{error, info};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest}}, 
-    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root}
+    requests::ip_server_requests::notify_transaction_submitted, structs::{node::Node, requests::{BaseRequest, ProposeRequest}}, utils::merkle_utils::{compute_merkle_branch, compute_merkle_root}
 };
 
 
@@ -103,9 +102,29 @@ pub async fn send_proposals(
 
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for epoch {}.", epoch);
-        Ok(())
-    } else {
-        Err(anyhow::anyhow!("One or more proposals failed."))
+
+      
+    // 🔥 **Add itself to proposal tracker since its proposal was successfully sent**
+    match Node::update_proposal_tracker(node.clone(), propose_request.clone()).await {
+        Ok((proposal_count, required_proposals, stored_proposals)) => {
+            info!(
+                "Node {}: Added itself to proposal tracker. Proposal count: {} / Required: {} : Stored proposals: {:?}",
+                propose_request.base.proposing_node_id, proposal_count, required_proposals, stored_proposals
+            );
+
+        }
+        Err(err) => {
+            error!("Node {}: Failed to update proposal tracker: {}", propose_request.base.proposing_node_id, err);
+        }
     }
+
+    if let Err(err) = notify_transaction_submitted(client, node.clone()).await {
+        error!("Failed to notify transaction submitted: {:?}", err);
+    }
+
+        Ok(())
+        } else {
+            Err(anyhow::anyhow!("One or more proposals failed."))
+        }
 }
 

@@ -6,7 +6,6 @@ use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
 use crate::requests::ip_server_requests::is_node_turn;
-use crate::requests::synchronize_epoch_across_nodes::synchronize_epoch_across_nodes;
 use crate::structs::node::Node;
 
 // Helper functions

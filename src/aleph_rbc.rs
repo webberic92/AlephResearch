@@ -62,17 +62,17 @@ async fn execute_transaction_logic(
 
     wait_for_turn(&client, node.clone()).await?;
 
-    let (shards, merkle_root) = create_transaction_data().await?;
+
+    let node_id;
+    {
+        let node_read = node.read().await;
+        node_id = node_read.id;
+    } // 🔴 Drop read lock immediately after fetching `id`
+
+    let (shards, merkle_root) = create_transaction_data(node_id).await?;
 
     send_proposals(&client, node.clone(), &shards, &merkle_root).await?;
-
-    // {
-    //     let node_write = node.write().await;
-    //     let mut epoch = node_write.current_epoch.lock().await;
-    //     *epoch += 1;
-    //     info!("Updated in-memory epoch to {}", *epoch);
-    // }
-
+    
     Ok(())
 }
 
