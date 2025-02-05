@@ -11,9 +11,9 @@ use tokio::io::AsyncWriteExt;
 use tokio::sync::RwLock;
 use tokio::time::timeout;
 use tracing::{ error, info };
-use crate::structs::node::Node;
+use crate::structs::node::{DagUnit, Node};
 use crate::structs::requests::CommitRequest;
-use crate::utils::dag_utils::are_parents_available;
+// use crate::utils::dag_utils::are_parents_available;
 use crate::utils::epoch_utils::{ broadcast_epoch_update, update_local_epoch };
 use crate::utils::merkle_utils::validate_merkle_branch;
 
@@ -77,51 +77,54 @@ pub async fn handle_commit(
     }
 
     // Step 3: Check parent availability (NO LOCK HELD)
-    if !are_parents_available(node.clone(), &commit_request.unit).await {
-        let error_message = format!(
-            "Node {}: Parent availability check failed for root {:?}",
-            node_id, commit_request.base.root
-        );
-        error!("{}", error_message);
-        return Err(error_message);
-    }
+    // if !are_parents_available(node.clone(), &commit_request.unit).await {
+    //     let error_message = format!(
+    //         "Node {}: Parent availability check failed for root {:?}",
+    //         node_id, commit_request.base.root
+    //     );
+    //     error!("{}", error_message);
+    //     return Err(error_message);
+    // }
 
-    // Step 4: Persist finalized unit (NO LOCK HELD)
-    let epoch_file = format!("/home/aleph-node/logs/finalized_units/epoch{}.json", epoch_id);
-    let unit_entry = serde_json::json!({
-        "epoch_id": epoch_id,
-        "timestamp": chrono::Utc::now().to_rfc3339(),
-        "proposer_node_id": commit_request.base.proposing_node_id,
-        "merkle_root": commit_request.base.root.clone(),
-        "unit": commit_request.unit,
-    });
-
-    if let Err(e) = write_finalized_unit(&epoch_file, unit_entry).await {
-        let error_message = format!(
-            "Node {}: Failed to write finalized unit to file {}: {:?}",
-            node_id, epoch_file, e
-        );
-        error!("{}", error_message);
-        return Err(error_message);
-    }
-
-    // Step 5: Update Proposal Tracker & Check Commit Status
     let should_advance_epoch;
+
     {
+        let node_read = node.read().await;
+    
+        // Step 4: Compute next unit ID and parents **before acquiring write lock**
+        let next_unit_id = node_read.get_next_dag_unit_id(epoch_id).await;
+        let parent_units = node_read.get_next_parents(epoch_id).await;
+    
+        drop(node_read); // 🔴 Release read lock ASAP
+    
+        let dag_unit = DagUnit {
+            unit_id: next_unit_id,
+            proposer_node: commit_request.base.proposing_node_id,
+            data: commit_request.unit.clone(),
+            parent_units,
+            finalization_timestamp: chrono::Utc::now().timestamp() as u64,
+        };
+    
         let node_write = node.write().await;
-        node_write.finalized_blocks.lock().await.insert(commit_request.base.root.clone());
-
-        let total_committed = node_write.finalized_blocks.lock().await.len();
-        let expected_commits = node_write.total_nodes;
-
+        let mut dag = node_write.dag.write().await;
+    
+        // ✅ Ensure there's an entry for the current epoch
+        dag.entry(epoch_id).or_insert_with(Vec::new).push(dag_unit.clone());
+    
         info!(
-            "Node {}: Total committed transactions for epoch {}: {}/{}",
-            node_id, epoch_id, total_committed, expected_commits
+            "Node {}: Added unit {:?} to DAG at epoch {}",
+            node_write.id, dag_unit, epoch_id
         );
-
-        // ✅ **Only decide to advance epoch inside the lock, but release it before calling update_local_epoch**
-        should_advance_epoch = total_committed >= expected_commits;
+    
+        info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag);
+    
+        // ✅ Ensure `get()` safely handles missing epochs
+        should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= node_write.total_nodes);
     } // 🔴 Drop write lock immediately
+    
+
+
+
 
     // ✅ Step 6: Update epoch and broadcast (NO LOCKS HELD)
     if should_advance_epoch {
@@ -142,37 +145,37 @@ pub async fn handle_commit(
 
 
 // **Writes the finalized unit to the epoch file**
-async fn write_finalized_unit(
-    epoch_file: &str,
-    unit_entry: Value
-) -> Result<(), Box<dyn std::error::Error>> {
-    let path = Path::new(epoch_file);
+// async fn write_finalized_unit(
+//     epoch_file: &str,
+//     unit_entry: Value
+// ) -> Result<(), Box<dyn std::error::Error>> {
+//     let path = Path::new(epoch_file);
 
-    // Ensure parent directory exists
-    if let Some(parent_dir) = path.parent() {
-        if !parent_dir.exists() {
-            println!("Creating directory: {:?}", parent_dir);
-            fs::create_dir_all(parent_dir).await?;
-        }
-    }
+//     // Ensure parent directory exists
+//     if let Some(parent_dir) = path.parent() {
+//         if !parent_dir.exists() {
+//             println!("Creating directory: {:?}", parent_dir);
+//             fs::create_dir_all(parent_dir).await?;
+//         }
+//     }
 
-    // Read existing file content or create a new vector
-    let mut epoch_data = match fs::read_to_string(epoch_file).await {
-        Ok(content) => serde_json::from_str::<Vec<Value>>(&content).unwrap_or_else(|_| vec![]),
-        Err(_) => vec![], // If file doesn't exist, start fresh
-    };
+//     // Read existing file content or create a new vector
+//     let mut epoch_data = match fs::read_to_string(epoch_file).await {
+//         Ok(content) => serde_json::from_str::<Vec<Value>>(&content).unwrap_or_else(|_| vec![]),
+//         Err(_) => vec![], // If file doesn't exist, start fresh
+//     };
 
-    // Append new unit entry
-    epoch_data.push(unit_entry);
+//     // Append new unit entry
+//     epoch_data.push(unit_entry);
 
-    // Open file and write updated content
-    let mut file = OpenOptions::new()
-        .write(true)
-        .create(true)
-        .truncate(true)
-        .open(epoch_file).await?;
+//     // Open file and write updated content
+//     let mut file = OpenOptions::new()
+//         .write(true)
+//         .create(true)
+//         .truncate(true)
+//         .open(epoch_file).await?;
 
-    file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes()).await?;
-    info!("Successfully wrote finalized unit to file: {}", epoch_file);
-    Ok(())
-}
+//     file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes()).await?;
+//     info!("Successfully wrote finalized unit to file: {}", epoch_file);
+//     Ok(())
+// }

@@ -11,7 +11,7 @@ use crate::{
         requests::{CommitRequest, PrevoteRequest},
     },
     utils::{
-        dag_utils::{ensure_dag_synchronization, validate_unit_parents},
+        dag_utils::{ensure_dag_synchronization},
         merkle_utils::{reconstruct_unit, validate_merkle_branch},
     },
 };
@@ -65,21 +65,21 @@ pub async fn handle_prevote(
         .map_err(|e| format!("Node {}: Failed to decode proofs: {:?}", node_id, e))?;
 
     // --- Step 4: Ensure DAG synchronization ---
-    ensure_dag_synchronization(
-        node.clone(),
-        &client,
-        prevote_request.propose.base.epoch_id,
-        &prevote_request.propose.base.proposing_node_id,
-        prevote_request.sender_url.clone(),
-    )
-    .await
-    .map_err(|e| {
-        let err_msg = format!("Node {}: DAG synchronization failed. Error: {:?}", node_id, e);
-        error!("{}", err_msg);
-        err_msg
-    })?;
+    // ensure_dag_synchronization(
+    //     node.clone(),
+    //     &client,
+    //     prevote_request.propose.base.epoch_id,
+    //     &prevote_request.propose.base.proposing_node_id,
+    //     prevote_request.sender_url.clone(),
+    // )
+    // .await
+    // .map_err(|e| {
+    //     let err_msg = format!("Node {}: DAG synchronization failed. Error: {:?}", node_id, e);
+    //     error!("{}", err_msg);
+    //     err_msg
+    // })?;
 
-    info!("Node {}: DAG synchronization successful.", node_id);
+    // info!("Node {}: DAG synchronization successful.", node_id);
 
     // --- Step 5: Compute shard hashes ---
     let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
@@ -106,11 +106,11 @@ pub async fn handle_prevote(
     .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
 
     // --- Step 8: Validate parents ---
-    validate_unit_parents(node.clone(), &reconstructed_unit.data).await.map_err(|e| {
-        let err_msg = format!("Node {}: Parent validation failed. Error: {:?}", node_id, e);
-        error!("{}", err_msg);
-        err_msg
-    })?;
+    // validate_unit_parents(node.clone(), &reconstructed_unit.data).await.map_err(|e| {
+    //     let err_msg = format!("Node {}: Parent validation failed. Error: {:?}", node_id, e);
+    //     error!("{}", err_msg);
+    //     err_msg
+    // })?;
 
     // --- Step 9: Update quorum votes ---
     let should_commit = {

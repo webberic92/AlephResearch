@@ -79,94 +79,94 @@ pub async fn ensure_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Re
 
 
 /// Checks if the parents of a given unit are available in the local DAG.
-pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool {
-    let node_state = node.read().await;
+// pub async fn are_parents_available(node: Arc<RwLock<Node>>, unit: &[u8]) -> bool {
+//     let node_state = node.read().await;
 
-    info!("Node {}: Checking parent availability for unit", node_state.id);
+//     info!("Node {}: Checking parent availability for unit", node_state.id);
 
-    let dag_read = node_state.dag.read().await;
+//     let dag_read = node_state.dag.read().await;
 
-    // ✅ If DAG is empty, assume this is the first transaction and return true
-    if dag_read.is_empty() {
-        info!("Node {}: DAG is empty. Assuming no parent validation needed.", node_state.id);
-        return true;
-    }
+//     // ✅ If DAG is empty, assume this is the first transaction and return true
+//     if dag_read.is_empty() {
+//         info!("Node {}: DAG is empty. Assuming no parent validation needed.", node_state.id);
+//         return true;
+//     }
 
-    // Extract parent hashes only if DAG is non-empty
-    let parent_hashes = match get_parent_hashes(unit) {
-        Ok(hashes) => hashes,
-        Err(e) => {
-            error!(
-                "Node {}: Failed to extract parents from unit. Error: {:?}",
-                node_state.id, e
-            );
-            return false;
-        }
-    };
+//     // Extract parent hashes only if DAG is non-empty
+//     let parent_hashes = match get_parent_hashes(unit) {
+//         Ok(hashes) => hashes,
+//         Err(e) => {
+//             error!(
+//                 "Node {}: Failed to extract parents from unit. Error: {:?}",
+//                 node_state.id, e
+//             );
+//             return false;
+//         }
+//     };
 
-    for parent in parent_hashes {
-        if !dag_read.contains_key(&parent) {
-            error!(
-                "Node {}: Parent with hash {:?} is missing in the local DAG",
-                node_state.id, parent
-            );
-            return false;
-        }
-    }
+//     for parent in parent_hashes {
+//         if !dag_read.contains_key(&parent) {
+//             error!(
+//                 "Node {}: Parent with hash {:?} is missing in the local DAG",
+//                 node_state.id, parent
+//             );
+//             return false;
+//         }
+//     }
 
-    info!("Node {}: All parents are locally available for unit", node_state.id);
-    true
-}
-
-
+//     info!("Node {}: All parents are locally available for unit", node_state.id);
+//     true
+// }
 
 
 
-pub async fn validate_unit_parents(node: Arc<RwLock<Node>>, unit_data: &[u8]) -> Result<(), String> {
-    // Acquire a read lock for the node to access the DAG
-    let node_state = node.read().await;
 
-    // Access the DAG
-    let dag = node_state.dag.read().await;
 
-    info!(
-        "Node {}: DAG length is: {}",
-        node_state.id,
-        dag.len()
-    );
+// pub async fn validate_unit_parents(node: Arc<RwLock<Node>>, unit_data: &[u8]) -> Result<(), String> {
+//     // Acquire a read lock for the node to access the DAG
+//     let node_state = node.read().await;
 
-    if dag.is_empty() {
-        info!(
-            "Node {}: DAG is empty because it's the first round proposal. Skipping parent validation.",
-            node_state.id
-        );
-        return Ok(());
-    }
+//     // Access the DAG
+//     let dag = node_state.dag.read().await;
 
-    // Extract all parent hashes at once
-    let parent_hashes = match get_parent_hashes(unit_data) {
-        Ok(hashes) => hashes,
-        Err(e) => {
-            let error_message = format!("Node {}: Failed to extract parent hashes. Error: {:?}", node_state.id, e);
-            error!("{}", error_message);
-            return Err(error_message);
-        }
-    };
+//     info!(
+//         "Node {}: DAG length is: {}",
+//         node_state.id,
+//         dag.len()
+//     );
 
-    info!("Node {}: Extracted parent hashes: {:?}", node_state.id, parent_hashes);
+//     if dag.is_empty() {
+//         info!(
+//             "Node {}: DAG is empty because it's the first round proposal. Skipping parent validation.",
+//             node_state.id
+//         );
+//         return Ok(());
+//     }
 
-    // Validate each parent hash against the DAG
-    for parent in &parent_hashes {
-        if !dag.contains_key(parent) {
-            return Err(format!(
-                "Node {}: Parent unit {:?} not committed in DAG.",
-                node_state.id, parent
-            ));
-        }
-    }
+//     // Extract all parent hashes at once
+//     let parent_hashes = match get_parent_hashes(unit_data) {
+//         Ok(hashes) => hashes,
+//         Err(e) => {
+//             let error_message = format!("Node {}: Failed to extract parent hashes. Error: {:?}", node_state.id, e);
+//             error!("{}", error_message);
+//             return Err(error_message);
+//         }
+//     };
 
-    Ok(())
-}
+//     info!("Node {}: Extracted parent hashes: {:?}", node_state.id, parent_hashes);
+
+//     // Validate each parent hash against the DAG
+//     for parent in &parent_hashes {
+//         if !dag.contains_key(parent) {
+//             return Err(format!(
+//                 "Node {}: Parent unit {:?} not committed in DAG.",
+//                 node_state.id, parent
+//             ));
+//         }
+//     }
+
+//     Ok(())
+// }
 
 
 // pub fn get_parent_hashes(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
@@ -241,35 +241,35 @@ pub fn get_parent_hashes(unit: &[u8]) -> Result<Vec<Vec<u8>>, String> {
 
 
 
-/// Ensures all parent units are committed in the DAG.
-pub async fn ensure_all_parents_committed(
-    node: &Node,
-    parents: &[String], // Parent hashes in Base64 format
-    root: &[u8],        // Root of the unit for error reporting
-) -> Result<(), String> {
-    for parent in parents {
-        // Decode the parent ID from Base64
-        let parent_bytes = match general_purpose::STANDARD.decode(parent) {
-            Ok(bytes) => bytes,
-            Err(e) => {
-                return Err(format!(
-                    "Failed to decode parent ID {}: {:?}",
-                    parent, e
-                ));
-            }
-        };
+// /// Ensures all parent units are committed in the DAG.
+// pub async fn ensure_all_parents_committed(
+//     node: &Node,
+//     parents: &[String], // Parent hashes in Base64 format
+//     root: &[u8],        // Root of the unit for error reporting
+// ) -> Result<(), String> {
+//     for parent in parents {
+//         // Decode the parent ID from Base64
+//         let parent_bytes = match general_purpose::STANDARD.decode(parent) {
+//             Ok(bytes) => bytes,
+//             Err(e) => {
+//                 return Err(format!(
+//                     "Failed to decode parent ID {}: {:?}",
+//                     parent, e
+//                 ));
+//             }
+//         };
 
-        // Convert the single Vec<u8> into a slice of Vec<u8> for `is_unit_committed`
-        if !node.is_unit_committed(&[parent_bytes]).await {
-            return Err(format!(
-                "Parent unit {} not committed for root {:?}",
-                parent,
-                general_purpose::STANDARD.encode(root), // Convert root to Base64 for readability
-            ));
-        }
-    }
-    Ok(())
-}
+//         // Convert the single Vec<u8> into a slice of Vec<u8> for `is_unit_committed`
+//         if !node.is_unit_committed(&[parent_bytes]).await {
+//             return Err(format!(
+//                 "Parent unit {} not committed for root {:?}",
+//                 parent,
+//                 general_purpose::STANDARD.encode(root), // Convert root to Base64 for readability
+//             ));
+//         }
+//     }
+//     Ok(())
+// }
 
 
 /// Ensures DAG synchronization by validating epoch and DAG state.
