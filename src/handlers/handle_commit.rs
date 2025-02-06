@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 use std::time::Duration;
@@ -128,8 +129,22 @@ pub async fn handle_commit(
 
     // ✅ Step 6: Update epoch and broadcast (NO LOCKS HELD)
     if should_advance_epoch {
-        info!("Node {}: Advancing to next epoch...", node_id);
 
+        {
+            let dag_clone;
+            {
+                let node_read = node.read().await;
+                let dag_read = node_read.dag.read().await;
+                dag_clone = dag_read.clone(); // ✅ Clone the DAG before releasing the lock
+            } // 🔴 Drop the read lock ASAP
+        
+            if let Err(e) = write_finalized_dag_to_file("/home/aleph-node/logs/finalized_dag", &dag_clone).await {
+                error!("Failed to write finalized DAG: {:?}", e);
+            }
+
+        }
+        
+        info!("Node {}: Advancing to next epoch...", node_id);
         let new_epoch_id = update_local_epoch(node.clone()).await; // ✅ No locks held here
 
         if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
@@ -145,37 +160,66 @@ pub async fn handle_commit(
 
 
 // **Writes the finalized unit to the epoch file**
-// async fn write_finalized_unit(
-//     epoch_file: &str,
-//     unit_entry: Value
-// ) -> Result<(), Box<dyn std::error::Error>> {
-//     let path = Path::new(epoch_file);
+// **Writes the entire DAG to epoch-specific files**
+pub async fn write_finalized_dag_to_file(
+    base_path: &str,
+    dag: &HashMap<u64, Vec<DagUnit>>,
+) -> Result<(), Box<dyn std::error::Error>> {
+    // ✅ Log the entire DAG before writing
+    if dag.is_empty() {
+        error!("DAG is empty, nothing to write.");
+        return Ok(()); // ✅ Early return if DAG is empty
+    }
 
-//     // Ensure parent directory exists
-//     if let Some(parent_dir) = path.parent() {
-//         if !parent_dir.exists() {
-//             println!("Creating directory: {:?}", parent_dir);
-//             fs::create_dir_all(parent_dir).await?;
-//         }
-//     }
+    info!("Starting DAG write process. Total epochs: {}", dag.len());
 
-//     // Read existing file content or create a new vector
-//     let mut epoch_data = match fs::read_to_string(epoch_file).await {
-//         Ok(content) => serde_json::from_str::<Vec<Value>>(&content).unwrap_or_else(|_| vec![]),
-//         Err(_) => vec![], // If file doesn't exist, start fresh
-//     };
+    for (&epoch_id, units) in dag.iter() {
+        let epoch_file = format!("{}/epoch{}.json", base_path, epoch_id);
+        let path = Path::new(&epoch_file);
 
-//     // Append new unit entry
-//     epoch_data.push(unit_entry);
+        info!(
+            "Writing DAG for epoch {}. Total units in epoch: {}",
+            epoch_id,
+            units.len()
+        );
 
-//     // Open file and write updated content
-//     let mut file = OpenOptions::new()
-//         .write(true)
-//         .create(true)
-//         .truncate(true)
-//         .open(epoch_file).await?;
+        // ✅ Ensure directory exists
+        if let Some(parent_dir) = path.parent() {
+            if !parent_dir.exists() {
+                fs::create_dir_all(parent_dir).await?;
+                info!("Created directory for DAG storage: {:?}", parent_dir);
+            }
+        }
 
-//     file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes()).await?;
-//     info!("Successfully wrote finalized unit to file: {}", epoch_file);
-//     Ok(())
-// }
+        // Convert all units in the epoch to JSON format
+        let epoch_data: Vec<Value> = units
+            .iter()
+            .map(|unit| serde_json::json!({
+                "unit_id": unit.unit_id,
+                "proposer_node": unit.proposer_node,
+                "data": unit.data,
+                "parent_units": unit.parent_units,
+                "finalization_timestamp": unit.finalization_timestamp
+            }))
+            .collect();
+
+        // Open file and write epoch DAG
+        let mut file = OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .open(&epoch_file)
+            .await?;
+
+        file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes())
+            .await?;
+
+        info!(
+            "Successfully wrote finalized DAG for epoch {} to file: {}",
+            epoch_id, epoch_file
+        );
+    }
+
+    Ok(())
+}
+
