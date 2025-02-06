@@ -22,8 +22,6 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
-    info!("test PREVOTE entering");
-
     let node_id = node.read().await.id;
 
     info!(
@@ -40,12 +38,12 @@ pub async fn handle_prevote(
         *current_epoch_lock
     };
 
-    if prevote_request.propose.base.epoch_id != current_epoch {
-        return Err(format!(
-            "Node {}: Received prevote for outdated epoch {}. Current epoch is {}",
-            node_id, prevote_request.propose.base.epoch_id, current_epoch
-        ));
-    }
+    // if prevote_request.propose.base.epoch_id != current_epoch {
+    //     return Err(format!(
+    //         "Node {}: Received prevote for outdated epoch {}. Current epoch is {}",
+    //         node_id, prevote_request.propose.base.epoch_id, current_epoch
+    //     ));
+    // }
 
     // --- Step 2: Decode Base64-encoded shards ---
     let decoded_shards = prevote_request.propose.shards

@@ -147,11 +147,11 @@ pub async fn handle_commit(
         info!("Node {}: Advancing to next epoch...", node_id);
         let new_epoch_id = update_local_epoch(node.clone()).await; // ✅ No locks held here
 
-        if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
-            error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
-        } else {
-            info!("Node {}: Successfully broadcasted epoch update.", node_id);
-        }
+        // if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
+        //     error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
+        // } else {
+        //     info!("Node {}: Successfully broadcasted epoch update.", node_id);
+        // }
     }
 
     info!("Node {}: Successfully handled commit request.", node_id);
