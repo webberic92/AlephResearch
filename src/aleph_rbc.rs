@@ -60,18 +60,19 @@ async fn execute_transaction_logic(
 
     wait_for_all_nodes_health(&client, node.clone()).await?;
 
-    wait_for_turn(&client, node.clone()).await?;
+    for _ in 0..2 { // 🔥 Loop twice to ensure each node executes two transactions
+        wait_for_turn(&client, node.clone()).await?;
 
+        let node_id;
+        {
+            let node_read = node.read().await;
+            node_id = node_read.id;
+        } // 🔴 Drop read lock immediately after fetching `id`
 
-    let node_id;
-    {
-        let node_read = node.read().await;
-        node_id = node_read.id;
-    } // 🔴 Drop read lock immediately after fetching `id`
+        let (shards, merkle_root) = create_transaction_data(node_id).await?;
 
-    let (shards, merkle_root) = create_transaction_data(node_id).await?;
-
-    send_proposals(&client, node.clone(), &shards, &merkle_root).await?;
+        send_proposals(&client, node.clone(), &shards, &merkle_root).await?;
+    }
     
     Ok(())
 }
