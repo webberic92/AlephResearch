@@ -55,22 +55,9 @@ pub async fn handle_prevote(
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode proofs: {:?}", node_id, e))?;
 
-    // --- Step 4: Ensure DAG synchronization ---
-    // ensure_dag_synchronization(
-    //     node.clone(),
-    //     &client,
-    //     prevote_request.propose.base.epoch_id,
-    //     &prevote_request.propose.base.proposing_node_id,
-    //     prevote_request.sender_url.clone(),
-    // )
-    // .await
-    // .map_err(|e| {
-    //     let err_msg = format!("Node {}: DAG synchronization failed. Error: {:?}", node_id, e);
-    //     error!("{}", err_msg);
-    //     err_msg
-    // })?;
-
-    // info!("Node {}: DAG synchronization successful.", node_id);
+  
+// TODO: Conclusion: You can replace the DAG sync check with a round check, 
+//ensuring that the local DAG has at least reached round - 1 before proceeding with the prevote.
 
     // --- Step 5: Compute shard hashes ---
     let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
@@ -150,7 +137,7 @@ pub async fn handle_prevote(
                 .collect(),
         };
 
-        handle_commit(node.clone(), client.clone(), commit_request).await.map_err(|e| {
+        handle_commit(node.clone(), commit_request).await.map_err(|e| {
             let err_msg = format!(
                 "Node {}: Commit phase failed for epoch {}. Error: {:?}",
                 node_id, prevote_request.propose.base.epoch_id, e

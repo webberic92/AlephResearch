@@ -108,7 +108,7 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
                 match serde_json::from_value::<CommitRequest>(payload) {
                     Ok(parsed_payload) => {
                         // Handle the commit and respond with proper HTTP status codes
-                        match handle_commit(node, client, parsed_payload).await {
+                        match handle_commit(node, parsed_payload).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {
