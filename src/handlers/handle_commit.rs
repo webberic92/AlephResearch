@@ -22,7 +22,7 @@ use crate::utils::merkle_utils::validate_merkle_branch;
 /// - Ensures multiple transactions are committed before advancing the epoch.
 pub async fn handle_commit(
     node: Arc<RwLock<Node>>,
-    client: Arc<Client>,
+    // client: Arc<Client>,
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     // Step 1: Read Node ID (Drop lock after reading)
@@ -117,7 +117,7 @@ pub async fn handle_commit(
             node_write.id, dag_unit, epoch_id
         );
     
-        info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag);
+        info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag.get(&epoch_id));
     
         // ✅ Ensure `get()` safely handles missing epochs
         should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= node_write.total_nodes);
@@ -178,7 +178,7 @@ pub async fn write_finalized_dag_to_file(
         let path = Path::new(&epoch_file);
 
         info!(
-            "Writing DAG for epoch {}. Total units in epoch: {}",
+            "Writing DAG for epoch {}. Total units in dag: {}",
             epoch_id,
             units.len()
         );

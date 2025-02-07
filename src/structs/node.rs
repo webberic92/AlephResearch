@@ -121,22 +121,6 @@ impl Node {
         vote_count >= quorum_threshold
     }
 
-    /// **🔹 Store Finalized Block**
-    // pub async fn output_finalized_block(&self, block: Vec<u8>) {
-    //     let mut finalized_blocks = self.finalized_blocks.lock().await;
-    //     if finalized_blocks.insert(block.clone()) {
-    //         info!("Node {}: Finalized block: {:?}", self.id, block);
-    //     } else {
-    //         info!("Node {}: Block {:?} is already finalized.", self.id, block);
-    //     }
-    // }
-
-    /// **🔹 Check if Units Are Committed**
-    // pub async fn is_unit_committed(&self, unit_ids: &[Vec<u8>]) -> bool {
-    //     let finalized_blocks = self.finalized_blocks.lock().await;
-    //     unit_ids.iter().all(|unit_id| finalized_blocks.contains(unit_id))
-    // }
-
     /// **🔹 Update Proposal Tracker**
     /// - Stores received proposals and tracks count.
     pub async fn update_proposal_tracker(

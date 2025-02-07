@@ -142,26 +142,48 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
     def _handle_submit_transaction(self):
         """
         Handles transaction submission by nodes.
-        - Advances to the next node if the transaction is successfully submitted.
+        - Advances to the next node in sequence.
+        - When all nodes have submitted, increments the epoch and restarts with node 1.
         """
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
+
         try:
             data = json.loads(post_data)
             node_id = data.get("node_id")
+
             with lock:
                 if global_state["current_node_id"] == node_id:
-                    # Move to the next node in the sequence.
-                    global_state["current_node_id"] = (
-                        (global_state["current_node_id"] % global_state["total_nodes"]) + 1
-                    )
-                    self._send_response(200, {"status": "Transaction submitted successfully"})
+                    # ✅ If last node submits, reset to Node 1 and increment epoch
+                    if global_state["current_node_id"] == global_state["total_nodes"]:
+                        global_state["current_node_id"] = 1
+                        global_state["current_epoch_id"] += 1  # 🔥 Corrected epoch increment
+                        print(f"✅ Epoch incremented to {global_state['current_epoch_id']}. Restarting node sequence.")
+
+                    else:
+                        # Otherwise, just move to the next node
+                        global_state["current_node_id"] += 1
+
+                    self._send_response(200, {
+                        "status": "Transaction submitted successfully",
+                        "current_epoch_id": global_state["current_epoch_id"],  # ✅ Return correct epoch
+                        "next_node_id": global_state["current_node_id"]
+                    })
                 else:
-                    # Error if it's not the submitting node's turn.
-                    self._send_response(403, {"error": "Not your turn"})
+                    # ❌ Reject if it's not the submitting node's turn
+                    self._send_response(403, {
+                        "error": "Not your turn",
+                        "expected_node_id": global_state["current_node_id"],
+                        "expected_epoch_id": global_state["current_epoch_id"],
+                        "received_node_id": node_id,
+                        "received_epoch_id": global_state["current_epoch_id"]
+                    })
+
         except json.JSONDecodeError:
-            # Error if the request body is not valid JSON.
+            # ❌ Handle invalid JSON request
             self._send_response(400, {"error": "Invalid JSON"})
+
+
 
     def _send_response(self, status_code, response):
         """

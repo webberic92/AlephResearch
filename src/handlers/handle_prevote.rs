@@ -38,13 +38,6 @@ pub async fn handle_prevote(
         *current_epoch_lock
     };
 
-    // if prevote_request.propose.base.epoch_id != current_epoch {
-    //     return Err(format!(
-    //         "Node {}: Received prevote for outdated epoch {}. Current epoch is {}",
-    //         node_id, prevote_request.propose.base.epoch_id, current_epoch
-    //     ));
-    // }
-
     // --- Step 2: Decode Base64-encoded shards ---
     let decoded_shards = prevote_request.propose.shards
         .iter()
@@ -131,12 +124,12 @@ pub async fn handle_prevote(
             *vote_count
         };
 
-        let quorum_threshold = node.read().await.get_quorum_threshold();
+        // let quorum_threshold = node.read().await.get_quorum_threshold();
         let is_quorum = node.read().await.is_quorum_reached(epoch_id).await;
 
         info!(
-            "Node {}: Checking quorum for epoch {}. Required quorum: {}, Current votes: {}",
-            node_id, epoch_id, quorum_threshold, vote_count
+            "Node {}: Checking quorum for epoch {}, Current votes: {}",
+            node_id, epoch_id, vote_count
         );
 
         is_quorum
@@ -165,6 +158,12 @@ pub async fn handle_prevote(
             error!("{}", err_msg);
             err_msg
         })?;
+        
+        let node_state = timeout(Duration::from_secs(5), node.write()).await
+        .map_err(|_| format!("Node {}: Timeout while acquiring write lock in prevote step 9!", node_id))?;
+        let mut quorum_votes = node_state.quorum_votes.write().await;
+        quorum_votes.clear();
+
     } else {
         info!(
             "Node {}: Quorum not yet reached for epoch {}. Required: {}, Current votes: {}",

@@ -72,31 +72,24 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>)
 
 
 pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
-    // info!("Entering waiting for turn");
-
-    let (node_id, ip_address, current_epoch) = {
-        let node_read = node.read().await;
-        let epoch = *node_read.current_epoch.lock().await;
-        (node_read.id, node_read.ip_address.clone(), epoch)
-    }; // 🔴 Drop lock immediately
-
-    info!(
-        "Node {} {}: Waiting for its turn to propose for epoch {}",
-        node_id, ip_address, current_epoch
-    );
-
     loop {
         if is_node_turn(client, node.clone()).await {
+            let (node_id, ip_address, latest_epoch) = {
+                let node_read = node.read().await;
+                let epoch = *node_read.current_epoch.lock().await; // Fetch latest epoch
+                (node_read.id, node_read.ip_address.clone(), epoch)
+            };
+
+            info!(
+                "Node {} {}: It's my turn to propose for epoch {}",
+                node_id, ip_address, latest_epoch
+            );
+
             break;
         }
 
         sleep(Duration::from_secs(1)).await;
     }
-
-    info!(
-        "Node {} {}: It's my turn to propose for epoch {}",
-        node_id, ip_address, current_epoch
-    );
     Ok(())
 }
 
