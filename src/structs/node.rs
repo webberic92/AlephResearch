@@ -166,7 +166,7 @@ impl Node {
     pub async fn get_last_unit_id(&self, epoch_id: u64) -> Option<u64> {
         let dag_read = self.dag.read().await;
     
-        // Check current epoch
+        // ✅ Check last unit in current epoch
         if let Some(units) = dag_read.get(&epoch_id) {
             if let Some(last_unit) = units.last() {
                 info!(
@@ -178,7 +178,7 @@ impl Node {
             info!("Node {}: No units found in epoch {}", self.id, epoch_id);
         }
     
-        // Fall back to previous epoch
+        // ✅ Fall back to last finalized unit from previous epoch
         if epoch_id > 1 {
             if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
                 if let Some(last_unit) = prev_units.last() {
@@ -195,77 +195,61 @@ impl Node {
         None // No units found
     }
     
+    
+    
     /// 🔹 **Get Next DAG Unit ID**
     /// - Gets the last unit ID for the current epoch and increments it.
     pub async fn get_next_dag_unit_id(&self, epoch_id: u64) -> u64 {
-        // Try to get the last unit ID from the current epoch
         if let Some(last_id) = self.get_last_unit_id(epoch_id).await {
-            let next_id = last_id + 1;
-            info!(
-                "Node {}: Next DAG unit ID for epoch {}: {} (incremented from {})",
-                self.id, epoch_id, next_id, last_id
-            );
-            return next_id;
+            return last_id + 1;
         }
     
-        // If the current epoch is empty, fall back to the last unit ID from the previous epoch
+        // If epoch is empty, reference the last unit from the previous epoch
         if epoch_id > 1 {
             if let Some(last_id) = self.get_last_unit_id(epoch_id - 1).await {
-                let next_id = last_id + 1;
-                info!(
-                    "Node {}: Epoch {} is empty, using previous epoch {} last unit {} → next unit {}",
-                    self.id, epoch_id, epoch_id - 1, last_id, next_id
-                );
-                return next_id;
+                return last_id + 1;
             }
         }
     
-        info!(
-            "Node {}: No previous units found, starting DAG unit ID from 1 for epoch {}",
-            self.id, epoch_id
-        );
-        1 // Default to 1 if it's the very first unit ever
+        1 // Default to 1 for new DAG
     }
+    
     
     /// 🔹 **Get Next Parent Units**
     /// - Retrieves parent units based on the last unit.
     pub async fn get_next_parents(&self, epoch_id: u64) -> Vec<String> {
         let dag_read = self.dag.read().await;
     
-        // Check current epoch first
+        // ✅ Get last unit(s) from the current epoch
         if let Some(units) = dag_read.get(&epoch_id) {
             if let Some(last_unit) = units.last() {
-                let mut parents = last_unit.parent_units.clone();
-                parents.push(format!("{}", last_unit.unit_id));
+                let parents = vec![format!("{}", last_unit.unit_id)];
                 info!(
-                    "Node {}: Next parents for epoch {}: {:?} (last unit ID: {})",
-                    self.id, epoch_id, parents, last_unit.unit_id
+                    "Node {}: Next parents for epoch {}: {:?}",
+                    self.id, epoch_id, parents
                 );
                 return parents;
             }
         }
     
-        // Fall back to previous epoch
+        // ✅ If no units exist, fall back to the last finalized unit of the previous epoch
         if epoch_id > 1 {
-            if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) { // ✅ FIXED: Removed extra `)`
+            if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
                 if let Some(last_unit) = prev_units.last() {
-                    let mut parents = last_unit.parent_units.clone();
-                    parents.push(format!("{}", last_unit.unit_id));
+                    let parents = vec![format!("{}", last_unit.unit_id)];
                     info!(
-                        "Node {}: No units in epoch {}, falling back to parents from epoch {}: {:?}",
-                        self.id, epoch_id, epoch_id - 1, parents
+                        "Node {}: No units in epoch {}, using parent {} from epoch {}",
+                        self.id, epoch_id, last_unit.unit_id, epoch_id - 1
                     );
                     return parents;
                 }
             }
         }
     
-        info!(
-            "Node {}: No parent units found for epoch {}, returning empty list",
-            self.id, epoch_id
-        );
+        info!("Node {}: No parent units found for epoch {}, returning empty list", self.id, epoch_id);
         Vec::new() // No parents if it's the first unit
     }
+    
     
 
 

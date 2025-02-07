@@ -92,8 +92,10 @@ pub async fn handle_commit(
     {
         let node_read = node.read().await;
     
-        // Step 4: Compute next unit ID and parents **before acquiring write lock**
+        // 🔹 Compute next unit ID
         let next_unit_id = node_read.get_next_dag_unit_id(epoch_id).await;
+    
+        // 🔹 Compute next parents (only the last finalized units)
         let parent_units = node_read.get_next_parents(epoch_id).await;
     
         drop(node_read); // 🔴 Release read lock ASAP
@@ -122,6 +124,7 @@ pub async fn handle_commit(
         // ✅ Ensure `get()` safely handles missing epochs
         should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= node_write.total_nodes);
     } // 🔴 Drop write lock immediately
+    
     
 
 

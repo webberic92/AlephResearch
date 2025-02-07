@@ -72,7 +72,6 @@ pub async fn handle_propose(
 
     info!("Node {}: All Merkle branches validated successfully.", node_id);
 
-    // ✅ Step 4: Directly Call `update_proposal_tracker` Without Outer Write Lock
     // ✅ Step 4: Call `update_proposal_tracker` to store proposal and check threshold
     let (proposal_count, required_proposals, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
