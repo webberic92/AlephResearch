@@ -106,6 +106,9 @@ pub async fn handle_propose(
                 format!("Prevote phase failed: {:?}", e)
             })?;
         }
+        let node_write = node.write().await;
+        let mut proposal_tracker = node_write.proposal_tracker.lock().await;
+        proposal_tracker.clear();
     }
 
     info!(

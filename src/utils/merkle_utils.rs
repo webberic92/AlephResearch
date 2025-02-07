@@ -22,7 +22,7 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
             })
             .collect();
 
-        info!("Next level of Merkle tree: {:?}", current_level);
+        // info!("Next level of Merkle tree: {:?}", current_level);
     }
 
     let root = current_level[0].clone();
@@ -148,7 +148,8 @@ pub fn reconstruct_unit(
         .map(|chunk| chunk.to_vec())
         .collect();
 
-    info!("Reconstructed parents: {:?}", parents);
+    // info!("Reconstructed parents: {:?}", parents);
+    info!("Reconstructed parents successfully");
 
     Ok(ReconstructedUnit {
         data: shards.concat(),
