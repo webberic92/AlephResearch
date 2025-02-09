@@ -29,8 +29,7 @@ pub struct Node {
     pub total_nodes: usize,
     pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
     pub current_epoch: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
-    pub proposal_tracker: Arc<Mutex<HashMap<usize, ProposeRequest>>>, // Stores proposals instead of just IDs
-    // pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>,
+    pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,    // pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>,
     pub dag: Arc<RwLock<HashMap<u64, Vec<DagUnit>>>>,
     pub ip_address: String,
     pub ip_manager_address: String,
@@ -128,38 +127,43 @@ impl Node {
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
         let node_id = node.read().await.id;
-
+        let epoch_id = propose_request.base.epoch_id;
+        
         info!("Node {}: Acquiring write lock for proposal tracker update...", node_id);
-
+    
         let proposal_count;
         let required_proposals;
         let stored_proposals;
-
+    
         {
             let node_write = node.write().await;
             let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-
-            // Store proposal in the tracker
-            proposal_tracker.insert(propose_request.base.proposing_node_id, propose_request.clone());
-
-            proposal_count = proposal_tracker.len();
-            stored_proposals = proposal_tracker.values().cloned().collect();
-        }
-
+    
+            // ✅ Ensure there is a HashMap for the given epoch
+            let epoch_entry = proposal_tracker.entry(epoch_id).or_insert_with(HashMap::new);
+    
+            // ✅ Store proposal in the epoch-specific tracker
+            epoch_entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
+    
+            proposal_count = epoch_entry.len();
+            stored_proposals = epoch_entry.values().cloned().collect();
+        } // 🔴 Drop write lock immediately
+    
         {
             let node_read = node.read().await;
             let node_count = node_read.total_nodes;
             let f = node_read.get_fault_tolerance_threshold();
             required_proposals = node_count - f;
-        }
-
+        } // 🔴 Drop read lock immediately
+    
         info!(
-            "Node {}: Proposal added from Node {}. Total proposals: {}. Required for consensus: {}.",
-            node_id, propose_request.base.proposing_node_id, proposal_count, required_proposals
+            "Node {}: Proposal added from Node {} for epoch {}. Total proposals: {}. Required for consensus: {}.",
+            node_id, propose_request.base.proposing_node_id, epoch_id, proposal_count, required_proposals
         );
-
+    
         Ok((proposal_count, required_proposals, stored_proposals))
     }
+    
 
   /// 🔹 **Get Last Unit ID in the DAG for a Given Epoch**
     /// - Retrieves the unit_id of the last entry in the DAG for `epoch_id`.
