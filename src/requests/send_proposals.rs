@@ -3,7 +3,7 @@ use base64::Engine;
 use futures::future::join_all;
 use reqwest::Client;
 use sha2::Digest;
-use tracing::{ error, info };
+use tracing::{error, info};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::{
@@ -13,18 +13,38 @@ use crate::{
     utils::merkle_utils::{ compute_merkle_branch, compute_merkle_root },
 };
 
-/// Sends proposal messages to all nodes in the network.
+/* 
+**ch-RBC Proof Validation for `send_proposals`**
+--------------------------------------------------
+
+1. If `P_i = P_s`, then:
+   - This function is called when a node needs to broadcast its proposal.
+
+2. `{s_j} j∈N ← shares of (f + 1, N)-erasure coding of U`:
+   - The `shards` parameter represents the erasure-coded shares.
+
+3. `h ← Merkle tree root of {s_j} j∈N`:
+   - The function `compute_merkle_root` is used to compute the Merkle root.
+
+4. For each node `j ∈ N`:
+   - A loop iterates over all nodes in `node_read.nodes` to send proposals.
+
+5. `b_i ← Merkle branch of s_j`:
+   - The function `compute_merkle_branch` computes the Merkle branch.
+
+6. `send propose(h, b_j, s_j) to P_j`:
+   - The proposals are sent asynchronously using `reqwest::Client::post`.
+*/
 pub async fn send_proposals(
     client: &Client,
     node: Arc<RwLock<Node>>,
     shards: &[Vec<u8>],
     merkle_root: &[u8]
 ) -> Result<(), anyhow::Error> {
-    // ✅ Use anyhow::Error
-
+    
     let node_read = node.read().await;
-
     let epoch = *node_read.current_epoch.lock().await;
+
     info!(
         "Node {} {}: Preparing to send proposals for epoch {} to nodes: {:?}",
         node_read.id,
@@ -33,6 +53,7 @@ pub async fn send_proposals(
         node_read.nodes
     );
 
+    // Step 3: Compute Merkle root
     let shard_hashes: Vec<Vec<u8>> = shards
         .iter()
         .map(|shard| sha2::Sha256::digest(shard).to_vec())
@@ -49,11 +70,13 @@ pub async fn send_proposals(
         );
     }
 
+    // Step 2: Encode shards for transmission
     let encoded_shards: Vec<String> = shards
         .iter()
         .map(|shard| general_purpose::STANDARD.encode(shard))
         .collect();
 
+    // Step 5: Compute Merkle branches for each shard
     let encoded_proofs: Vec<Vec<String>> = shard_hashes
         .iter()
         .enumerate()
@@ -80,6 +103,7 @@ pub async fn send_proposals(
 
     drop(node_read); // 🔥 Release lock before async calls
 
+    // Step 6: Send `propose(h, b_j, s_j)` to all nodes
     let futures: Vec<_> = node
         .read().await
         .nodes.iter()
@@ -135,10 +159,10 @@ pub async fn send_proposals(
 
     let results = join_all(futures).await;
 
+    // Step 1: If all proposals are sent, add self to proposal tracker
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for epoch {}.", epoch);
 
-        // 🔥 **Add itself to proposal tracker since its proposal was successfully sent**
         match Node::update_proposal_tracker(node.clone(), propose_request.clone()).await {
             Ok((proposal_count, required_proposals, stored_proposals)) => {
                 info!(
@@ -146,7 +170,7 @@ pub async fn send_proposals(
                     propose_request.base.proposing_node_id,
                     proposal_count,
                     required_proposals
-                    );
+                );
 
                 if proposal_count >= required_proposals {
                     info!(
@@ -157,7 +181,7 @@ pub async fn send_proposals(
                         propose_request.base.epoch_id
                     );
 
-                    // ✅ Send prevotes for all stored proposals
+                    // Send prevotes for all stored proposals
                     for stored_propose in stored_proposals {
                         info!(
                             "Node {}: Sending prevote for transaction proposed by Node {}",
@@ -173,13 +197,11 @@ pub async fn send_proposals(
                             }
                         };
 
-                        if
-                            let Err(e) = handle_prevote(
-                                node.clone(),
-                                client.clone().into(),
-                                prevote_request
-                            ).await
-                        {
+                        if let Err(e) = handle_prevote(
+                            node.clone(),
+                            client.clone().into(),
+                            prevote_request
+                        ).await {
                             error!(
                                 "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
                                 propose_request.base.proposing_node_id,
@@ -192,7 +214,6 @@ pub async fn send_proposals(
                     let node_write = node.write().await;
                     let mut proposal_tracker = node_write.proposal_tracker.lock().await;
                     proposal_tracker.clear();
-
                 }
             }
             Err(err) => {
