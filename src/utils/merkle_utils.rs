@@ -1,5 +1,6 @@
+use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use tracing::{debug, error, info};
+use tracing::{ error, info};
 
 use crate::structs::dag::ReconstructedUnit;
 
@@ -87,7 +88,7 @@ pub fn validate_merkle_branch(
     let mut current_hash = shard_hashes[index].clone();
     let mut current_index = index;
 
-    for (level, sibling_hash) in proofs.iter().enumerate() {
+    for (_level, sibling_hash) in proofs.iter().enumerate() {
         let combined = if current_index % 2 == 0 {
             [current_hash.clone(), sibling_hash.clone()].concat()
         } else {
@@ -191,3 +192,46 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
     Ok(())
 }
 
+
+pub fn interpolate_shares(shards: &[Vec<u8>], epoch_id: u64) -> Result<Vec<Vec<u8>>, String> {
+    if shards.is_empty() {
+        return Err("Interpolation failed: No available shards".to_string());
+    }
+
+    // ✅ Handle first transaction (epoch 1): No interpolation needed
+    if epoch_id == 1 {
+        info!("Epoch 1 detected: Skipping interpolation, returning provided shards.");
+        return Ok(shards.to_vec()); // ✅ Just return original shards
+    }
+
+    let data_shards = shards.len() / 2; // Assumption: f+1 out of N shards
+    let parity_shards = shards.len() - data_shards;
+
+    if data_shards < 1 {
+        return Err(format!(
+            "Interpolation failed: Not enough data shards ({}). Requires at least 1.",
+            data_shards
+        ));
+    }
+
+    // Initialize Reed-Solomon erasure coding
+    let r = ReedSolomon::new(data_shards, parity_shards)
+        .map_err(|e| format!("Failed to create Reed-Solomon codec: {:?}", e))?;
+
+    // Clone and pad the shards (Reed-Solomon needs full set)
+    let mut shard_buffer: Vec<Option<Vec<u8>>> = shards.iter().map(|s| Some(s.clone())).collect();
+    shard_buffer.resize(data_shards + parity_shards, None);
+
+    // Recover missing shares
+    r.reconstruct(&mut shard_buffer)
+        .map_err(|e| format!("Failed to interpolate shares: {:?}", e))?;
+
+    // Convert back to Vec<Vec<u8>>
+    let recovered_shards: Vec<Vec<u8>> = shard_buffer
+        .into_iter()
+        .filter_map(|s| s) // Remove None values
+        .collect();
+
+    info!("Interpolated missing shares successfully.");
+    Ok(recovered_shards)
+}

@@ -255,6 +255,24 @@ impl Node {
     }
     
     
-
+    pub async fn is_unit_committed(&self, parent_id: &str) -> bool {
+        let dag_read = self.dag.read().await;
+    
+        // ✅ Handle first transaction (epoch 1): No parents to check
+        if dag_read.is_empty() {
+            info!("DAG is empty: Treating first transaction as committed.");
+            return true;  // ✅ Allow the first transaction to commit
+        }
+    
+        // 🔹 Iterate through all epochs in the DAG
+        for (_epoch, units) in dag_read.iter() {
+            // 🔹 Check if any unit references `parent_id` in `parent_units`
+            if units.iter().any(|unit| unit.parent_units.contains(&parent_id.to_string())) {
+                return true; // ✅ Parent unit was referenced in DAG → Committed
+            }
+        }
+    
+        false // ❌ Parent unit was not found → Not committed
+    }
 
 }
