@@ -141,13 +141,6 @@ pub async fn send_proposals(
         // 🔥 **Add itself to proposal tracker since its proposal was successfully sent**
         match Node::update_proposal_tracker(node.clone(), propose_request.clone()).await {
             Ok((proposal_count, required_proposals, stored_proposals)) => {
-                // info!(
-                //     "Node {}: Added itself to proposal tracker. Proposal count: {} / Required: {} : Stored proposals: {:?}",
-                //     propose_request.base.proposing_node_id,
-                //     proposal_count,
-                //     required_proposals,
-                //     stored_proposals
-                // );
                 info!(
                     "Node {}: Added itself to proposal tracker. Proposal count: {} / Required: {}",
                     propose_request.base.proposing_node_id,

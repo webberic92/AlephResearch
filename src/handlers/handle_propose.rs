@@ -1,7 +1,6 @@
-use std::{sync::Arc, time::Duration};
+use std::sync::Arc;
 use base64::{engine::general_purpose, Engine};
-use sha2::Digest;
-use tokio::{sync::RwLock, time::timeout};
+use tokio::sync::RwLock;
 use tracing::{error, info};
 use reqwest::Client;
 use crate::{
@@ -10,37 +9,73 @@ use crate::{
         node::Node,
         requests::{PrevoteRequest, ProposeRequest},
     },
-    utils::merkle_utils::validate_merkle_branch,
+    utils::dag_utils::{check_size, ensure_dag_round_sync},
 };
 
-/// Handles an incoming proposal request in the ch-RBC protocol.
+/*
+**ch-RBC Proof Validation for `handle_propose`**
+--------------------------------------------------
+
+8: Upon receiving `propose(h, b_j, s_j)` from `P_s`
+   - The function `handle_propose` is called upon receiving a `ProposeRequest`. 
+
+9: If `received_propose(P_i, r)` then terminate
+   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same epoch (`r`).
+   - If a duplicate exists, the function returns early.
+
+10: If `check_size(s_j)` then
+   - The function `check_size(&decoded_shards)` verifies the shard sizes.
+   - If the size is invalid, the function returns early.
+
+11: Wait until `D_i` reaches round `r-1`
+   - The function `ensure_dag_round_sync(node.clone(), epoch_id).await?;` ensures the DAG is synchronized to `r-1` before proceeding.
+
+12: Multicast `prevote(h, b_j, s_j)`
+   - If enough proposals are received (`proposal_count >= required_proposals`), prevotes are sent for each stored proposal.
+
+13: `received_propose(P_i, r) = True`
+   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring the proposal is marked as received.
+*/
 pub async fn handle_propose(
     node: Arc<RwLock<Node>>,
     client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let node_id;
-    let node_epoch;
+    let epoch_id = propose_request.base.epoch_id;
 
-    // ✅ Step 1: Read node state first, NO LOCKING
+    // Step 8: Upon receiving `propose(h, b_j, s_j)` from `P_s`
     {
         let node_read = node.read().await;
         node_id = node_read.id;
-        node_epoch = *node_read.current_epoch.lock().await;
         info!(
             "Node {}: Handling Propose for epoch {} from sender {}",
             node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
         );
-    } // 🔴 Drop read lock immediately
+    } 
 
-    if propose_request.base.epoch_id < node_epoch {
-        return Err(format!(
-            "Node {}: Outdated epoch {} received, current epoch is {}",
-            node_id, propose_request.base.epoch_id, node_epoch
-        ));
-    }
-
-    // ✅ Step 2: Decode shards OUTSIDE any lock
+    // Step 9: If `received_propose(P_i, r)` then terminate
+    {
+        let proposal_tracker;
+        {
+            let node_read = node.read().await;
+            proposal_tracker = node_read.proposal_tracker.clone(); 
+        } 
+    
+        let proposal_tracker_read = proposal_tracker.lock().await;
+    
+        if let Some(epoch_proposals) = proposal_tracker_read.get(&epoch_id) {
+            if epoch_proposals.contains_key(&propose_request.base.proposing_node_id) {
+                info!(
+                    "Node {}: Already received propose for epoch {} from Node {}. Terminating.",
+                    node_id, epoch_id, propose_request.base.proposing_node_id
+                );
+                return Ok(());  
+            }
+        }
+    } 
+    
+    // Step 10: If `check_size(s_j)` then
     let decoded_shards: Vec<Vec<u8>> = propose_request
         .shards
         .iter()
@@ -48,41 +83,26 @@ pub async fn handle_propose(
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-    let decoded_proofs: Vec<Vec<Vec<u8>>> = propose_request
-        .proofs
-        .iter()
-        .map(|proof| proof.iter().map(|p| general_purpose::STANDARD.decode(p.as_bytes())).collect::<Result<Vec<_>, _>>())
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to decode proofs: {:?}", e))?;
+    if !check_size(&decoded_shards) {
+       return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id)); 
+    }    
 
-    // ✅ Step 3: Validate Merkle branches OUTSIDE lock
-    let shard_hashes: Vec<Vec<u8>> = decoded_shards
-        .iter()
-        .map(|shard| sha2::Sha256::digest(shard).to_vec())
-        .collect();
+    // Step 11: Wait until `D_i` reaches round `r-1`
+    ensure_dag_round_sync(node.clone(), epoch_id).await?;
 
-    for (index, proof) in decoded_proofs.iter().enumerate() {
-        if !validate_merkle_branch(&shard_hashes, proof, index, &propose_request.base.root) {
-            return Err(format!(
-                "Node {}: Merkle root mismatch for shard {}.",
-                node_id, index
-            ));
-        }
-    }
+    info!("Node {}: Checked sizes and ensured dag round sync successfully.", node_id);
 
-    info!("Node {}: All Merkle branches validated successfully.", node_id);
-
-    // ✅ Step 4: Call `update_proposal_tracker` to store proposal and check threshold
+    // Step 13: `received_propose(P_i, r) = True`
     let (proposal_count, required_proposals, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
+    // Step 12: Multicast `prevote(h, b_j, s_j)`
     if proposal_count >= required_proposals {
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
         );
 
-        // ✅ Send prevotes for all stored proposals
         for stored_propose in stored_proposals {
             info!(
                 "Node {}: Sending prevote for transaction proposed by Node {}",
@@ -105,9 +125,6 @@ pub async fn handle_propose(
                 format!("Prevote phase failed: {:?}", e)
             })?;
         }
-        let node_write = node.write().await;
-        let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-        proposal_tracker.clear();
     }
 
     info!(
@@ -116,7 +133,3 @@ pub async fn handle_propose(
     );
     Ok(())
 }
-
-
-
-
