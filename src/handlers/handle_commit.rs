@@ -94,17 +94,14 @@ pub async fn handle_commit(
     
         // 🔹 Compute next unit ID
         let next_unit_id = node_read.get_next_dag_unit_id(epoch_id).await;
-    
-        // 🔹 Compute next parents (only the last finalized units)
-        let parent_units = node_read.get_next_parents(epoch_id).await;
-    
+                      
         drop(node_read); // 🔴 Release read lock ASAP
     
         let dag_unit = DagUnit {
             unit_id: next_unit_id,
             proposer_node: commit_request.base.proposing_node_id,
             data: commit_request.unit.clone(),
-            parent_units,
+            parent_units: commit_request.parents.clone(),
             finalization_timestamp: chrono::Utc::now().timestamp() as u64,
         };
     

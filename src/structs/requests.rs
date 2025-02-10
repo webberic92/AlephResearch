@@ -12,7 +12,7 @@ pub struct ProposeRequest {
     pub base: BaseRequest,            // Base request fields
     pub proofs: Vec<Vec<String>>,     // Base64-encoded Merkle proofs for each shard
     pub shards: Vec<String>,    
-    // pub parents: Vec<u8>,         // Base64-encoded parent hashes      // Base64-encoded data shards
+    pub parents: Vec<String>,         // Base64-encoded parent hashes      // Base64-encoded data shards
 }
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
@@ -26,7 +26,8 @@ pub struct PrevoteRequest {
 pub struct CommitRequest {
     pub base: BaseRequest,       // Base fields common to all phases
     pub unit: Vec<u8>,           // Reconstructed unit
-    pub proofs: Vec<Vec<String>>, // Reuse Merkle proofs from ProposeRequest
+    pub proofs: Vec<Vec<String>>,
+    pub parents: Vec<String> // Reuse Merkle proofs from ProposeRequest
 }
 
 

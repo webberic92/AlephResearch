@@ -69,9 +69,9 @@ async fn execute_transaction_logic(
             node_id = node_read.id;
         } // 🔴 Drop read lock immediately after fetching `id`
 
-        let (shards, merkle_root) = create_transaction_data(node_id).await?;
+        let (shards, merkle_root, parents) = create_transaction_data(node.clone(),node_id).await?;
 
-        send_proposals(&client, node.clone(), &shards, &merkle_root).await?;
+        send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
     }
     
     Ok(())
