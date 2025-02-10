@@ -39,7 +39,8 @@ pub async fn send_proposals(
     client: &Client,
     node: Arc<RwLock<Node>>,
     shards: &[Vec<u8>],
-    merkle_root: &[u8]
+    merkle_root: &[u8],
+    parent_units: Vec<String>,  // 🔥 Ensure parent units are properly formatted
 ) -> Result<(), anyhow::Error> {
     
     let node_read = node.read().await;
@@ -99,7 +100,9 @@ pub async fn send_proposals(
         base: base_request,
         proofs: encoded_proofs.clone(),
         shards: encoded_shards.clone(),
+        parents: parent_units.clone(),  // ✅ Use Vec<String> instead of Vec<u8>
     };
+    
 
     drop(node_read); // 🔥 Release lock before async calls
 

@@ -219,60 +219,78 @@ impl Node {
     }
     
     
-    /// 🔹 **Get Next Parent Units**
-    /// - Retrieves parent units based on the last unit.
-    pub async fn get_next_parents(&self, epoch_id: u64) -> Vec<String> {
-        let dag_read = self.dag.read().await;
-    
-        // ✅ Get last unit(s) from the current epoch
-        if let Some(units) = dag_read.get(&epoch_id) {
-            if let Some(last_unit) = units.last() {
-                let parents = vec![format!("{}", last_unit.unit_id)];
-                info!(
-                    "Node {}: Next parents for epoch {}: {:?}",
-                    self.id, epoch_id, parents
-                );
-                return parents;
-            }
-        }
-    
-        // ✅ If no units exist, fall back to the last finalized unit of the previous epoch
-        if epoch_id > 1 {
-            if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
-                if let Some(last_unit) = prev_units.last() {
-                    let parents = vec![format!("{}", last_unit.unit_id)];
-                    info!(
-                        "Node {}: No units in epoch {}, using parent {} from epoch {}",
-                        self.id, epoch_id, last_unit.unit_id, epoch_id - 1
-                    );
-                    return parents;
-                }
-            }
-        }
-    
-        info!("Node {}: No parent units found for epoch {}, returning empty list", self.id, epoch_id);
-        Vec::new() // No parents if it's the first unit
-    }
+
     
     
     pub async fn is_unit_committed(&self, parent_id: &str) -> bool {
         let dag_read = self.dag.read().await;
     
+        info!("Checking commitment for parent: {}", parent_id);
+        info!("DAG state before commitment check: {:?}", *dag_read);
+            
         // ✅ Handle first transaction (epoch 1): No parents to check
         if dag_read.is_empty() {
             info!("DAG is empty: Treating first transaction as committed.");
             return true;  // ✅ Allow the first transaction to commit
         }
     
-        // 🔹 Iterate through all epochs in the DAG
         for (_epoch, units) in dag_read.iter() {
-            // 🔹 Check if any unit references `parent_id` in `parent_units`
-            if units.iter().any(|unit| unit.parent_units.contains(&parent_id.to_string())) {
-                return true; // ✅ Parent unit was referenced in DAG → Committed
+            if units.iter().any(|unit| unit.unit_id.to_string() == parent_id) {
+                return true; // ✅ Correct: Check if the DAG contains this parent unit ID
+            }
+        }
+        
+        // ❌ Parent unit was not found
+        false
+    }
+
+    pub async fn get_all_parents(&self, epoch_id: u64) -> Vec<String> {
+        let dag_read = self.dag.read().await;
+        let mut parents = Vec::new();
+    
+        // ✅ If there are already transactions in this epoch, use them as parents
+        if let Some(units) = dag_read.get(&epoch_id) {
+            if !units.is_empty() {
+                parents.extend(units.iter().map(|unit| format!("{}", unit.unit_id)));
+                info!(
+                    "Node {}: Using units from current epoch {} as parents: {:?}",
+                    self.id, epoch_id, parents
+                );
+                return parents; // 🔥 If current epoch has transactions, return immediately
             }
         }
     
-        false // ❌ Parent unit was not found → Not committed
+        // ✅ If we are in epoch 1, return no parents
+        if epoch_id == 1 {
+            info!(
+                "Node {}: Epoch 1 detected. No parents available.",
+                self.id
+            );
+            return Vec::new();
+        }
+    
+        // ✅ Otherwise, fallback to the last finalized transactions from the previous epoch
+        if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
+            if !prev_units.is_empty() {
+                parents.extend(prev_units.iter().map(|unit| format!("{}", unit.unit_id)));
+                info!(
+                    "Node {}: Using previous epoch {} as parents: {:?}",
+                    self.id, epoch_id - 1, parents
+                );
+            }
+        }
+    
+        info!(
+            "Node {}: Selected parents for epoch {} -> {:?}",
+            self.id, epoch_id, parents
+        );
+    
+        parents
     }
+    
+    
+    
+    
+    
 
 }

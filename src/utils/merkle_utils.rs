@@ -1,3 +1,4 @@
+use base64::Engine;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tracing::{ error, info};
@@ -117,39 +118,35 @@ pub fn validate_merkle_branch(
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
     epoch_id: u64,
-    parent_hashes: Vec<u8>, // Flat parent hashes in binary format
+    parent_hashes: Vec<String>, // ✅ Unit IDs as strings, NOT Base64-encoded hashes
 ) -> Result<ReconstructedUnit, String> {
     if shards.is_empty() {
         return Err("Reconstruction failed: shards are empty".to_string());
     }
 
     // Compute the hashes of the individual shards
-    let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
+    let shard_hashes: Vec<Vec<u8>> = shards.iter()
+        .map(|shard| Sha256::digest(shard).to_vec())
+        .collect();
+    info!("shard_hashes : {:?}", shard_hashes);
 
     // Compute the Merkle root using shard hashes
     let root = compute_merkle_root(&shard_hashes);
+    info!("root : {:?}", root);
 
-    // info!(
-    //     "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
-    //     shards.concat(),
-    //     root
-    // );
+    info!(
+        "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
+        shards.concat(),
+        root
+    );
 
-    // Split flat parent hashes into individual hashes (32 bytes each)
-    const HASH_SIZE: usize = 32;
-    if parent_hashes.len() % HASH_SIZE != 0 {
-        return Err(format!(
-            "Invalid parent hashes size: expected multiple of {}, got {}",
-            HASH_SIZE, parent_hashes.len()
-        ));
-    }
-
+    // ✅ **Fix: Convert parent unit IDs into raw bytes**
     let parents: Vec<Vec<u8>> = parent_hashes
-        .chunks(HASH_SIZE)
-        .map(|chunk| chunk.to_vec())
+        .iter()
+        .map(|parent| parent.as_bytes().to_vec()) // ✅ Convert directly to bytes (No Base64 decoding)
         .collect();
 
-    // info!("Reconstructed parents: {:?}", parents);
+    info!("Reconstructed parents: {:?}", parents);
     info!("Reconstructed parents successfully");
 
     Ok(ReconstructedUnit {
@@ -159,6 +156,7 @@ pub fn reconstruct_unit(
         epoch_id,
     })
 }
+
 
 
 pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {

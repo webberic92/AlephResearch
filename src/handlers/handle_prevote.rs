@@ -34,7 +34,7 @@ pub async fn handle_prevote(
 
     // --- Ensure DAG round is at least `round - 1` before prevoting ---
     let epoch_id = prevote_request.propose.base.epoch_id;
-    // ensure_dag_round_sync(node.clone(), epoch_id).await?;
+    ensure_dag_round_sync(node.clone(), epoch_id).await?;
 
     // --- Decode Base64-encoded shards ---
     let decoded_shards = prevote_request.propose.shards
@@ -69,35 +69,34 @@ pub async fn handle_prevote(
     }
 
     // --- Reconstruct the unit ---
-    // ✅ Compute flat hash representation of parent units (only if not first transaction)
-    // let parent_hashes_flat: Vec<u8> = shard_hashes.iter().flat_map(|hash| hash.clone()).collect();
-
     // --- Step 7: Reconstruct the unit ---
-    let parents = shard_hashes.iter().flat_map(|hash| hash.clone()).collect();
     let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.epoch_id,
-        parents,
+        prevote_request.propose.parents.clone(), // ✅ Pass the correct parents from the proposal
     )
     .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
-
-    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
-    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
-    // let node_read = node.read().await;
-
-    // if reconstructed_unit.epoch_id == 1 {
-    //     info!("Node {}: First epoch detected, skipping parent commitment check.", node_id);
-    // } else {
-    //     for parent in &reconstructed_unit.parents {
-    //         let parent_str = general_purpose::STANDARD.encode(parent); // Convert binary hash to Base64
     
-    //         if !node_read.is_unit_committed(&parent_str).await {
-    //             return Err(format!(
-    //                 "Node {}: Parent unit {} not received via RBC yet. Cannot commit.",
-    //                 node_id, parent_str
-    //             ));
-    //         }
-    //     }
+
+    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
+    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
+    
+    {
+        let node_read = node.read().await;
+
+        if reconstructed_unit.epoch_id == 1 {
+            info!("Node {}: First epoch detected, skipping parent commitment check.", node_id);
+        } else {
+            for parent in &prevote_request.propose.parents {
+                if !node_read.is_unit_committed(parent).await {
+                    return Err(format!(
+                        "Node {}: Parent unit {} not received via RBC yet. Cannot commit.",
+                        node_id, parent
+                    ));
+                }
+            }
+        }
+    }
     
     //     // ✅ **Only interpolate if `epoch_id > 1`**
     //     let interpolated_shards = interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
@@ -122,7 +121,6 @@ pub async fn handle_prevote(
 
 
     
-    // --- Ensure `2f+1` valid prevotes before committing ---
     // --- Ensure `2f+1` valid prevotes before committing ---
     let f = node.read().await.get_fault_tolerance_threshold();
     info!("Fault tolerance threshold: {}", f);
@@ -174,8 +172,9 @@ pub async fn handle_prevote(
         proofs: decoded_proofs.iter()
             .map(|proof| proof.iter().map(|p| base64::engine::general_purpose::STANDARD.encode(p)).collect())
             .collect(),
+        parents: prevote_request.propose.parents.clone(),
     };
-    
+
     handle_commit(node.clone(),  commit_request).await.map_err(|e| {
         error!(
             "Node {}: Commit phase failed for epoch {}. Error: {:?}",

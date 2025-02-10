@@ -25,6 +25,7 @@ pub async fn send_prevotes(
     toml_config: &TomlConfig,
     merkle_root: &Vec<u8>,
     shards: &Vec<Vec<u8>>, // Data shards
+    parents: Vec<String>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     info!(
         "Node {} {}: Starting SEND PREVOTE phase",
@@ -65,6 +66,7 @@ pub async fn send_prevotes(
                 },
                 proofs: encoded_proofs,    // Merkle proofs for shards
                 shards: vec![encoded_shard], // Encoded shards
+                parents: parents.clone(), // Parent units
             },
             sender_url: toml_config.network.ip_address.clone(), // Sender's IP address
         };

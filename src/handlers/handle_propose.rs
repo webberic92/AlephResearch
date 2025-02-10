@@ -65,6 +65,7 @@ pub async fn handle_propose(
 
         let proposal_tracker_read = proposal_tracker.lock().await;
 
+
         if let Some(epoch_proposals) = proposal_tracker_read.get(&epoch_id) {
             if epoch_proposals.contains_key(&propose_request.base.proposing_node_id) {
                 info!(
@@ -86,6 +87,10 @@ pub async fn handle_propose(
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
+
+        // let decoded_parent_hashes: Vec<u8> = general_purpose::STANDARD.decode(&propose_request.base.root).unwrap();
+        // info!("Decoded parent hashes: {:?}", decoded_parent_hashes);
+
     if !check_size(&decoded_shards) {
         return Err(format!(
             "Node {}: Received oversized unit, rejecting propose.",
@@ -104,9 +109,27 @@ pub async fn handle_propose(
     let (proposal_count, required_proposals, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
+        let proposal_tracker;
+        {
+        let node_read = node.read().await;
+
+        proposal_tracker = node_read.proposal_tracker.clone();
+
+        let proposal_tracker_read = proposal_tracker.lock().await;
+
+        info!(
+            "Node {}: Current Proposal Tracker for epoch {}: {:?}",
+            node_id, epoch_id, proposal_tracker_read
+        );
+        }   
+
     // Step 11: Multicast `prevote(h, b_j, s_j)`
     // - If the number of received proposals reaches the required threshold, proceed to prevote.
     if proposal_count >= required_proposals {
+
+
+
+        
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
