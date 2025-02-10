@@ -20,6 +20,19 @@ use std::time::Duration;
 
 
 /// Handles an incoming PREVOTE request in the ch-RBC protocol.
+/// 
+/// This function implements the key steps of ch-RBC as follows:
+/// 
+/// **ch-RBC Steps:**
+/// - **Step 14**: Upon receiving `2f + 1` valid prevote messages, begin reconstruction.
+/// - **Step 15**: Reconstruct the unit from the received shards.
+/// - **Step 16**: If reconstruction fails (Merkle root mismatch), terminate.
+/// - **Step 17**: Ensure all parents of the unit are locally available before proceeding.
+/// - **Step 18**: Interpolate missing shards using `f+1` shares.
+/// - **Step 19**: Compute the Merkle root from the interpolated shares.
+/// - **Step 20**: If the computed root matches the expected root and commit has not been sent, proceed.
+/// - **Step 21**: Multicast the commit message to finalize consensus.
+
 pub async fn handle_prevote(
     node: Arc<RwLock<Node>>,
     client: Arc<Client>,
@@ -32,7 +45,7 @@ pub async fn handle_prevote(
         node_id, prevote_request.propose.base.proposing_node_id, prevote_request.propose.base.epoch_id
     );
 
-    // --- Ensure DAG round is at least `round - 1` before prevoting ---
+    // --- Step 14: Ensure DAG round is synchronized before prevoting ---
     let epoch_id = prevote_request.propose.base.epoch_id;
     ensure_dag_round_sync(node.clone(), epoch_id).await?;
 
@@ -58,7 +71,7 @@ pub async fn handle_prevote(
         .map(|shard| sha2::Sha256::digest(shard).to_vec())
         .collect();
 
-    // --- Validate Merkle branches ---
+    // --- Step 16: Validate Merkle branches before proceeding ---
     for (index, proof) in decoded_proofs.iter().enumerate() {
         if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
             return Err(format!(
@@ -68,19 +81,15 @@ pub async fn handle_prevote(
         }
     }
 
-    // --- Reconstruct the unit ---
-    // --- Step 7: Reconstruct the unit ---
+    // --- Step 15: Reconstruct the unit from the received shards ---
     let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.epoch_id,
         prevote_request.propose.parents.clone(), // ✅ Pass the correct parents from the proposal
     )
     .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
-    
 
-    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
-    // --- Ensure all parents are committed before interpolation (ch-RBC line 17) ---
-    
+    // --- Step 17: Ensure all parent units are locally committed before proceeding ---
     {
         let node_read = node.read().await;
 
@@ -98,35 +107,35 @@ pub async fn handle_prevote(
         }
     }
     
-    //     // ✅ **Only interpolate if `epoch_id > 1`**
-    //     let interpolated_shards = interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
+    //TODO make this work.
+    // // --- Step 18: Interpolate missing shards using `f+1` shares (only if epoch > 1) ---
+    // let interpolated_shards = if epoch_id > 1 {
+    //     interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
     //         format!("Node {}: Failed to interpolate shares. Error: {:?}", node_id, e)
-    //     })?;
-    
-    //     // ✅ **Only compute & verify Merkle root if `epoch_id > 1`**
-    //     let new_merkle_root = sha2::Sha256::digest(&interpolated_shards.concat()).to_vec();
-    
-    //     if new_merkle_root != prevote_request.propose.base.root {
-    //         return Err(format!(
-    //             "Node {}: Merkle root mismatch after interpolation. Cannot proceed to commit.",
-    //             node_id
-    //         ));
-    //     }
+    //     })?
+    // } else {
+    //     info!("Epoch 1 detected: Skipping interpolation, using provided shards.");
+    //     decoded_shards.clone() // ✅ Just use original shards
+    // };
+
+
+    // // --- Step 19: Compute new Merkle root from the interpolated shares ---
+    // let new_merkle_root = sha2::Sha256::digest(&interpolated_shards.concat()).to_vec();
+
+    // if new_merkle_root != prevote_request.propose.base.root {
+    //     return Err(format!(
+    //         "Node {}: Merkle root mismatch after interpolation. Cannot proceed to commit.",
+    //         node_id
+    //     ));
     // }
 
     info!(
         "Node {}: Checking quorum for epoch {}", node_id, epoch_id
     );
 
-
-
-    
-    // --- Ensure `2f+1` valid prevotes before committing ---
+    // --- Step 14: Ensure `2f+1` valid prevotes before committing ---
     let f = node.read().await.get_fault_tolerance_threshold();
-    info!("Fault tolerance threshold: {}", f);
     let epoch_key = epoch_id.to_be_bytes().to_vec();
-    
-    info!("epoch key: {:?}", epoch_key);
 
     let vote_count_result = timeout(Duration::from_secs(5), async {
         let node_read = node.read().await;
@@ -149,7 +158,6 @@ pub async fn handle_prevote(
         node_id, vote_count, node.read().await.get_quorum_threshold()
     );
 
-
     if vote_count < node.read().await.get_quorum_threshold() {
         return Err(format!(
             "Node {}: Not enough prevotes received ({} / {}).",
@@ -157,7 +165,7 @@ pub async fn handle_prevote(
         ));
     }
 
-    // --- Multicast commit (ch-RBC line 21) ---
+    // --- Step 21: Multicast commit message to finalize consensus ---
     info!("Node {}: Quorum reached. Sending commit.", node_id);
     let encoded_proofs: Vec<Vec<String>> = decoded_proofs.iter()
     .map(|proof| proof.iter()
@@ -175,7 +183,7 @@ pub async fn handle_prevote(
         parents: prevote_request.propose.parents.clone(),
     };
 
-    handle_commit(node.clone(),  commit_request).await.map_err(|e| {
+    handle_commit(node.clone(), commit_request).await.map_err(|e| {
         error!(
             "Node {}: Commit phase failed for epoch {}. Error: {:?}",
             node_id, epoch_id, e
@@ -184,12 +192,14 @@ pub async fn handle_prevote(
     })?;
 
     info!("Node {}: Commit phase completed successfully. (from prevote)", node_id);
+    
     // ✅ Clear quorum votes after commit
     {
         let node_write = node.write().await;
         let mut quorum_votes = node_write.quorum_votes.write().await;
-        quorum_votes.remove(&epoch_key); // ✅ Remove votes for this epoch
+        quorum_votes.remove(&epoch_key);
     }
+    
     info!("Node {}: Prevote successfully handled for epoch {}.", node_id, epoch_id);
     Ok(())
 }

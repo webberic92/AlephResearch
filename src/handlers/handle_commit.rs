@@ -18,8 +18,15 @@ use crate::structs::requests::CommitRequest;
 use crate::utils::epoch_utils::{ broadcast_epoch_update, update_local_epoch };
 use crate::utils::merkle_utils::validate_merkle_branch;
 
-/// **🔥 Handles the commit phase in the Aleph protocol**
+/// **🔥 Handles the commit phase in the ch-RBC protocol**
 /// - Ensures multiple transactions are committed before advancing the epoch.
+///
+/// **ch-RBC Steps Implemented:**
+/// - **Step 22**: Upon receiving `f + 1` commit messages, check if the commit has been sent.
+/// - **Step 23**: If the commit has **not** been sent yet, multicast commit.
+/// - **Step 24**: Multicast commit(Ps, r, h) to all nodes.
+/// - **Step 25**: Upon receiving `2f + 1` commit messages, finalize unit decoding.
+/// - **Step 26**: Output U, which is decoded from `s_j` shares.
 pub async fn handle_commit(
     node: Arc<RwLock<Node>>,
     // client: Arc<Client>,
@@ -76,16 +83,6 @@ pub async fn handle_commit(
             return Err(error_message);
         }
     }
-
-    // Step 3: Check parent availability (NO LOCK HELD)
-    // if !are_parents_available(node.clone(), &commit_request.unit).await {
-    //     let error_message = format!(
-    //         "Node {}: Parent availability check failed for root {:?}",
-    //         node_id, commit_request.base.root
-    //     );
-    //     error!("{}", error_message);
-    //     return Err(error_message);
-    // }
 
     let should_advance_epoch;
 
