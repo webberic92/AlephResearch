@@ -1,5 +1,4 @@
 use base64::{engine::general_purpose, Engine};
-use reqwest::Client;
 use sha2::Digest;
 use tokio::sync::RwLock;
 use std::sync::Arc;
@@ -35,7 +34,6 @@ use std::time::Duration;
 
 pub async fn handle_prevote(
     node: Arc<RwLock<Node>>,
-    client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
     let node_id = node.read().await.id;
@@ -140,7 +138,6 @@ pub async fn handle_prevote(
     );
 
     // --- Step 14: Ensure `2f+1` valid prevotes before committing ---
-    let f: usize = node.read().await.get_fault_tolerance_threshold();
     let epoch_key = epoch_id.to_be_bytes().to_vec();
 
     let vote_count_result = timeout(Duration::from_secs(5), async {
@@ -173,12 +170,6 @@ pub async fn handle_prevote(
 
     // --- Step 21: Multicast commit message to finalize consensus ---
     info!("Node {}: Quorum reached. Sending commit.", node_id);
-    let encoded_proofs: Vec<Vec<String>> = decoded_proofs.iter()
-    .map(|proof| proof.iter()
-        .map(|p| general_purpose::STANDARD.encode(p)) // ✅ Convert `Vec<u8>` to `String`
-        .collect()
-    )
-    .collect();
 
     let commit_request = CommitRequest {
         base: prevote_request.propose.base.clone(),

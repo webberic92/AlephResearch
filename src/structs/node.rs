@@ -2,7 +2,6 @@ use std::{
     collections::{HashMap, HashSet},
     sync::Arc,
 };
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex, RwLock};
 use tracing::{error, info};
@@ -45,7 +44,6 @@ impl Node {
         ip_address: String,
         nodes: Vec<String>,
         ip_manager_address: String,
-        client: Arc<Client>,
     ) -> Arc<RwLock<Self>> {
         let (proposal_sender, proposal_receiver) = mpsc::channel(100);
         let node = Arc::new(RwLock::new(Self {
@@ -65,7 +63,7 @@ impl Node {
         // Spawn a background task to process proposals
         let node_clone = Arc::clone(&node);
         tokio::spawn(async move {
-            Node::process_proposals(node_clone, client, proposal_receiver).await;
+            Node::process_proposals(node_clone, proposal_receiver).await;
         });
 
         node
@@ -75,7 +73,6 @@ impl Node {
     /// - Processes proposals as they arrive via the message queue.
     async fn process_proposals(
         node: Arc<RwLock<Node>>,
-        client: Arc<Client>,
         mut receiver: Receiver<ProposeRequest>,
     ) {
         while let Some(propose_request) = receiver.recv().await {
@@ -84,7 +81,7 @@ impl Node {
                 node.read().await.id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
             );
 
-            if let Err(err) = handle_propose(node.clone(), client.clone(), propose_request).await {
+            if let Err(err) = handle_propose(node.clone(), propose_request).await {
                 error!("Node {}: Failed to process proposal: {:?}", node.read().await.id, err);
             }
         }

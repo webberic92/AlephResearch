@@ -2,7 +2,6 @@ use std::sync::Arc;
 use base64::{engine::general_purpose, Engine};
 use tokio::sync::RwLock;
 use tracing::{error, info};
-use reqwest::Client;
 use crate::{
     handlers::handle_prevote::handle_prevote,
     structs::{
@@ -43,7 +42,6 @@ use crate::{
 // - This function `handle_propose` is called when a proposal message is received.
 pub async fn handle_propose(
     node: Arc<RwLock<Node>>,
-    client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let node_id;
@@ -144,7 +142,7 @@ pub async fn handle_propose(
                 }
             };
 
-            handle_prevote(node.clone(), client.clone(), prevote_request).await.map_err(|e| {
+            handle_prevote(node.clone(),prevote_request).await.map_err(|e| {
                 error!(
                     "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
                     node_id, stored_propose.base.epoch_id, e
