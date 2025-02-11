@@ -12,7 +12,7 @@ use crate::{
     },
     utils::{
         dag_utils::ensure_dag_round_sync,
-        merkle_utils::{interpolate_shares, reconstruct_unit, validate_merkle_branch},
+        merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch},
     },
 };
 use tokio::time::timeout;
@@ -56,6 +56,7 @@ pub async fn handle_prevote(
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
 
+        
     // --- Decode Base64-encoded proofs ---
     let decoded_proofs = prevote_request.propose.proofs
         .iter()
@@ -109,25 +110,31 @@ pub async fn handle_prevote(
     
     //TODO make this work.
     // // --- Step 18: Interpolate missing shards using `f+1` shares (only if epoch > 1) ---
-    // let interpolated_shards = if epoch_id > 1 {
-    //     interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
-    //         format!("Node {}: Failed to interpolate shares. Error: {:?}", node_id, e)
-    //     })?
-    // } else {
-    //     info!("Epoch 1 detected: Skipping interpolation, using provided shards.");
-    //     decoded_shards.clone() // ✅ Just use original shards
-    // };
+    let interpolated_shards = if epoch_id > 1 {
+        interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
+            format!("Node {}: Failed to interpolate shares. Error: {:?}", node_id, e)
+        })?
+    } else {
+        info!("Epoch 1 detected: Skipping interpolation, using provided shards.");
+        decoded_shards.clone() // ✅ Just use original shards
+    };
 
 
     // // --- Step 19: Compute new Merkle root from the interpolated shares ---
-    // let new_merkle_root = sha2::Sha256::digest(&interpolated_shards.concat()).to_vec();
+    let interpolated_shard_hashes: Vec<Vec<u8>> = interpolated_shards
+    .iter()
+    .map(|shard| sha2::Sha256::digest(shard).to_vec())
+    .collect();
 
-    // if new_merkle_root != prevote_request.propose.base.root {
-    //     return Err(format!(
-    //         "Node {}: Merkle root mismatch after interpolation. Cannot proceed to commit.",
-    //         node_id
-    //     ));
-    // }
+    // Generate the new Merkle root from the interpolated shard hashes
+    let new_merkle_root = compute_merkle_root(&interpolated_shard_hashes);
+
+    if new_merkle_root != prevote_request.propose.base.root {
+        return Err(format!(
+            "Node {}: Merkle root mismatch after interpolation. Cannot proceed to commit.",
+            node_id
+        ));
+    }
 
     info!(
         "Node {}: Checking quorum for epoch {}", node_id, epoch_id
