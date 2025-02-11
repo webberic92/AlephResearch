@@ -18,15 +18,13 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     Router::new()
     .route("/propose", post({
         let node = node.clone(); // Clone the Arc to move it into the closure
-        let client = client.clone(); // Clone the Arc to move it into the closure
         move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
-            let client = client.clone(); // Clone Arc for each request
             async move {
                 match serde_json::from_value::<ProposeRequest>(payload) {
                     Ok(parsed_payload) => {
                         // Handle the proposal and respond with proper HTTP status codes
-                        match handle_propose(node, client, parsed_payload).await {
+                        match handle_propose(node, parsed_payload).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {
@@ -58,16 +56,14 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     }))
     .route("/prevote", post({
         let node = node.clone(); // Clone the Arc for the node
-        let client = client.clone(); // Clone the Arc for the client
         move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
-            let client = client.clone(); // Clone Arc for each request
             async move {
                 // Parse the JSON payload into the `PrevoteRequest` struct
                 match serde_json::from_value::<PrevoteRequest>(payload) {
                     Ok(parsed_payload) => {
                         // Handle the prevote and respond with proper HTTP status codes
-                        match handle_prevote(node, client, parsed_payload).await {
+                        match handle_prevote(node, parsed_payload).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {
@@ -99,10 +95,8 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     }))
     .route("/commit", post({
         let node = node.clone(); // Clone the Arc for the node
-        let client = client.clone(); // Clone the Arc for the client
         move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
-            let client = client.clone(); // Clone Arc for each request
             async move {
                 // Parse the JSON payload into the `CommitRequest` struct
                 match serde_json::from_value::<CommitRequest>(payload) {

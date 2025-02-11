@@ -88,7 +88,9 @@ pub async fn handle_commit(
 
     {
         let node_read = node.read().await;
-    
+        //TODO incorporate this later. let threshold = node_read.get_quorum_threshold(); //2f+1
+        // info!("Node {}: Quorum threshold for commit: {}", node_id, threshold);
+
         // 🔹 Compute next unit ID
         let next_unit_id = node_read.get_next_dag_unit_id(epoch_id).await;
                       
@@ -115,17 +117,13 @@ pub async fn handle_commit(
     
         info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag.get(&epoch_id));
     
-        // ✅ Ensure `get()` safely handles missing epochs
+
+        // ✅ Step 25: Ensure `2f + 1` commits before finalizing unit
         should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= node_write.total_nodes);
+        //TODO work on this later should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= threshold);
     } // 🔴 Drop write lock immediately
     
-    
-
-
-
-
-    // ✅ Step 6: Update epoch and broadcast (NO LOCKS HELD)
-    if should_advance_epoch {
+        if should_advance_epoch {
 
         {
             let dag_clone;
@@ -142,7 +140,7 @@ pub async fn handle_commit(
         }
         
         info!("Node {}: Advancing to next epoch...", node_id);
-        let new_epoch_id = update_local_epoch(node.clone()).await; // ✅ No locks held here
+        update_local_epoch(node.clone()).await; // ✅ No locks held here
 
         // if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
         //     error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);

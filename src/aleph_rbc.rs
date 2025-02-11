@@ -4,14 +4,13 @@ use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::{wait_for_all_nodes_health, wait_for_turn};
 use reqwest::Client;
 use tokio::sync::RwLock;
-use std::{net::SocketAddr, sync::Arc, thread};
+use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 use tracing::{error, info};
 use tracing_subscriber;
 use aleph_research::utils::config_util::load_config;
 use aleph_research::structs::node::Node;
-use anyhow::{Error, Result};
-use tokio::runtime::Handle;
+use anyhow::Result;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,7 +27,6 @@ async fn main() -> Result<()> {
         config.network.ip_address.clone(),
         config.network.nodes.clone(),
         config.network.ip_manager_address.clone(),
-        client.clone(),
     );
 
     let node_clone = Arc::clone(&node);

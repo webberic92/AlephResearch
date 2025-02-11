@@ -202,7 +202,6 @@ pub async fn send_proposals(
 
                         if let Err(e) = handle_prevote(
                             node.clone(),
-                            client.clone().into(),
                             prevote_request
                         ).await {
                             error!(

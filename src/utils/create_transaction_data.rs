@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use tokio::sync::RwLock;
 use sha2::{Digest, Sha256};
-use tracing::{error, info};
+use tracing::info;
 use anyhow::{anyhow, Error}; // ✅ Import `anyhow::Error` and `anyhow` macro for proper error handling
 use crate::{
     structs::node::Node, 
