@@ -35,8 +35,9 @@ use crate::{
 
 12: `received_propose(P_i, r) = True`
    - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring the proposal is marked as received.
-*/
 
+13: received_propose(Pi , r ) = True
+*/
 
 // Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
 // - This function `handle_propose` is called when a proposal message is received.
@@ -88,9 +89,6 @@ pub async fn handle_propose(
         .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
 
-        // let decoded_parent_hashes: Vec<u8> = general_purpose::STANDARD.decode(&propose_request.base.root).unwrap();
-        // info!("Decoded parent hashes: {:?}", decoded_parent_hashes);
-
     if !check_size(&decoded_shards) {
         return Err(format!(
             "Node {}: Received oversized unit, rejecting propose.",
@@ -127,9 +125,6 @@ pub async fn handle_propose(
     // - If the number of received proposals reaches the required threshold, proceed to prevote.
     if proposal_count >= required_proposals {
 
-
-
-        
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
             node_id, proposal_count, required_proposals, propose_request.base.epoch_id
@@ -159,6 +154,7 @@ pub async fn handle_propose(
         }
     }
 
+    //13: received_propose(Pi , r ) = True
     info!(
         "Node {}: Proposal successfully handled for epoch {} from sender {}",
         node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
