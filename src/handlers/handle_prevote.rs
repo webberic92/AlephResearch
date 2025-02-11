@@ -108,7 +108,6 @@ pub async fn handle_prevote(
         }
     }
     
-    //TODO make this work.
     // // --- Step 18: Interpolate missing shards using `f+1` shares (only if epoch > 1) ---
     let interpolated_shards = if epoch_id > 1 {
         interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
@@ -141,7 +140,7 @@ pub async fn handle_prevote(
     );
 
     // --- Step 14: Ensure `2f+1` valid prevotes before committing ---
-    let f = node.read().await.get_fault_tolerance_threshold();
+    let f: usize = node.read().await.get_fault_tolerance_threshold();
     let epoch_key = epoch_id.to_be_bytes().to_vec();
 
     let vote_count_result = timeout(Duration::from_secs(5), async {
