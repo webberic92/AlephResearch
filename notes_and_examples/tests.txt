@@ -1,0 +1,24 @@
+Basic Tests (Low Node Count)
+
+    Test 1: 3 nodes, each continuously proposing ~1 transaction per unit.
+    Test 2: 3 nodes, each continuously proposing ~2 transactions per unit.
+    Test 3: 5 nodes, each continuously proposing ~4 transactions per unit.
+
+Medium-Scale Tests
+
+    Test 5: 10 nodes, each proposing ~16 transactions per unit.
+    Test 6: 16 nodes, each proposing ~32 transactions per unit.
+    Test 7: 20 nodes, each proposing ~64 transactions per unit.
+
+Large-Scale Tests
+
+    Test 9: 32 nodes, each proposing ~256 transactions per unit.
+    Test 10: 40 nodes, each proposing ~512 transactions per unit.
+    Test 11: 48 nodes, each proposing ~1024 transactions per unit.
+    Test 12: 56 nodes, each proposing ~2048 transactions per unit.
+
+Maximum Stress Tests
+
+    Test 13: 64 nodes, each proposing ~4096 transactions per unit.
+    Test 14: 80 nodes, each proposing ~8192 transactions per unit.
+    Test 15: 104 nodes, each proposing ~131072 transactions per unit.

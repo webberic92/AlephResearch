@@ -13,21 +13,18 @@ pub struct NetworkConfig {
     pub listen_address: String,
     pub nodes: Vec<String>,
     pub ip_manager_address: String, // Added for GTC APIs
-    pub proposals: Vec<usize>,      // Add this line
     pub ip_address: String,
+    pub total_nodes: usize,
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct ConsensusConfig {
     pub transaction_size: usize,
     pub data_shards: usize,
-    pub batch_size: usize,
-    pub epoch_round_id: u64,
-
+    pub number_of_transactions: usize,
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct NodeConfig {
     pub id: usize,
-    pub total_nodes: usize,
 }

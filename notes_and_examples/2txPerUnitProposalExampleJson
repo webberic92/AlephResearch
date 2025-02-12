@@ -1,0 +1,12 @@
+{
+  "unit_id": "U1",
+  "creator": "Node 1",
+  "round": 1,
+  "transactions": [
+    { "tx_id": "Tx1", "data": "Alice → Bob: 10 ETH" },
+    { "tx_id": "Tx2", "data": "Charlie → Dave: 5 ETH" }
+  ],
+  "parents": ["Genesis"],
+  "merkle_root": "abc123def456...",
+  "signature": "sig_node1_789xyz"
+}

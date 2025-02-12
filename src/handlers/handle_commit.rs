@@ -34,7 +34,7 @@ pub async fn handle_commit(
 ) -> Result<(), String> {
     // Step 1: Read Node ID (Drop lock after reading)
     let node_id;
-    let epoch_id = commit_request.base.epoch_id; // ✅ Store epoch ID before acquiring write lock
+    let round_id = commit_request.base.round_id; // ✅ Store epoch ID before acquiring write lock
 
     {
         let node_state = match timeout(Duration::from_secs(5), node.read()).await {
@@ -49,7 +49,7 @@ pub async fn handle_commit(
 
     info!(
         "Node {}: Handling commit request from Node {} for epoch {}",
-        node_id, commit_request.base.proposing_node_id, epoch_id
+        node_id, commit_request.base.proposing_node_id, round_id
     );
 
     // Step 2: Validate Merkle branches (NO LOCK HELD)
@@ -92,7 +92,7 @@ pub async fn handle_commit(
         // info!("Node {}: Quorum threshold for commit: {}", node_id, threshold);
 
         // 🔹 Compute next unit ID
-        let next_unit_id = node_read.get_next_dag_unit_id(epoch_id).await;
+        let next_unit_id = node_read.get_next_dag_unit_id(round_id).await;
                       
         drop(node_read); // 🔴 Release read lock ASAP
     
@@ -108,19 +108,19 @@ pub async fn handle_commit(
         let mut dag = node_write.dag.write().await;
     
         // ✅ Ensure there's an entry for the current epoch
-        dag.entry(epoch_id).or_insert_with(Vec::new).push(dag_unit.clone());
+        dag.entry(round_id).or_insert_with(Vec::new).push(dag_unit.clone());
     
         info!(
             "Node {}: Added unit {:?} to DAG at epoch {}",
-            node_write.id, dag_unit, epoch_id
+            node_write.id, dag_unit, round_id
         );
     
-        info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag.get(&epoch_id));
+        info!("Node {}: Current DAG VALUE: {:?}", node_write.id, dag.get(&round_id));
     
 
         // ✅ Step 25: Ensure `2f + 1` commits before finalizing unit
-        should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= node_write.total_nodes);
-        //TODO work on this later should_advance_epoch = dag.get(&epoch_id).map_or(false, |units| units.len() >= threshold);
+        should_advance_epoch = dag.get(&round_id).map_or(false, |units| units.len() >= node_write.total_nodes);
+        //TODO work on this later should_advance_epoch = dag.get(&round_id).map_or(false, |units| units.len() >= threshold);
     } // 🔴 Drop write lock immediately
     
         if should_advance_epoch {
@@ -142,7 +142,7 @@ pub async fn handle_commit(
         info!("Node {}: Advancing to next epoch...", node_id);
         update_local_epoch(node.clone()).await; // ✅ No locks held here
 
-        // if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_epoch_id).await {
+        // if let Err(e) = broadcast_epoch_update(node.clone(), client.clone(), new_round_id).await {
         //     error!("Node {}: Failed to broadcast epoch update: {}", node_id, e);
         // } else {
         //     info!("Node {}: Successfully broadcasted epoch update.", node_id);
@@ -168,13 +168,13 @@ pub async fn write_finalized_dag_to_file(
 
     info!("Starting DAG write process. Total epochs: {}", dag.len());
 
-    for (&epoch_id, units) in dag.iter() {
-        let epoch_file = format!("{}/epoch{}.json", base_path, epoch_id);
+    for (&round_id, units) in dag.iter() {
+        let epoch_file = format!("{}/epoch{}.json", base_path, round_id);
         let path = Path::new(&epoch_file);
 
         info!(
             "Writing DAG for epoch {}. Total units in dag: {}",
-            epoch_id,
+            round_id,
             units.len()
         );
 
@@ -211,7 +211,7 @@ pub async fn write_finalized_dag_to_file(
 
         info!(
             "Successfully wrote finalized DAG for epoch {} to file: {}",
-            epoch_id, epoch_file
+            round_id, epoch_file
         );
     }
 

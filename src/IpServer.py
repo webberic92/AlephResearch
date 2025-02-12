@@ -14,7 +14,7 @@ node_status = {}
 # Global transaction state
 # Keeps track of the overall state of the network.
 global_state = {
-    "current_epoch_id": 1,  # The current epoch (round) of the transaction process.
+    "current_round_id": 1,  # The current epoch (round) of the transaction process.
     "current_node_id": 1,   # The ID of the node that is expected to submit the next transaction.
     "total_nodes": 0        # Total number of nodes in the network (set at runtime).
 }
@@ -48,26 +48,26 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                 self._send_response(200, {"node_ips": assigned_ips})
 
         elif self.path.startswith("/is_turn"):
-            # Parse query parameters (node_id and epoch_id).
+            # Parse query parameters (node_id and round_id).
             query = self.path.split("?")[-1]
             params = dict(qc.split("=") for qc in query.split("&"))
             try:
-                # Extract and validate node_id and epoch_id from the query parameters.
+                # Extract and validate node_id and round_id from the query parameters.
                 node_id = int(params.get("node_id", -1))
-                epoch_id = int(params.get("epoch_id", -1))
+                round_id = int(params.get("round_id", -1))
 
-                if node_id == -1 or epoch_id == -1:
+                if node_id == -1 or round_id == -1:
                     # Missing or invalid parameters.
                     self._send_response(
                         400, 
-                        {"error": "Missing or invalid parameters. 'node_id' and 'epoch_id' must be provided as integers."}
+                        {"error": "Missing or invalid parameters. 'node_id' and 'round_id' must be provided as integers."}
                     )
                     return
 
                 with lock:
                     # Check if it's the specified node's turn for the current epoch.
                     is_turn = (
-                        epoch_id == global_state["current_epoch_id"] and
+                        round_id == global_state["current_round_id"] and
                         node_id == global_state["current_node_id"]
                     )
 
@@ -82,9 +82,9 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                             "is_turn": False,
                             "error": "Not your turn.",
                             "expected_node_id": global_state["current_node_id"],
-                            "expected_epoch_id": global_state["current_epoch_id"],
+                            "expected_round_id": global_state["current_round_id"],
                             "received_node_id": node_id,
-                            "received_epoch_id": epoch_id,
+                            "received_round_id": round_id,
                         }
                     )
             except ValueError as e:
@@ -157,8 +157,8 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                     # ✅ If last node submits, reset to Node 1 and increment epoch
                     if global_state["current_node_id"] == global_state["total_nodes"]:
                         global_state["current_node_id"] = 1
-                        global_state["current_epoch_id"] += 1  # 🔥 Corrected epoch increment
-                        print(f"✅ Epoch incremented to {global_state['current_epoch_id']}. Restarting node sequence.")
+                        global_state["current_round_id"] += 1  # 🔥 Corrected epoch increment
+                        print(f"✅ Epoch incremented to {global_state['current_round_id']}. Restarting node sequence.")
 
                     else:
                         # Otherwise, just move to the next node
@@ -166,7 +166,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
 
                     self._send_response(200, {
                         "status": "Transaction submitted successfully",
-                        "current_epoch_id": global_state["current_epoch_id"],  # ✅ Return correct epoch
+                        "current_round_id": global_state["current_round_id"],  # ✅ Return correct epoch
                         "next_node_id": global_state["current_node_id"]
                     })
                 else:
@@ -174,9 +174,9 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                     self._send_response(403, {
                         "error": "Not your turn",
                         "expected_node_id": global_state["current_node_id"],
-                        "expected_epoch_id": global_state["current_epoch_id"],
+                        "expected_round_id": global_state["current_round_id"],
                         "received_node_id": node_id,
-                        "received_epoch_id": global_state["current_epoch_id"]
+                        "received_round_id": global_state["current_round_id"]
                     })
 
         except json.JSONDecodeError:

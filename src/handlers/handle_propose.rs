@@ -1,14 +1,11 @@
 use std::sync::Arc;
-use base64::{engine::general_purpose, Engine};
+use base64::{ engine::general_purpose, Engine };
 use tokio::sync::RwLock;
-use tracing::{error, info};
+use tracing::{ error, info };
 use crate::{
     handlers::handle_prevote::handle_prevote,
-    structs::{
-        node::Node,
-        requests::{PrevoteRequest, ProposeRequest},
-    },
-    utils::dag_utils::{check_size, ensure_dag_round_sync},
+    structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } },
+    utils::dag_utils::{ check_size, ensure_dag_round_sync },
 };
 
 /*
@@ -27,7 +24,7 @@ use crate::{
    - If the size is invalid, the function returns early.
 
 10: Wait until `D_i` reaches round `r-1`
-   - The function `ensure_dag_round_sync(node.clone(), epoch_id).await?;` ensures the DAG is synchronized to `r-1` before proceeding.
+   - The function `ensure_dag_round_sync(node.clone(), round_id).await?;` ensures the DAG is synchronized to `r-1` before proceeding.
 
 11: Multicast `prevote(h, b_j, s_j)`
    - If enough proposals are received (`proposal_count >= required_proposals`), prevotes are sent for each stored proposal.
@@ -42,10 +39,10 @@ use crate::{
 // - This function `handle_propose` is called when a proposal message is received.
 pub async fn handle_propose(
     node: Arc<RwLock<Node>>,
-    propose_request: ProposeRequest,
+    propose_request: ProposeRequest
 ) -> Result<(), String> {
     let node_id;
-    let epoch_id = propose_request.base.epoch_id;
+    let round_id = propose_request.base.round_id;
 
     // Step 8: If `received_propose(P_i, r)` then terminate
     // - Check if a proposal from the same sender (`P_s`) has already been received for this epoch (`r`).
@@ -57,19 +54,22 @@ pub async fn handle_propose(
             node_id = node_read.id;
             info!(
                 "Node {}: Handling Propose for epoch {} from sender {}",
-                node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
+                node_id,
+                propose_request.base.round_id,
+                propose_request.base.proposing_node_id
             );
             proposal_tracker = node_read.proposal_tracker.clone();
         }
 
         let proposal_tracker_read = proposal_tracker.lock().await;
 
-
-        if let Some(epoch_proposals) = proposal_tracker_read.get(&epoch_id) {
+        if let Some(epoch_proposals) = proposal_tracker_read.get(&round_id) {
             if epoch_proposals.contains_key(&propose_request.base.proposing_node_id) {
                 info!(
                     "Node {}: Already received propose for epoch {} from Node {}. Terminating.",
-                    node_id, epoch_id, propose_request.base.proposing_node_id
+                    node_id,
+                    round_id,
+                    propose_request.base.proposing_node_id
                 );
                 return Ok(());
             }
@@ -79,34 +79,39 @@ pub async fn handle_propose(
     // Step 9: If `check_size(s_j)` then
     // - Validate the size of the received shard.
     // - If the shard size is invalid, reject the proposal.
-    let decoded_shards: Vec<Vec<u8>> = propose_request
-        .shards
+    let decoded_shards: Vec<Vec<u8>> = propose_request.shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-
-    if !check_size(&decoded_shards) {
-        return Err(format!(
-            "Node {}: Received oversized unit, rejecting propose.",
-            node_id
-        ));
-    }
-
+        let number_of_transactions;
+        let transaction_size;
+        {
+            let node_read = node.read().await;
+            number_of_transactions = node_read.number_of_transactions;
+            transaction_size = node_read.transaction_size;
+        } // 🔴 Drop read lock immediately
+        
+        // ✅ Now call `check_size` outside the locked block
+        if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
+            return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id));
+        }
     // Step 10: Wait until `D_i` reaches round `r-1`
     // - Ensure the DAG is synchronized to at least round `r-1` before processing the proposal.
-    ensure_dag_round_sync(node.clone(), epoch_id).await?;
+    ensure_dag_round_sync(node.clone(), round_id).await?;
 
     info!("Node {}: Checked sizes and ensured DAG round sync successfully.", node_id);
 
     // Step 12: `received_propose(P_i, r) = True`
     // - Store the received proposal in the `proposal_tracker` to prevent reprocessing.
-    let (proposal_count, required_proposals, stored_proposals) =
-        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
+    let (proposal_count, required_proposals, stored_proposals) = Node::update_proposal_tracker(
+        node.clone(),
+        propose_request.clone()
+    ).await?;
 
-        let proposal_tracker;
-        {
+    let proposal_tracker;
+    {
         let node_read = node.read().await;
 
         proposal_tracker = node_read.proposal_tracker.clone();
@@ -115,23 +120,28 @@ pub async fn handle_propose(
 
         info!(
             "Node {}: Current Proposal Tracker for epoch {}: {:?}",
-            node_id, epoch_id, proposal_tracker_read
+            node_id,
+            round_id,
+            proposal_tracker_read
         );
-        }   
+    }
 
     // Step 11: Multicast `prevote(h, b_j, s_j)`
     // - If the number of received proposals reaches the required threshold, proceed to prevote.
     if proposal_count >= required_proposals {
-
         info!(
             "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
-            node_id, proposal_count, required_proposals, propose_request.base.epoch_id
+            node_id,
+            proposal_count,
+            required_proposals,
+            propose_request.base.round_id
         );
 
         for stored_propose in stored_proposals {
             info!(
                 "Node {}: Sending prevote for transaction proposed by Node {}",
-                node_id, stored_propose.base.proposing_node_id
+                node_id,
+                stored_propose.base.proposing_node_id
             );
 
             let prevote_request = {
@@ -142,10 +152,12 @@ pub async fn handle_propose(
                 }
             };
 
-            handle_prevote(node.clone(),prevote_request).await.map_err(|e| {
+            handle_prevote(node.clone(), prevote_request).await.map_err(|e| {
                 error!(
                     "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
-                    node_id, stored_propose.base.epoch_id, e
+                    node_id,
+                    stored_propose.base.round_id,
+                    e
                 );
                 format!("Prevote phase failed: {:?}", e)
             })?;
@@ -155,8 +167,9 @@ pub async fn handle_propose(
     //13: received_propose(Pi , r ) = True
     info!(
         "Node {}: Proposal successfully handled for epoch {} from sender {}",
-        node_id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
+        node_id,
+        propose_request.base.round_id,
+        propose_request.base.proposing_node_id
     );
     Ok(())
 }
-

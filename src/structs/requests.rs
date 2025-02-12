@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 pub struct BaseRequest {
     pub proposing_node_id: usize,  // ID of the node sending the message
     pub root: Vec<u8>,     // Merkle root of the tree
-    pub epoch_id: u64,     // Epoch ID
+    pub round_id: u64,     // Epoch ID
 }
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
@@ -33,14 +33,14 @@ pub struct CommitRequest {
 
 #[derive(Deserialize,Serialize)]
 pub struct SyncEpochRequest {
-pub epoch_id: u64,
+pub round_id: u64,
 pub sender: usize,
 }
 
 /// Represents a request for DAG synchronization.
 #[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct DAGSyncRequest {
-    pub epoch_id: u64,
+    pub round_id: u64,
     pub sender_id: usize,
     pub sender_url: String,
 }
