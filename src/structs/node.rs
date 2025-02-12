@@ -27,13 +27,16 @@ pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
     pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    pub current_epoch: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
+    pub current_round: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
     pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,    // pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>,
     pub dag: Arc<RwLock<HashMap<u64, Vec<DagUnit>>>>,
     pub ip_address: String,
     pub ip_manager_address: String,
     pub nodes: Vec<String>,
     pub proposal_sender: Sender<ProposeRequest>, // Proposal queue for async processing
+    pub number_of_transactions: usize,
+    pub transaction_size: usize,
+    pub data_shards: usize,
 }
 
 impl Node {
@@ -44,6 +47,10 @@ impl Node {
         ip_address: String,
         nodes: Vec<String>,
         ip_manager_address: String,
+        number_of_transactions: usize,
+        transaction_size: usize,
+        data_shards: usize,
+
     ) -> Arc<RwLock<Self>> {
         let (proposal_sender, proposal_receiver) = mpsc::channel(100);
         let node = Arc::new(RwLock::new(Self {
@@ -52,12 +59,15 @@ impl Node {
             ip_address,
             ip_manager_address,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            current_epoch: Arc::new(Mutex::new(1)), // Start at epoch 1
+            current_round: Arc::new(Mutex::new(1)), // Start at epoch 1
             proposal_tracker: Arc::new(Mutex::new(HashMap::new())), // Use HashMap for proposal storage
             // finalized_blocks: Arc::new(Mutex::new(HashSet::new())),
             dag: Arc::new(RwLock::new(HashMap::new())),
             nodes,
             proposal_sender,
+            number_of_transactions,
+            transaction_size,
+            data_shards,
         }));
 
         // Spawn a background task to process proposals
@@ -78,7 +88,7 @@ impl Node {
         while let Some(propose_request) = receiver.recv().await {
             info!(
                 "Node {}: Processing queued proposal for epoch {} from node {}",
-                node.read().await.id, propose_request.base.epoch_id, propose_request.base.proposing_node_id
+                node.read().await.id, propose_request.base.round_id, propose_request.base.proposing_node_id
             );
 
             if let Err(err) = handle_propose(node.clone(), propose_request).await {
@@ -104,14 +114,14 @@ impl Node {
     }
 
     /// **🔹 Check if Quorum is Reached**
-    pub async fn is_quorum_reached(&self, epoch_id: u64) -> bool {
+    pub async fn is_quorum_reached(&self, round_id: u64) -> bool {
         let quorum_threshold = self.get_quorum_threshold();
         let quorum_votes = self.quorum_votes.read().await;
-        let vote_count = quorum_votes.get(&epoch_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
+        let vote_count = quorum_votes.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
 
         info!(
             "Node {}: Checking quorum for epoch {}. Votes: {}, Threshold: {}",
-            self.id, epoch_id, vote_count, quorum_threshold
+            self.id, round_id, vote_count, quorum_threshold
         );
 
         vote_count >= quorum_threshold
@@ -124,7 +134,7 @@ impl Node {
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
         let node_id = node.read().await.id;
-        let epoch_id = propose_request.base.epoch_id;
+        let round_id = propose_request.base.round_id;
         
         info!("Node {}: Acquiring write lock for proposal tracker update...", node_id);
     
@@ -137,7 +147,7 @@ impl Node {
             let mut proposal_tracker = node_write.proposal_tracker.lock().await;
     
             // ✅ Ensure there is a HashMap for the given epoch
-            let epoch_entry = proposal_tracker.entry(epoch_id).or_insert_with(HashMap::new);
+            let epoch_entry = proposal_tracker.entry(round_id).or_insert_with(HashMap::new);
     
             // ✅ Store proposal in the epoch-specific tracker
             epoch_entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
@@ -155,7 +165,7 @@ impl Node {
     
         info!(
             "Node {}: Proposal added from Node {} for epoch {}. Total proposals: {}. Required for consensus: {}.",
-            node_id, propose_request.base.proposing_node_id, epoch_id, proposal_count, required_proposals
+            node_id, propose_request.base.proposing_node_id, round_id, proposal_count, required_proposals
         );
     
         Ok((proposal_count, required_proposals, stored_proposals))
@@ -163,29 +173,29 @@ impl Node {
     
 
   /// 🔹 **Get Last Unit ID in the DAG for a Given Epoch**
-    /// - Retrieves the unit_id of the last entry in the DAG for `epoch_id`.
-    pub async fn get_last_unit_id(&self, epoch_id: u64) -> Option<u64> {
+    /// - Retrieves the unit_id of the last entry in the DAG for `round_id`.
+    pub async fn get_last_unit_id(&self, round_id: u64) -> Option<u64> {
         let dag_read = self.dag.read().await;
     
         // ✅ Check last unit in current epoch
-        if let Some(units) = dag_read.get(&epoch_id) {
+        if let Some(units) = dag_read.get(&round_id) {
             if let Some(last_unit) = units.last() {
                 info!(
                     "Node {}: Found last unit ID {} in epoch {}",
-                    self.id, last_unit.unit_id, epoch_id
+                    self.id, last_unit.unit_id, round_id
                 );
                 return Some(last_unit.unit_id);
             }
-            info!("Node {}: No units found in epoch {}", self.id, epoch_id);
+            info!("Node {}: No units found in epoch {}", self.id, round_id);
         }
     
         // ✅ Fall back to last finalized unit from previous epoch
-        if epoch_id > 1 {
-            if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
+        if round_id > 1 {
+            if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
                 if let Some(last_unit) = prev_units.last() {
                     info!(
                         "Node {}: No units in epoch {}, falling back to last unit ID {} from epoch {}",
-                        self.id, epoch_id, last_unit.unit_id, epoch_id - 1
+                        self.id, round_id, last_unit.unit_id, round_id - 1
                     );
                     return Some(last_unit.unit_id);
                 }
@@ -200,14 +210,14 @@ impl Node {
     
     /// 🔹 **Get Next DAG Unit ID**
     /// - Gets the last unit ID for the current epoch and increments it.
-    pub async fn get_next_dag_unit_id(&self, epoch_id: u64) -> u64 {
-        if let Some(last_id) = self.get_last_unit_id(epoch_id).await {
+    pub async fn get_next_dag_unit_id(&self, round_id: u64) -> u64 {
+        if let Some(last_id) = self.get_last_unit_id(round_id).await {
             return last_id + 1;
         }
     
         // If epoch is empty, reference the last unit from the previous epoch
-        if epoch_id > 1 {
-            if let Some(last_id) = self.get_last_unit_id(epoch_id - 1).await {
+        if round_id > 1 {
+            if let Some(last_id) = self.get_last_unit_id(round_id - 1).await {
                 return last_id + 1;
             }
         }
@@ -241,24 +251,24 @@ impl Node {
         false
     }
 
-    pub async fn get_all_parents(&self, epoch_id: u64) -> Vec<String> {
+    pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
         let dag_read = self.dag.read().await;
         let mut parents = Vec::new();
     
         // ✅ If there are already transactions in this epoch, use them as parents
-        if let Some(units) = dag_read.get(&epoch_id) {
+        if let Some(units) = dag_read.get(&round_id) {
             if !units.is_empty() {
                 parents.extend(units.iter().map(|unit| format!("{}", unit.unit_id)));
                 info!(
                     "Node {}: Using units from current epoch {} as parents: {:?}",
-                    self.id, epoch_id, parents
+                    self.id, round_id, parents
                 );
                 return parents; // 🔥 If current epoch has transactions, return immediately
             }
         }
     
         // ✅ If we are in epoch 1, return no parents
-        if epoch_id == 1 {
+        if round_id == 1 {
             info!(
                 "Node {}: Epoch 1 detected. No parents available.",
                 self.id
@@ -267,19 +277,19 @@ impl Node {
         }
     
         // ✅ Otherwise, fallback to the last finalized transactions from the previous epoch
-        if let Some(prev_units) = dag_read.get(&(epoch_id - 1)) {
+        if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
             if !prev_units.is_empty() {
                 parents.extend(prev_units.iter().map(|unit| format!("{}", unit.unit_id)));
                 info!(
                     "Node {}: Using previous epoch {} as parents: {:?}",
-                    self.id, epoch_id - 1, parents
+                    self.id, round_id - 1, parents
                 );
             }
         }
     
         info!(
             "Node {}: Selected parents for epoch {} -> {:?}",
-            self.id, epoch_id, parents
+            self.id, round_id, parents
         );
     
         parents

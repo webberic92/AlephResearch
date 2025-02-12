@@ -14,9 +14,8 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 3 # Define the number of instances
-        BATCH_SIZE = 1  # Define the number of transactions per node for the test
-        TRANSACTION_SIZE = 256 #Bytes
-        ROUND_SIZE = 1 
+        NUMBER_OF_TRANSACTIONS = 2  # Define the number of transactions
+        TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
@@ -135,13 +134,11 @@ class TestAleph(Stack):
                 f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /home/aleph-node/aleph-node-config.toml",
                 "echo \"ip_address = \\\"$PRIVATE_IP\\\"\" >> /home/aleph-node/aleph-node-config.toml", 
                 "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
-                "echo \"proposals = []\" >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'batch_size = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'number_of_transactions = {NUMBER_OF_TRANSACTIONS}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'round_size = {ROUND_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'epoch_round_id = 1 # bytes' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
@@ -150,7 +147,6 @@ class TestAleph(Stack):
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[node]' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
                 "cat /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status"
             )
 

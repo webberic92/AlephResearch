@@ -40,12 +40,12 @@ pub async fn handle_prevote(
 
     info!(
         "Node {}: Handling PREVOTE request from Node {} for epoch {}",
-        node_id, prevote_request.propose.base.proposing_node_id, prevote_request.propose.base.epoch_id
+        node_id, prevote_request.propose.base.proposing_node_id, prevote_request.propose.base.round_id
     );
 
     // --- Step 14: Ensure DAG round is synchronized before prevoting ---
-    let epoch_id = prevote_request.propose.base.epoch_id;
-    ensure_dag_round_sync(node.clone(), epoch_id).await?;
+    let round_id = prevote_request.propose.base.round_id;
+    ensure_dag_round_sync(node.clone(), round_id).await?;
 
     // --- Decode Base64-encoded shards ---
     let decoded_shards = prevote_request.propose.shards
@@ -83,7 +83,7 @@ pub async fn handle_prevote(
     // --- Step 15: Reconstruct the unit from the received shards ---
     let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
-        prevote_request.propose.base.epoch_id,
+        prevote_request.propose.base.round_id,
         prevote_request.propose.parents.clone(), // ✅ Pass the correct parents from the proposal
     )
     .map_err(|e| format!("Node {}: Reconstruction failed. Error: {:?}", node_id, e))?;
@@ -92,7 +92,7 @@ pub async fn handle_prevote(
     {
         let node_read = node.read().await;
 
-        if reconstructed_unit.epoch_id == 1 {
+        if reconstructed_unit.round_id == 1 {
             info!("Node {}: First epoch detected, skipping parent commitment check.", node_id);
         } else {
             for parent in &prevote_request.propose.parents {
@@ -107,8 +107,8 @@ pub async fn handle_prevote(
     }
     
     // // --- Step 18: Interpolate missing shards using `f+1` shares (only if epoch > 1) ---
-    let interpolated_shards = if epoch_id > 1 {
-        interpolate_shares(&decoded_shards, epoch_id).map_err(|e| {
+    let interpolated_shards = if round_id > 1 {
+        interpolate_shares(&decoded_shards, round_id).map_err(|e| {
             format!("Node {}: Failed to interpolate shares. Error: {:?}", node_id, e)
         })?
     } else {
@@ -134,11 +134,11 @@ pub async fn handle_prevote(
     }
 
     info!(
-        "Node {}: Checking quorum for epoch {}", node_id, epoch_id
+        "Node {}: Checking quorum for epoch {}", node_id, round_id
     );
 
     // --- Step 14: Ensure `2f+1` valid prevotes before committing ---
-    let epoch_key = epoch_id.to_be_bytes().to_vec();
+    let epoch_key = round_id.to_be_bytes().to_vec();
 
     let vote_count_result = timeout(Duration::from_secs(5), async {
         let node_read = node.read().await;
@@ -183,7 +183,7 @@ pub async fn handle_prevote(
     handle_commit(node.clone(), commit_request).await.map_err(|e| {
         error!(
             "Node {}: Commit phase failed for epoch {}. Error: {:?}",
-            node_id, epoch_id, e
+            node_id, round_id, e
         );
         format!("Commit phase failed: {:?}", e)
     })?;
@@ -197,6 +197,6 @@ pub async fn handle_prevote(
         quorum_votes.remove(&epoch_key);
     }
     
-    info!("Node {}: Prevote successfully handled for epoch {}.", node_id, epoch_id);
+    info!("Node {}: Prevote successfully handled for epoch {}.", node_id, round_id);
     Ok(())
 }

@@ -76,7 +76,7 @@ pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(
         if is_node_turn(client, node.clone()).await {
             let (node_id, ip_address, latest_epoch) = {
                 let node_read = node.read().await;
-                let epoch = *node_read.current_epoch.lock().await; // Fetch latest epoch
+                let epoch = *node_read.current_round.lock().await; // Fetch latest epoch
                 (node_read.id, node_read.ip_address.clone(), epoch)
             };
 

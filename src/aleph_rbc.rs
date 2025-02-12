@@ -23,10 +23,13 @@ async fn main() -> Result<()> {
     // ✅ Create Node with Proposal Queue Handling
     let node = Node::new(
         config.node.id,
-        config.node.total_nodes,
+        config.network.total_nodes,
         config.network.ip_address.clone(),
         config.network.nodes.clone(),
         config.network.ip_manager_address.clone(),
+        config.consensus.number_of_transactions.clone(),
+        config.consensus.transaction_size.clone(),
+        config.consensus.data_shards.clone(),
     );
 
     let node_clone = Arc::clone(&node);
@@ -49,28 +52,19 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-/// ✅ **Final Fix: Ensure Non-Blocking Transactions**  
 async fn execute_transaction_logic(
     node: Arc<RwLock<Node>>, 
-    client: Arc<Client>
-) -> Result<(), anyhow::Error> {  // ✅ Changed to anyhow::Error
-    // info!("🚀 Entering execute_transaction_logic");
+    client: Arc<Client>,
+) -> Result<(), anyhow::Error> {  
 
+    //Verify all nodes are healthy before creating transactions and proposing.
     wait_for_all_nodes_health(&client, node.clone()).await?;
 
-    for _ in 0..2 { // 🔥 Loop twice to ensure each node executes two transactions
-        wait_for_turn(&client, node.clone()).await?;
+    let (shards, merkle_root, parents) = create_transaction_data(
+            node.clone()
+        ).await?;
 
-        let node_id;
-        {
-            let node_read = node.read().await;
-            node_id = node_read.id;
-        } // 🔴 Drop read lock immediately after fetching `id`
-
-        let (shards, merkle_root, parents) = create_transaction_data(node.clone(),node_id).await?;
-
-        send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
-    }
+    send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
     
     Ok(())
 }

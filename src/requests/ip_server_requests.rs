@@ -7,20 +7,20 @@ use crate::structs::node::Node;
 
 /// Check if it's this node's turn to submit a transaction
 pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
-    let (node_id, ip_manager_address, current_epoch) = {
+    let (node_id, ip_manager_address, current_round) = {
         let node_read = node.read().await;
-        let epoch = *node_read.current_epoch.lock().await;
+        let epoch = *node_read.current_round.lock().await;
         (node_read.id, node_read.ip_manager_address.clone(), epoch)
     }; // 🔴 Drop read lock immediately
 
     let url = format!(
-        "http://{}:8080/is_turn?node_id={}&epoch_id={}",
-        ip_manager_address, node_id, current_epoch
+        "http://{}:8080/is_turn?node_id={}&round_id={}",
+        ip_manager_address, node_id, current_round
     );
 
     info!(
         "Node {}: Checking if it's the turn to propose for epoch {} at URL: {}",
-        node_id, current_epoch, url
+        node_id, current_round, url
     );
 
     match client.get(&url).send().await {
@@ -33,14 +33,14 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
         
             warn!(
                 "Node {}: Turn check failed with status {} for epoch {}. Response: {}",
-                node_id, status, current_epoch, text
+                node_id, status, current_round, text
             );
             false
         },
         Err(e) => {
             error!(
                 "Node {}: Error while checking turn for epoch {}: {:?}",
-                node_id, current_epoch, e
+                node_id, current_round, e
             );
             false
         }

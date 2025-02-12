@@ -1,6 +1,3 @@
-
-use tracing::{error, info};
-
 use crate::structs::toml_config::TomlConfig;
 
 /// Load configuration
@@ -19,18 +16,3 @@ pub fn save_config(toml_config: &TomlConfig, path: Option<&str>) -> Result<(), B
     Ok(())
 }
 
-
-pub fn update_proposals_in_config() -> Result<TomlConfig, Box<dyn std::error::Error>> {
-    let mut updated_toml_config = load_config( None);
-    if !updated_toml_config.network.proposals.contains(&updated_toml_config.node.id) {
-        updated_toml_config.network.proposals.push(updated_toml_config.node.id);
-        save_config(&updated_toml_config, None )?;
-        info!(
-            "Node {} {}: Added to proposals. Current proposals: {:?}",
-            updated_toml_config.node.id,
-            updated_toml_config.network.ip_address,
-            updated_toml_config.network.proposals
-        );
-    }
-    Ok(updated_toml_config)
-}

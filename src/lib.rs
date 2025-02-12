@@ -30,7 +30,6 @@ pub mod controllers{
 
 pub mod requests{
     pub mod send_proposals;
-    pub mod send_prevotes;
     pub mod ip_server_requests;
     pub mod synchronize_epoch_across_nodes;
 

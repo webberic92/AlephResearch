@@ -139,7 +139,7 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             async move {
                 match serde_json::from_value::<SyncEpochRequest>(payload) {
                     Ok(parsed_payload) => {
-                        let sender_epoch = parsed_payload.epoch_id; // Extract epoch ID from request
+                        let sender_epoch = parsed_payload.round_id; // Extract epoch ID from request
     
                         match handle_sync_epoch(node, sender_epoch).await {
                             Ok(_) => (
@@ -177,12 +177,12 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             async move {
                 let node_read = node.read().await;
                 let quorum_votes = node_read.quorum_votes.read().await;
-                let epoch_round_id = node_read.current_epoch.lock().await;
+                let round_id = node_read.current_round.lock().await;
     
                 Json(Response {
                     status: format!(
                         "Node {} is healthy. Quorum votes: {:?}, Epochs: {:?}",
-                        node_read.id, *quorum_votes, *epoch_round_id
+                        node_read.id, *quorum_votes, *round_id
                     ),
                 })
             }

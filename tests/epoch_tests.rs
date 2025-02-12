@@ -21,7 +21,7 @@ mod tests {
         // Initial epoch
         {
             let node_read = node.read().await;
-            let initial_epoch = *node_read.current_epoch.lock().await;
+            let initial_epoch = *node_read.current_round.lock().await;
             assert_eq!(initial_epoch, 0);
         }
 
@@ -30,9 +30,9 @@ mod tests {
         // Check updated epoch
         {
             let node_read = node.read().await;
-            let updated_epoch = *node_read.current_epoch.lock().await;
+            let updated_epoch = *node_read.current_round.lock().await;
             assert_eq!(updated_epoch, 1);
-            assert!(*node_read.current_epoch.lock().await == 1);
+            assert!(*node_read.current_round.lock().await == 1);
         }
 
         assert_eq!(new_epoch, 1);
@@ -57,8 +57,8 @@ mod tests {
 
         )));
 
-        let epoch_id = 1;
-        let result = broadcast_epoch_update(node.clone(), client.clone(), epoch_id).await;
+        let round_id = 1;
+        let result = broadcast_epoch_update(node.clone(), client.clone(), round_id).await;
 
         assert!(
             result.is_ok(),
@@ -86,8 +86,8 @@ mod tests {
 
         )));
 
-        let epoch_id = 1;
-        let result = broadcast_epoch_update(node.clone(), client.clone(), epoch_id).await;
+        let round_id = 1;
+        let result = broadcast_epoch_update(node.clone(), client.clone(), round_id).await;
 
         assert!(
             result.is_err(),
@@ -109,8 +109,8 @@ mod tests {
 
         )));
 
-        let epoch_id = 1;
-        let result = broadcast_epoch_update(node.clone(), client.clone(), epoch_id).await;
+        let round_id = 1;
+        let result = broadcast_epoch_update(node.clone(), client.clone(), round_id).await;
 
         assert!(result.is_err(), "Expected Err but got Ok()");
     }

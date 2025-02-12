@@ -117,7 +117,7 @@ pub fn validate_merkle_branch(
 
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
-    epoch_id: u64,
+    round_id: u64,
     parent_hashes: Vec<String>, // ✅ Unit IDs as strings, NOT Base64-encoded hashes
 ) -> Result<ReconstructedUnit, String> {
     if shards.is_empty() {
@@ -153,7 +153,7 @@ pub fn reconstruct_unit(
         data: shards.concat(),
         root,
         parents,
-        epoch_id,
+        round_id,
     })
 }
 
@@ -191,13 +191,13 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
 }
 
 
-pub fn interpolate_shares(shards: &[Vec<u8>], epoch_id: u64) -> Result<Vec<Vec<u8>>, String> {
+pub fn interpolate_shares(shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u8>>, String> {
     if shards.is_empty() {
         return Err("Interpolation failed: No available shards".to_string());
     }
 
     // ✅ Handle first transaction (epoch 1): No interpolation needed
-    if epoch_id == 1 {
+    if round_id == 1 {
         info!("Epoch 1 detected: Skipping interpolation, returning provided shards.");
         return Ok(shards.to_vec()); // ✅ Just return original shards
     }

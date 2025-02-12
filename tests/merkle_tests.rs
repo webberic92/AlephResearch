@@ -100,10 +100,10 @@ mod tests {
         info!("Flat parent hashes: {:?}", flat_parent_hashes);
     
         // Mock epoch ID
-        let epoch_id = 1;
+        let round_id = 1;
     
         // Attempt to reconstruct the unit
-        match reconstruct_unit(&shards, epoch_id, flat_parent_hashes.clone()) {
+        match reconstruct_unit(&shards, round_id, flat_parent_hashes.clone()) {
             Ok(reconstructed_unit) => {
                 // Validate reconstructed data matches original concatenated shards
                 let concatenated_shards = shards.concat();
@@ -258,10 +258,10 @@ mod tests {
         let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
         info!("Flat parent hashes: {:?}", flat_parent_hashes);
         // Mock epoch ID
-        let epoch_id = 1;
+        let round_id = 1;
     
         // Attempt to reconstruct the unit
-        match reconstruct_unit(&shards, epoch_id, flat_parent_hashes.clone()) {
+        match reconstruct_unit(&shards, round_id, flat_parent_hashes.clone()) {
             Ok(reconstructed_unit) => {
                 // Validate reconstructed data matches original transaction data
                 let concatenated_shards = shards.concat();

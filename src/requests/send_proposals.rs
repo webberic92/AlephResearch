@@ -44,13 +44,13 @@ pub async fn send_proposals(
 ) -> Result<(), anyhow::Error> {
     
     let node_read = node.read().await;
-    let epoch = *node_read.current_epoch.lock().await;
+    let round = *node_read.current_round.lock().await;
 
     info!(
-        "Node {} {}: Preparing to send proposals for epoch {} to nodes: {:?}",
+        "Node {} {}: Preparing to send proposals for round {} to nodes: {:?}",
         node_read.id,
         node_read.ip_address,
-        epoch,
+        round,
         node_read.nodes
     );
 
@@ -92,7 +92,7 @@ pub async fn send_proposals(
 
     let base_request = BaseRequest {
         proposing_node_id: node_read.id,
-        epoch_id: epoch,
+        round_id: round,
         root: merkle_root.to_vec(),
     };
 
@@ -117,9 +117,9 @@ pub async fn send_proposals(
 
             async move {
                 info!(
-                    "Node sending proposal to {} for epoch {}",
+                    "Node sending proposal to {} for round {}",
                     node_url,
-                    propose_request.base.epoch_id
+                    propose_request.base.round_id
                 );
 
                 match
@@ -130,9 +130,9 @@ pub async fn send_proposals(
                 {
                     Ok(res) if res.status().is_success() => {
                         info!(
-                            "Proposal successfully delivered to Node {} (Epoch {}).",
+                            "Proposal successfully delivered to Node {} (round {}).",
                             node_url,
-                            propose_request.base.epoch_id
+                            propose_request.base.round_id
                         );
                         Ok(())
                     }
@@ -164,7 +164,7 @@ pub async fn send_proposals(
 
     // Step 1: If all proposals are sent, add self to proposal tracker
     if results.iter().all(|res| res.is_ok()) {
-        info!("Successfully sent all proposals for epoch {}.", epoch);
+        info!("Successfully sent all proposals for round {}.", round);
 
         match Node::update_proposal_tracker(node.clone(), propose_request.clone()).await {
             Ok((proposal_count, required_proposals, stored_proposals)) => {
@@ -177,11 +177,11 @@ pub async fn send_proposals(
 
                 if proposal_count >= required_proposals {
                     info!(
-                        "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
+                        "Node {}: Received enough proposals ({}/{}) for round {}. Transitioning to prevote.",
                         propose_request.base.proposing_node_id,
                         proposal_count,
                         required_proposals,
-                        propose_request.base.epoch_id
+                        propose_request.base.round_id
                     );
 
                     // Send prevotes for all stored proposals
@@ -205,9 +205,9 @@ pub async fn send_proposals(
                             prevote_request
                         ).await {
                             error!(
-                                "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
+                                "Node {}: Failed to handle prevote for round {}. Error: {:?}",
                                 propose_request.base.proposing_node_id,
-                                stored_propose.base.epoch_id,
+                                stored_propose.base.round_id,
                                 e
                             );
                         }
@@ -227,11 +227,7 @@ pub async fn send_proposals(
             }
         }
 
-        if let Err(err) = notify_transaction_submitted(client, node.clone()).await {
-            error!("Failed to notify transaction submitted: {:?}", err);
-        }
-
-        Ok(())
+       Ok(())
     } else {
         Err(anyhow::anyhow!("One or more proposals failed."))
     }

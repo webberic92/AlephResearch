@@ -29,18 +29,18 @@ pub async fn handle_dag_sync(
     
     info!(
         "Node {}: INSIDE Handler - Received DAG sync request from Node {} for epoch {}. About to call check_dag_sync...",
-        node_read.id, payload.sender_id, payload.epoch_id
+        node_read.id, payload.sender_id, payload.round_id
     );
 
     // Call `check_dag_sync` asynchronously
-    match check_dag_sync(&client, payload.epoch_id, &payload.sender_id, &payload.sender_url).await {
+    match check_dag_sync(&client, payload.round_id, &payload.sender_id, &payload.sender_url).await {
         Ok(in_sync) => {
             if in_sync {
                 Json(DAGSyncResponse {
                     in_sync: true,
                     message: format!(
                         "Node {}: DAG is in sync with Node {} for epoch {}",
-                        node_read.id, payload.sender_id, payload.epoch_id
+                        node_read.id, payload.sender_id, payload.round_id
                     ),
                 })
             } else {
@@ -48,7 +48,7 @@ pub async fn handle_dag_sync(
                     in_sync: false,
                     message: format!(
                         "Node {}: DAG is NOT in sync with Node {} for epoch {}",
-                        node_read.id, payload.sender_id, payload.epoch_id
+                        node_read.id, payload.sender_id, payload.round_id
                     ),
                 })
             }
@@ -56,7 +56,7 @@ pub async fn handle_dag_sync(
         Err(e) => {
             error!(
                 "Node {}: Failed to check DAG sync with Node {} for epoch {}. Error: {:?}",
-                node_read.id, payload.sender_id, payload.epoch_id, e
+                node_read.id, payload.sender_id, payload.round_id, e
             );
             Json(DAGSyncResponse {
                 in_sync: false,

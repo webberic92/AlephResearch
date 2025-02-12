@@ -14,7 +14,7 @@ use aleph_research::utils::merkle_utils::{compute_merkle_branch, compute_merkle_
 async fn test_check_dag_sync_success() {
     let mock_server = mock("POST", "/dag_sync")
         .match_body(Matcher::Json(json!({
-            "epoch_id": 1,
+            "round_id": 1,
             "sender_id": 2,
             "sender_url": mockito::server_url()
         })))
@@ -35,7 +35,7 @@ async fn test_check_dag_sync_success() {
 async fn test_check_dag_sync_failure() {
     let mock_server = mock("POST", "/dag_sync")
         .match_body(Matcher::Json(json!({
-            "epoch_id": 1,
+            "round_id": 1,
             "sender_id": 2,
             "sender_url": mockito::server_url()
         })))
@@ -55,7 +55,7 @@ async fn test_check_dag_sync_failure() {
 async fn test_ensure_dag_synchronization_success() {
     let mock_server = mock("POST", "/dag_sync")
         .match_body(Matcher::Json(json!({
-            "epoch_id": 2,
+            "round_id": 2,
             "sender_id": 2,
             "sender_url": mockito::server_url()
         })))
@@ -75,8 +75,8 @@ async fn test_ensure_dag_synchronization_success() {
 
     {
         let node_state = node.write().await;
-        let mut epoch_round_id = node_state.current_epoch.lock().await;
-        *epoch_round_id = 2;
+        let mut round_id = node_state.current_round.lock().await;
+        *round_id = 2;
     }
 
     let client = Client::new();
@@ -228,8 +228,8 @@ async fn test_ensure_round_sync_success() {
 
     {
         let node_state = node.write().await;
-        let mut epoch_round_id = node_state.current_epoch.lock().await;
-        *epoch_round_id = 2;
+        let mut round_id = node_state.current_round.lock().await;
+        *round_id = 2;
     }
 
     let result = ensure_round_sync(node.clone(), 3).await;
@@ -255,17 +255,17 @@ async fn test_ensure_round_sync_failure() {
 
     {
         let node_state = node.write().await;
-        let mut epoch_round_id = node_state.current_epoch.lock().await;
-        *epoch_round_id = 2;
-        info!("Test: Set current_epoch to {}", *epoch_round_id); // Debugging
+        let mut round_id = node_state.current_round.lock().await;
+        *round_id = 2;
+        info!("Test: Set current_round to {}", *round_id); // Debugging
     }
 
     {
         let node_state = node.read().await;
-        let epoch_round_id = node_state.current_epoch.lock().await;
+        let round_id = node_state.current_round.lock().await;
         info!(
-            "Test: Confirming current_epoch before calling ensure_round_sync: {}",
-            *epoch_round_id
+            "Test: Confirming current_round before calling ensure_round_sync: {}",
+            *round_id
         );
     }
 
@@ -276,7 +276,7 @@ async fn test_ensure_round_sync_failure() {
         format!(
             "Node 1: DAG not synchronized to round {} for prevote (current round: {})",
             3, // target_round - 1 (4 - 1)
-            2  // Matches expected `current_epoch`
+            2  // Matches expected `current_round`
         )
     );
 }

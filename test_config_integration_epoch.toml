@@ -10,7 +10,7 @@
             transaction_size = 256
             data_shards = 4
             batch_size = 10
-            epoch_round_id = 5
+            round_id = 5
 
             [node]
             id = 1

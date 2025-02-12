@@ -11,30 +11,55 @@ use crate::{
 /// ✅ **Fixed: Now using `anyhow::Error` to ensure errors are `Send + Sync`**
 pub async fn create_transaction_data(
     node: Arc<RwLock<Node>>, 
-    id: usize
-) -> Result<(Vec<Vec<u8>>, Vec<u8>, Vec<String>), Error> {
-    let transaction_size = 256;
-    let data_shards = 4;
-
-    let node_id: u8 = id.try_into().map_err(|_| anyhow!("Node ID too large"))?;
-    let transaction_data = vec![node_id; transaction_size];
-
-    let shards = split_into_shards(&transaction_data, data_shards);
-    let proofs: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
+) -> Result<(Vec<Vec<u8>>, Vec<u8>, Vec<String>), Error> {  
     
-    validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
+    let node_id;
+    let node_number_of_transactions: usize;
+    let transaction_size: usize;
+    let data_shards: usize;
+    {
+        let node_read = node.read().await;
+        node_id = node_read.id;
+        node_number_of_transactions = node_read.number_of_transactions;
+        transaction_size = node_read.transaction_size;
+        data_shards = node_read.data_shards;
+    } // 🔴 Drop read lock immediately after fetching `id`
 
-    let merkle_root = compute_merkle_root(&proofs);
+    let node_id: u8 = node_id.try_into().map_err(|_| anyhow!("Node ID too large"))?;
+    let mut all_shards = Vec::new();
+    let mut proofs = Vec::new();
+
+    // ✅ Dynamically generate `node_number_of_transactions` transactions while ensuring batch size limits
+    for _ in 0..node_number_of_transactions {
+        let transaction_data = vec![node_id; transaction_size];
+        let shards = split_into_shards(&transaction_data, data_shards);
+
+        let merkle_proofs: Vec<Vec<u8>> = shards.iter()
+            .map(|shard| Sha256::digest(shard).to_vec())
+            .collect();
+        
+        validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
+
+        all_shards.push(shards.clone());  // ✅ Ensure each transaction's shards are separate
+        proofs.push(merkle_proofs);
+    }
+
+    let merkle_root = compute_merkle_root(&proofs.concat()); // ✅ Compute Merkle root over all shards
 
     // ✅ Step 1: Acquire read lock
     let node_read = node.read().await;
 
     // ✅ Step 2: Extract current epoch safely
-    let epoch_id = *node_read.current_epoch.lock().await;
+    let round_id = *node_read.current_round.lock().await;
 
     // ✅ Step 3: Retrieve last committed parent(s) from DAG (Always use previous epoch)
-    let parent_units = node_read.get_all_parents(epoch_id).await;
-    info!("Creating transaction: Parent Units = {:?} for Epoch {}", parent_units, epoch_id);
+    let parent_units = node_read.get_all_parents(round_id).await;
+    info!(
+        "Creating transaction: {} transactions, Parent Units = {:?} for Epoch {}",
+        node_number_of_transactions, parent_units, round_id
+    );
 
-    Ok((shards, merkle_root, parent_units))
+    // ✅ Return only shards, merkle_root, and parents
+    Ok((all_shards.concat(), merkle_root, parent_units))  // ✅ Flatten shard structure
 }
+
