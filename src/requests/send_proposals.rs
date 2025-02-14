@@ -8,7 +8,6 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use crate::{
     handlers::handle_prevote::handle_prevote,
-    requests::ip_server_requests::notify_transaction_submitted,
     structs::{ node::Node, requests::{ BaseRequest, PrevoteRequest, ProposeRequest } },
     utils::merkle_utils::{ compute_merkle_branch, compute_merkle_root },
 };

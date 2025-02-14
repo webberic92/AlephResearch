@@ -9,15 +9,23 @@ use crate::handlers::handle_propose::handle_propose;
 use super::requests::ProposeRequest;
 
 
-/// **🔹 DAG Unit Structure**
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
+pub struct Transaction {
+    pub tx_id: String,
+    pub data: Vec<u8>, // Transaction payload
+}
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct DagUnit {
-    pub unit_id: u64,
+    pub unit_id: String,
     pub proposer_node: usize,
-    pub data: Vec<u8>,
+    pub round: u64,
+    pub transactions: Vec<Transaction>, // ✅ Store multiple transactions
     pub parent_units: Vec<String>,
+    pub merkle_root: String,
     pub finalization_timestamp: u64,
 }
+
 
 
 
@@ -174,56 +182,60 @@ impl Node {
 
   /// 🔹 **Get Last Unit ID in the DAG for a Given Epoch**
     /// - Retrieves the unit_id of the last entry in the DAG for `round_id`.
-    pub async fn get_last_unit_id(&self, round_id: u64) -> Option<u64> {
+    pub async fn get_last_unit_id(&self, round_id: u64) -> Option<String> {
         let dag_read = self.dag.read().await;
     
-        // ✅ Check last unit in current epoch
+        // ✅ First, check the last unit in the current round
         if let Some(units) = dag_read.get(&round_id) {
             if let Some(last_unit) = units.last() {
                 info!(
-                    "Node {}: Found last unit ID {} in epoch {}",
+                    "Node {}: Found last unit ID {} in round {}",
                     self.id, last_unit.unit_id, round_id
                 );
-                return Some(last_unit.unit_id);
+                return Some(last_unit.unit_id.clone()); // ✅ Return unit_id as String
             }
-            info!("Node {}: No units found in epoch {}", self.id, round_id);
+            info!("Node {}: No units found in round {}", self.id, round_id);
         }
     
-        // ✅ Fall back to last finalized unit from previous epoch
+        // ✅ If no units exist in the current round, check the previous round
         if round_id > 1 {
             if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
                 if let Some(last_unit) = prev_units.last() {
                     info!(
-                        "Node {}: No units in epoch {}, falling back to last unit ID {} from epoch {}",
+                        "Node {}: No units in round {}, falling back to last unit ID {} from round {}",
                         self.id, round_id, last_unit.unit_id, round_id - 1
                     );
-                    return Some(last_unit.unit_id);
+                    return Some(last_unit.unit_id.clone()); // ✅ Ensure String consistency
                 }
             }
         }
     
+        // ✅ If no units exist at all, return a default unit ID or None
         info!("Node {}: No previous units found, returning None", self.id);
-        None // No units found
+        None
     }
+    
     
     
     
     /// 🔹 **Get Next DAG Unit ID**
     /// - Gets the last unit ID for the current epoch and increments it.
-    pub async fn get_next_dag_unit_id(&self, round_id: u64) -> u64 {
+    pub async fn get_next_dag_unit_id(&self, round_id: u64) -> String {
         if let Some(last_id) = self.get_last_unit_id(round_id).await {
-            return last_id + 1;
+            return format!("U{}", last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0) + 1);
         }
     
-        // If epoch is empty, reference the last unit from the previous epoch
+        // ✅ If no units exist in the current round, check the previous round
         if round_id > 1 {
             if let Some(last_id) = self.get_last_unit_id(round_id - 1).await {
-                return last_id + 1;
+                return format!("U{}", last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0) + 1);
             }
         }
     
-        1 // Default to 1 for new DAG
+        // ✅ Default to "U1" for a new DAG round
+        "U1".to_string()
     }
+    
     
     
 
@@ -235,69 +247,67 @@ impl Node {
         info!("Checking commitment for parent: {}", parent_id);
         info!("DAG state before commitment check: {:?}", *dag_read);
             
-        // ✅ Handle first transaction (epoch 1): No parents to check
+        // ✅ Handle first transaction (round 1): No parents to check
         if dag_read.is_empty() {
             info!("DAG is empty: Treating first transaction as committed.");
             return true;  // ✅ Allow the first transaction to commit
         }
     
-        for (_epoch, units) in dag_read.iter() {
-            if units.iter().any(|unit| unit.unit_id.to_string() == parent_id) {
-                return true; // ✅ Correct: Check if the DAG contains this parent unit ID
+        for (_round, units) in dag_read.iter() {
+            if units.iter().any(|unit| unit.unit_id == parent_id) {  // ✅ Proper string comparison
+                return true; // ✅ Check if the DAG contains this parent unit ID
             }
         }
         
         // ❌ Parent unit was not found
         false
     }
+    
 
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
         let dag_read = self.dag.read().await;
         let mut parents = Vec::new();
     
-        // ✅ If there are already transactions in this epoch, use them as parents
+        // ✅ If there are already transactions in this round, use them as parents
         if let Some(units) = dag_read.get(&round_id) {
             if !units.is_empty() {
-                parents.extend(units.iter().map(|unit| format!("{}", unit.unit_id)));
+                parents.extend(units.iter().map(|unit| unit.unit_id.clone()));  // ✅ Return structured unit IDs
                 info!(
-                    "Node {}: Using units from current epoch {} as parents: {:?}",
+                    "Node {}: Using units from current round {} as parents: {:?}",
                     self.id, round_id, parents
                 );
-                return parents; // 🔥 If current epoch has transactions, return immediately
+                return parents; // 🔥 If current round has transactions, return immediately
             }
         }
     
-        // ✅ If we are in epoch 1, return no parents
+        // ✅ If we are in round 1, return no parents
         if round_id == 1 {
             info!(
-                "Node {}: Epoch 1 detected. No parents available.",
+                "Node {}: Round 1 detected. No parents available.",
                 self.id
             );
             return Vec::new();
         }
     
-        // ✅ Otherwise, fallback to the last finalized transactions from the previous epoch
+        // ✅ Otherwise, fallback to the last finalized transactions from the previous round
         if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
             if !prev_units.is_empty() {
-                parents.extend(prev_units.iter().map(|unit| format!("{}", unit.unit_id)));
+                parents.extend(prev_units.iter().map(|unit| unit.unit_id.clone()));  // ✅ Maintain String format
                 info!(
-                    "Node {}: Using previous epoch {} as parents: {:?}",
+                    "Node {}: Using previous round {} as parents: {:?}",
                     self.id, round_id - 1, parents
                 );
             }
         }
     
         info!(
-            "Node {}: Selected parents for epoch {} -> {:?}",
+            "Node {}: Selected parents for round {} -> {:?}",
             self.id, round_id, parents
         );
     
         parents
     }
-    
-    
-    
-    
+  
     
 
 }
