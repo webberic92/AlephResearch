@@ -8,7 +8,7 @@ use std::time::Duration;
 use crate::structs::{node::Node, requests::SyncroundRequest};
 
 /// Updates the round in the local node state.
-pub async fn update_local_round(node: Arc<RwLock<Node>>) -> u64 {
+pub async fn update_local_round(node: Arc<RwLock<Node>>) -> Result<(), Box<dyn std::error::Error>> {
     // info!("Entering Update local round to the next round");
 
     let next_round_id;
@@ -39,7 +39,7 @@ pub async fn update_local_round(node: Arc<RwLock<Node>>) -> u64 {
 
     // info!("Exiting Update local round to the next round");
 
-    next_round_id
+    Ok(())
 }
 
 
