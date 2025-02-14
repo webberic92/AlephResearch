@@ -1,14 +1,15 @@
 sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.184.69
+PRIVATE_IP = 10.0.137.109
 Node registration success.
 IP Manager not ready, retrying...
+IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.140.144:30333", "10.0.191.111:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.134.133:30333", "10.0.151.184:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.162.227"
-ip_address = "10.0.184.69"
-nodes = ["10.0.140.144:30333", "10.0.191.111:30333"]
+ip_manager_address = "10.0.174.149"
+ip_address = "10.0.137.109"
+nodes = ["10.0.134.133:30333", "10.0.151.184:30333"]
 total_nodes = 3
 
 [consensus]
@@ -28,189 +29,798 @@ Configuration file found at /home/aleph-node/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-02-14T00:47:38.327322Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-14T00:47:38.327627Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-02-14T00:47:38.328561Z  INFO aleph_research::utils::start_util: Node 10.0.140.144:30333 is healthy.
-2025-02-14T00:47:38.329403Z  INFO aleph_research::utils::start_util: Node 10.0.191.111:30333 is healthy.
-2025-02-14T00:47:38.329420Z  INFO aleph_research::utils::start_util: All nodes are healthy.
-2025-02-14T00:47:38.329431Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a trasnsaction size of 256
-2025-02-14T00:47:38.329483Z  INFO aleph_research::structs::node: Node 1: Round 1 detected. No parents available.
-2025-02-14T00:47:38.329488Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 2 transactions, Parent Units = [] for Epoch 1
-2025-02-14T00:47:38.329496Z  INFO aleph_research::utils::create_transaction_data: Created transactions shards [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
-2025-02-14T00:47:38.329568Z  INFO aleph_research::utils::create_transaction_data: Created transactions root [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54,39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
-2025-02-14T00:47:38.329576Z  INFO aleph_research::utils::create_transaction_data: Created transactions parents []
-2025-02-14T00:47:38.329594Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.184.69: Preparing to send proposals for round 1 to nodes: ["10.0.140.144:30333", "10.0.191.111:30333"]
-2025-02-14T00:47:38.329794Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.140.144:30333 for round 1
-2025-02-14T00:47:38.329888Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.191.111:30333 for round 1
-2025-02-14T00:47:39.041508Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.191.111:30333 (round 1).
+2025-02-14T00:58:50.056555Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-02-14T00:58:50.056553Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-02-14T00:58:50.057747Z  INFO aleph_research::utils::start_util: Node 10.0.134.133:30333 is healthy.
+2025-02-14T00:58:50.058639Z  INFO aleph_research::utils::start_util: Node 10.0.151.184:30333 is healthy.
+2025-02-14T00:58:50.058653Z  INFO aleph_research::utils::start_util: All nodes are healthy.
+2025-02-14T00:58:50.058657Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a trasnsaction size of 256
+2025-02-14T00:58:50.058690Z  INFO aleph_research::structs::node: Node 1: Round 1 detected. No parents available.
+2025-02-14T00:58:50.058694Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 2 transactions, Parent Units = [] for round 1
+2025-02-14T00:58:50.058699Z  INFO aleph_research::utils::create_transaction_data: Created transactions shards [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+2025-02-14T00:58:50.058748Z  INFO aleph_research::utils::create_transaction_data: Created transactions root [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54,39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:50.058760Z  INFO aleph_research::utils::create_transaction_data: Created transactions parents []
+2025-02-14T00:58:50.058767Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.137.109: Preparing to send proposals for round 1 to nodes: ["10.0.134.133:30333", "10.0.151.184:30333"]
+2025-02-14T00:58:50.058879Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.134.133:30333 for round 1
+2025-02-14T00:58:50.058943Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.151.184:30333 for round 1
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 1
-2025-02-14T00:47:40.601689Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.140.144:30333 (round 1).
-2025-02-14T00:47:40.601738Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
-2025-02-14T00:47:40.601749Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
-2025-02-14T00:47:40.601978Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 1 for epoch 1. Total proposals: 1. Required for consensus: 3.
-2025-02-14T00:47:40.601993Z  INFO aleph_research::requests::send_proposals: Node 1: Added itself to proposal tracker. Proposal count: 1 / Required: 3
-2025-02-14T00:47:40.603200Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for epoch 1 from sender 3
-2025-02-14T00:47:40.603215Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest epoch: 1, Target epoch: 1
-2025-02-14T00:47:40.603219Z  INFO aleph_research::utils::dag_utils: Node 1: First epoch detected (epoch 1). Skipping DAG sync check.
-2025-02-14T00:47:40.603223Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
-2025-02-14T00:47:40.603230Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
-2025-02-14T00:47:40.603251Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 3 for epoch 1. Total proposals: 2. Required for consensus: 3.
-2025-02-14T00:47:40.603257Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for epoch 1: {1: {1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents: [] }, 3: ProposeRequest { base: BaseRequest { proposing_node_id: 3, root: [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198], round_id: 1 }, proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="], parents: [] }}}
-2025-02-14T00:47:40.603310Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal successfully handled for epoch 1 from sender 3
-2025-02-14T00:47:40.603534Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for epoch 1 from sender 2
-2025-02-14T00:47:40.603545Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest epoch: 1, Target epoch: 1
-2025-02-14T00:47:40.603548Z  INFO aleph_research::utils::dag_utils: Node 1: First epoch detected (epoch 1). Skipping DAG sync check.
-2025-02-14T00:47:40.603552Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
-2025-02-14T00:47:40.603558Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
-2025-02-14T00:47:40.603583Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 2 for epoch 1. Total proposals: 3. Required for consensus: 3.
-2025-02-14T00:47:40.603588Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for epoch 1: {1: {1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents: [] }, 3: ProposeRequest { base: BaseRequest { proposing_node_id: 3, root: [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198], round_id: 1 }, proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="], parents: [] }, 2: ProposeRequest { base: BaseRequest { proposing_node_id: 2, root: [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155], round_id: 1 }, proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="], parents: [] }}}
-2025-02-14T00:47:40.603636Z  INFO aleph_research::handlers::handle_propose: Node 1: Received enough proposals (3/3) for epoch 1. Transitioning to prevote.
-2025-02-14T00:47:40.603640Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 1
-2025-02-14T00:47:40.603646Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 1 for epoch 1
-2025-02-14T00:47:40.603649Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest epoch: 1, Target epoch: 1
-2025-02-14T00:47:40.603652Z  INFO aleph_research::utils::dag_utils: Node 1: First epoch detected (epoch 1). Skipping DAG sync check.
-2025-02-14T00:47:40.603705Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
-2025-02-14T00:47:40.603739Z  INFO aleph_research::utils::merkle_utils: root : [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
-2025-02-14T00:47:40.603745Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
-2025-02-14T00:47:40.603782Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
-2025-02-14T00:47:40.603785Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
-2025-02-14T00:47:40.603789Z  INFO aleph_research::handlers::handle_prevote: Node 1: First epoch detected, skipping parent commitment check.
-2025-02-14T00:47:40.603792Z  INFO aleph_research::handlers::handle_prevote: Epoch 1 detected: Skipping interpolation, using provided shards.
-2025-02-14T00:47:40.603810Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for epoch 1
-2025-02-14T00:47:40.603816Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.603819Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
-2025-02-14T00:47:40.603824Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.603827Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
-2025-02-14T00:47:40.603834Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 1 for epoch 1
-2025-02-14T00:47:40.603844Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 1, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction {tx_id: "Tx2", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx3", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx4", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx5", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx6", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx7", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx8", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }], parent_units: [], merkle_root: "vqUz28zpkjj45Fm4ExeBgvuykDYn0Rng5qkXGN7pO+w=", finalization_timestamp: 1739494060 } to DAG at epoch 1
-2025-02-14T00:47:40.603914Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
-2025-02-14T00:47:40.603917Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for epoch 1.
-2025-02-14T00:47:40.603926Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 3
-2025-02-14T00:47:40.603931Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 3 for epoch 1
-2025-02-14T00:47:40.603935Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest epoch: 1, Target epoch: 1
-2025-02-14T00:47:40.603937Z  INFO aleph_research::utils::dag_utils: Node 1: First epoch detected (epoch 1). Skipping DAG sync check.
-2025-02-14T00:47:40.603983Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96,201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25,3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49]]
-2025-02-14T00:47:40.604015Z  INFO aleph_research::utils::merkle_utils: root : [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
-2025-02-14T00:47:40.604020Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], Computed root = [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
-2025-02-14T00:47:40.604057Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
-2025-02-14T00:47:40.604060Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
-2025-02-14T00:47:40.604063Z  INFO aleph_research::handlers::handle_prevote: Node 1: First epoch detected, skipping parent commitment check.
-2025-02-14T00:47:40.604066Z  INFO aleph_research::handlers::handle_prevote: Epoch 1 detected: Skipping interpolation, using provided shards.
-2025-02-14T00:47:40.604091Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for epoch 1
-2025-02-14T00:47:40.604096Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.604100Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
-2025-02-14T00:47:40.604104Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.604110Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
-2025-02-14T00:47:40.604117Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 3 for epoch 1
-2025-02-14T00:47:40.604123Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 3, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction {tx_id: "Tx2", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx3", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx4", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx5", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx6", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx7", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx8", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }], parent_units: [], merkle_root: "H9G5gpOYMg/Xe+39Gvw4xC+JuEUHLGybGdgRtd+qAcY=", finalization_timestamp: 1739494060 } to DAG at epoch 1
-2025-02-14T00:47:40.604169Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
-2025-02-14T00:47:40.604172Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for epoch 1.
-2025-02-14T00:47:40.604180Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 2
-2025-02-14T00:47:40.604185Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 2 for epoch 1
-2025-02-14T00:47:40.604188Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest epoch: 1, Target epoch: 1
-2025-02-14T00:47:40.604191Z  INFO aleph_research::utils::dag_utils: Node 1: First epoch detected (epoch 1). Skipping DAG sync check.
-2025-02-14T00:47:40.604236Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133,144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144,171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173]]
-2025-02-14T00:47:40.604267Z  INFO aleph_research::utils::merkle_utils: root : [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
-2025-02-14T00:47:40.604272Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], Computed root = [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
-2025-02-14T00:47:40.604309Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
-2025-02-14T00:47:40.604312Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
-2025-02-14T00:47:40.604315Z  INFO aleph_research::handlers::handle_prevote: Node 1: First epoch detected, skipping parent commitment check.
-2025-02-14T00:47:40.604318Z  INFO aleph_research::handlers::handle_prevote: Epoch 1 detected: Skipping interpolation, using provided shards.
-2025-02-14T00:47:40.604335Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for epoch 1
-2025-02-14T00:47:40.604339Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.604341Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
-2025-02-14T00:47:40.604344Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
-2025-02-14T00:47:40.604349Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
-2025-02-14T00:47:40.604355Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 2 for epoch 1
-2025-02-14T00:47:40.604362Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 2, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction {tx_id: "Tx2", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx3", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx4", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx5", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx6", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx7", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx8", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }], parent_units: [], merkle_root: "AjyTy66uVyF2/cv7n8dpPLCO6l9QQ7BvZWHnUnEb8ps=", finalization_timestamp: 1739494060 } to DAG at epoch 1
-2025-02-14T00:47:40.604401Z  INFO aleph_research::handlers::handle_commit: Node 1: Advancing to next epoch...
-2025-02-14T00:47:40.604912Z  INFO aleph_research::handlers::handle_commit: Successfully wrote finalized DAG for epoch 1 to file: /home/aleph-node/logs/finalized_dag/epoch1.json
-sh-4.2$
-sh-4.2$
-sh-4.2$ cat /home/aleph-node/logs/finalized_dag/epoch1.json
+2025-02-14T00:58:51.331210Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.151.184:30333 (round 1).
+2025-02-14T00:58:51.688482Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.134.133:30333 (round 1).
+2025-02-14T00:58:51.688523Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
+2025-02-14T00:58:51.688533Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.688600Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 1 for round 1. Total proposals: 1. Required for consensus: 3.
+2025-02-14T00:58:51.688606Z  INFO aleph_research::requests::send_proposals: Node 1: Added itself to proposal tracker. Proposal count: 1 / Required: 3
+2025-02-14T00:58:51.690076Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for round 1 from sender 2
+2025-02-14T00:58:51.690093Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.690097Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.690101Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
+2025-02-14T00:58:51.690109Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.690129Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 2 for round 1. Total proposals: 2. Required for consensus: 3.
+2025-02-14T00:58:51.690136Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1: {1: {2: ProposeRequest { base: BaseRequest { proposing_node_id: 2, root: [2, 60,147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155], round_id: 1 }, proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="], parents: [] }, 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=","TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents:[] }}}
+2025-02-14T00:58:51.690183Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal successfully handled for round 1 from sender 2
+2025-02-14T00:58:51.691019Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for round 1 from sender 3
+2025-02-14T00:58:51.691033Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691037Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691040Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
+2025-02-14T00:58:51.691050Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.691072Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 3 for round 1. Total proposals: 3. Required for consensus: 3.
+2025-02-14T00:58:51.691077Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1: {1: {3: ProposeRequest { base: BaseRequest { proposing_node_id: 3, root: [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198], round_id: 1 }, proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="], parents: [] }, 2: ProposeRequest { base: BaseRequest { proposing_node_id: 2, root: [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105,60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155], round_id: 1 }, proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="], parents: []}, 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents: [] }}}
+2025-02-14T00:58:51.691132Z  INFO aleph_research::handlers::handle_propose: Node 1: Received enough proposals (3/3) for round 1. Transitioning to prevote.
+2025-02-14T00:58:51.691136Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 3
+2025-02-14T00:58:51.691143Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 3 for round 1
+2025-02-14T00:58:51.691146Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691149Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691232Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96,201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25,3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49]]
+2025-02-14T00:58:51.691273Z  INFO aleph_research::utils::merkle_utils: root : [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
+2025-02-14T00:58:51.691279Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], Computed root = [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
+2025-02-14T00:58:51.691317Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691320Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691324Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691327Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691345Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691352Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691355Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691360Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691363Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691371Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 3 for round 1
+2025-02-14T00:58:51.691380Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 3, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction {tx_id: "Tx2", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx3", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx4", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx5", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx6", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx7", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx8", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }], parent_units: [], merkle_root: "H9G5gpOYMg/Xe+39Gvw4xC+JuEUHLGybGdgRtd+qAcY=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691425Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
+2025-02-14T00:58:51.691429Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for round 1.
+2025-02-14T00:58:51.691437Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 2
+2025-02-14T00:58:51.691443Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 2 for round 1
+2025-02-14T00:58:51.691446Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691449Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691495Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133,144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144,171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173]]
+2025-02-14T00:58:51.691526Z  INFO aleph_research::utils::merkle_utils: root : [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
+2025-02-14T00:58:51.691531Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], Computed root = [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
+2025-02-14T00:58:51.691568Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691571Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691574Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691577Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691595Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691598Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691601Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691606Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691609Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691615Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 2 for round 1
+2025-02-14T00:58:51.691621Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 2, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction {tx_id: "Tx2", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx3", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx4", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx5", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx6", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx7", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx8", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }], parent_units: [], merkle_root: "AjyTy66uVyF2/cv7n8dpPLCO6l9QQ7BvZWHnUnEb8ps=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691663Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
+2025-02-14T00:58:51.691666Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for round 1.
+2025-02-14T00:58:51.691673Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 1
+2025-02-14T00:58:51.691679Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 1 for round 1
+2025-02-14T00:58:51.691682Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691685Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691729Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-02-14T00:58:51.691760Z  INFO aleph_research::utils::merkle_utils: root : [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:51.691766Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:51.691803Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691805Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691809Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691812Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691829Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691832Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691835Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691838Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691843Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691849Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 1 for round 1
+2025-02-14T00:58:51.691855Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 1, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction {tx_id: "Tx2", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx3", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx4", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx5", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx6", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx7", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx8", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }], parent_units: [], merkle_root: "vqUz28zpkjj45Fm4ExeBgvuykDYn0Rng5qkXGN7pO+w=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691895Z  INFO aleph_research::handlers::handle_commit: Node 1: Advancing to next round...
+2025-02-14T00:58:51.692628Z  INFO aleph_research::handlers::handle_commit: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/logs/finalized_dag/round1.json
+sh-4.2$ cat /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.137.109
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.134.133:30333", "10.0.151.184:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.174.149"
+ip_address = "10.0.137.109"
+nodes = ["10.0.134.133:30333", "10.0.151.184:30333"]
+total_nodes = 3
+
+[consensus]
+number_of_transactions = 2
+transaction_size = 256 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 1
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+2025-02-14T00:58:50.056555Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-02-14T00:58:50.056553Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-02-14T00:58:50.057747Z  INFO aleph_research::utils::start_util: Node 10.0.134.133:30333 is healthy.
+2025-02-14T00:58:50.058639Z  INFO aleph_research::utils::start_util: Node 10.0.151.184:30333 is healthy.
+2025-02-14T00:58:50.058653Z  INFO aleph_research::utils::start_util: All nodes are healthy.
+2025-02-14T00:58:50.058657Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a trasnsaction size of 256
+2025-02-14T00:58:50.058690Z  INFO aleph_research::structs::node: Node 1: Round 1 detected. No parents available.
+2025-02-14T00:58:50.058694Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 2 transactions, Parent Units = [] for round 1
+2025-02-14T00:58:50.058699Z  INFO aleph_research::utils::create_transaction_data: Created transactions shards [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+2025-02-14T00:58:50.058748Z  INFO aleph_research::utils::create_transaction_data: Created transactions root [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54,39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:50.058760Z  INFO aleph_research::utils::create_transaction_data: Created transactions parents []
+2025-02-14T00:58:50.058767Z  INFO aleph_research::requests::send_proposals: Node 1 10.0.137.109: Preparing to send proposals for round 1 to nodes: ["10.0.134.133:30333", "10.0.151.184:30333"]
+2025-02-14T00:58:50.058879Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.134.133:30333 for round 1
+2025-02-14T00:58:50.058943Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.151.184:30333 for round 1
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 1
+2025-02-14T00:58:51.331210Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.151.184:30333 (round 1).
+2025-02-14T00:58:51.688482Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.134.133:30333 (round 1).
+2025-02-14T00:58:51.688523Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
+2025-02-14T00:58:51.688533Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.688600Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 1 for round 1. Total proposals: 1. Required for consensus: 3.
+2025-02-14T00:58:51.688606Z  INFO aleph_research::requests::send_proposals: Node 1: Added itself to proposal tracker. Proposal count: 1 / Required: 3
+2025-02-14T00:58:51.690076Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for round 1 from sender 2
+2025-02-14T00:58:51.690093Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.690097Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.690101Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
+2025-02-14T00:58:51.690109Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.690129Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 2 for round 1. Total proposals: 2. Required for consensus: 3.
+2025-02-14T00:58:51.690136Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1: {1: {2: ProposeRequest { base: BaseRequest { proposing_node_id: 2, root: [2, 60,147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155], round_id: 1 }, proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="], parents: [] }, 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=","TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents:[] }}}
+2025-02-14T00:58:51.690183Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal successfully handled for round 1 from sender 2
+2025-02-14T00:58:51.691019Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling Propose for round 1 from sender 3
+2025-02-14T00:58:51.691033Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691037Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691040Z  INFO aleph_research::handlers::handle_propose: Node 1: Checked sizes and ensured DAG round sync successfully.
+2025-02-14T00:58:51.691050Z  INFO aleph_research::structs::node: Node 1: Acquiring write lock for proposal tracker update...
+2025-02-14T00:58:51.691072Z  INFO aleph_research::structs::node: Node 1: Proposal added from Node 3 for round 1. Total proposals: 3. Required for consensus: 3.
+2025-02-14T00:58:51.691077Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1: {1: {3: ProposeRequest { base: BaseRequest { proposing_node_id: 3, root: [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198], round_id: 1 }, proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE=", "Tz5ADVDLsfVgO/uhaaqAjNsakVY+TCWDqbAVNxncXt0=", "6YNfE/1moW0r+MjwpCtbLXuVJcwwAR3eFjPRmT2xkGQ="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="], parents: [] }, 2: ProposeRequest { base: BaseRequest { proposing_node_id: 2, root: [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105,60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155], round_id: 1 }, proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=", "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4=", "oVRTzfMGdubMlHIBI1AVVDUGiZAsnzEjugrj0SlKewI="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="], parents: []}, 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, root: [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236], round_id: 1 }, proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=", "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY=", "TEUMxLaZ7i/W9ju3CgTir9tcScDKCziSYzzAcs+NnyE="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="], parents: [] }}}
+2025-02-14T00:58:51.691132Z  INFO aleph_research::handlers::handle_propose: Node 1: Received enough proposals (3/3) for round 1. Transitioning to prevote.
+2025-02-14T00:58:51.691136Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 3
+2025-02-14T00:58:51.691143Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 3 for round 1
+2025-02-14T00:58:51.691146Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691149Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691232Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96,201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25, 3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49], [106, 165, 108, 75, 205, 32, 137, 17, 121, 42, 210, 76, 118, 129, 254, 251, 147, 190, 213, 25,3, 175, 197, 72, 96, 201, 189, 55, 228, 30, 90, 49]]
+2025-02-14T00:58:51.691273Z  INFO aleph_research::utils::merkle_utils: root : [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
+2025-02-14T00:58:51.691279Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], Computed root = [31, 209, 185, 130, 147, 152, 50, 15, 215, 123, 237, 253, 26, 252, 56, 196, 47, 137, 184, 69, 7, 44, 108, 155, 25, 216, 17, 181, 223, 170, 1, 198]
+2025-02-14T00:58:51.691317Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691320Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691324Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691327Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691345Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691352Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691355Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691360Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691363Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691371Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 3 for round 1
+2025-02-14T00:58:51.691380Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 3, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction {tx_id: "Tx2", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx3", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx4", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx5", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx6", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx7", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }, Transaction { tx_id: "Tx8", data: [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3] }], parent_units: [], merkle_root: "H9G5gpOYMg/Xe+39Gvw4xC+JuEUHLGybGdgRtd+qAcY=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691425Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
+2025-02-14T00:58:51.691429Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for round 1.
+2025-02-14T00:58:51.691437Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 2
+2025-02-14T00:58:51.691443Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 2 for round 1
+2025-02-14T00:58:51.691446Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691449Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691495Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133,144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144,171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173], [248, 59, 51, 43, 228, 230, 165, 164, 177, 197, 106, 175, 109, 181, 38, 87, 218, 73, 94, 20, 152, 112, 5, 125, 133, 144, 171, 157, 122, 97, 103, 173]]
+2025-02-14T00:58:51.691526Z  INFO aleph_research::utils::merkle_utils: root : [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
+2025-02-14T00:58:51.691531Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], Computed root = [2, 60, 147, 203, 174, 174, 87, 33, 118, 253, 203, 251, 159, 199, 105, 60, 176, 142, 234, 95, 80, 67, 176, 111, 101, 97, 231, 82, 113, 27, 242, 155]
+2025-02-14T00:58:51.691568Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691571Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691574Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691577Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691595Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691598Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691601Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691606Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691609Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691615Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 2 for round 1
+2025-02-14T00:58:51.691621Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 2, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction {tx_id: "Tx2", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx3", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx4", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx5", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx6", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx7", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }, Transaction { tx_id: "Tx8", data: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2] }], parent_units: [], merkle_root: "AjyTy66uVyF2/cv7n8dpPLCO6l9QQ7BvZWHnUnEb8ps=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691663Z  INFO aleph_research::handlers::handle_prevote: Node 1: Commit phase completed successfully. (from prevote)
+2025-02-14T00:58:51.691666Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for round 1.
+2025-02-14T00:58:51.691673Z  INFO aleph_research::handlers::handle_propose: Node 1: Sending prevote for transaction proposed by Node 1
+2025-02-14T00:58:51.691679Z  INFO aleph_research::handlers::handle_prevote: Node 1: Handling PREVOTE request from Node 1 for round 1
+2025-02-14T00:58:51.691682Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 1, Target round: 1
+2025-02-14T00:58:51.691685Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-14T00:58:51.691729Z  INFO aleph_research::utils::merkle_utils: shard_hashes : [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-02-14T00:58:51.691760Z  INFO aleph_research::utils::merkle_utils: root : [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:51.691766Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit: Concatenated data = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], Computed root = [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236]
+2025-02-14T00:58:51.691803Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
+2025-02-14T00:58:51.691805Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents successfully
+2025-02-14T00:58:51.691809Z  INFO aleph_research::handlers::handle_prevote: Node 1: First round detected, skipping parent commitment check.
+2025-02-14T00:58:51.691812Z  INFO aleph_research::handlers::handle_prevote: round 1 detected: Skipping interpolation, using provided shards.
+2025-02-14T00:58:51.691829Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum for round 1
+2025-02-14T00:58:51.691832Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691835Z  INFO aleph_research::handlers::handle_prevote: Node 1: Checking quorum vote count 1/1
+2025-02-14T00:58:51.691838Z  INFO aleph_research::structs::node: Node 1: Total nodes: 3, Fault tolerance f: 0, Required quorum: 1
+2025-02-14T00:58:51.691843Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached. Sending commit.
+2025-02-14T00:58:51.691849Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 1 for round 1
+2025-02-14T00:58:51.691855Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit DagUnit { unit_id: "U1", proposer_node: 1, round: 1, transactions: [Transaction { tx_id: "Tx1", data: [1, 1,1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction {tx_id: "Tx2", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx3", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx4", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx5", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx6", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx7", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }, Transaction { tx_id: "Tx8", data: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1] }], parent_units: [], merkle_root: "vqUz28zpkjj45Fm4ExeBgvuykDYn0Rng5qkXGN7pO+w=", finalization_timestamp: 1739494731 } to DAG at round 1
+2025-02-14T00:58:51.691895Z  INFO aleph_research::handlers::handle_commit: Node 1: Advancing to next round...
+2025-02-14T00:58:51.692628Z  INFO aleph_research::handlers::handle_commit: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/logs/finalized_dag/round1.json
+sh-4.2$ cat /home/aleph-node/logs/node_status^C
+sh-4.2$ ^C
+sh-4.2$ cat /home/aleph-node/logs/finalized_dag/round1.json
 [
   {
-    "creator": 1,
-    "finalization_timestamp": 1739494060,
-    "merkle_root": "vqUz28zpkjj45Fm4ExeBgvuykDYn0Rng5qkXGN7pO+w=",
-    "parents": [],
-    "round": 1,
-    "transactions": [
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx1"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx2"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx3"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx4"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx5"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx6"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx7"
-      },
-      {
-        "data": "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==",
-        "tx_id": "Tx8"
-      }
-    ],
-    "unit_id": "U1"
-  },
-  {
     "creator": 3,
-    "finalization_timestamp": 1739494060,
+    "finalization_timestamp": 1739494731,
     "merkle_root": "H9G5gpOYMg/Xe+39Gvw4xC+JuEUHLGybGdgRtd+qAcY=",
     "parents": [],
     "round": 1,
     "transactions": [
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx1"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx2"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx3"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx4"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx5"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx6"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx7"
       },
       {
-        "data": "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==",
+        "data": [
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3,
+          3
+        ],
         "tx_id": "Tx8"
       }
     ],
@@ -218,41 +828,1123 @@ sh-4.2$ cat /home/aleph-node/logs/finalized_dag/epoch1.json
   },
   {
     "creator": 2,
-    "finalization_timestamp": 1739494060,
+    "finalization_timestamp": 1739494731,
     "merkle_root": "AjyTy66uVyF2/cv7n8dpPLCO6l9QQ7BvZWHnUnEb8ps=",
     "parents": [],
     "round": 1,
     "transactions": [
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx1"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx2"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx3"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx4"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx5"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx6"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
         "tx_id": "Tx7"
       },
       {
-        "data": "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==",
+        "data": [
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2,
+          2
+        ],
+        "tx_id": "Tx8"
+      }
+    ],
+    "unit_id": "U1"
+  },
+  {
+    "creator": 1,
+    "finalization_timestamp": 1739494731,
+    "merkle_root": "vqUz28zpkjj45Fm4ExeBgvuykDYn0Rng5qkXGN7pO+w=",
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx1"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx2"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx3"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx4"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx5"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx6"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
+        "tx_id": "Tx7"
+      },
+      {
+        "data": [
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1,
+          1
+        ],
         "tx_id": "Tx8"
       }
     ],

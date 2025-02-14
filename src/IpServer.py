@@ -14,7 +14,7 @@ node_status = {}
 # Global transaction state
 # Keeps track of the overall state of the network.
 global_state = {
-    "current_round_id": 1,  # The current epoch (round) of the transaction process.
+    "current_round_id": 1,  # The current round (round) of the transaction process.
     "current_node_id": 1,   # The ID of the node that is expected to submit the next transaction.
     "total_nodes": 0        # Total number of nodes in the network (set at runtime).
 }
@@ -34,7 +34,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
         Endpoints include:
         - `/check_all_ready`: Checks if all nodes are registered and ready.
         - `/get_all_nodes`: Returns the list of all registered nodes.
-        - `/is_turn`: Checks if it's the turn of a specific node for the current epoch.
+        - `/is_turn`: Checks if it's the turn of a specific node for the current round.
         """
         if self.path == "/check_all_ready":
             with lock:
@@ -65,7 +65,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
                     return
 
                 with lock:
-                    # Check if it's the specified node's turn for the current epoch.
+                    # Check if it's the specified node's turn for the current round.
                     is_turn = (
                         round_id == global_state["current_round_id"] and
                         node_id == global_state["current_node_id"]
@@ -103,7 +103,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
         Handles POST requests.
         Endpoints include:
         - `/node_ready`: Marks a node as ready.
-        - `/submit_transaction`: Submits a transaction for the current epoch.
+        - `/submit_transaction`: Submits a transaction for the current round.
         """
         if self.path == "/node_ready":
             self._handle_node_ready()
@@ -143,7 +143,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
         """
         Handles transaction submission by nodes.
         - Advances to the next node in sequence.
-        - When all nodes have submitted, increments the epoch and restarts with node 1.
+        - When all nodes have submitted, increments the round and restarts with node 1.
         """
         content_length = int(self.headers['Content-Length'])
         post_data = self.rfile.read(content_length)
@@ -154,11 +154,11 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
 
             with lock:
                 if global_state["current_node_id"] == node_id:
-                    # ✅ If last node submits, reset to Node 1 and increment epoch
+                    # ✅ If last node submits, reset to Node 1 and increment round
                     if global_state["current_node_id"] == global_state["total_nodes"]:
                         global_state["current_node_id"] = 1
-                        global_state["current_round_id"] += 1  # 🔥 Corrected epoch increment
-                        print(f"✅ Epoch incremented to {global_state['current_round_id']}. Restarting node sequence.")
+                        global_state["current_round_id"] += 1  # 🔥 Corrected round increment
+                        print(f"✅ round incremented to {global_state['current_round_id']}. Restarting node sequence.")
 
                     else:
                         # Otherwise, just move to the next node
@@ -166,7 +166,7 @@ class IPAllocationHandler(BaseHTTPRequestHandler):
 
                     self._send_response(200, {
                         "status": "Transaction submitted successfully",
-                        "current_round_id": global_state["current_round_id"],  # ✅ Return correct epoch
+                        "current_round_id": global_state["current_round_id"],  # ✅ Return correct round
                         "next_node_id": global_state["current_node_id"]
                     })
                 else:

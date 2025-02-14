@@ -1,55 +1,37 @@
 [
-    {
-      "round_id": 1,
-      "units": [
-        {
-          "unit_id": "U_1",
-          "proposer_node": 1,
-          "data": ["1", "1", "1", "1"],
-          "parent_units": [],
-          "finalization_timestamp": 1707101000
-        },
-        {
-          "unit_id": "U_2",
-          "proposer_node": 2,
-          "data": ["2", "2", "2", "2"],
-          "parent_units": ["U_1"],
-          "finalization_timestamp": 1707101020
-        },
-        {
-          "unit_id": "U_3",
-          "proposer_node": 3,
-          "data": ["3", "3", "3", "3"],
-          "parent_units": ["U_1", "U_2"],
-          "finalization_timestamp": 1707101040
-        }
-      ]
-    },
-    {
-      "round_id": 2,
-      "units": [
-        {
-          "unit_id": "U_4",
-          "proposer_node": 1,
-          "data": ["4", "4", "4", "4"],
-          "parent_units": ["U_3"],
-          "finalization_timestamp": 1707101060
-        },
-        {
-          "unit_id": "U_5",
-          "proposer_node": 2,
-          "data": ["5", "5", "5", "5"],
-          "parent_units": ["U_3", "U_4"],
-          "finalization_timestamp": 1707101080
-        },
-        {
-          "unit_id": "U_6",
-          "proposer_node": 3,
-          "data": ["6", "6", "6", "6"],
-          "parent_units": ["U_4", "U_5"],
-          "finalization_timestamp": 1707101100
-        }
-      ]
-    }
-  ]
+  {
+    "creator": 1,
+    "round": 1,
+    "transactions": [
+      { "tx_id": "Tx1", "data": [1, 1, 1, 1] },
+      { "tx_id": "Tx2", "data": [1, 1, 1, 1] } 
+    ],
+    "parents": [],
+    "merkle_root": "...",
+    "finalization_timestamp": 1739494731
+  },
+  {
+    "creator": 2,
+    "round": 1,
+    "transactions": [
+      { "tx_id": "Tx1", "data": [2, 2, 2, 2] },
+      { "tx_id": "Tx2", "data": [2, 2, 2, 2] } 
+    ],
+    "parents": [],
+    "merkle_root": "...",
+    "finalization_timestamp": 1739494731
+  },
+  {
+    "creator": 3,
+    "round": 1,
+    "transactions": [
+      { "tx_id": "Tx1", "data": [3, 3, 3, 3] },
+      { "tx_id": "Tx2", "data": [3, 3, 3, 3] } 
+    ],
+    "parents": [],
+    "merkle_root": "...",
+    "finalization_timestamp": 1739494731
+  }
+]
+
   

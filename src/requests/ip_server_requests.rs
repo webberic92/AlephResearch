@@ -9,8 +9,8 @@ use crate::structs::node::Node;
 pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
     let (node_id, ip_manager_address, current_round) = {
         let node_read = node.read().await;
-        let epoch = *node_read.current_round.lock().await;
-        (node_read.id, node_read.ip_manager_address.clone(), epoch)
+        let round = *node_read.current_round.lock().await;
+        (node_read.id, node_read.ip_manager_address.clone(), round)
     }; // 🔴 Drop read lock immediately
 
     let url = format!(
@@ -19,7 +19,7 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
     );
 
     info!(
-        "Node {}: Checking if it's the turn to propose for epoch {} at URL: {}",
+        "Node {}: Checking if it's the turn to propose for round {} at URL: {}",
         node_id, current_round, url
     );
 
@@ -32,14 +32,14 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
             let text = response.text().await.unwrap_or_else(|_| "Failed to parse response".to_string());
         
             warn!(
-                "Node {}: Turn check failed with status {} for epoch {}. Response: {}",
+                "Node {}: Turn check failed with status {} for round {}. Response: {}",
                 node_id, status, current_round, text
             );
             false
         },
         Err(e) => {
             error!(
-                "Node {}: Error while checking turn for epoch {}: {:?}",
+                "Node {}: Error while checking turn for round {}: {:?}",
                 node_id, current_round, e
             );
             false

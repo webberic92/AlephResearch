@@ -16,7 +16,7 @@ use crate::{
    - The function `handle_propose` is called upon receiving a `ProposeRequest` from another node.
 
 8: If `received_propose(P_i, r)` then terminate
-   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same epoch (`r`).
+   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same round (`r`).
    - If a duplicate exists, the function returns early.
 
 9: If `check_size(s_j)` then
@@ -45,7 +45,7 @@ pub async fn handle_propose(
     let round_id = propose_request.base.round_id;
 
     // Step 8: If `received_propose(P_i, r)` then terminate
-    // - Check if a proposal from the same sender (`P_s`) has already been received for this epoch (`r`).
+    // - Check if a proposal from the same sender (`P_s`) has already been received for this round (`r`).
     // - If it has, terminate early to prevent duplicate processing.
     {
         let proposal_tracker;
@@ -53,7 +53,7 @@ pub async fn handle_propose(
             let node_read = node.read().await;
             node_id = node_read.id;
             info!(
-                "Node {}: Handling Propose for epoch {} from sender {}",
+                "Node {}: Handling Propose for round {} from sender {}",
                 node_id,
                 propose_request.base.round_id,
                 propose_request.base.proposing_node_id
@@ -63,10 +63,10 @@ pub async fn handle_propose(
 
         let proposal_tracker_read = proposal_tracker.lock().await;
 
-        if let Some(epoch_proposals) = proposal_tracker_read.get(&round_id) {
-            if epoch_proposals.contains_key(&propose_request.base.proposing_node_id) {
+        if let Some(round_proposals) = proposal_tracker_read.get(&round_id) {
+            if round_proposals.contains_key(&propose_request.base.proposing_node_id) {
                 info!(
-                    "Node {}: Already received propose for epoch {} from Node {}. Terminating.",
+                    "Node {}: Already received propose for round {} from Node {}. Terminating.",
                     node_id,
                     round_id,
                     propose_request.base.proposing_node_id
@@ -119,7 +119,7 @@ pub async fn handle_propose(
         let proposal_tracker_read = proposal_tracker.lock().await;
 
         info!(
-            "Node {}: Current Proposal Tracker for epoch {}: {:?}",
+            "Node {}: Current Proposal Tracker for round {}: {:?}",
             node_id,
             round_id,
             proposal_tracker_read
@@ -130,7 +130,7 @@ pub async fn handle_propose(
     // - If the number of received proposals reaches the required threshold, proceed to prevote.
     if proposal_count >= required_proposals {
         info!(
-            "Node {}: Received enough proposals ({}/{}) for epoch {}. Transitioning to prevote.",
+            "Node {}: Received enough proposals ({}/{}) for round {}. Transitioning to prevote.",
             node_id,
             proposal_count,
             required_proposals,
@@ -154,7 +154,7 @@ pub async fn handle_propose(
 
             handle_prevote(node.clone(), prevote_request).await.map_err(|e| {
                 error!(
-                    "Node {}: Failed to handle prevote for epoch {}. Error: {:?}",
+                    "Node {}: Failed to handle prevote for round {}. Error: {:?}",
                     node_id,
                     stored_propose.base.round_id,
                     e
@@ -166,7 +166,7 @@ pub async fn handle_propose(
 
     //13: received_propose(Pi , r ) = True
     info!(
-        "Node {}: Proposal successfully handled for epoch {} from sender {}",
+        "Node {}: Proposal successfully handled for round {} from sender {}",
         node_id,
         propose_request.base.round_id,
         propose_request.base.proposing_node_id

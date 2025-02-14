@@ -74,15 +74,15 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>)
 pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
     loop {
         if is_node_turn(client, node.clone()).await {
-            let (node_id, ip_address, latest_epoch) = {
+            let (node_id, ip_address, latest_round) = {
                 let node_read = node.read().await;
-                let epoch = *node_read.current_round.lock().await; // Fetch latest epoch
-                (node_read.id, node_read.ip_address.clone(), epoch)
+                let round = *node_read.current_round.lock().await; // Fetch latest round
+                (node_read.id, node_read.ip_address.clone(), round)
             };
 
             info!(
-                "Node {} {}: It's my turn to propose for epoch {}",
-                node_id, ip_address, latest_epoch
+                "Node {} {}: It's my turn to propose for round {}",
+                node_id, ip_address, latest_round
             );
 
             break;

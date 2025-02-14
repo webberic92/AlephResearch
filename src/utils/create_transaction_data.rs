@@ -52,13 +52,13 @@ pub async fn create_transaction_data(
     // ✅ Step 1: Acquire read lock
     let node_read = node.read().await;
 
-    // ✅ Step 2: Extract current epoch safely
+    // ✅ Step 2: Extract current round safely
     let round_id = *node_read.current_round.lock().await;
 
-    // ✅ Step 3: Retrieve last committed parent(s) from DAG (Always use previous epoch)
+    // ✅ Step 3: Retrieve last committed parent(s) from DAG (Always use previous round)
     let parent_units = node_read.get_all_parents(round_id).await;
     info!(
-        "Creating transaction: {} transactions, Parent Units = {:?} for Epoch {}",
+        "Creating transaction: {} transactions, Parent Units = {:?} for round {}",
         node_number_of_transactions, parent_units, round_id
     );
     info!("Created transactions shards {:?}", all_shards.concat());

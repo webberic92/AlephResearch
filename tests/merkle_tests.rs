@@ -99,7 +99,7 @@ mod tests {
         let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
         info!("Flat parent hashes: {:?}", flat_parent_hashes);
     
-        // Mock epoch ID
+        // Mock round ID
         let round_id = 1;
     
         // Attempt to reconstruct the unit
@@ -257,7 +257,7 @@ mod tests {
         // Flatten parent hashes into a single Vec<u8> (expected by reconstruct_unit)
         let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
         info!("Flat parent hashes: {:?}", flat_parent_hashes);
-        // Mock epoch ID
+        // Mock round ID
         let round_id = 1;
     
         // Attempt to reconstruct the unit

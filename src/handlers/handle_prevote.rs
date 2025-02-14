@@ -39,7 +39,7 @@ pub async fn handle_prevote(
     let node_id = node.read().await.id;
 
     info!(
-        "Node {}: Handling PREVOTE request from Node {} for epoch {}",
+        "Node {}: Handling PREVOTE request from Node {} for round {}",
         node_id, prevote_request.propose.base.proposing_node_id, prevote_request.propose.base.round_id
     );
 
@@ -93,7 +93,7 @@ pub async fn handle_prevote(
         let node_read = node.read().await;
 
         if reconstructed_unit.round_id == 1 {
-            info!("Node {}: First epoch detected, skipping parent commitment check.", node_id);
+            info!("Node {}: First round detected, skipping parent commitment check.", node_id);
         } else {
             for parent in &prevote_request.propose.parents {
                 if !node_read.is_unit_committed(parent).await {
@@ -106,13 +106,13 @@ pub async fn handle_prevote(
         }
     }
     
-    // // --- Step 18: Interpolate missing shards using `f+1` shares (only if epoch > 1) ---
+    // // --- Step 18: Interpolate missing shards using `f+1` shares (only if round > 1) ---
     let interpolated_shards = if round_id > 1 {
         interpolate_shares(&decoded_shards, round_id).map_err(|e| {
             format!("Node {}: Failed to interpolate shares. Error: {:?}", node_id, e)
         })?
     } else {
-        info!("Epoch 1 detected: Skipping interpolation, using provided shards.");
+        info!("round 1 detected: Skipping interpolation, using provided shards.");
         decoded_shards.clone() // ✅ Just use original shards
     };
 
@@ -134,16 +134,16 @@ pub async fn handle_prevote(
     }
 
     info!(
-        "Node {}: Checking quorum for epoch {}", node_id, round_id
+        "Node {}: Checking quorum for round {}", node_id, round_id
     );
 
     // --- Step 14: Ensure `2f+1` valid prevotes before committing ---
-    let epoch_key = round_id.to_be_bytes().to_vec();
+    let round_key = round_id.to_be_bytes().to_vec();
 
     let vote_count_result = timeout(Duration::from_secs(5), async {
         let node_read = node.read().await;
         let mut quorum_votes = node_read.quorum_votes.write().await;
-        let count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
+        let count = quorum_votes.entry(round_key.clone()).or_insert(0);
         *count += 1;
         *count // Return updated vote count
     }).await;
@@ -182,7 +182,7 @@ pub async fn handle_prevote(
 
     handle_commit(node.clone(), commit_request).await.map_err(|e| {
         error!(
-            "Node {}: Commit phase failed for epoch {}. Error: {:?}",
+            "Node {}: Commit phase failed for round {}. Error: {:?}",
             node_id, round_id, e
         );
         format!("Commit phase failed: {:?}", e)
@@ -194,9 +194,9 @@ pub async fn handle_prevote(
     {
         let node_write = node.write().await;
         let mut quorum_votes = node_write.quorum_votes.write().await;
-        quorum_votes.remove(&epoch_key);
+        quorum_votes.remove(&round_key);
     }
     
-    info!("Node {}: Prevote successfully handled for epoch {}.", node_id, round_id);
+    info!("Node {}: Prevote successfully handled for round {}.", node_id, round_id);
     Ok(())
 }

@@ -28,7 +28,7 @@ pub async fn handle_dag_sync(
     let node_read = node.read().await;
     
     info!(
-        "Node {}: INSIDE Handler - Received DAG sync request from Node {} for epoch {}. About to call check_dag_sync...",
+        "Node {}: INSIDE Handler - Received DAG sync request from Node {} for round {}. About to call check_dag_sync...",
         node_read.id, payload.sender_id, payload.round_id
     );
 
@@ -39,7 +39,7 @@ pub async fn handle_dag_sync(
                 Json(DAGSyncResponse {
                     in_sync: true,
                     message: format!(
-                        "Node {}: DAG is in sync with Node {} for epoch {}",
+                        "Node {}: DAG is in sync with Node {} for round {}",
                         node_read.id, payload.sender_id, payload.round_id
                     ),
                 })
@@ -47,7 +47,7 @@ pub async fn handle_dag_sync(
                 Json(DAGSyncResponse {
                     in_sync: false,
                     message: format!(
-                        "Node {}: DAG is NOT in sync with Node {} for epoch {}",
+                        "Node {}: DAG is NOT in sync with Node {} for round {}",
                         node_read.id, payload.sender_id, payload.round_id
                     ),
                 })
@@ -55,7 +55,7 @@ pub async fn handle_dag_sync(
         }
         Err(e) => {
             error!(
-                "Node {}: Failed to check DAG sync with Node {} for epoch {}. Error: {:?}",
+                "Node {}: Failed to check DAG sync with Node {} for round {}. Error: {:?}",
                 node_read.id, payload.sender_id, payload.round_id, e
             );
             Json(DAGSyncResponse {
