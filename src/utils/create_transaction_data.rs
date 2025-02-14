@@ -24,7 +24,10 @@ pub async fn create_transaction_data(
         transaction_size = node_read.transaction_size;
         data_shards = node_read.data_shards;
     } // 🔴 Drop read lock immediately after fetching `id`
-
+    info!(
+        "Node {}: Creating {} transactions with {} shards and a trasnsaction size of {}",
+        node_id, node_number_of_transactions, data_shards, transaction_size
+    );
     let node_id: u8 = node_id.try_into().map_err(|_| anyhow!("Node ID too large"))?;
     let mut all_shards = Vec::new();
     let mut proofs = Vec::new();
@@ -58,6 +61,9 @@ pub async fn create_transaction_data(
         "Creating transaction: {} transactions, Parent Units = {:?} for Epoch {}",
         node_number_of_transactions, parent_units, round_id
     );
+    info!("Created transactions shards {:?}", all_shards.concat());
+    info!("Created transactions root {:?}", merkle_root);
+    info!("Created transactions parents {:?}", parent_units);
 
     // ✅ Return only shards, merkle_root, and parents
     Ok((all_shards.concat(), merkle_root, parent_units))  // ✅ Flatten shard structure
