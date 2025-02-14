@@ -6,10 +6,10 @@ use tracing::info;
 use std::sync::Arc;
 
 use crate::{
-    handlers::{ handle_commit::handle_commit, handle_dag_sync::handle_dag_sync, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_sync_epoch::handle_sync_epoch},
+    handlers::{ handle_commit::handle_commit, handle_dag_sync::handle_dag_sync, handle_prevote::handle_prevote, handle_propose::handle_propose, handle_sync_round::handle_sync_round},
     structs::{
         node::Node,
-        requests::{ CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncEpochRequest},
+        requests::{ CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncroundRequest},
         responses::Response,
     },
 };
@@ -132,24 +132,24 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
             }
         }
     }))
-    .route("/sync_epoch", post({
+    .route("/sync_round", post({
         let node = node.clone(); // Clone the Arc for the node
         move |Json(payload): Json<Value>| {
             let node = node.clone(); // Clone Arc again for each request
             async move {
-                match serde_json::from_value::<SyncEpochRequest>(payload) {
+                match serde_json::from_value::<SyncroundRequest>(payload) {
                     Ok(parsed_payload) => {
-                        let sender_epoch = parsed_payload.round_id; // Extract epoch ID from request
+                        let sender_round = parsed_payload.round_id; // Extract round ID from request
     
-                        match handle_sync_epoch(node, sender_epoch).await {
+                        match handle_sync_round(node, sender_round).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {
-                                    status: format!("Epoch successfully synced to {}", sender_epoch),
+                                    status: format!("round successfully synced to {}", sender_round),
                                 }),
                             ),
                             Err(err) => {
-                                let error_message = format!("Failed to sync epoch: {:?}", err);
+                                let error_message = format!("Failed to sync round: {:?}", err);
                                 tracing::error!("{}", error_message);
                                 (
                                     StatusCode::BAD_REQUEST,
@@ -159,7 +159,7 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
                         }
                     }
                     Err(err) => {
-                        let error_message = format!("Failed to parse SyncEpochRequest: {:?}", err);
+                        let error_message = format!("Failed to parse SyncroundRequest: {:?}", err);
                         tracing::error!("{}", error_message);
                         (
                             StatusCode::BAD_REQUEST,
@@ -181,7 +181,7 @@ pub fn initialize_apis(node: Arc<RwLock<Node>>, client: Arc<Client>) -> Router {
     
                 Json(Response {
                     status: format!(
-                        "Node {} is healthy. Quorum votes: {:?}, Epochs: {:?}",
+                        "Node {} is healthy. Quorum votes: {:?}, rounds: {:?}",
                         node_read.id, *quorum_votes, *round_id
                     ),
                 })

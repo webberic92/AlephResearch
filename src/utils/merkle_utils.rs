@@ -196,9 +196,9 @@ pub fn interpolate_shares(shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u
         return Err("Interpolation failed: No available shards".to_string());
     }
 
-    // ✅ Handle first transaction (epoch 1): No interpolation needed
+    // ✅ Handle first transaction (round 1): No interpolation needed
     if round_id == 1 {
-        info!("Epoch 1 detected: Skipping interpolation, returning provided shards.");
+        info!("round 1 detected: Skipping interpolation, returning provided shards.");
         return Ok(shards.to_vec()); // ✅ Just return original shards
     }
 

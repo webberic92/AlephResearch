@@ -11,10 +11,10 @@ use tokio::sync::RwLock;
 use tracing::{ error, info };
 use crate::structs::node::{DagUnit, Node, Transaction};
 use crate::structs::requests::CommitRequest;
-use crate::utils::epoch_utils::update_local_epoch;
+use crate::utils::round_utils::update_local_round;
 
 /// **🔥 Handles the commit phase in the ch-RBC protocol**
-/// - Ensures multiple transactions are committed before advancing the epoch.
+/// - Ensures multiple transactions are committed before advancing the round.
 ///
 /// **ch-RBC Steps Implemented:**
 /// - **Step 22**: Upon receiving `f + 1` commit messages, check if the commit has been sent.
@@ -35,12 +35,12 @@ pub async fn handle_commit(
     } // 🔥 Dropping read lock
 
     info!(
-        "Node {}: Handling commit request from Node {} for epoch {}",
+        "Node {}: Handling commit request from Node {} for round {}",
         node_id, commit_request.base.proposing_node_id, round_id
     );
 
     // ✅ Extract transaction data properly
-    let shard_size = 64; // Assuming fixed shard size
+    let shard_size = 256; // Assuming fixed shard size
     let mut transactions = Vec::new();
 
     for (i, chunk) in commit_request.unit.chunks(shard_size).enumerate() {
@@ -67,21 +67,21 @@ pub async fn handle_commit(
     dag.entry(round_id).or_insert_with(Vec::new).push(dag_unit.clone());
 
     info!(
-        "Node {}: Added unit {:?} to DAG at epoch {}",
+        "Node {}: Added unit {:?} to DAG at round {}",
         node_write.id, dag_unit, round_id
     );
 
     if dag.get(&round_id).map_or(false, |units| units.len() >= node_write.total_nodes) {
-        info!("Node {}: Advancing to next epoch...", node_id);
+        info!("Node {}: Advancing to next round...", node_id);
         write_finalized_dag_to_file("/home/aleph-node/logs/finalized_dag", &dag, round_id).await.unwrap();
-        update_local_epoch(node.clone()).await;
+        update_local_round(node.clone()).await;
     }
 
     Ok(())
 }
 
 
-// **Writes the finalized unit to the epoch file**
+// **Writes the finalized unit to the round file**
 pub async fn write_finalized_dag_to_file(
     base_path: &str,
     dag: &HashMap<u64, Vec<DagUnit>>,
@@ -94,8 +94,8 @@ pub async fn write_finalized_dag_to_file(
 
     // ✅ Fetch only the finalized units for the given round
     if let Some(units) = dag.get(&round_id) {
-        let epoch_file = format!("{}/epoch{}.json", base_path, round_id);
-        let path = Path::new(&epoch_file);
+        let round_file = format!("{}/round{}.json", base_path, round_id);
+        let path = Path::new(&round_file);
 
         if let Some(parent_dir) = path.parent() {
             if !parent_dir.exists() {
@@ -103,7 +103,7 @@ pub async fn write_finalized_dag_to_file(
             }
         }
 
-        let epoch_data: Vec<Value> = units
+        let round_data: Vec<Value> = units
             .iter()
             .map(|unit| serde_json::json!({
                 "unit_id": unit.unit_id,
@@ -112,7 +112,7 @@ pub async fn write_finalized_dag_to_file(
                 "transactions": unit.transactions.iter().map(|tx| {
                     serde_json::json!({
                         "tx_id": tx.tx_id,
-                        "data": general_purpose::STANDARD.encode(&tx.data),
+                        "data": &tx.data,
                     })
                 }).collect::<Vec<Value>>(),
                 "parents": unit.parent_units,
@@ -125,12 +125,12 @@ pub async fn write_finalized_dag_to_file(
             .write(true)
             .create(true)
             .truncate(true)
-            .open(&epoch_file)
+            .open(&round_file)
             .await?;
 
-        file.write_all(serde_json::to_string_pretty(&epoch_data)?.as_bytes()).await?;
+        file.write_all(serde_json::to_string_pretty(&round_data)?.as_bytes()).await?;
 
-        info!("Successfully wrote finalized DAG for epoch {} to file: {}", round_id, epoch_file);
+        info!("Successfully wrote finalized DAG for round {} to file: {}", round_id, round_file);
     }
 
     Ok(())

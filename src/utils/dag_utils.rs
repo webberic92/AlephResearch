@@ -30,13 +30,13 @@ pub async fn check_dag_sync(
         let response_data: serde_json::Value = response.json().await?;
         let in_sync = response_data["in_sync"].as_bool().unwrap_or(false);
         info!(
-            "DAG sync status with sender {} for epoch {}: {}",
+            "DAG sync status with sender {} for round {}: {}",
             sender_id, round_id, in_sync
         );
         Ok(in_sync)
     } else {
         error!(
-            "Failed to check DAG sync with sender {} for epoch {}. Status: {}",
+            "Failed to check DAG sync with sender {} for round {}. Status: {}",
             sender_id, round_id, response.status()
         );
         Err(format!("Failed to check DAG sync. Status: {}", response.status()).into())
@@ -49,43 +49,43 @@ pub async fn check_dag_sync(
 
 
 /// Ensures that the DAG has reached the required round before progressing.
-pub async fn ensure_dag_round_sync(node: Arc<RwLock<Node>>, target_epoch: u64) -> Result<(), String> {
-    let (latest_epoch, node_id, dag_keys) = {
+pub async fn ensure_dag_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Result<(), String> {
+    let (latest_round, node_id, dag_keys) = {
         let node_state = node.read().await;
         let dag_read = node_state.dag.read().await;
 
         // 🔹 Clone the DAG keys instead of holding the lock
         let dag_keys: Vec<u64> = dag_read.keys().copied().collect();
 
-        let latest_epoch = dag_keys.iter().max().copied().unwrap_or(1); // Default to 1 if empty
-        (latest_epoch, node_state.id, dag_keys)
+        let latest_round = dag_keys.iter().max().copied().unwrap_or(1); // Default to 1 if empty
+        (latest_round, node_state.id, dag_keys)
     }; // ✅ Drop read lock ASAP
 
     info!(
-        "Node {}: DAG latest epoch: {}, Target epoch: {}",
-        node_id, latest_epoch, target_epoch
+        "Node {}: DAG latest round: {}, Target round: {}",
+        node_id, latest_round, target_round
     );
 
-    if target_epoch == 1 {
+    if target_round == 1 {
         info!(
-            "Node {}: First epoch detected (epoch 1). Skipping DAG sync check.",
+            "Node {}: First round detected (round 1). Skipping DAG sync check.",
             node_id
         );
         return Ok(());
     }
 
-    if latest_epoch < target_epoch - 1 {
+    if latest_round < target_round - 1 {
         let error_message = format!(
-            "Node {}: DAG not synchronized. Latest epoch in DAG: {}, required: {}.",
-            node_id, latest_epoch, target_epoch - 1
+            "Node {}: DAG not synchronized. Latest round in DAG: {}, required: {}.",
+            node_id, latest_round, target_round - 1
         );
         error!("{}", error_message);
         return Err(error_message);
     }
 
     info!(
-        "Node {}: DAG is synchronized for epoch {} or beyond.",
-        node_id, target_epoch - 1
+        "Node {}: DAG is synchronized for round {} or beyond.",
+        node_id, target_round - 1
     );
     
     Ok(())

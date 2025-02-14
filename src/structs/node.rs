@@ -35,7 +35,7 @@ pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
     pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    pub current_round: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
+    pub current_round: Arc<Mutex<u64>>, // Tracks the current round explicitly
     pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,    // pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>,
     pub dag: Arc<RwLock<HashMap<u64, Vec<DagUnit>>>>,
     pub ip_address: String,
@@ -67,7 +67,7 @@ impl Node {
             ip_address,
             ip_manager_address,
             quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            current_round: Arc::new(Mutex::new(1)), // Start at epoch 1
+            current_round: Arc::new(Mutex::new(1)), // Start at round 1
             proposal_tracker: Arc::new(Mutex::new(HashMap::new())), // Use HashMap for proposal storage
             // finalized_blocks: Arc::new(Mutex::new(HashSet::new())),
             dag: Arc::new(RwLock::new(HashMap::new())),
@@ -95,7 +95,7 @@ impl Node {
     ) {
         while let Some(propose_request) = receiver.recv().await {
             info!(
-                "Node {}: Processing queued proposal for epoch {} from node {}",
+                "Node {}: Processing queued proposal for round {} from node {}",
                 node.read().await.id, propose_request.base.round_id, propose_request.base.proposing_node_id
             );
 
@@ -128,7 +128,7 @@ impl Node {
         let vote_count = quorum_votes.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
 
         info!(
-            "Node {}: Checking quorum for epoch {}. Votes: {}, Threshold: {}",
+            "Node {}: Checking quorum for round {}. Votes: {}, Threshold: {}",
             self.id, round_id, vote_count, quorum_threshold
         );
 
@@ -154,14 +154,14 @@ impl Node {
             let node_write = node.write().await;
             let mut proposal_tracker = node_write.proposal_tracker.lock().await;
     
-            // ✅ Ensure there is a HashMap for the given epoch
-            let epoch_entry = proposal_tracker.entry(round_id).or_insert_with(HashMap::new);
+            // ✅ Ensure there is a HashMap for the given round
+            let round_entry = proposal_tracker.entry(round_id).or_insert_with(HashMap::new);
     
-            // ✅ Store proposal in the epoch-specific tracker
-            epoch_entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
+            // ✅ Store proposal in the round-specific tracker
+            round_entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
     
-            proposal_count = epoch_entry.len();
-            stored_proposals = epoch_entry.values().cloned().collect();
+            proposal_count = round_entry.len();
+            stored_proposals = round_entry.values().cloned().collect();
         } // 🔴 Drop write lock immediately
     
         {
@@ -172,7 +172,7 @@ impl Node {
         } // 🔴 Drop read lock immediately
     
         info!(
-            "Node {}: Proposal added from Node {} for epoch {}. Total proposals: {}. Required for consensus: {}.",
+            "Node {}: Proposal added from Node {} for round {}. Total proposals: {}. Required for consensus: {}.",
             node_id, propose_request.base.proposing_node_id, round_id, proposal_count, required_proposals
         );
     
@@ -180,7 +180,7 @@ impl Node {
     }
     
 
-  /// 🔹 **Get Last Unit ID in the DAG for a Given Epoch**
+  /// 🔹 **Get Last Unit ID in the DAG for a Given round**
     /// - Retrieves the unit_id of the last entry in the DAG for `round_id`.
     pub async fn get_last_unit_id(&self, round_id: u64) -> Option<String> {
         let dag_read = self.dag.read().await;
@@ -219,7 +219,7 @@ impl Node {
     
     
     /// 🔹 **Get Next DAG Unit ID**
-    /// - Gets the last unit ID for the current epoch and increments it.
+    /// - Gets the last unit ID for the current round and increments it.
     pub async fn get_next_dag_unit_id(&self, round_id: u64) -> String {
         if let Some(last_id) = self.get_last_unit_id(round_id).await {
             return format!("U{}", last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0) + 1);
