@@ -72,11 +72,22 @@ pub async fn handle_commit(
     );
 
     if dag.get(&round_id).map_or(false, |units| units.len() >= node_write.total_nodes) {
-        info!("Node {}: Advancing to next round...", node_id);
-        write_finalized_dag_to_file("/home/aleph-node/logs/finalized_dag", &dag, round_id).await.unwrap();
-        update_local_round(node.clone()).await;
+        info!("Node {}: Writing finalized DAG before advancing...", node_id);
+        
+        if let Err(e) = write_finalized_dag_to_file("/home/aleph-node/logs/finalized_dag", &dag, round_id).await {
+            error!("Node {}: Failed to write finalized DAG! Error: {:?}", node_id, e);
+        } else {
+            info!("Node {}: DAG finalized for round {}, now advancing...", node_id, round_id);
+        }
+        
+        // if let Err(e) = update_local_round(node.clone()).await {
+        //     error!("Node {}: Failed to update local round! Error: {:?}", node_id, e);
+        // } else {
+        //     info!("Node {}: Local round successfully updated to next round!", node_id);
+        // }
     }
-
+    
+    info!("Node {}: Exiting commit handler", node_id);
     Ok(())
 }
 

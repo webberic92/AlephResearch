@@ -158,8 +158,9 @@ pub async fn send_proposals(
             }
         })
         .collect();
-
+    info!("Test 1");
     let results = join_all(futures).await;
+    info!("Test 2");
 
     // Step 1: If all proposals are sent, add self to proposal tracker
     if results.iter().all(|res| res.is_ok()) {
