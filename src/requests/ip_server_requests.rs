@@ -2,16 +2,18 @@ use reqwest::Client;
 use tracing::{error, info, warn};
 use serde_json::json;
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use crate::structs::node::Node;
 
-/// Check if it's this node's turn to submit a transaction
-pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
+/// **🔄 Check if it's this node's turn**  
+/// - Uses `Arc<Mutex<Node>>` to ensure consistency.  
+/// - Queries the Python server to determine if the node should propose.
+pub async fn is_node_turn(client: &Client, node: Arc<Mutex<Node>>) -> bool {
     let (node_id, ip_manager_address, current_round) = {
-        let node_read = node.read().await;
-        let round = *node_read.current_round.lock().await;
-        (node_read.id, node_read.ip_manager_address.clone(), round)
-    }; // 🔴 Drop read lock immediately
+        let node_guard = node.lock().await;
+        let round = *node_guard.current_round.lock().await;
+        (node_guard.id, node_guard.ip_manager_address.clone(), round)
+    }; // 🔓 Drop lock immediately
 
     let url = format!(
         "http://{}:8080/is_turn?node_id={}&round_id={}",
@@ -28,9 +30,8 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
             .map(|body| body["is_turn"].as_bool().unwrap_or(false))
             .unwrap_or(false),
         Ok(response) => {
-            let status = response.status(); // Get HTTP status
+            let status = response.status(); 
             let text = response.text().await.unwrap_or_else(|_| "Failed to parse response".to_string());
-        
             warn!(
                 "Node {}: Turn check failed with status {} for round {}. Response: {}",
                 node_id, status, current_round, text
@@ -47,14 +48,16 @@ pub async fn is_node_turn(client: &Client, node: Arc<RwLock<Node>>) -> bool {
     }
 }
 
-
+/// **🔔 Notify Transaction Submission**  
+/// - Informs the Python server that the transaction has been submitted.
 pub async fn notify_transaction_submitted(
     client: &Client,
-    node: Arc<RwLock<Node>>,
+    node: Arc<Mutex<Node>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let node_read = node.read().await;
-    let node_id = node_read.id;
-    let ip_manager_address = &node_read.ip_manager_address;
+    let (node_id, ip_manager_address) = {
+        let node_guard = node.lock().await;
+        (node_guard.id, node_guard.ip_manager_address.clone())
+    };
 
     let url = format!("http://{}:8080/submit_transaction", ip_manager_address);
     let payload = json!({ "node_id": node_id });
@@ -74,4 +77,3 @@ pub async fn notify_transaction_submitted(
     }
     Ok(())
 }
-

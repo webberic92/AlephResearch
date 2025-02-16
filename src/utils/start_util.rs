@@ -1,6 +1,6 @@
 use anyhow::Error;
 use reqwest::Client;
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::time::sleep;
@@ -8,23 +8,29 @@ use tracing::{error, info};
 use crate::requests::ip_server_requests::is_node_turn;
 use crate::structs::node::Node;
 
-// Helper functions
-pub async fn check_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) -> bool {
-    let node_read = node.read().await;
+/// **🔄 Updated: Use `Arc<Mutex<Node>>`**  
+/// - Ensures consistency with the new thread-safe architecture.
+pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> bool {
+    let nodes = {
+        let node_guard = node.lock().await;
+        node_guard.nodes.clone()
+    }; // 🔓 Lock released immediately here
+
     let mut all_healthy = true;
 
-    for peer in &node_read.nodes {
+    for peer in nodes {
         let url = format!("http://{}/health", peer);
         match client.get(&url).send().await {
+            Ok(response) if response.status().is_success() => {
+                info!("Node {} is healthy.", peer);
+            }
             Ok(response) => {
-                if !response.status().is_success() {
-                    info!("Node {} is not healthy. Retrying...", peer);
-                    all_healthy = false; // Mark as unhealthy but continue checking
-                }
+                info!("Node {} responded with status {}. Retrying...", peer, response.status());
+                all_healthy = false;
             }
             Err(e) => {
                 info!("Node {} health check failed with error: {:?}", peer, e);
-                all_healthy = false; // Mark as unhealthy but continue checking
+                all_healthy = false;
             }
         }
     }
@@ -33,31 +39,33 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) ->
 }
 
 
-
-pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
-    let max_retries = 10; // Max attempts
+/// **🛠️ Wait until all nodes report healthy**  
+/// - Retries up to 10 times, checking every 3 seconds.
+pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
+    let max_retries = 10;
     let mut attempts = 0;
 
     while attempts < max_retries {
         info!("Checking health of all nodes...");
-        let node_read = node.read().await;
 
-        let mut all_healthy = true;
+        let nodes = {
+            let node_guard = node.lock().await;
+            node_guard.nodes.clone()
+        };
 
-        for node_url in &node_read.nodes {
-            let health_url = format!("http://{}/health", node_url);
-            match client.get(&health_url).send().await {
-                Ok(response) if response.status().is_success() => {
-                    info!("Node {} is healthy.", node_url);
-                }
-                _ => {
-                    error!("Node {} health check failed. Retrying...", node_url);
-                    all_healthy = false;
+        let health_checks = nodes.into_iter().map(|node_url| {
+            let client = client.clone();
+            async move {
+                let health_url = format!("http://{}/health", node_url);
+                match client.get(&health_url).send().await {
+                    Ok(response) => response.status().is_success(),
+                    Err(_) => false,
                 }
             }
-        }
+        });
 
-        if all_healthy {
+        let results: Vec<bool> = futures::future::join_all(health_checks).await;
+        if results.iter().all(|&r| r) {
             info!("All nodes are healthy.");
             return Ok(());
         }
@@ -70,14 +78,15 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<RwLock<Node>>)
 }
 
 
-
-pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(), Error> {
+/// **🕰️ Wait for Node's Turn**  
+/// - Continuously checks if it is this node's turn.
+pub async fn wait_for_turn(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
     loop {
         if is_node_turn(client, node.clone()).await {
             let (node_id, ip_address, latest_round) = {
-                let node_read = node.read().await;
-                let round = *node_read.current_round.lock().await; // Fetch latest round
-                (node_read.id, node_read.ip_address.clone(), round)
+                let node_guard = node.lock().await;
+                let round = *node_guard.current_round.lock().await; 
+                (node_guard.id, node_guard.ip_address.clone(), round)
             };
 
             info!(
@@ -92,4 +101,3 @@ pub async fn wait_for_turn(client: &Client, node: Arc<RwLock<Node>>) -> Result<(
     }
     Ok(())
 }
-

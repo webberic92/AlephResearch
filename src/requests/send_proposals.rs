@@ -2,10 +2,10 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use futures::future::join_all;
 use reqwest::Client;
-use sha2::Digest;
+use sha2::{Digest, Sha256};
 use tracing::{error, info};
 use std::sync::Arc;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use crate::{
     handlers::handle_prevote::handle_prevote,
     structs::{ node::Node, requests::{ BaseRequest, PrevoteRequest, ProposeRequest } },
@@ -36,38 +36,40 @@ use crate::{
 */
 pub async fn send_proposals(
     client: &Client,
-    node: Arc<RwLock<Node>>,
+    node: Arc<Mutex<Node>>,
     shards: &[Vec<u8>],
     merkle_root: &[u8],
-    parent_units: Vec<String>,  // 🔥 Ensure parent units are properly formatted
-) -> Result<(), anyhow::Error> {
-    
-    let node_read = node.read().await;
-    let round = *node_read.current_round.lock().await;
+    parent_units: Vec<String>,
+)  -> Result<(), anyhow::Error> {
+
+    let round;
+    let node_id;
+    let nodes;
+
+    {
+        let node_guard = node.lock().await;
+        round = *node_guard.current_round.lock().await;
+        node_id = node_guard.id;
+        nodes = node_guard.nodes.clone();
+    }
 
     info!(
-        "Node {} {}: Preparing to send proposals for round {} to nodes: {:?}",
-        node_read.id,
-        node_read.ip_address,
-        round,
-        node_read.nodes
+        "Node {}: Preparing to send proposals for round {} to nodes: {:?}",
+        node_id, round, nodes
     );
 
     // Step 3: Compute Merkle root
     let shard_hashes: Vec<Vec<u8>> = shards
         .iter()
-        .map(|shard| sha2::Sha256::digest(shard).to_vec())
+        .map(|shard| Sha256::digest(shard).to_vec())
         .collect();
 
     let computed_root = compute_merkle_root(&shard_hashes);
     if computed_root != merkle_root {
-        return Err(
-            anyhow::anyhow!(
-                "Computed Merkle root does not match provided root.\nComputed: {:?}\nProvided: {:?}",
-                computed_root,
-                merkle_root
-            )
-        );
+        return Err(anyhow::anyhow!(
+            "Computed Merkle root does not match provided root.\nComputed: {:?}\nProvided: {:?}",
+            computed_root, merkle_root
+        ));
     }
 
     // Step 2: Encode shards for transmission
@@ -82,15 +84,14 @@ pub async fn send_proposals(
         .enumerate()
         .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
         .map(|branch|
-            branch
-                .iter()
+            branch.iter()
                 .map(|b| general_purpose::STANDARD.encode(b))
                 .collect()
         )
         .collect();
 
     let base_request = BaseRequest {
-        proposing_node_id: node_read.id,
+        proposing_node_id: node_id,
         round_id: round,
         root: merkle_root.to_vec(),
     };
@@ -99,77 +100,76 @@ pub async fn send_proposals(
         base: base_request,
         proofs: encoded_proofs.clone(),
         shards: encoded_shards.clone(),
-        parents: parent_units.clone(),  // ✅ Use Vec<String> instead of Vec<u8>
+        parents: parent_units.clone(),
     };
-    
-
-    drop(node_read); // 🔥 Release lock before async calls
 
     // Step 6: Send `propose(h, b_j, s_j)` to all nodes
-    let futures: Vec<_> = node
-        .read().await
-        .nodes.iter()
-        .map(|node_url| {
-            let client = client.clone();
-            let propose_request = propose_request.clone();
-            let node_url = node_url.clone();
+    let futures: Vec<_> = nodes.iter().map(|node_url| {
+        let client = client.clone();
+        let propose_request = propose_request.clone();
+        let node_url = node_url.clone();
 
-            async move {
-                info!(
-                    "Node sending proposal to {} for round {}",
-                    node_url,
-                    propose_request.base.round_id
-                );
+        async move {
+            info!(
+                "Node sending proposal to {} for round {}",
+                node_url,
+                propose_request.base.round_id
+            );
 
-                match
-                    client
-                        .post(format!("http://{}/propose", node_url))
-                        .json(&propose_request)
-                        .send().await
-                {
-                    Ok(res) if res.status().is_success() => {
-                        info!(
-                            "Proposal successfully delivered to Node {} (round {}).",
-                            node_url,
-                            propose_request.base.round_id
-                        );
-                        Ok(())
-                    }
-                    Ok(res) => {
-                        let err_msg = format!(
-                            "Proposal failed for {}. Status: {}. Response: {}",
-                            node_url,
-                            res.status(),
-                            res.text().await.unwrap_or_else(|_| "No response body".to_string())
-                        );
-                        error!("{}", err_msg);
-                        Err(anyhow::anyhow!(err_msg))
-                    }
-                    Err(e) => {
-                        let err_msg = format!(
-                            "Network error while sending proposal to {}: {:?}",
-                            node_url,
-                            e
-                        );
-                        error!("{}", err_msg);
-                        Err(anyhow::anyhow!(err_msg))
-                    }
+            match client
+                .post(format!("http://{}/propose", node_url))
+                .json(&propose_request)
+                .send()
+                .await
+            {
+                Ok(res) if res.status().is_success() => {
+                    info!(
+                        "Proposal successfully delivered to Node {} (round {}).",
+                        node_url,
+                        propose_request.base.round_id
+                    );
+                    Ok(())
+                }
+                Ok(res) => {
+                    let err_msg = format!(
+                        "Proposal failed for {}. Status: {}. Response: {}",
+                        node_url,
+                        res.status(),
+                        res.text().await.unwrap_or_else(|_| "No response body".to_string())
+                    );
+                    error!("{}", err_msg);
+                    Err(anyhow::anyhow!(err_msg))
+                }
+                Err(e) => {
+                    let err_msg = format!(
+                        "Network error while sending proposal to {}: {:?}",
+                        node_url,
+                        e
+                    );
+                    error!("{}", err_msg);
+                    Err(anyhow::anyhow!(err_msg))
                 }
             }
-        })
-        .collect();
-    info!("Test 1");
-    let results = join_all(futures).await;
-    info!("Test 2");
+        }
+    }).collect();
 
-    // Step 1: If all proposals are sent, add self to proposal tracker
+    info!("Test 1: Starting async proposal dispatch...");
+    let results = join_all(futures).await;
+    info!("Test 2: Async proposal dispatch completed.");
+
+    // Step 7: If all proposals are sent, add self to proposal tracker
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for round {}.", round);
 
-        match Node::update_proposal_tracker(node.clone(), propose_request.clone()).await {
+        let update_result = {
+            let node_clone = node.clone(); // Clone the Arc here
+            Node::update_proposal_tracker(node_clone, propose_request.clone()).await
+        };
+
+        match update_result {
             Ok((proposal_count, required_proposals, stored_proposals)) => {
                 info!(
-                    "Node {}: Added itself to proposal tracker. Proposal count: {} / Required: {}",
+                    "Node {}: Proposal tracker updated. Proposals: {}/{}",
                     propose_request.base.proposing_node_id,
                     proposal_count,
                     required_proposals
@@ -177,45 +177,34 @@ pub async fn send_proposals(
 
                 if proposal_count >= required_proposals {
                     info!(
-                        "Node {}: Received enough proposals ({}/{}) for round {}. Transitioning to prevote.",
-                        propose_request.base.proposing_node_id,
-                        proposal_count,
-                        required_proposals,
-                        propose_request.base.round_id
+                        "Node {}: Reached proposal threshold. Initiating prevote...",
+                        propose_request.base.proposing_node_id
                     );
 
                     // Send prevotes for all stored proposals
                     for stored_propose in stored_proposals {
-                        info!(
-                            "Node {}: Sending prevote for transaction proposed by Node {}",
-                            propose_request.base.proposing_node_id,
-                            stored_propose.base.proposing_node_id
-                        );
-
-                        let prevote_request = {
-                            let node_read = node.read().await;
-                            PrevoteRequest {
-                                propose: stored_propose.clone(),
-                                sender_url: node_read.ip_address.clone(),
-                            }
+                        let prevote_request = PrevoteRequest {
+                            propose: stored_propose.clone(),
+                            sender_url: {
+                                let node_guard = node.lock().await;
+                                node_guard.ip_address.clone()
+                            },
                         };
 
-                        if let Err(e) = handle_prevote(
-                            node.clone(),
-                            prevote_request
-                        ).await {
+                        if let Err(e) = handle_prevote(node.clone(), prevote_request).await {
                             error!(
-                                "Node {}: Failed to handle prevote for round {}. Error: {:?}",
+                                "Node {}: Failed to handle prevote. Error: {:?}",
                                 propose_request.base.proposing_node_id,
-                                stored_propose.base.round_id,
                                 e
                             );
                         }
                     }
 
-                    let node_write = node.write().await;
-                    let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-                    proposal_tracker.clear();
+                    // Clear proposal tracker after processing
+                    {
+                        let mut node_guard = node.lock().await;
+                        node_guard.proposal_tracker.lock().await.clear();
+                    }
                 }
             }
             Err(err) => {
@@ -227,8 +216,10 @@ pub async fn send_proposals(
             }
         }
 
-       Ok(())
+        Ok(())
     } else {
         Err(anyhow::anyhow!("One or more proposals failed."))
     }
 }
+
+

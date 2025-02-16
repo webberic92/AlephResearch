@@ -1,46 +1,59 @@
 use std::sync::Arc;
 
 use reqwest::Client;
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::{error, info};
 use tokio::time::timeout;
 use std::time::Duration;
 use crate::structs::{node::Node, requests::SyncroundRequest};
 
+
+// pub async fn update_local_round(node: Arc<Mutex<Node>>) -> Result<(), Box<dyn std::error::Error>> {
+//     let mut node_guard = node.lock().await; // 🔥 Lock entire node
+//     let node_id = node_guard.id;
+//     node_guard.current_round += 1;
+
+//     info!(
+//         "Node {}: Updated local round to the next round: {}",
+//         node_id, node_guard.current_round
+//     );
+
+//     Ok(())
+// }
+
+
 /// Updates the round in the local node state.
-pub async fn update_local_round(node: Arc<RwLock<Node>>) -> Result<(), Box<dyn std::error::Error>> {
-    // info!("Entering Update local round to the next round");
+// 
 
-    let next_round_id;
-    
-    // ✅ Step 1: Acquire a read lock on `node` to get `current_round`
-    let current_round_lock = {
-        let node_read = node.read().await; // Keeps `node_read` in scope
-        node_read.current_round.clone()    // Clone the Arc<Mutex<u64>> to extend its lifetime
-    };
 
-    // ✅ Step 2: Lock `current_round` separately
+
+/// **🔄 Correctly Update Local Round**  
+/// - **Locks the `Mutex`** for atomic round increment.  
+/// - **Avoids arithmetic on `Arc`**, which isn't allowed.
+pub async fn update_local_round(node: Arc<Mutex<Node>>) -> Result<(), Box<dyn std::error::Error>> {
+    info!("Attempting to acquire lock on node...");
+
+    let node_guard = node.lock().await; // 🔒 Lock Node
+    let node_id = node_guard.id;
+
+    info!("Lock acquired on node {}. Attempting to update current round...", node_id);
+
     {
-        let mut round_guard = current_round_lock.lock().await;
-        next_round_id = *round_guard + 1;
-        *round_guard = next_round_id;
-    } // 🔴 Drop `current_round` lock immediately
+        let mut current_round_guard = node_guard.current_round.lock().await; // 🔒 Lock current_round
+        *current_round_guard += 1;
 
-    // ✅ Step 3: Read `node.id` separately
-    let node_id = {
-        let node_read = node.read().await;
-        node_read.id
-    }; // 🔴 Drop `node` read lock immediately
+        info!(
+            "Node {}: Updated local round to the next round: {}",
+            node_id, *current_round_guard
+        );
+    } // 🔓 Drop current_round lock immediately
 
-    info!(
-        "Node {}: Updated local round to the next round: {}",
-        node_id, next_round_id
-    );
-
-    // info!("Exiting Update local round to the next round");
+    info!("Node {}: Completed update_local_round.", node_id);
 
     Ok(())
 }
+
+
 
 
 

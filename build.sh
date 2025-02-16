@@ -24,15 +24,6 @@ if [ $? -ne 0 ]; then
 fi
 echo "Uploaded $BINARY_1 with checksum: $(md5sum target/$TARGET/release/$BINARY_1)"
 
-# echo "Uploading $BINARY_2 to S3 bucket $S3_BUCKET..."
-# aws s3 cp "target/$TARGET/release/$BINARY_2" "s3://$S3_BUCKET/"
-# if [ $? -ne 0 ]; then
-#     echo "Failed to upload $BINARY_2. Exiting."
-#     exit 1
-# fi
-# echo "Uploaded $BINARY_2 with checksum: $(md5sum target/$TARGET/release/$BINARY_2)"
-
-
 # Step 3: Upload IpServer.py to S3
 echo "Uploading $IP_SERVER_SCRIPT to S3 bucket $S3_BUCKET..."
 aws s3 cp "src/$IP_SERVER_SCRIPT" "s3://$S3_BUCKET/"
