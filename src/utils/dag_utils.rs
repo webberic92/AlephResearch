@@ -1,8 +1,7 @@
 use std::{error::Error, sync::Arc, usize};
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use tracing::{ error, info};
 use reqwest::Client;
-use base64::{engine::general_purpose, Engine};
 use crate::
     structs::node::Node;
 
@@ -49,23 +48,25 @@ pub async fn check_dag_sync(
 
 
 /// Ensures that the DAG has reached the required round before progressing.
-pub async fn ensure_dag_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -> Result<(), String> {
+pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, target_round: u64) -> Result<(), String> {
     let (latest_round, node_id, dag_keys) = {
-        let node_state = node.read().await;
-        let dag_read = node_state.dag.read().await;
+        // 🔒 Lock the node only as long as necessary
+        let node_guard = node.lock().await;
+        let dag = node_guard.dag.lock().await;
 
         // 🔹 Clone the DAG keys instead of holding the lock
-        let dag_keys: Vec<u64> = dag_read.keys().copied().collect();
-
+        let dag_keys: Vec<u64> = dag.keys().copied().collect();
         let latest_round = dag_keys.iter().max().copied().unwrap_or(1); // Default to 1 if empty
-        (latest_round, node_state.id, dag_keys)
-    }; // ✅ Drop read lock ASAP
+
+        (latest_round, node_guard.id, dag_keys)
+    }; // ✅ Drop locks immediately
 
     info!(
         "Node {}: DAG latest round: {}, Target round: {}",
         node_id, latest_round, target_round
     );
 
+    // 🚀 **Optimization: Handle First Round**
     if target_round == 1 {
         info!(
             "Node {}: First round detected (round 1). Skipping DAG sync check.",
@@ -74,6 +75,7 @@ pub async fn ensure_dag_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -
         return Ok(());
     }
 
+    // ⚠️ **Check Synchronization Status**
     if latest_round < target_round - 1 {
         let error_message = format!(
             "Node {}: DAG not synchronized. Latest round in DAG: {}, required: {}.",
@@ -83,13 +85,15 @@ pub async fn ensure_dag_round_sync(node: Arc<RwLock<Node>>, target_round: u64) -
         return Err(error_message);
     }
 
+    // ✅ **Synchronization Complete**
     info!(
         "Node {}: DAG is synchronized for round {} or beyond.",
         node_id, target_round - 1
     );
-    
+
     Ok(())
 }
+
 
 /// Validates that the size of the received shards does not exceed the allowed limit.
 /// Ensures compliance with ch-RBC constraints (max 256 bytes).

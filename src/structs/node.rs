@@ -3,11 +3,10 @@ use std::{
     sync::Arc,
 };
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex, RwLock};
+use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex};
 use tracing::{error, info};
 use crate::handlers::handle_propose::handle_propose;
 use super::requests::ProposeRequest;
-
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct Transaction {
@@ -26,18 +25,15 @@ pub struct DagUnit {
     pub finalization_timestamp: u64,
 }
 
-
-
-
 /// **📌 Node Struct: Represents a single node in the Aleph RBC protocol.**
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
-    pub quorum_votes: Arc<RwLock<HashMap<Vec<u8>, usize>>>,
-    pub current_round: Arc<Mutex<u64>>, // Tracks the current round explicitly
-    pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,    // pub finalized_blocks: Arc<Mutex<HashSet<Vec<u8>>>>,
-    pub dag: Arc<RwLock<HashMap<u64, Vec<DagUnit>>>>,
+    pub quorum_votes: Arc<Mutex<HashMap<Vec<u8>, usize>>>,
+    pub current_round: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
+    pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,
+    pub dag: Arc<Mutex<HashMap<u64, Vec<DagUnit>>>>,
     pub ip_address: String,
     pub ip_manager_address: String,
     pub nodes: Vec<String>,
@@ -58,19 +54,17 @@ impl Node {
         number_of_transactions: usize,
         transaction_size: usize,
         data_shards: usize,
-
-    ) -> Arc<RwLock<Self>> {
+    ) -> Arc<Mutex<Self>> {
         let (proposal_sender, proposal_receiver) = mpsc::channel(100);
-        let node = Arc::new(RwLock::new(Self {
+        let node = Arc::new(Mutex::new(Self {
             id,
             total_nodes,
             ip_address,
             ip_manager_address,
-            quorum_votes: Arc::new(RwLock::new(HashMap::new())),
-            current_round: Arc::new(Mutex::new(1)), // Start at round 1
+            quorum_votes: Arc::new(Mutex::new(HashMap::new())),
+            current_round: Arc::new(Mutex::new(1)), // Start at epoch 1
             proposal_tracker: Arc::new(Mutex::new(HashMap::new())), // Use HashMap for proposal storage
-            // finalized_blocks: Arc::new(Mutex::new(HashSet::new())),
-            dag: Arc::new(RwLock::new(HashMap::new())),
+            dag: Arc::new(Mutex::new(HashMap::new())),
             nodes,
             proposal_sender,
             number_of_transactions,
@@ -90,17 +84,21 @@ impl Node {
     /// **🔹 Asynchronous Proposal Processing**
     /// - Processes proposals as they arrive via the message queue.
     async fn process_proposals(
-        node: Arc<RwLock<Node>>,
+        node: Arc<Mutex<Node>>,
         mut receiver: Receiver<ProposeRequest>,
     ) {
         while let Some(propose_request) = receiver.recv().await {
+            let node_guard = node.lock().await;
             info!(
                 "Node {}: Processing queued proposal for round {} from node {}",
-                node.read().await.id, propose_request.base.round_id, propose_request.base.proposing_node_id
+                node_guard.id, propose_request.base.round_id, propose_request.base.proposing_node_id
             );
 
+            // Unlock node before calling handle_propose to prevent deadlocks
+            drop(node_guard);
             if let Err(err) = handle_propose(node.clone(), propose_request).await {
-                error!("Node {}: Failed to process proposal: {:?}", node.read().await.id, err);
+                let node_guard = node.lock().await;
+                error!("Node {}: Failed to process proposal: {:?}", node_guard.id, err);
             }
         }
     }
@@ -113,19 +111,13 @@ impl Node {
     /// **🔹 Compute Quorum Threshold**
     pub fn get_quorum_threshold(&self) -> usize {
         let f = self.get_fault_tolerance_threshold();
-        let quorum = 2 * f + 1;
-        info!(
-            "Node {}: Total nodes: {}, Fault tolerance f: {}, Required quorum: {}",
-            self.id, self.total_nodes, f, quorum
-        );
-        quorum
+        2 * f + 1
     }
 
     /// **🔹 Check if Quorum is Reached**
     pub async fn is_quorum_reached(&self, round_id: u64) -> bool {
         let quorum_threshold = self.get_quorum_threshold();
-        let quorum_votes = self.quorum_votes.read().await;
-        let vote_count = quorum_votes.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
+        let vote_count = self.quorum_votes.lock().await.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
 
         info!(
             "Node {}: Checking quorum for round {}. Votes: {}, Threshold: {}",
@@ -135,179 +127,73 @@ impl Node {
         vote_count >= quorum_threshold
     }
 
-    /// **🔹 Update Proposal Tracker**
-    /// - Stores received proposals and tracks count.
+    /// **🔄 Update Proposal Tracker**
     pub async fn update_proposal_tracker(
-        node: Arc<RwLock<Node>>,
+        node: Arc<Mutex<Node>>,
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
-        let node_id = node.read().await.id;
+        let mut node_guard = node.lock().await;
+        let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
-        
-        info!("Node {}: Acquiring write lock for proposal tracker update...", node_id);
-    
+
+        tracing::info!("Node {}: Updating proposal tracker for round {}...", node_id, round_id);
+
         let proposal_count;
-        let required_proposals;
         let stored_proposals;
-    
+
         {
-            let node_write = node.write().await;
-            let mut proposal_tracker = node_write.proposal_tracker.lock().await;
-    
-            // ✅ Ensure there is a HashMap for the given round
-            let round_entry = proposal_tracker.entry(round_id).or_insert_with(HashMap::new);
-    
-            // ✅ Store proposal in the round-specific tracker
-            round_entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
-    
-            proposal_count = round_entry.len();
-            stored_proposals = round_entry.values().cloned().collect();
-        } // 🔴 Drop write lock immediately
-    
-        {
-            let node_read = node.read().await;
-            let node_count = node_read.total_nodes;
-            let f = node_read.get_fault_tolerance_threshold();
-            required_proposals = node_count - f;
-        } // 🔴 Drop read lock immediately
-    
-        info!(
-            "Node {}: Proposal added from Node {} for round {}. Total proposals: {}. Required for consensus: {}.",
-            node_id, propose_request.base.proposing_node_id, round_id, proposal_count, required_proposals
+            let mut tracker = node_guard.proposal_tracker.lock().await;
+            let entry = tracker.entry(round_id).or_insert_with(HashMap::new);
+            entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
+            proposal_count = entry.len();
+            stored_proposals = entry.values().cloned().collect();
+        }
+
+        let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+        tracing::info!(
+            "Node {}: Added proposal for round {}. Count: {}/{}",
+            node_id, round_id, proposal_count, required_proposals
         );
-    
+
         Ok((proposal_count, required_proposals, stored_proposals))
     }
-    
 
-  /// 🔹 **Get Last Unit ID in the DAG for a Given round**
-    /// - Retrieves the unit_id of the last entry in the DAG for `round_id`.
+    /// **🔍 Get Last Unit ID in the DAG for a Given Round**
     pub async fn get_last_unit_id(&self, round_id: u64) -> Option<String> {
-        let dag_read = self.dag.read().await;
-    
-        // ✅ First, check the last unit in the current round
-        if let Some(units) = dag_read.get(&round_id) {
-            if let Some(last_unit) = units.last() {
-                info!(
-                    "Node {}: Found last unit ID {} in round {}",
-                    self.id, last_unit.unit_id, round_id
-                );
-                return Some(last_unit.unit_id.clone()); // ✅ Return unit_id as String
-            }
-            info!("Node {}: No units found in round {}", self.id, round_id);
-        }
-    
-        // ✅ If no units exist in the current round, check the previous round
-        if round_id > 1 {
-            if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
-                if let Some(last_unit) = prev_units.last() {
-                    info!(
-                        "Node {}: No units in round {}, falling back to last unit ID {} from round {}",
-                        self.id, round_id, last_unit.unit_id, round_id - 1
-                    );
-                    return Some(last_unit.unit_id.clone()); // ✅ Ensure String consistency
-                }
-            }
-        }
-    
-        // ✅ If no units exist at all, return a default unit ID or None
-        info!("Node {}: No previous units found, returning None", self.id);
-        None
+        let dag = self.dag.lock().await;
+        dag.get(&round_id)
+            .and_then(|units| units.last())
+            .map(|unit| unit.unit_id.clone())
     }
-    
-    
-    
-    
-    /// 🔹 **Get Next DAG Unit ID**
-    /// - Gets the last unit ID for the current round and increments it.
+
+    /// **🔢 Generate Next Unit ID**
     pub async fn get_next_dag_unit_id(&self, round_id: u64) -> String {
         if let Some(last_id) = self.get_last_unit_id(round_id).await {
-            return format!("U{}", last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0) + 1);
+            let id_num = last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0);
+            format!("U{}", id_num + 1)
+        } else {
+            "U1".to_string()
         }
-    
-        // ✅ If no units exist in the current round, check the previous round
-        if round_id > 1 {
-            if let Some(last_id) = self.get_last_unit_id(round_id - 1).await {
-                return format!("U{}", last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0) + 1);
-            }
-        }
-    
-        // ✅ Default to "U1" for a new DAG round
-        "U1".to_string()
     }
-    
-    
-    
 
-    
-    
+    /// **📋 Check if Parent Unit is Committed**
     pub async fn is_unit_committed(&self, parent_id: &str) -> bool {
-        let dag_read = self.dag.read().await;
-    
-        info!("Checking commitment for parent: {}", parent_id);
-        info!("DAG state before commitment check: {:?}", *dag_read);
-            
-        // ✅ Handle first transaction (round 1): No parents to check
-        if dag_read.is_empty() {
-            info!("DAG is empty: Treating first transaction as committed.");
-            return true;  // ✅ Allow the first transaction to commit
-        }
-    
-        for (_round, units) in dag_read.iter() {
-            if units.iter().any(|unit| unit.unit_id == parent_id) {  // ✅ Proper string comparison
-                return true; // ✅ Check if the DAG contains this parent unit ID
-            }
-        }
-        
-        // ❌ Parent unit was not found
-        false
+        let dag = self.dag.lock().await;
+        dag.values()
+            .flatten()
+            .any(|unit| unit.unit_id == parent_id)
     }
-    
 
+    /// **🔗 Retrieve All Parents for a Round**
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
-        let dag_read = self.dag.read().await;
-        let mut parents = Vec::new();
+        let dag_snapshot = {
+            let dag = self.dag.lock().await;
+            dag.clone()
+        };
     
-        // ✅ If there are already transactions in this round, use them as parents
-        if let Some(units) = dag_read.get(&round_id) {
-            if !units.is_empty() {
-                parents.extend(units.iter().map(|unit| unit.unit_id.clone()));  // ✅ Return structured unit IDs
-                info!(
-                    "Node {}: Using units from current round {} as parents: {:?}",
-                    self.id, round_id, parents
-                );
-                return parents; // 🔥 If current round has transactions, return immediately
-            }
-        }
-    
-        // ✅ If we are in round 1, return no parents
-        if round_id == 1 {
-            info!(
-                "Node {}: Round 1 detected. No parents available.",
-                self.id
-            );
-            return Vec::new();
-        }
-    
-        // ✅ Otherwise, fallback to the last finalized transactions from the previous round
-        if let Some(prev_units) = dag_read.get(&(round_id - 1)) {
-            if !prev_units.is_empty() {
-                parents.extend(prev_units.iter().map(|unit| unit.unit_id.clone()));  // ✅ Maintain String format
-                info!(
-                    "Node {}: Using previous round {} as parents: {:?}",
-                    self.id, round_id - 1, parents
-                );
-            }
-        }
-    
-        info!(
-            "Node {}: Selected parents for round {} -> {:?}",
-            self.id, round_id, parents
-        );
-    
-        parents
+        dag_snapshot.get(&round_id)
+            .map(|units| units.iter().map(|u| u.unit_id.clone()).collect())
+            .unwrap_or_else(Vec::new)
     }
-  
     
-
 }

@@ -1,6 +1,6 @@
 use std::sync::Arc;
 use base64::{ engine::general_purpose, Engine };
-use tokio::sync::RwLock;
+use tokio::sync::{Mutex, RwLock};
 use tracing::{ error, info };
 use crate::{
     handlers::handle_prevote::handle_prevote,
@@ -38,32 +38,27 @@ use crate::{
 // Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
 // - This function `handle_propose` is called when a proposal message is received.
 pub async fn handle_propose(
-    node: Arc<RwLock<Node>>,
+    node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest
 ) -> Result<(), String> {
-    let node_id;
     let round_id = propose_request.base.round_id;
+    let node_id;
 
     // Step 8: If `received_propose(P_i, r)` then terminate
-    // - Check if a proposal from the same sender (`P_s`) has already been received for this round (`r`).
-    // - If it has, terminate early to prevent duplicate processing.
     {
-        let proposal_tracker;
-        {
-            let node_read = node.read().await;
-            node_id = node_read.id;
-            info!(
-                "Node {}: Handling Propose for round {} from sender {}",
-                node_id,
-                propose_request.base.round_id,
-                propose_request.base.proposing_node_id
-            );
-            proposal_tracker = node_read.proposal_tracker.clone();
-        }
+        let node_guard = node.lock().await;
+        node_id = node_guard.id;
 
-        let proposal_tracker_read = proposal_tracker.lock().await;
+        info!(
+            "Node {}: Handling Propose for round {} from sender {}",
+            node_id,
+            propose_request.base.round_id,
+            propose_request.base.proposing_node_id
+        );
 
-        if let Some(round_proposals) = proposal_tracker_read.get(&round_id) {
+        let proposal_tracker = node_guard.proposal_tracker.lock().await;
+
+        if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&propose_request.base.proposing_node_id) {
                 info!(
                     "Node {}: Already received propose for round {} from Node {}. Terminating.",
@@ -85,18 +80,18 @@ pub async fn handle_propose(
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-        let number_of_transactions;
-        let transaction_size;
-        {
-            let node_read = node.read().await;
-            number_of_transactions = node_read.number_of_transactions;
-            transaction_size = node_read.transaction_size;
-        } // 🔴 Drop read lock immediately
-        
-        // ✅ Now call `check_size` outside the locked block
-        if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
-            return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id));
-        }
+    let (number_of_transactions, transaction_size);
+    {
+        let node_guard = node.lock().await;
+        number_of_transactions = node_guard.number_of_transactions;
+        transaction_size = node_guard.transaction_size;
+    }
+
+    // ✅ Now call `check_size` outside the locked block
+    if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
+        return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id));
+    }
+
     // Step 10: Wait until `D_i` reaches round `r-1`
     // - Ensure the DAG is synchronized to at least round `r-1` before processing the proposal.
     ensure_dag_round_sync(node.clone(), round_id).await?;
@@ -110,19 +105,15 @@ pub async fn handle_propose(
         propose_request.clone()
     ).await?;
 
-    let proposal_tracker;
     {
-        let node_read = node.read().await;
-
-        proposal_tracker = node_read.proposal_tracker.clone();
-
-        let proposal_tracker_read = proposal_tracker.lock().await;
+        let node_guard = node.lock().await;
+        let proposal_tracker = node_guard.proposal_tracker.lock().await;
 
         info!(
             "Node {}: Current Proposal Tracker for round {}: {:?}",
             node_id,
             round_id,
-            proposal_tracker_read
+            *proposal_tracker
         );
     }
 
@@ -145,10 +136,10 @@ pub async fn handle_propose(
             );
 
             let prevote_request = {
-                let node_read = node.read().await;
+                let node_guard = node.lock().await;
                 PrevoteRequest {
                     propose: stored_propose.clone(),
-                    sender_url: node_read.ip_address.clone(),
+                    sender_url: node_guard.ip_address.clone(),
                 }
             };
 
@@ -164,7 +155,7 @@ pub async fn handle_propose(
         }
     }
 
-    //13: received_propose(Pi , r ) = True
+    // Step 13: received_propose(Pi , r) = True
     info!(
         "Node {}: Proposal successfully handled for round {} from sender {}",
         node_id,

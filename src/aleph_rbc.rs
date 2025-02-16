@@ -3,7 +3,7 @@ use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::{wait_for_all_nodes_health, wait_for_turn};
 use reqwest::Client;
-use tokio::sync::RwLock;
+use tokio::sync::Mutex;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 use tracing::{error, info};
@@ -32,6 +32,7 @@ async fn main() -> Result<()> {
         config.consensus.data_shards.clone(),
     );
 
+    // ✅ Node is already Arc<Mutex<Node>>, so no need to call `.read()`
     let node_clone = Arc::clone(&node);
     let client_clone = Arc::clone(&client);
 
@@ -44,7 +45,6 @@ async fn main() -> Result<()> {
         }
     });
 
-
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
 
@@ -53,19 +53,21 @@ async fn main() -> Result<()> {
 }
 
 async fn execute_transaction_logic(
-    node: Arc<RwLock<Node>>, 
+    node: Arc<Mutex<Node>>, 
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
 
     //Verify all nodes are healthy before creating transactions and proposing.
     wait_for_all_nodes_health(&client, node.clone()).await?;
 
-    let (shards, merkle_root, parents) = create_transaction_data(
-            node.clone()
-        ).await?;
-
+    info!("Node: Starting transaction data creation...");
+    let (shards, merkle_root, parents) = create_transaction_data(node.clone()).await?;
+    info!("Node: Transaction data creation completed.");
+    
+    info!("Node: Starting proposal sending...");
     send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
+    info!("Node: Proposals sent successfully.");
+    
     
     Ok(())
 }
-
