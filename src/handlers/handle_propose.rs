@@ -50,7 +50,7 @@ pub async fn handle_propose(
         node_id = node_guard.id;
 
         info!(
-            "Node {}: Handling Propose for round {} from sender {}",
+            "Node {}: ============Handling Propose for round {} from sender {}===============",
             node_id,
             propose_request.base.round_id,
             propose_request.base.proposing_node_id
@@ -113,7 +113,7 @@ pub async fn handle_propose(
             "Node {}: Current Proposal Tracker for round {}: {:?}",
             node_id,
             round_id,
-            *proposal_tracker
+            proposal_tracker[&round_id]
         );
     }
 

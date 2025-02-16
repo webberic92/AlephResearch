@@ -5,6 +5,7 @@ use crate::structs::node::Node;
 
 /// Handles an incoming sync round request.
 pub async fn handle_sync_round(node: Arc<Mutex<Node>>, sender_round: u64) -> Result<(), String> {
+        info!(" ================= Handling sync round request  =================");
     // Step 1: Read the current round and drop the lock early
     let current_round = {
         let node_guard = node.lock().await;
