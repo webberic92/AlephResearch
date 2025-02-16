@@ -37,7 +37,7 @@ pub async fn handle_prevote(
     };
 
     info!(
-        "Node {}: Handling PREVOTE request from Node {} for round {}",
+        "Node {}: =============Handling PREVOTE request from Node {} for round {} =================",
         node_id, 
         prevote_request.propose.base.proposing_node_id, 
         prevote_request.propose.base.round_id

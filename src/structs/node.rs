@@ -159,6 +159,7 @@ impl Node {
     }
 
     /// **🔍 Get Last Unit ID in the DAG for a Given Round**
+    /// **🔍 Get Last Unit ID in the DAG for a Given Round**
     pub async fn get_last_unit_id(&self, round_id: u64) -> Option<String> {
         let dag = self.dag.lock().await;
         dag.get(&round_id)
@@ -166,13 +167,21 @@ impl Node {
             .map(|unit| unit.unit_id.clone())
     }
 
-    /// **🔢 Generate Next Unit ID**
+    /// **🔢 Generate Next Unit ID with Dynamic Pattern (U<round>-<index>)**
     pub async fn get_next_dag_unit_id(&self, round_id: u64) -> String {
         if let Some(last_id) = self.get_last_unit_id(round_id).await {
-            let id_num = last_id.trim_start_matches('U').parse::<u64>().unwrap_or(0);
-            format!("U{}", id_num + 1)
+            // Extract the index from the pattern "U<round>-<index>"
+            let parts: Vec<&str> = last_id.split('-').collect();
+            if parts.len() == 2 {
+                if let Ok(index) = parts[1].parse::<u64>() {
+                    return format!("U{}-{}", round_id, index + 1);
+                }
+            }
+            // Fallback if parsing fails
+            format!("U{}-1", round_id)
         } else {
-            "U1".to_string()
+            // No units for this round yet
+            format!("U{}-1", round_id)
         }
     }
 
@@ -185,15 +194,23 @@ impl Node {
     }
 
     /// **🔗 Retrieve All Parents for a Round**
+    /// **🔗 Retrieve All Parents for the Previous Round**
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
+        if round_id == 1 {
+            // First round has no parents
+            return Vec::new();
+        }
+
         let dag_snapshot = {
             let dag = self.dag.lock().await;
             dag.clone()
         };
-    
-        dag_snapshot.get(&round_id)
+
+        // 🔍 Fetch units from the previous round
+        dag_snapshot.get(&(round_id - 1))
             .map(|units| units.iter().map(|u| u.unit_id.clone()).collect())
             .unwrap_or_else(Vec::new)
     }
+
     
 }

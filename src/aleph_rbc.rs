@@ -57,17 +57,59 @@ async fn execute_transaction_logic(
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
 
-    //Verify all nodes are healthy before creating transactions and proposing.
+    // ✅ Wait for all nodes to become healthy before starting.
     wait_for_all_nodes_health(&client, node.clone()).await?;
 
-    info!("Node: Starting transaction data creation...");
-    let (shards, merkle_root, parents) = create_transaction_data(node.clone()).await?;
-    info!("Node: Transaction data creation completed.");
-    
-    info!("Node: Starting proposal sending...");
-    send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
-    info!("Node: Proposals sent successfully.");
-    
-    
+    let total_rounds = 2; // 🚀 Modify this value to test more rounds
+
+    for round in 1..=total_rounds {
+        info!("Node: Starting round {} of {}", round, total_rounds);
+
+        // 🎯 Step 1: Create transaction data for this round
+        info!("Node: Creating transaction data...");
+        let (shards, merkle_root, parents) = create_transaction_data(node.clone()).await?;
+        info!("Node: Transaction data for round {} created.", round);
+        
+        // 🎯 Step 2: Send proposals for this round
+        info!("Node: Sending proposals for round {}...", round);
+        send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await?;
+        info!("Node: Proposals for round {} sent successfully.", round);
+
+        // // 🎯 Step 3: Wait for round commit confirmation
+        wait_for_commit_confirmation(node.clone(), round).await?;
+        info!("Node: Commit confirmed for round {}.", round);
+    }
+
+    info!("Node: All rounds completed successfully.");
     Ok(())
 }
+
+
+/// **🕰️ Wait for Commit Confirmation**
+/// This checks whether the commit has been recorded in the DAG for the given round.
+async fn wait_for_commit_confirmation(node: Arc<Mutex<Node>>, round: u64) -> Result<(), anyhow::Error> {
+    use tokio::time::{sleep, Duration};
+
+    let max_retries = 20; // ⏳ Adjust based on network conditions
+    let mut retries = 0;
+
+    while retries < max_retries {
+        let node_guard = node.lock().await;
+        let dag = node_guard.dag.lock().await;
+
+        // 🧐 Check if the DAG contains finalized units for this round
+        if let Some(units) = dag.get(&round) {
+            if !units.is_empty() {
+                info!("Node: Commit detected for round {}.", round);
+                return Ok(());
+            }
+        }
+
+        info!("Node: Waiting for commit confirmation for round {}... (Attempt {})", round, retries + 1);
+        sleep(Duration::from_secs(5)).await;
+        retries += 1;
+    }
+
+    Err(anyhow::anyhow!("Timeout waiting for commit confirmation for round {}", round))
+}
+

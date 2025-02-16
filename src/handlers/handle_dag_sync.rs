@@ -26,7 +26,7 @@ pub async fn handle_dag_sync(
     let node_guard = node.lock().await;
 
     info!(
-        "Node {}: INSIDE Handler - Received DAG sync request from Node {} for round {}. About to call check_dag_sync...",
+        "Node {}: ================= HANDLING DAG SYNC Received DAG sync request from Node {} for round {}.  =================",
         node_guard.id, payload.sender_id, payload.round_id
     );
 

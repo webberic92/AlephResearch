@@ -31,7 +31,7 @@ pub async fn handle_commit(
     }
 
     info!(
-        "Node {}: Handling commit request from Node {} for round {}",
+        "Node {}:  ================= Handling commit request from Node {} for round {}  =================",
         node_id, commit_request.base.proposing_node_id, round_id
     );
 
@@ -48,7 +48,7 @@ pub async fn handle_commit(
     }
 
     let dag_unit = DagUnit {
-        unit_id: format!("U{}", round_id),
+        unit_id: format!("U{}-{}", round_id, commit_request.base.proposing_node_id),
         proposer_node: commit_request.base.proposing_node_id,
         round: round_id,
         transactions,
@@ -70,6 +70,7 @@ pub async fn handle_commit(
         );
 
         // Step 4: Check if DAG Finalization Condition is Met
+        // Step 4: Check if DAG Finalization Condition is Met
         if dag.get(&round_id).map_or(false, |units| units.len() >= node_guard.total_nodes) {
             info!("Node {}: Writing finalized DAG before advancing...", node_id);
 
@@ -79,17 +80,24 @@ pub async fn handle_commit(
                 info!("Node {}: DAG finalized for round {}, now advancing...", node_id, round_id);
             }
 
-            // Step 5: Increment the Round
+            // Step 5: Increment the Round (only if not already done)
             let mut current_round_guard = node_guard.current_round.lock().await;
-            *current_round_guard += 1;
 
-            info!(
-                "Node {}: Local round successfully updated to: {}",
-                node_id, *current_round_guard
-            );
+            if *current_round_guard == round_id {
+                *current_round_guard += 1;
+                info!(
+                    "Node {}: Local round successfully updated to: {}",
+                    node_id, *current_round_guard
+                );
+            } else {
+                info!(
+                    "Node {}: Round already updated. Current round: {}",
+                    node_id, *current_round_guard
+                );
+            }
         }
-    }
 
+    }
     info!("Node {}: Exiting commit handler", node_id);
     Ok(())
 }
