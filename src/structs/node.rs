@@ -41,6 +41,7 @@ pub struct Node {
     pub number_of_transactions: usize,
     pub transaction_size: usize,
     pub data_shards: usize,
+    pub total_rounds: usize,
 }
 
 impl Node {
@@ -54,6 +55,7 @@ impl Node {
         number_of_transactions: usize,
         transaction_size: usize,
         data_shards: usize,
+        total_rounds: usize,
     ) -> Arc<Mutex<Self>> {
         let (proposal_sender, proposal_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -70,6 +72,7 @@ impl Node {
             number_of_transactions,
             transaction_size,
             data_shards,
+            total_rounds
         }));
 
         // Spawn a background task to process proposals
