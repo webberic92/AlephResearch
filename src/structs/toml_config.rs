@@ -22,6 +22,7 @@ pub struct ConsensusConfig {
     pub transaction_size: usize,
     pub data_shards: usize,
     pub number_of_transactions: usize,
+    pub total_rounds: usize,
 }
 
 #[derive(Debug, Deserialize, serde::Serialize)]

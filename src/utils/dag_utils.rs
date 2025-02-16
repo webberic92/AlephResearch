@@ -48,7 +48,8 @@ pub async fn check_dag_sync(
 
 
 /// Ensures that the DAG has reached the required round before progressing.
-pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, target_round: u64) -> Result<(), String> {
+pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, current_round: u64) -> Result<(), String> {
+    info!("Node {}: Ensuring DAG synchronization for round {}...", node.lock().await.id, current_round);
     let (latest_round, node_id, dag_keys) = {
         // 🔒 Lock the node only as long as necessary
         let node_guard = node.lock().await;
@@ -56,18 +57,17 @@ pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, target_round: u64) ->
 
         // 🔹 Clone the DAG keys instead of holding the lock
         let dag_keys: Vec<u64> = dag.keys().copied().collect();
-        let latest_round = dag_keys.iter().max().copied().unwrap_or(1); // Default to 1 if empty
-
+        let latest_round = dag_keys.iter().max().copied().unwrap_or(0);
         (latest_round, node_guard.id, dag_keys)
     }; // ✅ Drop locks immediately
 
     info!(
         "Node {}: DAG latest round: {}, Target round: {}",
-        node_id, latest_round, target_round
+        node_id, latest_round, current_round
     );
 
     // 🚀 **Optimization: Handle First Round**
-    if target_round == 1 {
+    if current_round == 1 {
         info!(
             "Node {}: First round detected (round 1). Skipping DAG sync check.",
             node_id
@@ -76,10 +76,10 @@ pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, target_round: u64) ->
     }
 
     // ⚠️ **Check Synchronization Status**
-    if latest_round < target_round - 1 {
+    if latest_round < current_round - 1 {
         let error_message = format!(
             "Node {}: DAG not synchronized. Latest round in DAG: {}, required: {}.",
-            node_id, latest_round, target_round - 1
+            node_id, latest_round, current_round - 1
         );
         error!("{}", error_message);
         return Err(error_message);
@@ -88,7 +88,7 @@ pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, target_round: u64) ->
     // ✅ **Synchronization Complete**
     info!(
         "Node {}: DAG is synchronized for round {} or beyond.",
-        node_id, target_round - 1
+        node_id, current_round - 1
     );
 
     Ok(())

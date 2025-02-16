@@ -14,9 +14,10 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 3 # Define the number of instances
-        NUMBER_OF_TRANSACTIONS = 2  # Define the number of transactions
+        NUMBER_OF_TRANSACTIONS = 2  # Define the number of transactions per batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4
+        TOTAL_ROUNDS = 5
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -140,6 +141,7 @@ class TestAleph(Stack):
                 f"echo 'number_of_transactions = {NUMBER_OF_TRANSACTIONS}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'total_rounds = {TOTAL_ROUNDS} # Number of rounds' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
                 "echo 'level = \"info\"' >> /home/aleph-node/aleph-node-config.toml",

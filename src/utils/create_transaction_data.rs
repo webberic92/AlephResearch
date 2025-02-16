@@ -65,8 +65,8 @@ pub async fn create_transaction_data(
         "Creating transaction: {} transactions, Parent Units = {:?} for round {}",
         node_number_of_transactions, parent_units, round_id
     );
-    info!("Created transaction shards: {:?}", all_shards.concat());
-    info!("Created transaction root: {:?}", merkle_root);
+    // info!("Created transaction shards: {:?}", all_shards.concat());
+    // info!("Created transaction root: {:?}", merkle_root);
     info!("Created transaction parents: {:?}", parent_units);
 
     // ✅ Return only shards, merkle_root, and parents

@@ -128,17 +128,17 @@ pub fn reconstruct_unit(
     let shard_hashes: Vec<Vec<u8>> = shards.iter()
         .map(|shard| Sha256::digest(shard).to_vec())
         .collect();
-    info!("shard_hashes : {:?}", shard_hashes);
+    // info!("shard_hashes : {:?}", shard_hashes);
 
     // Compute the Merkle root using shard hashes
     let root = compute_merkle_root(&shard_hashes);
     info!("root : {:?}", root);
 
-    info!(
-        "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
-        shards.concat(),
-        root
-    );
+    // info!(
+    //     "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
+    //     shards.concat(),
+    //     root
+    // );
 
     // ✅ **Fix: Convert parent unit IDs into raw bytes**
     let parents: Vec<Vec<u8>> = parent_hashes
@@ -147,7 +147,7 @@ pub fn reconstruct_unit(
         .collect();
 
     info!("Reconstructed parents: {:?}", parents);
-    info!("Reconstructed parents successfully");
+    // info!("Reconstructed parents successfully");
 
     Ok(ReconstructedUnit {
         data: shards.concat(),

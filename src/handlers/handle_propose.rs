@@ -110,10 +110,10 @@ pub async fn handle_propose(
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
 
         info!(
-            "Node {}: Current Proposal Tracker for round {}: {:?}",
+            "Node {}: Current Proposal Tracker for round {}: keys {:?}",
             node_id,
             round_id,
-            proposal_tracker[&round_id]
+            proposal_tracker[&round_id].keys()
         );
     }
 
@@ -153,6 +153,7 @@ pub async fn handle_propose(
                 format!("Prevote phase failed: {:?}", e)
             })?;
         }
+
     }
 
     // Step 13: received_propose(Pi , r) = True
