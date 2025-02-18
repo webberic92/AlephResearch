@@ -1,4 +1,4 @@
-use crate::structs::node::DagUnit;
+use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
 use std::collections::HashMap;
 use std::path::Path;
