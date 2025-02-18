@@ -54,6 +54,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
         }
     }))
     .route("/prevote", post({
+        info!("*** PREVOTE API ***");
         let node = node.clone();
         move |Json(payload): Json<Value>| {
             let node = node.clone();

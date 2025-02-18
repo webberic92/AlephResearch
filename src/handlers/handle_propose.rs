@@ -8,72 +8,68 @@ use crate::{
     utils::dag_utils::{ check_size, ensure_dag_round_sync },
 };
 
+
 /*
 **ch-RBC Proof Validation for `handle_propose`**
 --------------------------------------------------
 
-7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
-   - The function `handle_propose` is called upon receiving a `ProposeRequest` from another node.
+**Step 7:** Upon receiving `propose(h, b_j, s_j)` from `P_s`
+   - This function (`handle_propose`) is invoked upon receiving a `ProposeRequest` from another node.
 
-8: If `received_propose(P_i, r)` then terminate
+**Step 8:** If `received_propose(P_i, r)` then terminate
    - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same round (`r`).
    - If a duplicate exists, the function returns early.
 
-9: If `check_size(s_j)` then
-   - The function `check_size(&decoded_shards)` verifies the shard sizes.
+**Step 9:** If `check_size(s_j)` then
+   - The function `check_size(&decoded_shards)` validates the shard sizes.
    - If the size is invalid, the function returns early.
 
-10: Wait until `D_i` reaches round `r-1`
-   - The function `ensure_dag_round_sync(node.clone(), round_id).await?;` ensures the DAG is synchronized to `r-1` before proceeding.
+**Step 10:** Wait until `D_i` reaches round `r−1`
+   - The function `ensure_dag_round_sync(node.clone(), round_id).await?` ensures that the DAG is synchronized to `r-1` before proceeding.
 
-11: Multicast `prevote(h, b_j, s_j)`
-   - If enough proposals are received (`proposal_count >= required_proposals`), prevotes are sent for each stored proposal.
+**Step 11:** Multicast `prevote(h, b_j, s_j)` to all nodes
+   - If enough proposals are received (`proposal_count >= required_proposals`), all `prevote` messages are aggregated into a single request and multicast to all nodes.
 
-12: `received_propose(P_i, r) = True`
-   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring the proposal is marked as received.
+**Step 12:** `received_propose(P_i, r) = True`
+   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring that the proposal is marked as received.
 
-13: received_propose(Pi , r ) = True
+**Step 13:** Confirm proposal handling
+   - Log that the proposal was successfully handled.
 */
 
 // Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
 // - This function `handle_propose` is called when a proposal message is received.
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
-    propose_request: ProposeRequest
+    propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
 
-    // Step 8: If `received_propose(P_i, r)` then terminate
+    // 🔹 Step 7: Log receipt of the proposal
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
 
         info!(
-            "Node {}: ============Handling Propose for round {} from sender {}===============",
-            node_id,
-            propose_request.base.round_id,
-            propose_request.base.proposing_node_id
+            "============== Node {}: Handling PROPOSE request for round {} from Node {}==============",
+            node_id, round_id, propose_request.base.proposing_node_id
         );
 
+        // 🔹 Step 8: Check if we already received a proposal from this node
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
-
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&propose_request.base.proposing_node_id) {
                 info!(
                     "Node {}: Already received propose for round {} from Node {}. Terminating.",
-                    node_id,
-                    round_id,
-                    propose_request.base.proposing_node_id
+                    node_id, round_id, propose_request.base.proposing_node_id
                 );
-                return Ok(());
+                return Ok(()); // ✅ Step 8 fulfilled
             }
         }
     }
 
-    // Step 9: If `check_size(s_j)` then
-    // - Validate the size of the received shard.
-    // - If the shard size is invalid, reject the proposal.
+    // 🔹 Step 9: Decode shards and validate their size
     let decoded_shards: Vec<Vec<u8>> = propose_request.shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
@@ -87,81 +83,107 @@ pub async fn handle_propose(
         transaction_size = node_guard.transaction_size;
     }
 
-    // ✅ Now call `check_size` outside the locked block
+    // 🔹 Step 9 continued: Validate shard size
     if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
         return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id));
     }
 
-    // Step 10: Wait until `D_i` reaches round `r-1`
-    // - Ensure the DAG is synchronized to at least round `r-1` before processing the proposal.
+    // 🔹 Step 10: Wait until DAG is synchronized to round r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    info!("Node {}: Checked sizes and ensured DAG round sync successfully.", node_id);
-
-    // Step 12: `received_propose(P_i, r) = True`
-    // - Store the received proposal in the `proposal_tracker` to prevent reprocessing.
+    // 🔹 Step 12: Add proposal to tracker, marking as received
     let (proposal_count, required_proposals, stored_proposals) = Node::update_proposal_tracker(
         node.clone(),
-        propose_request.clone()
+        propose_request.clone(),
     ).await?;
 
-    {
-        let node_guard = node.lock().await;
-        let proposal_tracker = node_guard.proposal_tracker.lock().await;
+    info!(
+        "Node {}: Current Proposal Tracker for round {} has {} proposals (threshold: {}).",
+        node_id, round_id, proposal_count, required_proposals
+    );
 
-        info!(
-            "Node {}: Current Proposal Tracker for round {}: keys {:?}",
-            node_id,
-            round_id,
-            proposal_tracker[&round_id].keys()
-        );
-    }
-
-    // Step 11: Multicast `prevote(h, b_j, s_j)`
-    // - If the number of received proposals reaches the required threshold, proceed to prevote.
+    // 🔹 Step 11: If quorum is met, multicast aggregated prevote
     if proposal_count >= required_proposals {
         info!(
-            "Node {}: Received enough proposals ({}/{}) for round {}. Transitioning to prevote.",
-            node_id,
-            proposal_count,
-            required_proposals,
-            propose_request.base.round_id
+            "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
+            node_id, stored_proposals.len()
         );
 
-        for stored_propose in stored_proposals {
-            info!(
-                "Node {}: Sending prevote for transaction proposed by Node {}",
-                node_id,
-                stored_propose.base.proposing_node_id
-            );
+        let mut aggregated_shards = Vec::new();
+        let mut aggregated_proofs = Vec::new();
+        let mut aggregated_parents = Vec::new();
+        info!("Node {}:Attempting to Aggregate prevote data...", node_id);
+        // 🔹 Aggregate all proposals
+        for proposal in stored_proposals {
+            aggregated_shards.extend(proposal.shards.clone());
+            aggregated_proofs.extend(proposal.proofs.clone());
+            aggregated_parents.extend(proposal.parents.clone());
+        }
+        info!("Node {}:Finsihed Aggregate prevote data...", node_id);
 
-            let prevote_request = {
-                let node_guard = node.lock().await;
-                PrevoteRequest {
-                    propose: stored_propose.clone(),
-                    sender_url: node_guard.ip_address.clone(),
+        // 🔹 Prepare the `PrevoteRequest`
+        let prevote_request = {
+            let node_guard = node.lock().await;
+            PrevoteRequest {
+                propose: ProposeRequest {
+                    base: propose_request.base.clone(),
+                    shards: aggregated_shards.clone(),
+                    proofs: aggregated_proofs.clone(),
+                    parents: aggregated_parents.clone(),
+                },
+                sender_url: node_guard.ip_address.clone(),
+            }
+        };
+        info!("Node {}:Created PrevoteRequest with aggregated data", node_id);
+        // 🔹 Multicast the prevote to all other nodes
+        let node_guard = node.lock().await;
+        let node_ip = &node_guard.ip_address;
+        info!("Node {}:Multicasting prevote to all nodes...", node_id);
+        for target_node in &node_guard.nodes {
+            // Skip self
+            if target_node != node_ip {
+                info!("Node {}:Sending prevote to {}", node_id, target_node);
+                let target_url = format!("http://{}/prevote", target_node);
+                info!("Node {}:Sending prevote to {}", node_id, target_url);
+                let client = reqwest::Client::new();
+                info!("after reqwest client");
+                match client.post(&target_url)
+                    .json(&prevote_request)
+                    .send()
+                    .await
+                {
+                    Ok(response) => {
+                        if response.status().is_success() {
+                            info!("Node {}: Successfully sent prevote to {}", node_id, target_url);
+                        } else {
+                            error!("Node {}: Failed to send prevote to {}. Status: {}", node_id, target_url, response.status());
+                        }
+                    },
+                    Err(e) => {
+                        error!("Node {}: Network error while sending prevote to {}: {:?}", node_id, target_url, e);
+                    }
                 }
-            };
-
-            handle_prevote(node.clone(), prevote_request).await.map_err(|e| {
-                error!(
-                    "Node {}: Failed to handle prevote for round {}. Error: {:?}",
-                    node_id,
-                    stored_propose.base.round_id,
-                    e
-                );
-                format!("Prevote phase failed: {:?}", e)
-            })?;
+            }
         }
 
+        // 🔹 Step 11 (continued): Also handle the prevote locally
+        info!("Node {}: Handling prevote locally.", node_id);
+        handle_prevote(node.clone(), prevote_request).await.map_err(|e| {
+            error!(
+                "Node {}: Failed to handle aggregated prevote for round {}. Error: {:?}",
+                node_id, round_id, e
+            );
+            format!("Aggregated prevote phase failed: {:?}", e)
+        })?;
     }
 
-    // Step 13: received_propose(Pi , r) = True
+    // 🔹 Step 13: Log successful handling
     info!(
-        "Node {}: Proposal successfully handled for round {} from sender {}",
-        node_id,
-        propose_request.base.round_id,
-        propose_request.base.proposing_node_id
+        "============== Node {}: Proposal successfully handled for round {} from sender {}==============",
+        node_id, round_id, propose_request.base.proposing_node_id
     );
+
     Ok(())
 }
+
+

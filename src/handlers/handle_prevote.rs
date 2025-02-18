@@ -9,50 +9,72 @@ use crate::{
         node::Node,
         requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::merkle_utils::{reconstruct_unit, validate_merkle_branch,
+    utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch
     },
 };
 
-/// Handles an incoming PREVOTE request in the ch-RBC protocol.
-///
-/// **ch-RBC Steps:**  
-/// - **Step 14:** Check quorum for `2f + 1` valid prevote messages.  
-/// - **Step 15:** Reconstruct the unit from shards.  
-/// - **Step 16:** Validate the Merkle root.  
-/// - **Step 17:** Ensure parent units are committed.  
-/// - **Step 18:** Interpolate missing shares if necessary.  
-/// - **Step 19:** Compute Merkle root and compare with the expected.  
-/// - **Step 20:** If root matches, send commit messages.  
-/// - **Step 21:** Clean up quorum votes afterward.
+/*
+**ch-RBC Proof Validation for `handle_prevote`**
+--------------------------------------------------
+
+**Step 14:** Upon receiving `2f + 1` valid `prevote(h, ·, ·)`
+   - Count received `prevote` messages and check if the quorum threshold (`2f + 1`) is met.
+
+**Step 15:** Reconstruct `U` from the received `s_j`
+   - Use the received shards to reconstruct the proposed unit.
+
+**Step 16:** Validate reconstructed `U`
+   - If the reconstructed unit is invalid (e.g., invalid Merkle root or missing parents), terminate processing.
+
+**Step 17:** Wait until all of `U`'s parents are locally available
+   - Ensure that all parent units have been received and committed before proceeding.
+
+**Step 18:** Interpolate `s_j` from `f + 1` shares
+   - Perform interpolation on the shards if necessary to recover the original data.
+
+**Step 19:** Compute Merkle root `h'` from interpolated shares
+   - Generate a Merkle root from the interpolated shares to compare against the original.
+
+**Step 20:** If `h = h'` and `commit(P_s, r, ·)` has not been sent, multicast commit
+   - If the computed root matches the expected root, send `commit` messages to all nodes.
+
+**Step 21:** Cleanup quorum votes after successful commit
+   - Remove the quorum vote entry from the tracking map after a successful commit.
+
+*/
+
 /// Handles an incoming PREVOTE request in the ch-RBC protocol.
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
+    // 🔹 Extract Node ID
+    info!("handle prevote entering....");
     let node_id = {
         let node_guard = node.lock().await;
         node_guard.id
     };
 
     info!(
-        "Node {}: Handling PREVOTE request from Node {} for round {}",
+        "Node {}:============== Handling PREVOTE request from Node {} for round {}==============",
         node_id,
         prevote_request.propose.base.proposing_node_id,
         prevote_request.propose.base.round_id
     );
 
-    // Decode shards
+    // 🛠️ **Step 14:** Decode shards and validate Merkle proofs
     let decoded_shards = prevote_request.propose.shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
 
-    // Validate Merkle proofs
+    // 🔍 Compute hashes for Merkle branch verification
     let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
         .map(|shard| Sha256::digest(shard).to_vec())
         .collect();
 
+    // 🔍 Validate Merkle proofs for each shard
     for (index, proof) in prevote_request.propose.proofs.iter().enumerate() {
         let decoded_proof = proof.iter()
             .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
@@ -64,7 +86,7 @@ pub async fn handle_prevote(
         }
     }
 
-    // Reconstruct unit
+    // 🛠️ **Step 15:** Reconstruct unit from received shards
     let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.round_id,
@@ -72,7 +94,12 @@ pub async fn handle_prevote(
     )
     .map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
 
-    // Validate parent commitments
+    // 🔍 **Step 16:** Validate the reconstructed unit
+    if reconstructed_unit.data.is_empty() {
+        return Err(format!("Node {}: Reconstructed unit is invalid or empty", node_id));
+    }
+
+    // 🛠️ **Step 17:** Ensure parent units are committed
     {
         let node_guard = node.lock().await;
         if reconstructed_unit.round_id != 1 {
@@ -84,7 +111,26 @@ pub async fn handle_prevote(
         }
     }
 
-    // Check quorum
+    // 🛠️ **Step 18:** Interpolate shares from `f + 1` valid shares
+    let interpolated_shards = if prevote_request.propose.base.round_id > 1 {
+        interpolate_shares(&decoded_shards, prevote_request.propose.base.round_id)
+            .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
+    } else {
+        decoded_shards.clone()
+    };
+
+    // 🛠️ **Step 19:** Compute Merkle root from interpolated shares
+    let interpolated_hashes: Vec<Vec<u8>> = interpolated_shards.iter()
+        .map(|shard| Sha256::digest(shard).to_vec())
+        .collect();
+    let new_merkle_root = compute_merkle_root(&interpolated_hashes);
+
+    // 🔍 Validate reconstructed root
+    if new_merkle_root != prevote_request.propose.base.root {
+        return Err(format!("Node {}: Merkle root mismatch after interpolation.", node_id));
+    }
+
+    // 🛠️ **Step 14 (continued):** Count quorum votes
     let round_id = prevote_request.propose.base.round_id;
     let epoch_key = round_id.to_be_bytes().to_vec();
 
@@ -103,11 +149,16 @@ pub async fn handle_prevote(
 
     info!("Node {}: Quorum votes {}/{}", node_id, vote_count, quorum_threshold);
 
+    // 🔍 **Step 20:** Check quorum for commit
     if vote_count < quorum_threshold {
+        info!(
+            "Node {}: Not enough prevote messages received: {}/{}. Waiting for quorum before proceeding to commit.",
+            node_id, vote_count, quorum_threshold
+        );
         return Ok(());
     }
 
-    // Collect all units for this round
+    // 🛠️ **Step 20 (continued):** Collect all units for commit
     let units_for_commit = {
         let node_guard = node.lock().await;
         let dag = node_guard.dag.lock().await;
@@ -124,7 +175,7 @@ pub async fn handle_prevote(
         return Ok(());
     }
 
-    // Prepare commit request
+    // 🛠️ **Step 20 (continued):** Prepare commit request
     let commit_request = CommitRequest {
         base: prevote_request.propose.base.clone(),
         proofs: prevote_request.propose.proofs.clone(),
@@ -132,20 +183,36 @@ pub async fn handle_prevote(
         units: units_for_commit,
     };
 
-    // Trigger commit once with all units
+    // 🚀 **Step 21:** Multicast commit messages
+    let node_guard = node.lock().await;
+    for target_node in &node_guard.nodes {
+        let target_url = format!("http://{}/commit", target_node);
+        let client = reqwest::Client::new();
+        let commit_payload = commit_request.clone();
+        tokio::spawn(async move {
+            if let Err(e) = client.post(&target_url).json(&commit_payload).send().await {
+                error!("Failed to send commit to {}: {:?}", target_url, e);
+            } else {
+                info!("Sent commit message to {}", target_url);
+            }
+        });
+    }
+
+    // 🔍 **Step 21 (continued):** Trigger commit locally
     handle_commit(node.clone(), commit_request).await.map_err(|e| {
         error!("Node {}: Commit phase failed: {:?}", node_id, e);
         format!("Commit phase failed: {:?}", e)
     })?;
 
-    // Clear votes after commit
+    // 🔍 **Step 21 (continued):** Cleanup quorum votes
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         quorum_votes.remove(&epoch_key);
     }
 
-    info!("Node {}: Prevote successfully handled for round {}.", node_id, round_id);
+    info!("============== Node {}:  PREVOTE successfully for round {}.==============", node_id, round_id);
     Ok(())
 }
+
 
