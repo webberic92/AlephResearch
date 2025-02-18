@@ -191,19 +191,21 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
 }
 
 
-pub fn interpolate_shares(shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u8>>, String> {
-    if shards.is_empty() {
+pub fn interpolate_shares(decoded_shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u8>>, String> {
+    // ✅ Handle round 1: No interpolation required
+    if round_id == 1 {
+        info!("Round 1 detected: Skipping interpolation, returning provided shards.");
+        return Ok(decoded_shards.to_vec());
+    }
+
+    // Check if we have enough shards
+    if decoded_shards.is_empty() {
         return Err("Interpolation failed: No available shards".to_string());
     }
 
-    // ✅ Handle first transaction (round 1): No interpolation needed
-    if round_id == 1 {
-        info!("round 1 detected: Skipping interpolation, returning provided shards.");
-        return Ok(shards.to_vec()); // ✅ Just return original shards
-    }
-
-    let data_shards = shards.len() / 2; // Assumption: f+1 out of N shards
-    let parity_shards = shards.len() - data_shards;
+    let total_shards = decoded_shards.len();
+    let data_shards = (total_shards + 1) / 2; // Assumes f+1 shards for reconstruction
+    let parity_shards = total_shards - data_shards;
 
     if data_shards < 1 {
         return Err(format!(
@@ -216,19 +218,23 @@ pub fn interpolate_shares(shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u
     let r = ReedSolomon::new(data_shards, parity_shards)
         .map_err(|e| format!("Failed to create Reed-Solomon codec: {:?}", e))?;
 
-    // Clone and pad the shards (Reed-Solomon needs full set)
-    let mut shard_buffer: Vec<Option<Vec<u8>>> = shards.iter().map(|s| Some(s.clone())).collect();
+    // Prepare shard buffer with None for missing shares
+    let mut shard_buffer: Vec<Option<Vec<u8>>> = decoded_shards.iter().map(|s| Some(s.clone())).collect();
     shard_buffer.resize(data_shards + parity_shards, None);
 
-    // Recover missing shares
+    // Attempt to recover missing shares
     r.reconstruct(&mut shard_buffer)
         .map_err(|e| format!("Failed to interpolate shares: {:?}", e))?;
 
-    // Convert back to Vec<Vec<u8>>
+    // Convert buffer to final result, filtering out any None values
     let recovered_shards: Vec<Vec<u8>> = shard_buffer
         .into_iter()
-        .filter_map(|s| s) // Remove None values
+        .filter_map(|s| s)
         .collect();
+
+    if recovered_shards.len() < data_shards + parity_shards {
+        return Err("Interpolation failed: Not all shares were recovered".to_string());
+    }
 
     info!("Interpolated missing shares successfully.");
     Ok(recovered_shards)

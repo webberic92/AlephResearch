@@ -25,6 +25,7 @@ pub struct Node {
     pub transaction_size: usize,
     pub data_shards: usize,
     pub total_rounds: usize,
+    pub commit_tracker: Arc<Mutex<std::collections::HashSet<String>>>, 
 }
 
 impl Node {
@@ -55,7 +56,9 @@ impl Node {
             number_of_transactions,
             transaction_size,
             data_shards,
-            total_rounds
+            total_rounds,
+            commit_tracker: Arc::new(Mutex::new(std::collections::HashSet::new())),
+            
         }));
 
         // Spawn a background task to process proposals

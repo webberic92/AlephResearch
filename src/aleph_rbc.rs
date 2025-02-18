@@ -60,28 +60,49 @@ async fn execute_transaction_logic(
 
     // ✅ Wait for all nodes to become healthy before starting.
     wait_for_all_nodes_health(&client, node.clone()).await?;
-   
-    // 🔍 Access `total_rounds` safely within an async block
-    let total_rounds = {
-        let node_guard = node.lock().await;
-        node_guard.total_rounds
-    };
 
-    for round in 1..=total_rounds {
-        info!("Node: Starting round {} of {}", round, total_rounds);
+    // 🎯 Create transaction data
+    match create_transaction_data(node.clone()).await {
+        Ok((shards, merkle_root, parents)) => {
+            let node_id = {
+                let node_guard = node.lock().await;
+                node_guard.id
+            };
+            let round = 1; // Assuming round 1 for single-round logic
 
-        send_proposals_with_sync(node.clone(), round, client.clone()).await;
+            info!("Node: Transaction data created for round {}.", round);
 
-
-        // // 🎯 Step 3: Wait for round commit confirmation
-        info!("Node {}: starting wait_for_commit_confirmation for round {}.",  node.lock().await.id, round);
-        wait_for_commit_confirmation(node.clone(), round).await?;
-        info!("Node {}: Commit confirmed for round {}.",  node.lock().await.id, round);
+            // 🎯 Step 2: Send proposals for this round
+            info!("Node {}: Sending proposals for round {}...", node_id, round);
+            if let Err(e) = send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await {
+                error!(
+                    "Node {}: Failed to send proposals for round {}. Error: {:?}",
+                    node_id, round, e
+                );
+            } else {
+                info!(
+                    "Node {}: Proposals for round {} sent successfully.",
+                    node_id, round
+                );
+            }
+        }
+        Err(e) => {
+            let node_id = {
+                let node_guard = node.lock().await;
+                node_guard.id
+            };
+            let round = 1;
+            error!(
+                "Node {}: Failed to create transaction data for round {}. Error: {:?}",
+                node_id, round, e
+            );
+        }
     }
 
     info!("Node: All rounds completed successfully.");
     Ok(())
 }
+
 
 
 pub async fn send_proposals_with_sync(node: Arc<Mutex<Node>>, round: usize, client: Arc<Client>) {
