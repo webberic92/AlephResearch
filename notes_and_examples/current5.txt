@@ -75,6 +75,7 @@ Done with aleph_rbc loop for node 1
 2025-02-18T00:17:47.414910Z  INFO aleph_rbc: Node: Transaction data created for round 1.
 2025-02-18T00:17:47.414913Z  INFO aleph_rbc: Node 1: Sending proposals for round 1...
 2025-02-18T00:17:47.414918Z  INFO aleph_research::requests::send_proposals: Node 1: Preparing to send proposals for round 1 to nodes: ["10.0.137.113:30333", "10.0.143.177:30333", "10.0.151.219:30333", "10.0.183.180:30333"]
+2025-02-18T00:17:47.415534Z  INFO aleph_research::requests::send_proposals: Test 1: Starting async proposal dispatch...
 2025-02-18T00:17:47.415541Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.137.113:30333 for round 1
 2025-02-18T00:17:47.415607Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.143.177:30333 for round 1
 2025-02-18T00:17:47.415673Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.151.219:30333 for round 1
@@ -83,53 +84,36 @@ Done with aleph_rbc loop for node 1
 2025-02-18T00:17:47.417987Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.143.177:30333 (round 1).
 2025-02-18T00:17:47.418438Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.183.180:30333 (round 1).
 2025-02-18T00:17:47.421592Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.137.113:30333 (round 1).
+2025-02-18T00:17:47.421623Z  INFO aleph_research::requests::send_proposals: Test 2: Async proposal dispatch completed.
 2025-02-18T00:17:47.421627Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
 2025-02-18T00:17:47.421667Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
 2025-02-18T00:17:47.421778Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 4/4
 2025-02-18T00:17:47.421787Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal tracker updated. Proposals: 4/4
 2025-02-18T00:17:47.421791Z  INFO aleph_research::requests::send_proposals: Node 1: Reached proposal threshold. Initiating prevote...
-
-
-Handled proposal from 4 nodes + itself at this point...
-Says prevote request is from node 4.... who is it supposed to be from?
-
 2025-02-18T00:17:47.421827Z  INFO aleph_research::handlers::handle_prevote: Node 1: =============Handling PREVOTE request from Node 4 for round 1 =================
 2025-02-18T00:17:47.422165Z  INFO aleph_research::utils::merkle_utils: root : [157, 89, 205, 143, 113, 241, 73, 60, 195, 7, 29, 27, 250, 111, 195, 201, 106, 116, 48, 86, 173, 5, 140, 119, 41, 43, 171, 112, 124, 191, 80, 8]
 2025-02-18T00:17:47.422177Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
 2025-02-18T00:17:47.422256Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum votes 1/3
 2025-02-18T00:17:47.422260Z  INFO aleph_research::handlers::handle_prevote: Node 1: Return OK Prevote received but quorum not yet met: 1/3
-
 2025-02-18T00:17:47.422365Z  INFO aleph_research::handlers::handle_prevote: Node 1: =============Handling PREVOTE request from Node 1 for round 1 =================
 2025-02-18T00:17:47.422599Z  INFO aleph_research::utils::merkle_utils: root : [230, 54, 144, 138, 80, 41, 190, 186, 34, 191, 174, 137, 206, 154, 231, 153, 123, 68, 126, 44, 155, 11, 232, 86, 10, 159, 29, 97, 140, 53, 232, 144]
 2025-02-18T00:17:47.422612Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
 2025-02-18T00:17:47.422656Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum votes 2/3
 2025-02-18T00:17:47.422660Z  INFO aleph_research::handlers::handle_prevote: Node 1: Return OK Prevote received but quorum not yet met: 2/3
-
 2025-02-18T00:17:47.422689Z  INFO aleph_research::handlers::handle_prevote: Node 1: =============Handling PREVOTE request from Node 5 for round 1 =================
 2025-02-18T00:17:47.422868Z  INFO aleph_research::utils::merkle_utils: root : [19, 254, 203, 121, 113, 218, 56, 122, 158, 185, 193, 178, 216, 82, 131, 5, 201, 251, 10, 2, 154, 170, 12, 209, 235, 136, 253, 39, 107, 247, 243, 61]
 2025-02-18T00:17:47.422874Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
 2025-02-18T00:17:47.422923Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum votes 3/3
-
-Says from node 5 but currently has 3 proposals / prevotes in quourum....
-
 2025-02-18T00:17:47.422939Z  INFO aleph_research::handlers::handle_commit: Node 1: Handling commit request from Node 5 for round 1
 2025-02-18T00:17:47.422949Z  INFO aleph_research::handlers::handle_commit: Node 1: Added unit "U1-5" to DAG at round 1
 2025-02-18T00:17:47.422952Z  INFO aleph_research::handlers::handle_commit: Node 1: DAG unit count for round 1: 1/3. Waiting for more units.
 2025-02-18T00:17:47.422961Z  INFO aleph_research::handlers::handle_prevote: Node 1: Prevote successfully handled for round 1.
-
-Added U1-5 but how does it know what to add? or was it supposed to add all the transactions ?
-
-Starting prevotes for round 1 again?
-
 2025-02-18T00:17:47.422990Z  INFO aleph_research::handlers::handle_prevote: Node 1: =============Handling PREVOTE request from Node 2 for round 1 =================
 2025-02-18T00:17:47.423168Z  INFO aleph_research::utils::merkle_utils: root : [65, 71, 234, 125, 90, 35, 183, 0, 194, 81, 158, 152, 218, 78, 177, 181, 86, 67, 71, 111, 80, 56, 233, 247, 242, 100, 138, 237, 247, 200, 170, 32]
 2025-02-18T00:17:47.423174Z  INFO aleph_research::utils::merkle_utils: Reconstructed parents: []
 2025-02-18T00:17:47.423216Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum votes 1/3
 2025-02-18T00:17:47.423219Z  INFO aleph_research::handlers::handle_prevote: Node 1: Return OK Prevote received but quorum not yet met: 1/3
 2025-02-18T00:17:47.423284Z  INFO aleph_rbc: Node 1: Proposals for round 1 sent successfully.
-
- Starting round 2 early? not to mention nothings been commited or finalized yet...
- 
 2025-02-18T00:17:47.423291Z  INFO aleph_rbc: Node 1: starting wait_for_commit_confirmation for round 1.
 2025-02-18T00:17:47.423294Z  INFO aleph_rbc: Node: Round 1 does not require DAG sync. Skipping.
 2025-02-18T00:17:47.423343Z  INFO aleph_rbc: Node 1: Commit confirmed for round 1.

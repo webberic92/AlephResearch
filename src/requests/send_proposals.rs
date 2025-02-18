@@ -153,9 +153,7 @@ pub async fn send_proposals(
         }
     }).collect();
 
-    info!("Test 1: Starting async proposal dispatch...");
     let results = join_all(futures).await;
-    info!("Test 2: Async proposal dispatch completed.");
 
     // Step 7: If all proposals are sent, add self to proposal tracker
     if results.iter().all(|res| res.is_ok()) {

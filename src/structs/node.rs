@@ -1,29 +1,12 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     sync::Arc,
 };
-use serde::{Deserialize, Serialize};
 use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex};
 use tracing::{error, info};
 use crate::handlers::handle_propose::handle_propose;
-use super::requests::ProposeRequest;
+use super::requests::{DagUnit, ProposeRequest};
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Transaction {
-    pub tx_id: String,
-    pub data: Vec<u8>, // Transaction payload
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct DagUnit {
-    pub unit_id: String,
-    pub proposer_node: usize,
-    pub round: u64,
-    pub transactions: Vec<Transaction>, // ✅ Store multiple transactions
-    pub parent_units: Vec<String>,
-    pub merkle_root: String,
-    pub finalization_timestamp: u64,
-}
 
 /// **📌 Node Struct: Represents a single node in the Aleph RBC protocol.**
 #[derive(Debug)]
@@ -135,7 +118,7 @@ impl Node {
         node: Arc<Mutex<Node>>,
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
 
@@ -191,9 +174,22 @@ impl Node {
     /// **📋 Check if Parent Unit is Committed**
     pub async fn is_unit_committed(&self, parent_id: &str) -> bool {
         let dag = self.dag.lock().await;
-        dag.values()
+    
+        // 🌐 Log the entire DAG before searching
+        tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
+    
+        let result = dag.values()
             .flatten()
-            .any(|unit| unit.unit_id == parent_id)
+            .any(|unit| unit.unit_id == parent_id);
+    
+        tracing::info!(
+            "Node {}: Parent unit '{}' committed status: {}",
+            self.id,
+            parent_id,
+            result
+        );
+    
+        result
     }
 
     /// **🔗 Retrieve All Parents for a Round**

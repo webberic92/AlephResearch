@@ -7,11 +7,9 @@ use crate::{
     handlers::handle_commit::handle_commit,
     structs::{
         node::Node,
-        requests::{CommitRequest, PrevoteRequest},
+        requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::{
-        dag_utils::ensure_dag_round_sync,
-        merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch},
+    utils::merkle_utils::{reconstruct_unit, validate_merkle_branch,
     },
 };
 
@@ -26,51 +24,47 @@ use crate::{
 /// - **Step 19:** Compute Merkle root and compare with the expected.  
 /// - **Step 20:** If root matches, send commit messages.  
 /// - **Step 21:** Clean up quorum votes afterward.
+/// Handles an incoming PREVOTE request in the ch-RBC protocol.
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
-    // Step 1: Log and Extract Node ID
     let node_id = {
         let node_guard = node.lock().await;
         node_guard.id
     };
 
     info!(
-        "Node {}: =============Handling PREVOTE request from Node {} for round {} =================",
-        node_id, 
-        prevote_request.propose.base.proposing_node_id, 
+        "Node {}: Handling PREVOTE request from Node {} for round {}",
+        node_id,
+        prevote_request.propose.base.proposing_node_id,
         prevote_request.propose.base.round_id
     );
 
-    // Step 2: Decode and Validate Shards
+    // Decode shards
     let decoded_shards = prevote_request.propose.shards
         .iter()
         .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
         .collect::<Result<Vec<Vec<u8>>, _>>()
         .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
 
-    let decoded_proofs = prevote_request.propose.proofs
-        .iter()
-        .map(|proof| proof.iter()
-            .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-            .collect::<Result<Vec<_>, _>>()
-        )
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Node {}: Failed to decode proofs: {:?}", node_id, e))?;
-
+    // Validate Merkle proofs
     let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
         .map(|shard| Sha256::digest(shard).to_vec())
         .collect();
 
-    // Step 3: Validate Merkle Branches
-    for (index, proof) in decoded_proofs.iter().enumerate() {
-        if !validate_merkle_branch(&shard_hashes, proof, index, &prevote_request.propose.base.root) {
+    for (index, proof) in prevote_request.propose.proofs.iter().enumerate() {
+        let decoded_proof = proof.iter()
+            .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
+            .collect::<Result<Vec<Vec<u8>>, _>>()
+            .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+
+        if !validate_merkle_branch(&shard_hashes, &decoded_proof, index, &prevote_request.propose.base.root) {
             return Err(format!("Node {}: Merkle root mismatch for shard {}", node_id, index));
         }
     }
 
-    // Step 4: Reconstruct the Unit
+    // Reconstruct unit
     let reconstructed_unit = reconstruct_unit(
         &decoded_shards,
         prevote_request.propose.base.round_id,
@@ -78,7 +72,7 @@ pub async fn handle_prevote(
     )
     .map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
 
-    // Step 5: Validate Parent Commitments
+    // Validate parent commitments
     {
         let node_guard = node.lock().await;
         if reconstructed_unit.round_id != 1 {
@@ -90,25 +84,7 @@ pub async fn handle_prevote(
         }
     }
 
-    // Step 6: Interpolate Shares if Needed
-    let interpolated_shards = if prevote_request.propose.base.round_id > 1 {
-        interpolate_shares(&decoded_shards, prevote_request.propose.base.round_id)
-            .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
-    } else {
-        decoded_shards.clone()
-    };
-
-    // Step 7: Compute Merkle Root and Validate
-    let interpolated_hashes: Vec<Vec<u8>> = interpolated_shards.iter()
-        .map(|shard| Sha256::digest(shard).to_vec())
-        .collect();
-
-    let new_merkle_root = compute_merkle_root(&interpolated_hashes);
-    if new_merkle_root != prevote_request.propose.base.root {
-        return Err(format!("Node {}: Merkle root mismatch after interpolation.", node_id));
-    }
-
-    // Step 8: Check Quorum
+    // Check quorum
     let round_id = prevote_request.propose.base.round_id;
     let epoch_key = round_id.to_be_bytes().to_vec();
 
@@ -128,35 +104,48 @@ pub async fn handle_prevote(
     info!("Node {}: Quorum votes {}/{}", node_id, vote_count, quorum_threshold);
 
     if vote_count < quorum_threshold {
-        return Err(format!(
-            "Node {}: Not enough prevotes received: {}/{}",
-            node_id, vote_count, quorum_threshold
-        ));
+        return Ok(());
     }
 
-    // Step 9: Construct Commit Request and Trigger Commit
-    let commit_request = CommitRequest {
-        base: prevote_request.propose.base.clone(),
-        unit: reconstructed_unit.data.clone(),
-        proofs: decoded_proofs.iter()
-            .map(|proof| proof.iter().map(|p| general_purpose::STANDARD.encode(p)).collect())
-            .collect(),
-        parents: prevote_request.propose.parents.clone(),
+    // Collect all units for this round
+    let units_for_commit = {
+        let node_guard = node.lock().await;
+        let dag = node_guard.dag.lock().await;
+
+        let mut units: Vec<DagUnit> = Vec::new();
+        if let Some(round_units) = dag.get(&round_id) {
+            units.extend(round_units.clone());
+        }
+        units
     };
 
+    if units_for_commit.len() < quorum_threshold {
+        info!("Node {}: Not enough units to commit yet.", node_id);
+        return Ok(());
+    }
+
+    // Prepare commit request
+    let commit_request = CommitRequest {
+        base: prevote_request.propose.base.clone(),
+        proofs: prevote_request.propose.proofs.clone(),
+        parents: prevote_request.propose.parents.clone(),
+        units: units_for_commit,
+    };
+
+    // Trigger commit once with all units
     handle_commit(node.clone(), commit_request).await.map_err(|e| {
         error!("Node {}: Commit phase failed: {:?}", node_id, e);
         format!("Commit phase failed: {:?}", e)
     })?;
 
-    // Step 10: Clear Quorum Votes After Success
+    // Clear votes after commit
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         quorum_votes.remove(&epoch_key);
     }
 
-    // ✅ Success
     info!("Node {}: Prevote successfully handled for round {}.", node_id, round_id);
     Ok(())
 }
+

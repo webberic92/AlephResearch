@@ -87,18 +87,29 @@ async fn execute_transaction_logic(
 pub async fn send_proposals_with_sync(node: Arc<Mutex<Node>>, round: usize, client: Arc<Client>) {
     // For the first round, no DAG sync needed.
     if round > 1 {
-        while node.lock().await.dag.lock().await.get(&(round as u64 - 1)).is_none() {
+        let prev_round = (round as u64) - 1;
+        loop {
+            let dag = {
+                let node_guard = node.lock().await;
+                let dag = node_guard.dag.lock().await;
+                dag.contains_key(&prev_round)
+            };
+            if dag {
+                break;
+            }
+            let node_id = node.lock().await.id;
             info!(
                 "Node {}: Waiting for DAG round {} to be committed before sending round {} proposals...",
-                node.lock().await.id, round - 1, round
+                node_id, round - 1, round
             );
             tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
         }
     }
 
+    let node_id = node.lock().await.id;
     info!(
         "Node {}: DAG ready. Proceeding to round {} proposal dispatch.",
-        node.lock().await.id, round
+        node_id, round
     );
 
     // 🎯 Step 1: Create transaction data for this round
@@ -108,31 +119,23 @@ pub async fn send_proposals_with_sync(node: Arc<Mutex<Node>>, round: usize, clie
             info!("Node: Transaction data created for round {}.", round);
 
             // 🎯 Step 2: Send proposals for this round
-            info!(
-                "Node {}: Sending proposals for round {}...",
-                node.lock().await.id, round
-            );
-
-            // Handle the result properly
-            match send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await {
-                Ok(_) => {
-                    info!(
-                        "Node {}: Proposals for round {} sent successfully.",
-                        node.lock().await.id, round
-                    );
-                }
-                Err(e) => {
-                    error!(
-                        "Node {}: Failed to send proposals for round {}. Error: {:?}",
-                        node.lock().await.id, round, e
-                    );
-                }
+            info!("Node {}: Sending proposals for round {}...", node_id, round);
+            if let Err(e) = send_proposals(&client, node.clone(), &shards, &merkle_root, parents).await {
+                error!(
+                    "Node {}: Failed to send proposals for round {}. Error: {:?}",
+                    node_id, round, e
+                );
+            } else {
+                info!(
+                    "Node {}: Proposals for round {} sent successfully.",
+                    node_id, round
+                );
             }
         }
         Err(e) => {
             error!(
                 "Node {}: Failed to create transaction data for round {}. Error: {:?}",
-                node.lock().await.id, round, e
+                node_id, round, e
             );
         }
     }
@@ -157,43 +160,58 @@ async fn wait_for_commit_confirmation(node: Arc<Mutex<Node>>, round: usize) -> R
         return Ok(());
     }
 
+    let prev_round = (round as u64) - 1;
+
     while retries < max_retries {
-        let node_guard = node.lock().await;
-        let dag = node_guard.dag.lock().await;
+        let (dag_status, commit_quorum, node_id) = {
+            let node_guard = node.lock().await;
+            let dag = node_guard.dag.lock().await;
 
-        let prev_round = round - 1;
+            let commit_quorum = node_guard.get_quorum_threshold();
+            let node_id = node_guard.id;
+            let units = dag.get(&prev_round);
+            let received_units = units.map(|u| u.len()).unwrap_or(0);
 
-        if let Some(units) = dag.get(&(prev_round as u64)) {
-            if units.len() == node_guard.total_nodes {
-                info!(
-                    "Node {}: DAG confirmed for round {}. Proceeding to round {}.",
-                    node_guard.id, prev_round, round
-                );
-                return Ok(());
+            let dag_ready = received_units >= commit_quorum;
+
+            (dag_ready, commit_quorum, node_id)
+        };
+
+        if dag_status {
+            info!(
+                "Node {}: DAG confirmed for round {}. Proceeding to round {}.",
+                node_id, prev_round, round
+            );
+
+            let mut node_guard = node.lock().await;
+            let mut current_round = node_guard.current_round.lock().await;
+            if *current_round == prev_round {
+                *current_round += 1;
+                info!("Node {}: Local round advanced to {}", node_id, *current_round);
             }
+            return Ok(());
+        } else {
+            warn!(
+                "Node {}: Waiting for DAG completion of round {}... Retries: {}/{}",
+                node_id, prev_round, retries + 1, max_retries
+            );
         }
 
         retries += 1;
-        warn!(
-            "Node {}: Waiting for DAG completion of round {}... (Attempt {}/{})",
-            node_guard.id, prev_round, retries, max_retries
-        );
-
-        drop(dag);
-        drop(node_guard);
-
         sleep(Duration::from_secs(5)).await;
     }
 
+    let node_id = node.lock().await.id;
     error!(
         "Node {}: Timeout waiting for DAG round {} to complete.",
-        node.lock().await.id, round - 1
+        node_id, prev_round
     );
     Err(anyhow::anyhow!(
         "Timeout waiting for DAG round {} to complete",
-        round - 1
+        prev_round
     ))
 }
+
 
 
 
