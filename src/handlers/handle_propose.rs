@@ -1,5 +1,6 @@
 use std::sync::Arc;
 use base64::{ engine::general_purpose, Engine };
+use reqwest::Client;
 use tokio::sync::{Mutex, RwLock};
 use tracing::{ error, info };
 use crate::{
@@ -41,6 +42,7 @@ use crate::{
 // - This function `handle_propose` is called when a proposal message is received.
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
+    client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
@@ -57,16 +59,21 @@ pub async fn handle_propose(
         );
 
         // 🔹 Step 8: Check if we already received a proposal from this node
-        let proposal_tracker = node_guard.proposal_tracker.lock().await;
-        if let Some(round_proposals) = proposal_tracker.get(&round_id) {
-            if round_proposals.contains_key(&propose_request.base.proposing_node_id) {
-                info!(
-                    "Node {}: Already received propose for round {} from Node {}. Terminating.",
-                    node_id, round_id, propose_request.base.proposing_node_id
-                );
-                return Ok(()); // ✅ Step 8 fulfilled
-            }
+        let duplicate = {
+            let proposal_tracker = node_guard.proposal_tracker.lock().await;
+            proposal_tracker.get(&round_id)
+                .map(|round_proposals| round_proposals.contains_key(&propose_request.base.proposing_node_id))
+                .unwrap_or(false) 
+        }; // 🔥 Lock is dropped here
+        
+        if duplicate {
+            info!(
+                "Node {}: Already received propose for round {} from Node {}. Terminating.",
+                node_id, round_id, propose_request.base.proposing_node_id
+            );
+            return Ok(()); // ✅ Step 8 fulfilled
         }
+        
     }
 
     // 🔹 Step 9: Decode shards and validate their size
@@ -135,40 +142,45 @@ pub async fn handle_propose(
             }
         };
         info!("Node {}:Created PrevoteRequest with aggregated data", node_id);
-        // 🔹 Multicast the prevote to all other nodes
-        let node_guard = node.lock().await;
-        let node_ip = &node_guard.ip_address;
-        info!("Node {}:Multicasting prevote to all nodes...", node_id);
-        for target_node in &node_guard.nodes {
-            // Skip self
+
+        let (node_ip, node_list) = {
+            let node_guard = node.lock().await;
+            (node_guard.ip_address.clone(), node_guard.nodes.clone()) // Clone and drop lock early
+        };
+        
+        info!("Node {}: Multicasting prevote to all nodes...", node_id);
+        for target_node in node_list {  // Now we don't hold the lock
             if target_node != node_ip {
-                info!("Node {}:Sending prevote to {}", node_id, target_node);
                 let target_url = format!("http://{}/prevote", target_node);
-                info!("Node {}:Sending prevote to {}", node_id, target_url);
-                let client = reqwest::Client::new();
-                info!("after reqwest client");
-                match client.post(&target_url)
-                    .json(&prevote_request)
-                    .send()
-                    .await
-                {
-                    Ok(response) => {
-                        if response.status().is_success() {
+                info!("Node {}: Sending prevote to {}", node_id, target_url);
+        
+                let client_clone = client.clone();
+                let prevote_request_clone = prevote_request.clone();
+                
+                tokio::spawn(async move {
+                    match client_clone.post(&target_url)
+                        .json(&prevote_request_clone)
+                        .send()
+                        .await
+                    {
+                        Ok(response) if response.status().is_success() => {
                             info!("Node {}: Successfully sent prevote to {}", node_id, target_url);
-                        } else {
+                        }
+                        Ok(response) => {
                             error!("Node {}: Failed to send prevote to {}. Status: {}", node_id, target_url, response.status());
                         }
-                    },
-                    Err(e) => {
-                        error!("Node {}: Network error while sending prevote to {}: {:?}", node_id, target_url, e);
+                        Err(e) => {
+                            error!("Node {}: Network error while sending prevote to {}: {:?}", node_id, target_url, e);
+                        }
                     }
-                }
+                });
             }
         }
+        
 
         // 🔹 Step 11 (continued): Also handle the prevote locally
         info!("Node {}: Handling prevote locally.", node_id);
-        handle_prevote(node.clone(), prevote_request).await.map_err(|e| {
+        handle_prevote(node.clone(), client, prevote_request).await.map_err(|e| {
             error!(
                 "Node {}: Failed to handle aggregated prevote for round {}. Error: {:?}",
                 node_id, round_id, e

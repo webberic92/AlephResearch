@@ -5,7 +5,7 @@ use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tracing::{error, info};
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use crate::{
     handlers::handle_prevote::handle_prevote,
     structs::{ node::Node, requests::{ BaseRequest, PrevoteRequest, ProposeRequest } },
@@ -35,13 +35,12 @@ use crate::{
    - The proposals are sent asynchronously using `reqwest::Client::post`.
 */
 pub async fn send_proposals(
-    client: &Client,
+    client: Arc<Client>,  // ✅ Changed to Arc<Client>
     node: Arc<Mutex<Node>>,
     shards: &[Vec<u8>],
     merkle_root: &[u8],
     parent_units: Vec<String>,
-)  -> Result<(), anyhow::Error> {
-
+) -> Result<(), anyhow::Error> {
     let round;
     let node_id;
     let nodes;
@@ -105,9 +104,9 @@ pub async fn send_proposals(
 
     // Step 6: Send `propose(h, b_j, s_j)` to all nodes
     let futures: Vec<_> = nodes.iter().map(|node_url| {
-        let client = client.clone();
         let propose_request = propose_request.clone();
         let node_url = node_url.clone();
+        let client = client.clone(); // ✅ Clone client for each async call
 
         async move {
             info!(
@@ -160,7 +159,7 @@ pub async fn send_proposals(
         info!("Successfully sent all proposals for round {}.", round);
 
         let update_result = {
-            let node_clone = node.clone(); // Clone the Arc here
+            let node_clone = node.clone();
             Node::update_proposal_tracker(node_clone, propose_request.clone()).await
         };
 
@@ -189,7 +188,7 @@ pub async fn send_proposals(
                             },
                         };
 
-                        if let Err(e) = handle_prevote(node.clone(), prevote_request).await {
+                        if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
                             error!(
                                 "Node {}: Failed to handle prevote. Error: {:?}",
                                 propose_request.base.proposing_node_id,
@@ -200,7 +199,7 @@ pub async fn send_proposals(
 
                     // Clear proposal tracker after processing
                     {
-                        let mut node_guard = node.lock().await;
+                        let node_guard = node.lock().await;
                         node_guard.proposal_tracker.lock().await.clear();
                     }
                 }
@@ -219,5 +218,3 @@ pub async fn send_proposals(
         Err(anyhow::anyhow!("One or more proposals failed."))
     }
 }
-
-
