@@ -19,12 +19,14 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
     Router::new()
     .route("/propose", post({
         let node = node.clone();
+        let client = client.clone();
         move |Json(payload): Json<Value>| {
             let node = node.clone();
+            let client = client.clone();
             async move {
                 match serde_json::from_value::<ProposeRequest>(payload) {
                     Ok(parsed_payload) => {
-                        match handle_propose(node, parsed_payload).await {
+                        match handle_propose(node, client, parsed_payload).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {
@@ -54,14 +56,15 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
         }
     }))
     .route("/prevote", post({
-        info!("*** PREVOTE API ***");
         let node = node.clone();
+        let client = client.clone();
         move |Json(payload): Json<Value>| {
             let node = node.clone();
+            let client = client.clone();
             async move {
                 match serde_json::from_value::<PrevoteRequest>(payload) {
                     Ok(parsed_payload) => {
-                        match handle_prevote(node, parsed_payload).await {
+                        match handle_prevote(node, client,parsed_payload).await {
                             Ok(_) => (
                                 StatusCode::OK,
                                 Json(Response {

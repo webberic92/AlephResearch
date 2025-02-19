@@ -2,6 +2,7 @@ use std::{
     collections::HashMap,
     sync::Arc,
 };
+use reqwest::Client;
 use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex};
 use tracing::{error, info};
 use crate::handlers::handle_propose::handle_propose;
@@ -26,10 +27,10 @@ pub struct Node {
     pub data_shards: usize,
     pub total_rounds: usize,
     pub commit_tracker: Arc<Mutex<std::collections::HashSet<String>>>, 
+    pub client: Arc<Client>,
 }
 
 impl Node {
-    /// **🔹 Node Constructor: Initializes a new node and starts processing proposals asynchronously.**
     pub fn new(
         id: usize,
         total_nodes: usize,
@@ -40,6 +41,7 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
+        client: Arc<Client>, // ✅ Pass client
     ) -> Arc<Mutex<Self>> {
         let (proposal_sender, proposal_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -48,8 +50,8 @@ impl Node {
             ip_address,
             ip_manager_address,
             quorum_votes: Arc::new(Mutex::new(HashMap::new())),
-            current_round: Arc::new(Mutex::new(1)), // Start at epoch 1
-            proposal_tracker: Arc::new(Mutex::new(HashMap::new())), // Use HashMap for proposal storage
+            current_round: Arc::new(Mutex::new(1)),
+            proposal_tracker: Arc::new(Mutex::new(HashMap::new())),
             dag: Arc::new(Mutex::new(HashMap::new())),
             nodes,
             proposal_sender,
@@ -58,17 +60,17 @@ impl Node {
             data_shards,
             total_rounds,
             commit_tracker: Arc::new(Mutex::new(std::collections::HashSet::new())),
-            
+            client: client.clone(), // ✅ Store client instance
         }));
-
-        // Spawn a background task to process proposals
+    
         let node_clone = Arc::clone(&node);
         tokio::spawn(async move {
             Node::process_proposals(node_clone, proposal_receiver).await;
         });
-
+    
         node
     }
+    
 
     /// **🔹 Asynchronous Proposal Processing**
     /// - Processes proposals as they arrive via the message queue.
@@ -77,17 +79,18 @@ impl Node {
         mut receiver: Receiver<ProposeRequest>,
     ) {
         while let Some(propose_request) = receiver.recv().await {
-            let node_guard = node.lock().await;
+            let (node_id, client) = {
+                let node_guard = node.lock().await;
+                (node_guard.id, node_guard.client.clone()) // ✅ Retrieve client
+            };
+    
             info!(
                 "Node {}: Processing queued proposal for round {} from node {}",
-                node_guard.id, propose_request.base.round_id, propose_request.base.proposing_node_id
+                node_id, propose_request.base.round_id, propose_request.base.proposing_node_id
             );
-
-            // Unlock node before calling handle_propose to prevent deadlocks
-            drop(node_guard);
-            if let Err(err) = handle_propose(node.clone(), propose_request).await {
-                let node_guard = node.lock().await;
-                error!("Node {}: Failed to process proposal: {:?}", node_guard.id, err);
+    
+            if let Err(err) = handle_propose(node.clone(), client.clone(), propose_request).await {
+                error!("Node {}: Failed to process proposal: {:?}", node_id, err);
             }
         }
     }

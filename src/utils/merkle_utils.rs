@@ -1,9 +1,9 @@
-use base64::Engine;
+use base64::{engine::general_purpose, Engine};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tracing::{ error, info};
 
-use crate::structs::dag::ReconstructedUnit;
+use crate::structs::{dag::ReconstructedUnit, requests::{DagUnit, Transaction}};
 
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
@@ -118,44 +118,42 @@ pub fn validate_merkle_branch(
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
     round_id: u64,
-    parent_hashes: Vec<String>, // ✅ Unit IDs as strings, NOT Base64-encoded hashes
-) -> Result<ReconstructedUnit, String> {
+    parent_units: Vec<String>, // ✅ Already stored as parent unit IDs
+    proposer_node: usize, // ✅ We need to pass the proposing node ID
+) -> Result<DagUnit, String> {
     if shards.is_empty() {
         return Err("Reconstruction failed: shards are empty".to_string());
     }
 
-    // Compute the hashes of the individual shards
+    // Compute the Merkle root using shard hashes
     let shard_hashes: Vec<Vec<u8>> = shards.iter()
         .map(|shard| Sha256::digest(shard).to_vec())
         .collect();
-    // info!("shard_hashes : {:?}", shard_hashes);
 
-    // Compute the Merkle root using shard hashes
-    let root = compute_merkle_root(&shard_hashes);
-    info!("root : {:?}", root);
+    let merkle_root = compute_merkle_root(&shard_hashes);
+    info!("Computed Merkle root for reconstructed unit: {:?}", merkle_root);
 
-    // info!(
-    //     "Reconstructing unit: Concatenated data = {:?}, Computed root = {:?}",
-    //     shards.concat(),
-    //     root
-    // );
+    // Generate a unique unit ID for the reconstructed unit
+    let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    // ✅ **Fix: Convert parent unit IDs into raw bytes**
-    let parents: Vec<Vec<u8>> = parent_hashes
-        .iter()
-        .map(|parent| parent.as_bytes().to_vec()) // ✅ Convert directly to bytes (No Base64 decoding)
-        .collect();
+    // Convert shards into transactions
+    let transactions: Vec<Transaction> = shards.iter().enumerate().map(|(i, shard)| Transaction {
+        tx_id: format!("{}-{}", unit_id, i),
+        data: shard.clone(),
+    }).collect();
 
-    info!("Reconstructed parents: {:?}", parents);
-    // info!("Reconstructed parents successfully");
-
-    Ok(ReconstructedUnit {
-        data: shards.concat(),
-        root,
-        parents,
-        round_id,
+    // Create the DagUnit object
+    Ok(DagUnit {
+        unit_id,
+        proposer_node,
+        round: round_id,
+        transactions,
+        parent_units,
+        merkle_root: general_purpose::STANDARD.encode(&merkle_root), // ✅ Ensure Merkle root is encoded
+        finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }
+
 
 
 
