@@ -115,6 +115,21 @@ pub fn validate_merkle_branch(
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 pub fn reconstruct_unit(
     shards: &[Vec<u8>],
     round_id: u64,
@@ -149,7 +164,7 @@ pub fn reconstruct_unit(
         round: round_id,
         transactions,
         parent_units,
-        merkle_root: general_purpose::STANDARD.encode(&merkle_root), // ✅ Ensure Merkle root is encoded
+        merkle_root, // ✅ Ensure Merkle root is encoded
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }

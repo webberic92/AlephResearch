@@ -58,6 +58,10 @@ pub async fn handle_propose(
             node_id, round_id, propose_request.base.proposing_node_id
         );
 
+        info!(
+            "Node {}: Received PROPOSE request {:?} ",
+            node_id, propose_request
+        );
         // 🔹 Step 8: Check if we already received a proposal from this node
         let duplicate = {
             let proposal_tracker = node_guard.proposal_tracker.lock().await;
@@ -78,11 +82,12 @@ pub async fn handle_propose(
 
     // 🔹 Step 9: Decode shards and validate their size
     let decoded_shards: Vec<Vec<u8>> = propose_request.shards
-        .iter()
-        .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-        .collect::<Result<Vec<Vec<u8>>, _>>()
-        .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
+    .iter()
+    .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
+    .collect::<Result<Vec<Vec<u8>>, _>>()
+    .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
+        info!("handle proposal Decoded shards: {:?}", decoded_shards);
     let (number_of_transactions, transaction_size);
     {
         let node_guard = node.lock().await;
@@ -116,32 +121,15 @@ pub async fn handle_propose(
             node_id, stored_proposals.len()
         );
 
-        let mut aggregated_shards = Vec::new();
-        let mut aggregated_proofs = Vec::new();
-        let mut aggregated_parents = Vec::new();
-        info!("Node {}:Attempting to Aggregate prevote data...", node_id);
-        // 🔹 Aggregate all proposals
-        for proposal in stored_proposals {
-            aggregated_shards.extend(proposal.shards.clone());
-            aggregated_proofs.extend(proposal.proofs.clone());
-            aggregated_parents.extend(proposal.parents.clone());
-        }
-        info!("Node {}:Finsihed Aggregate prevote data...", node_id);
-
-        // 🔹 Prepare the `PrevoteRequest`
+        // ✅ Collect all proposals individually instead of aggregating them
         let prevote_request = {
             let node_guard = node.lock().await;
             PrevoteRequest {
-                propose: ProposeRequest {
-                    base: propose_request.base.clone(),
-                    shards: aggregated_shards.clone(),
-                    proofs: aggregated_proofs.clone(),
-                    parents: aggregated_parents.clone(),
-                },
+                proposals: stored_proposals.clone(),  // ✅ Send as a list, not merged
                 sender_url: node_guard.ip_address.clone(),
             }
         };
-        info!("Node {}:Created PrevoteRequest with aggregated data", node_id);
+        info!("Node {}:Created PrevoteRequest with data {:?} ", node_id, prevote_request);
 
         let (node_ip, node_list) = {
             let node_guard = node.lock().await;

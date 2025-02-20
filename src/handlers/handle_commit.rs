@@ -19,7 +19,7 @@ pub async fn handle_commit(
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     let node_id;
-    let round_id = commit_request.base.round_id;
+    let round_id = commit_request.round_id;
 
     {
         let node_guard = node.lock().await;
@@ -43,7 +43,7 @@ pub async fn handle_commit(
 
         // Step 23: Check if commit has already been sent
         let mut commit_tracker = node_guard.commit_tracker.lock().await;
-        let commit_key = format!("{}-{}", commit_request.base.proposing_node_id, round_id);
+        let commit_key = format!("{}-{}", commit_request.proposing_node_id, round_id);
         if commit_tracker.contains(&commit_key) {
             info!("Node {}: Commit message for round {} already sent.", node_id, round_id);
             return Ok(());
