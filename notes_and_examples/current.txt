@@ -1,210 +1,63 @@
-what is problem here seems like adead lock some where
-
-
-
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.158.38
-Node registration success.
-IP Manager not ready, retrying...
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.154.242:30333", "10.0.175.51:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.186.191"
-ip_address = "10.0.158.38"
-nodes = ["10.0.154.242:30333", "10.0.175.51:30333"]
+sh-4.2$ cat  /home/aleph-node/logs/node_status
+PRIVATE_IP = 10.0.177.187Node registration success.IP Manager is reachable and all nodes are ready.Retrieved all nodes for nodes (excluding self): "10.0.158.230:30333", "10.0.191.44:30333"[network]listen_address = "0.0.0.0:30333"ip_manager_address = "10.0.146.145"ip_address = "10.0.177.187"nodes = ["10.0.158.230:30333", "10.0.191.44:30333"]
 total_nodes = 3
-
-[consensus]
-number_of_transactions = 5
+[consensus]number_of_transactions = 2
 transaction_size = 256 # bytes
 data_shards = 4 # Number of data shards for erasure coding
 total_rounds = 1 # Number of rounds
 
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 1
-Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute aleph_rbc with configuration
-Waiting for aleph_rbc to be ready on port 30333
+[logging]level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"[node]id = 1Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbcConfiguration file found at /home/aleph-node/aleph-node-config.tomlAttempting to execute aleph_rbc with configurationWaiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-02-18T04:01:54.941399Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-02-18T04:01:54.941399Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-02-20T02:12:03.012875Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-02-20T02:12:03.012875Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-02-20T02:12:03.854639Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Handling PROPOSE request for round 1 from Node 2 ==============2025-02-20T02:12:03.854668Z  INFO aleph_research::handlers::handle_propose: Node 1: Received PROPOSE request: ProposeRequest { base: BaseRequest { proposing_node_id: 2, round_id: 1 }, transactions: [Transaction { root: [161, 84, 83, 205, 243, 6, 118, 230, 204, 148, 114, 1, 35, 80, 21, 84, 53, 6, 137, 144, 44, 159, 49, 35, 186, 10, 227, 209, 41, 74, 123, 2], proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="] }, Transaction { root: [161, 84, 83, 205, 243, 6, 118, 230, 204, 148, 114, 1, 35, 80, 21, 84, 53, 6, 137, 144, 44, 159, 49, 35, 186, 10, 227, 209, 41, 74, 123, 2], proofs: [["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="], ["+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60="]], shards: ["AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg==", "AgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAg=="] }], parents: [] }2025-02-20T02:12:03.854713Z  INFO aleph_research::handlers::handle_propose: handle proposal Decoded shards: [[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]
+2025-02-20T02:12:03.854746Z  INFO aleph_research::handlers::handle_propose: handle proposal Decoded shards: [[2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2], [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]]
+2025-02-20T02:12:03.854835Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
+2025-02-20T02:12:03.854842Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
+2025-02-20T02:12:03.854847Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-20T02:12:03.854858Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
+2025-02-20T02:12:03.854877Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 1/3
+2025-02-20T02:12:03.854885Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1 has 1 proposals (threshold: 3).
+2025-02-20T02:12:03.854928Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Proposal successfully handled for round 1 from sender 2 ==============
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
 Done with aleph_rbc loop for node 1
-2025-02-18T04:01:57.755789Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling PROPOSE request for round 1 from Node 2
-2025-02-18T04:01:57.755822Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
-2025-02-18T04:01:57.755827Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
-2025-02-18T04:01:57.755831Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:01:57.755845Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.755884Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 1/3
-2025-02-18T04:01:57.755892Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1 has 1 proposals (threshold: 3).
-2025-02-18T04:01:57.755896Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal successfully handled for round 1 from sender 2
-2025-02-18T04:01:57.943298Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-18T04:01:57.945288Z  INFO aleph_research::utils::start_util: All nodes are healthy.
-2025-02-18T04:01:57.945303Z  INFO aleph_rbc: Node: Starting round 1 of 1
-2025-02-18T04:01:57.945307Z  INFO aleph_rbc: Node 1: DAG ready. Proceeding to round 1 proposal dispatch.
-2025-02-18T04:01:57.945310Z  INFO aleph_rbc: Node: Creating transaction data for round 1...
-2025-02-18T04:01:57.945314Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 5 transactions with 4 shards and a transaction size of 256
-2025-02-18T04:01:57.945376Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 5 transactions, Parent Units = [] for round 1
-2025-02-18T04:01:57.945381Z  INFO aleph_research::utils::create_transaction_data: Created transaction parents: []
-2025-02-18T04:01:57.945388Z  INFO aleph_rbc: Node: Transaction data created for round 1.
-2025-02-18T04:01:57.945391Z  INFO aleph_rbc: Node 1: Sending proposals for round 1...
-2025-02-18T04:01:57.945401Z  INFO aleph_research::requests::send_proposals: Node 1: Preparing to send proposals for round 1 to nodes: ["10.0.154.242:30333", "10.0.175.51:30333"]
-2025-02-18T04:01:57.945968Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.154.242:30333 for round 1
-2025-02-18T04:01:57.946054Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.175.51:30333 for round 1
-2025-02-18T04:01:57.947029Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.175.51:30333 (round 1).
-2025-02-18T04:01:57.947145Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.154.242:30333 (round 1).
-2025-02-18T04:01:57.947166Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
-2025-02-18T04:01:57.947211Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.947273Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 2/3
-2025-02-18T04:01:57.947283Z  INFO aleph_research::requests::send_proposals: Node 1: Proposal tracker updated. Proposals: 2/3
-2025-02-18T04:01:57.947309Z  INFO aleph_rbc: Node 1: Proposals for round 1 sent successfully.
-2025-02-18T04:01:57.947315Z  INFO aleph_rbc: Node: All rounds completed successfully.
-2025-02-18T04:02:00.440979Z  INFO aleph_research::handlers::handle_propose: Node 1: Handling PROPOSE request for round 1 from Node 3
-2025-02-18T04:02:00.441013Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
-2025-02-18T04:02:00.441017Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
-2025-02-18T04:02:00.441021Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:02:00.441036Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-18T04:02:00.441086Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 3/3
-2025-02-18T04:02:00.441094Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1 has 3 proposals (threshold: 3).
-2025-02-18T04:02:00.441099Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal quorum met. Aggregating and multicasting prevote for 3 proposals.
-2025-02-18T04:02:00.441102Z  INFO aleph_research::handlers::handle_propose: Node 1:Attempting to Aggregate prevote data...
-2025-02-18T04:02:00.441143Z  INFO aleph_research::handlers::handle_propose: Node 1:Finsihed Aggregate prevote data...
-2025-02-18T04:02:00.441184Z  INFO aleph_research::handlers::handle_propose: Node 1:Created PrevoteRequest with aggregated data
-2025-02-18T04:02:00.441187Z  INFO aleph_research::handlers::handle_propose: Node 1:Multicasting prevote to all nodes...
-2025-02-18T04:02:00.441190Z  INFO aleph_research::handlers::handle_propose: Node 1:Sending prevote to 10.0.154.242:30333
-
-node]
-id = 3
-Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute aleph_rbc with configuration
-Waiting for aleph_rbc to be ready on port 30333
-aleph_rbc not ready, retrying...
-2025-02-18T04:01:54.431836Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-02-18T04:01:54.431833Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-aleph_rbc APIs are ready.
-Waiting for aleph_rbc API readiness...
-aleph_rbc API is ready.
-Done with aleph_rbc loop for node 3
-2025-02-18T04:01:57.433636Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-18T04:01:57.758134Z  INFO aleph_research::handlers::handle_propose: Node 3: Handling PROPOSE request for round 1 from Node 2
-2025-02-18T04:01:57.758168Z  INFO aleph_research::utils::dag_utils: Node 3: Ensuring DAG synchronization for round 1...
-2025-02-18T04:01:57.758173Z  INFO aleph_research::utils::dag_utils: Node 3: DAG latest round: 0, Target round: 1
-2025-02-18T04:01:57.758176Z  INFO aleph_research::utils::dag_utils: Node 3: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:01:57.758191Z  INFO aleph_research::structs::node: Node 3: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.758231Z  INFO aleph_research::structs::node: Node 3: Added proposal for round 1. Count: 1/3
-2025-02-18T04:01:57.758239Z  INFO aleph_research::handlers::handle_propose: Node 3: Current Proposal Tracker for round 1 has 1 proposals (threshold: 3).
-2025-02-18T04:01:57.758243Z  INFO aleph_research::handlers::handle_propose: Node 3: Proposal successfully handled for round 1 from sender 2
-2025-02-18T04:01:57.946630Z  INFO aleph_research::handlers::handle_propose: Node 3: Handling PROPOSE request for round 1 from Node 1
-2025-02-18T04:01:57.946673Z  INFO aleph_research::utils::dag_utils: Node 3: Ensuring DAG synchronization for round 1...
-2025-02-18T04:01:57.946680Z  INFO aleph_research::utils::dag_utils: Node 3: DAG latest round: 0, Target round: 1
-2025-02-18T04:01:57.946685Z  INFO aleph_research::utils::dag_utils: Node 3: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:01:57.946706Z  INFO aleph_research::structs::node: Node 3: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.946770Z  INFO aleph_research::structs::node: Node 3: Added proposal for round 1. Count: 2/3
-2025-02-18T04:01:57.946784Z  INFO aleph_research::handlers::handle_propose: Node 3: Current Proposal Tracker for round 1 has 2 proposals (threshold: 3).
-2025-02-18T04:01:57.946789Z  INFO aleph_research::handlers::handle_propose: Node 3: Proposal successfully handled for round 1 from sender 1
-2025-02-18T04:02:00.435489Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-18T04:02:00.436847Z  INFO aleph_research::utils::start_util: All nodes are healthy.
-2025-02-18T04:02:00.436871Z  INFO aleph_rbc: Node: Starting round 1 of 1
-2025-02-18T04:02:00.436877Z  INFO aleph_rbc: Node 3: DAG ready. Proceeding to round 1 proposal dispatch.
-2025-02-18T04:02:00.436882Z  INFO aleph_rbc: Node: Creating transaction data for round 1...
-2025-02-18T04:02:00.436886Z  INFO aleph_research::utils::create_transaction_data: Node 3: Creating 5 transactions with 4 shards and a transaction size of 256
-2025-02-18T04:02:00.436985Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 5 transactions, Parent Units = [] for round 1
-2025-02-18T04:02:00.436992Z  INFO aleph_research::utils::create_transaction_data: Created transaction parents: []
-2025-02-18T04:02:00.437003Z  INFO aleph_rbc: Node: Transaction data created for round 1.
-2025-02-18T04:02:00.437008Z  INFO aleph_rbc: Node 3: Sending proposals for round 1...
-2025-02-18T04:02:00.437014Z  INFO aleph_research::requests::send_proposals: Node 3: Preparing to send proposals for round 1 to nodes: ["10.0.154.242:30333", "10.0.158.38:30333"]
-2025-02-18T04:02:00.438310Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.154.242:30333 for round 1
-2025-02-18T04:02:00.440447Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.158.38:30333 for round 1
-sh-4.2$sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.154.242
-Node registration success.
-IP Manager not ready, retrying...
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.158.38:30333", "10.0.175.51:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.186.191"
-ip_address = "10.0.154.242"
-nodes = ["10.0.158.38:30333", "10.0.175.51:30333"]
-total_nodes = 3
-
-[consensus]
-number_of_transactions = 5
-transaction_size = 256 # bytes
-data_shards = 4 # Number of data shards for erasure coding
-total_rounds = 1 # Number of rounds
-
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 2
-Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute aleph_rbc with configuration
-Waiting for aleph_rbc to be ready on port 30333
-aleph_rbc not ready, retrying...
-2025-02-18T04:01:57.752082Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-02-18T04:01:57.752082Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-18T04:01:57.754394Z  INFO aleph_research::utils::start_util: All nodes are healthy.
-2025-02-18T04:01:57.754407Z  INFO aleph_rbc: Node: Starting round 1 of 1
-2025-02-18T04:01:57.754412Z  INFO aleph_rbc: Node 2: DAG ready. Proceeding to round 1 proposal dispatch.
-2025-02-18T04:01:57.754415Z  INFO aleph_rbc: Node: Creating transaction data for round 1...
-2025-02-18T04:01:57.754418Z  INFO aleph_research::utils::create_transaction_data: Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
-2025-02-18T04:01:57.754487Z  INFO aleph_research::utils::create_transaction_data: Creating transaction: 5 transactions, Parent Units = [] for round 1
-2025-02-18T04:01:57.754491Z  INFO aleph_research::utils::create_transaction_data: Created transaction parents: []
-2025-02-18T04:01:57.754498Z  INFO aleph_rbc: Node: Transaction data created for round 1.
-2025-02-18T04:01:57.754501Z  INFO aleph_rbc: Node 2: Sending proposals for round 1...
-2025-02-18T04:01:57.754506Z  INFO aleph_research::requests::send_proposals: Node 2: Preparing to send proposals for round 1 to nodes: ["10.0.158.38:30333", "10.0.175.51:30333"]
-2025-02-18T04:01:57.755102Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.158.38:30333 for round 1
-2025-02-18T04:01:57.755195Z  INFO aleph_research::requests::send_proposals: Node sending proposal to 10.0.175.51:30333 for round 1
-2025-02-18T04:01:57.756044Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.158.38:30333 (round 1).
-2025-02-18T04:01:57.758431Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.175.51:30333 (round 1).
-2025-02-18T04:01:57.758452Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
-2025-02-18T04:01:57.758473Z  INFO aleph_research::structs::node: Node 2: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.758523Z  INFO aleph_research::structs::node: Node 2: Added proposal for round 1. Count: 1/3
-2025-02-18T04:01:57.758532Z  INFO aleph_research::requests::send_proposals: Node 2: Proposal tracker updated. Proposals: 1/3
-2025-02-18T04:01:57.758559Z  INFO aleph_rbc: Node 2: Proposals for round 1 sent successfully.
-2025-02-18T04:01:57.758571Z  INFO aleph_rbc: Node: All rounds completed successfully.
-2025-02-18T04:01:57.946681Z  INFO aleph_research::handlers::handle_propose: Node 2: Handling PROPOSE request for round 1 from Node 1
-2025-02-18T04:01:57.946711Z  INFO aleph_research::utils::dag_utils: Node 2: Ensuring DAG synchronization for round 1...
-2025-02-18T04:01:57.946715Z  INFO aleph_research::utils::dag_utils: Node 2: DAG latest round: 0, Target round: 1
-2025-02-18T04:01:57.946719Z  INFO aleph_research::utils::dag_utils: Node 2: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:01:57.946733Z  INFO aleph_research::structs::node: Node 2: Updating proposal tracker for round 1...
-2025-02-18T04:01:57.946776Z  INFO aleph_research::structs::node: Node 2: Added proposal for round 1. Count: 2/3
-2025-02-18T04:01:57.946784Z  INFO aleph_research::handlers::handle_propose: Node 2: Current Proposal Tracker for round 1 has 2 proposals (threshold: 3).
-2025-02-18T04:01:57.946787Z  INFO aleph_research::handlers::handle_propose: Node 2: Proposal successfully handled for round 1 from sender 1
-aleph_rbc APIs are ready.
-Waiting for aleph_rbc API readiness...
-aleph_rbc API is ready.
-Done with aleph_rbc loop for node 2
-2025-02-18T04:02:00.441028Z  INFO aleph_research::handlers::handle_propose: Node 2: Handling PROPOSE request for round 1 from Node 3
-2025-02-18T04:02:00.441060Z  INFO aleph_research::utils::dag_utils: Node 2: Ensuring DAG synchronization for round 1...
-2025-02-18T04:02:00.441065Z  INFO aleph_research::utils::dag_utils: Node 2: DAG latest round: 0, Target round: 1
-2025-02-18T04:02:00.441068Z  INFO aleph_research::utils::dag_utils: Node 2: First round detected (round 1). Skipping DAG sync check.
-2025-02-18T04:02:00.441083Z  INFO aleph_research::structs::node: Node 2: Updating proposal tracker for round 1...
-2025-02-18T04:02:00.441149Z  INFO aleph_research::structs::node: Node 2: Added proposal for round 1. Count: 3/3
-2025-02-18T04:02:00.441157Z  INFO aleph_research::handlers::handle_propose: Node 2: Current Proposal Tracker for round 1 has 3 proposals (threshold: 3).
-2025-02-18T04:02:00.441161Z  INFO aleph_research::handlers::handle_propose: Node 2: Proposal quorum met. Aggregating and multicasting prevote for 3 proposals.
-2025-02-18T04:02:00.441164Z  INFO aleph_research::handlers::handle_propose: Node 2:Attempting to Aggregate prevote data...
-2025-02-18T04:02:00.441207Z  INFO aleph_research::handlers::handle_propose: Node 2:Finsihed Aggregate prevote data...
-2025-02-18T04:02:00.441248Z  INFO aleph_research::handlers::handle_propose: Node 2:Created PrevoteRequest with aggregated data
-2025-02-18T04:02:00.441251Z  INFO aleph_research::handlers::handle_propose: Node 2:Multicasting prevote to all nodes...
-2025-02-18T04:02:00.441254Z  INFO aleph_research::handlers::handle_propose: Node 2:Sending prevote to 10.0.158.38:30333
-
-
+2025-02-20T02:12:06.006961Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Handling PROPOSE request for round 1 from Node 3 ==============
+2025-02-20T02:12:06.006990Z  INFO aleph_research::handlers::handle_propose: Node 1: Received PROPOSE request: ProposeRequest { base: BaseRequest { proposing_node_id: 3, round_id: 1 }, transactions: [Transaction { root: [233, 131, 95, 19, 253, 102, 161, 109, 43, 248, 200, 240, 164, 43, 91, 45, 123, 149, 37, 204, 48, 1, 29, 222, 22, 51, 209, 153, 61, 177, 144, 100], proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="] }, Transaction { root: [233, 131, 95, 19, 253, 102, 161, 109, 43, 248, 200, 240, 164, 43, 91, 45, 123, 149, 37, 204, 48, 1, 29, 222, 22, 51, 209, 153, 61, 177, 144, 100], proofs: [["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="], ["aqVsS80giRF5KtJMdoH++5O+1RkDr8VIYMm9N+QeWjE="]], shards: ["AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw==", "AwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAw=="] }], parents: [] }
+2025-02-20T02:12:06.007019Z  INFO aleph_research::handlers::handle_propose: handle proposal Decoded shards: [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]]
+2025-02-20T02:12:06.007059Z  INFO aleph_research::handlers::handle_propose: handle proposal Decoded shards: [[3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3], [3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3,3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]]
+2025-02-20T02:12:06.007088Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
+2025-02-20T02:12:06.007094Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
+2025-02-20T02:12:06.007099Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
+2025-02-20T02:12:06.007110Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
+2025-02-20T02:12:06.007179Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 2/3
+2025-02-20T02:12:06.007190Z  INFO aleph_research::handlers::handle_propose: Node 1: Current Proposal Tracker for round 1 has 2 proposals (threshold: 3).
+2025-02-20T02:12:06.007195Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Proposal successfully handled for round 1 from sender 3 ==============
+2025-02-20T02:12:06.017437Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
+2025-02-20T02:12:06.018390Z  INFO aleph_research::utils::start_util: All nodes are healthy.
+2025-02-20T02:12:06.018411Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a transaction size of 256
+2025-02-20T02:12:06.018465Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 2 transactions, Parent Units = [] for round 1
+2025-02-20T02:12:06.018472Z  INFO aleph_rbc: Node 1: Created proposal with 2 transactions for round 1.
+2025-02-20T02:12:06.018478Z  INFO aleph_rbc: Node 1: Sending proposal for round 1...
+2025-02-20T02:12:06.018483Z  INFO aleph_research::requests::send_proposals: Node 1: Preparing to send a proposal with 2 transactions for round 1 to nodes: ["10.0.158.230:30333", "10.0.191.44:30333"]
+2025-02-20T02:12:06.018507Z  INFO aleph_research::requests::send_proposals: Node 1 sending proposal to 10.0.158.230:30333 for round 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, round_id: 1 }, transactions: [Transaction { root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33], proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="]], shards:["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="] }, Transaction { root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33], proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="] }], parents: [] }
+2025-02-20T02:12:06.018596Z  INFO aleph_research::requests::send_proposals: Node 1 sending proposal to 10.0.191.44:30333 for round 1: ProposeRequest { base: BaseRequest { proposing_node_id: 1, round_id:1 }, transactions: [Transaction { root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33], proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="] }, Transaction { root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33], proofs: [["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="], ["fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U="]], shards: ["AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQ=="] }], parents: [] }
+2025-02-20T02:12:06.019438Z ERROR aleph_research::requests::send_proposals: Proposal failed for 10.0.158.230:30333. Status: 500 Internal Server Error. Response: {"status":"Failed to handle proposal: \"Aggregated prevote phase failed: \\\"Node 2: Merkle root mismatch for shard 0\\\"\""}
+2025-02-20T02:12:06.019592Z ERROR aleph_research::requests::send_proposals: Proposal failed for 10.0.191.44:30333. Status: 500 Internal Server Error. Response: {"status":"Failed to handle proposal: \"Aggregated prevote phase failed: \\\"Node 3: Merkle root mismatch for shard 0\\\"\""}
+2025-02-20T02:12:06.019632Z ERROR aleph_rbc: Node 1: Failed to send proposal for round 1. Error: One or more proposals failed.
+2025-02-20T02:12:06.019639Z  INFO aleph_rbc: Node: All rounds completed successfully.
+2025-02-20T02:12:06.019842Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle_prevote: Processing 3 proposals from 10.0.158.230
+2025-02-20T02:12:06.019850Z  INFO aleph_research::handlers::handle_prevote: 🔹 Processing proposal from Node 1 for round 1
+2025-02-20T02:12:06.019855Z  INFO aleph_research::handlers::handle_prevote: 🔹 Processing transaction with Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-02-20T02:12:06.019866Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle prevote Decoded shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+2025-02-20T02:12:06.019904Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle prevote shard_hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114,121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242,142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-02-20T02:12:06.019935Z ERROR aleph_research::controllers::api_routes: Failed to handle prevote: "Node 1: Merkle root mismatch for shard 0"
+2025-02-20T02:12:06.020241Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle_prevote: Processing 3 proposals from 10.0.191.44
+2025-02-20T02:12:06.020251Z  INFO aleph_research::handlers::handle_prevote: 🔹 Processing proposal from Node 1 for round 1
+2025-02-20T02:12:06.020256Z  INFO aleph_research::handlers::handle_prevote: 🔹 Processing transaction with Merkle root: [76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]
+2025-02-20T02:12:06.020273Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle prevote Decoded shards: [[1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+2025-02-20T02:12:06.020320Z  INFO aleph_research::handlers::handle_prevote: 🔹 handle prevote shard_hashes: [[124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114,121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242, 142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245], [124, 137, 117, 225, 230, 10, 92, 131, 55, 242,142, 223, 140, 51, 195, 177, 128, 54, 11, 114, 121, 100, 74, 155, 193, 175, 60, 81, 230, 34, 11, 245]]
+2025-02-20T02:12:06.020418Z ERROR aleph_research::controllers::api_routes: Failed to handle prevote: "Node 1: Merkle root mismatch for shard 0"

@@ -11,7 +11,6 @@ use tracing_subscriber;
 use aleph_research::utils::config_util::load_config;
 use aleph_research::structs::node::Node;
 use anyhow::Result;
-use aleph_research::structs::requests::ProposeRequest;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -38,7 +37,6 @@ async fn main() -> Result<()> {
     
     // ✅ **Pass node directly without extra wrapping**
     let app = initialize_apis(node.clone(), client.clone());  // ✅ FIXED
-    wait_for_all_nodes_health(&client, node.clone()).await?;  // ✅ FIXED
 
     // ✅ **Spawn Transaction Execution Logic**
     let node_clone = node.clone();
@@ -59,6 +57,7 @@ async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
+    wait_for_all_nodes_health(&client, node.clone()).await?;  // ✅ FIXED
 
     // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
