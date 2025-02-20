@@ -5,9 +5,8 @@ use sha2::{Digest, Sha256};
 use tracing::info;
 use anyhow::{anyhow, Error};
 use crate::{
-    structs::node::Node, 
-    utils::merkle_utils::{compute_merkle_root, split_into_shards, validate_shard_sizes},
-    structs::requests::{BaseRequest, ProposeRequest, Transaction}
+    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
+    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, split_into_shards, validate_shard_sizes}
 };
 
 pub async fn create_transaction_data(
@@ -38,21 +37,29 @@ pub async fn create_transaction_data(
         let transaction_data = vec![node_id as u8; transaction_size]; // ✅ Convert here safely
         let shards = split_into_shards(&transaction_data, data_shards);
 
-        let merkle_proofs: Vec<Vec<u8>> = shards.iter()
-            .map(|shard| Sha256::digest(shard).to_vec())
+        let shard_hashes: Vec<Vec<u8>> = shards.iter()
+            .map(|shard| Sha256::digest(shard).to_vec())  // ✅ Hash each shard
             .collect();
         
+        let merkle_root = compute_merkle_root(&shard_hashes); // ✅ Compute root from hashed shards
+
+        let proofs: Vec<Vec<Vec<u8>>> = shard_hashes
+        .iter()
+        .enumerate()
+        .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))  // ✅ Generate correct Merkle proof
+        .collect();
+
         validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
 
         let encoded_shards: Vec<String> = shards.iter()
             .map(|s| base64::engine::general_purpose::STANDARD.encode(s))
             .collect();
 
-        let encoded_proofs: Vec<Vec<String>> = merkle_proofs.iter()
-            .map(|proof| vec![base64::engine::general_purpose::STANDARD.encode(proof)]) 
-            .collect();
-
-        let merkle_root = compute_merkle_root(&merkle_proofs); // ✅ This is Vec<u8>
+        let encoded_proofs: Vec<Vec<String>> = proofs.iter()
+            .map(|proof| proof.iter()
+                .map(|p| base64::engine::general_purpose::STANDARD.encode(p))
+                .collect()
+            ).collect();
 
         transactions.push(Transaction {
             root: merkle_root,  
@@ -79,3 +86,4 @@ pub async fn create_transaction_data(
         parents: parent_units,
     })
 }
+

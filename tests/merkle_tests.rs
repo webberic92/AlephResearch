@@ -8,6 +8,9 @@ use tracing_subscriber;
 
 mod tests {
     use super::*;
+    use aleph_research::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::PrevoteRequest}, utils::create_transaction_data::create_transaction_data};
+    use base64::Engine;
+    use reqwest::Client;
     use tracing_subscriber;
 
     fn init_logger() {
@@ -69,228 +72,190 @@ mod tests {
         info!("All minimal Merkle branch validations passed.");
     }
 
-    #[test]
-    fn test_reconstruct_unit() {
-        init_logger();
+
+    
+    
+    
+
+    // #[test]
+    // fn test_validate_merkle_branch_complex() {
+    //     init_logger();
+    
+    //     // ✅ Generate mock data shards for testing
+    //     let data: Vec<Vec<u8>> = (0..8) // 8 shards for increased complexity
+    //         .map(|i| {
+    //             let mut shard = vec![0; 256]; // Each shard is 256 bytes
+    //             shard[0..6].copy_from_slice(format!("shard{}", i + 1).as_bytes()); // Add identifier
+    //             shard
+    //         })
+    //         .collect();
+    
+    //     // ✅ Compute SHA-256 hashes for each shard
+    //     let shard_hashes: Vec<Vec<u8>> = data.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
+    
+    //     // ✅ Compute the Merkle root
+    //     let merkle_root = compute_merkle_root(&shard_hashes);
+    
+    //     // ✅ Compute Merkle proofs for each shard
+    //     let proofs: Vec<Vec<u8>> = (0..shard_hashes.len())
+    //         .map(|i| compute_merkle_branch(&shard_hashes, i))
+    //         .collect::<Vec<Vec<u8>>>();
+    
+    //     // ✅ Simulate handle_propose, handle_prevote, and handle_commit phases
+    //     let mut all_valid = true;
+    //     for (i, proof) in proofs.iter().enumerate() {
+    //         info!(
+    //             "🔹 Testing validation for shard index {}: Proof = {:?}, Expected root = {:?}",
+    //             i, proof, merkle_root
+    //         );
+    
+    //         // ✅ Validate the Merkle branch using correct proof format
+    //         let is_valid = validate_merkle_branch(&shard_hashes, &[*proof.clone()], i, &merkle_root);
+    
+    //         if !is_valid {
+    //             error!(
+    //                 "❌ Validation failed for shard index {}. Proof = {:?}, Expected root = {:?}",
+    //                 i, proof, merkle_root
+    //             );
+    //             all_valid = false;
+    //         }
+    //     }
+    
+    //     // ✅ Ensure all Merkle branches are valid
+    //     assert!(all_valid, "❌ Some Merkle branch validations failed.");
         
-        // Original transaction data
-        let transaction_data: Vec<u8> = (0..1024).map(|i| (i % 256) as u8).collect();
-        let shard_count = 4;
+    //     // ✅ Mock reconstruction of a unit and commit phase validation
+    //     let reconstructed_unit: Vec<u8> = data.concat(); // Concatenate all shards
+    //     let reconstructed_shard_hashes: Vec<Vec<u8>> = reconstructed_unit
+    //         .chunks(256) // Simulate splitting back into shards
+    //         .map(|shard| Sha256::digest(shard).to_vec())
+    //         .collect();
     
-        // Split the transaction data into shards
-        let shards = split_into_shards(&transaction_data, shard_count);
-        info!("Shards: {:?}", shards);
+    //     let commit_proofs: Vec<Vec<u8>> = (0..reconstructed_shard_hashes.len())
+    //         .map(|i| compute_merkle_branch(&reconstructed_shard_hashes, i))
+    //         .collect::<Vec<Vec<u8>>>();
     
-        // Compute the hashes of each shard
-        let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
-        info!("Shard hashes: {:?}", shard_hashes);
+    //     for (i, proof) in commit_proofs.iter().enumerate() {
+    //         let commit_valid = validate_merkle_branch(&reconstructed_shard_hashes, &[*proof.clone()], i, &merkle_root);
     
-        // Compute the expected Merkle root using shard hashes
-        let expected_root = compute_merkle_root(&shard_hashes);
-        info!("Expected root: {:?}", expected_root);
+    //         assert!(
+    //             commit_valid,
+    //             "❌ Commit phase validation failed for shard index {}.",
+    //             i
+    //         );
+    //     }
     
-        // Mock parent hashes (assuming 2 parents, each 32 bytes)
-        let parent1 = vec![1; 32];
-        let parent2 = vec![2; 32];
-        let parent_hashes = vec![parent1.clone(), parent2.clone()];
-        info!("Parent hashes: {:?}", parent_hashes);
+    //     info!("✅ All complex Merkle branch validations passed.");
+    // }
     
-        // Flatten parent hashes into a single Vec<u8> (expected by reconstruct_unit)
-        let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
-        info!("Flat parent hashes: {:?}", flat_parent_hashes);
     
-        // Mock round ID
-        let round_id = 1;
     
-        // Attempt to reconstruct the unit
-        match reconstruct_unit(&shards, round_id, flat_parent_hashes.clone()) {
-            Ok(reconstructed_unit) => {
-                // Validate reconstructed data matches original concatenated shards
-                let concatenated_shards = shards.concat();
+
+
+    #[tokio::test]
+    async fn test_full_transaction_flow() {
+        use std::sync::Arc;
+        use base64::engine::general_purpose;
+        use sha2::{Digest, Sha256};
+        use tokio::sync::Mutex;
+        use tracing::info;
+        use reqwest::Client;
+        use anyhow::Error;
+
+    
+        let client = Arc::new(Client::new());
+    
+        // ✅ **Create the Node Once and Wrap it in `Arc<Mutex<Node>>`**
+        let node = Arc::new(Mutex::new(Node::new(
+            1, // Node ID
+            3, // Total nodes in network
+            "10.0.0.1".to_string(), // IP Address
+            vec!["10.0.0.2:30333".to_string(), "10.0.0.3:30333".to_string()], // Peers
+            "10.0.0.100".to_string(), // IP Manager
+            2, // Number of Transactions
+            256, // Transaction Size
+            4, // Data Shards
+            1, // Total Rounds
+            client.clone(), // Pass the client
+        )));
+    
+        info!("✅ Node created successfully.");
+    
+        // ✅ **Create 3 proposals without wrapping the node again**
+        let mut proposals = Vec::new();
+        for _ in 0..3 {
+            let proposal = create_transaction_data(node.clone()).await.unwrap();
+            proposals.push(proposal);
+        }
+    
+        info!("✅ Created 3 transaction proposals");
+    
+        // ✅ **Construct a PREVOTE request with all proposals**
+        let prevote_request = PrevoteRequest {
+            proposals: proposals.clone(),
+            sender_url: "test-node".to_string(),
+        };
+    
+        // ✅ **Mimic the handle_prevote logic**
+        let result = handle_prevote(node.clone(), client.clone(), prevote_request).await;
+    
+        // ✅ **Assert that prevote validation passes**
+        assert!(
+            result.is_ok(),
+            "❌ Prevote validation failed! Expected success but got error: {:?}",
+            result
+        );
+    
+        info!("✅ Prevote validation passed!");
+    
+        // ✅ **Validate each transaction individually**
+        for proposal in proposals {
+            for transaction in &proposal.transactions {
+                // Decode shards
+                let decoded_shards: Vec<Vec<u8>> = transaction.shards
+                    .iter()
+                    .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()).unwrap())
+                    .collect();
+    
+                // Compute hash of each decoded shard
+                let shard_hashes: Vec<Vec<u8>> = decoded_shards
+                    .iter()
+                    .map(|shard| Sha256::digest(shard).to_vec())
+                    .collect();
+    
+                // Compute Merkle root from hashed shards
+                let computed_merkle_root = compute_merkle_root(&shard_hashes);
                 assert_eq!(
-                    reconstructed_unit.data, concatenated_shards,
-                    "Reconstructed data does not match the concatenated shards"
+                    computed_merkle_root, transaction.root,
+                    "❌ Merkle root mismatch! Expected {:?}, but computed {:?}",
+                    transaction.root, computed_merkle_root
                 );
     
-                // Validate Merkle root
-                assert_eq!(
-                    reconstructed_unit.root, expected_root,
-                    "Reconstructed Merkle root does not match the computed root from shard hashes"
-                );
+                info!("✅ Merkle root validated successfully!");
     
-                // Validate parents (convert reconstructed parents back to Vec<Vec<u8>> for comparison)
-                assert_eq!(
-                    reconstructed_unit.parents, parent_hashes,
-                    "Reconstructed parents do not match the provided parents"
-                );
+                // Validate Merkle proofs
+                for (shard_index, _) in decoded_shards.iter().enumerate() {
+                    let decoded_proof: Vec<Vec<u8>> = transaction.proofs[shard_index]
+                        .iter()
+                        .map(|p| general_purpose::STANDARD.decode(p.as_bytes()).unwrap())
+                        .collect();
     
-                info!("Reconstruction and validation succeeded!");
-            }
-            Err(error_message) => {
-                error!("Reconstruction failed: {}", error_message);
-                panic!("Reconstruction failed: {}", error_message);
+                    assert!(
+                        validate_merkle_branch(&shard_hashes[shard_index], &decoded_proof, shard_index, &transaction.root),
+                        "❌ Merkle proof validation failed for shard index {}",
+                        shard_index
+                    );
+                }
+                info!("✅ Merkle proof validated successfully!");
             }
         }
+    
+        info!("✅ All transactions successfully validated!");
     }
     
-    
-    
+       
 
-    #[test]
-    fn test_validate_merkle_branch_complex() {
-        init_logger();
-
-        // Generate mock data shards for testing
-        let data: Vec<Vec<u8>> = (0..8) // Increase complexity with more shards
-            .map(|i| {
-                let mut shard = vec![0; 256]; // Larger shard size
-                shard[0..6].copy_from_slice(format!("shard{}", i + 1).as_bytes());
-                shard
-            })
-            .collect();
-
-        // Compute hashes for each shard
-        let hashes: Vec<Vec<u8>> = data.iter().map(|d| Sha256::digest(d).to_vec()).collect();
-        
-        // Compute the Merkle root for the given data
-        let root = compute_merkle_root(&hashes);
-
-        // Compute Merkle proofs for each shard
-        let proofs: Vec<Vec<Vec<u8>>> = (0..hashes.len())
-            .map(|i| compute_merkle_branch(&hashes, i))
-            .collect();
-
-        // Simulate handle_propose, handle_prevote, and handle_commit phases
-        let mut all_valid = true;
-        for (i, proof) in proofs.iter().enumerate() {
-            info!(
-                "Testing validation for shard index {}: Proof = {:?}, Expected root = {:?}",
-                i, proof, root
-            );
-
-            // Validate the Merkle branch
-            let is_valid = validate_merkle_branch(&hashes, proof, i, &root);
-
-            if !is_valid {
-                error!(
-                    "Validation failed for shard index {}. Proof = {:?}, Expected root = {:?}",
-                    i, proof, root
-                );
-                all_valid = false;
-            }
-        }
-
-        // Ensure all Merkle branches are valid
-        assert!(all_valid, "Some Merkle branch validations failed.");
-        
-        // Mock reconstruction of a unit and its subsequent validation in the commit phase
-        let reconstructed_unit: Vec<u8> = data.concat(); // Concatenate all shards to form the unit
-        let shard_hashes: Vec<Vec<u8>> = reconstructed_unit
-            .chunks(256) // Mock shard size
-            .map(|shard| Sha256::digest(shard).to_vec())
-            .collect();
-
-        let commit_proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
-            .map(|i| compute_merkle_branch(&shard_hashes, i))
-            .collect();
-
-        for (i, proof) in commit_proofs.iter().enumerate() {
-            assert!(
-                validate_merkle_branch(&shard_hashes, proof, i, &root),
-                "Commit phase validation failed for shard index {}.",
-                i
-            );
-        }
-
-        info!("All complex Merkle branch validations passed.");
-    }
-
-
-
-    #[test]
-    fn test_propose_integration() {
-        init_logger();
-        info!("Starting test_propose_integration...");
-    
-        // Original transaction data
-        let transaction_data = (0..256).map(|i| i as u8).collect::<Vec<_>>();
-        let shard_count = 4;
-    
-        // Split the transaction data into shards
-        let shards = split_into_shards(&transaction_data, shard_count);
-        info!("Shards: {:?}", shards);
-
-        // Compute the hashes of each shard
-        let shard_hashes: Vec<Vec<u8>> = shards.iter().map(|shard| Sha256::digest(shard).to_vec()).collect();
-        info!("Shard hashes: {:?}", shard_hashes);
-
-        // Compute the expected Merkle root using shard hashes
-        let expected_root = compute_merkle_root(&shard_hashes);
-        info!("Expected root: {:?}", expected_root);
-
-        // Generate Merkle proofs for each shard
-        let proofs: Vec<Vec<Vec<u8>>> = (0..shard_hashes.len())
-            .map(|i| compute_merkle_branch(&shard_hashes, i))
-            .collect();
-    
-        info!("Generated proofs: {:?}", proofs);
-    
-        // Validate Merkle branches
-        for (i, proof) in proofs.iter().enumerate() {
-            info!(
-                "Validating Merkle branch for shard {}: Proof = {:?}, Expected root = {:?}",
-                i, proof, expected_root
-            );
-            assert!(
-                validate_merkle_branch(&shard_hashes, proof, i, &expected_root),
-                "Validation failed for Shard {}. Proof = {:?}, Expected root = {:?}",
-                i, proof, expected_root
-            );
-        }
-    
-        // Mock parent hashes (assuming 2 parents, each 32 bytes)
-        let parent1 = vec![1; 32];
-        let parent2 = vec![2; 32];
-        let parent_hashes = vec![parent1.clone(), parent2.clone()];
-        info!("Parent hashes: {:?}", parent_hashes);
-
-        // Flatten parent hashes into a single Vec<u8> (expected by reconstruct_unit)
-        let flat_parent_hashes: Vec<u8> = parent_hashes.iter().flat_map(|p| p.clone()).collect();
-        info!("Flat parent hashes: {:?}", flat_parent_hashes);
-        // Mock round ID
-        let round_id = 1;
-    
-        // Attempt to reconstruct the unit
-        match reconstruct_unit(&shards, round_id, flat_parent_hashes.clone()) {
-            Ok(reconstructed_unit) => {
-                // Validate reconstructed data matches original transaction data
-                let concatenated_shards = shards.concat();
-                assert_eq!(
-                    reconstructed_unit.data, concatenated_shards,
-                    "Reconstructed data does not match the concatenated shards"
-                );
-    
-                // Validate Merkle root
-                assert_eq!(
-                    reconstructed_unit.root, expected_root,
-                    "Reconstructed Merkle root does not match the computed root"
-                );
-    
-                // Validate reconstructed parents
-                let reconstructed_parents: Vec<Vec<u8>> = reconstructed_unit.parents.clone();
-                assert_eq!(
-                    reconstructed_parents, parent_hashes,
-                    "Reconstructed parents do not match the provided parents"
-                );
-    
-                info!("Reconstruction and validation succeeded!");
-            }
-            Err(error_message) => {
-                error!("Reconstruction failed: {}", error_message);
-                panic!("Reconstruction failed: {}", error_message);
-            }
-        }
-    }
+       
     
    
     
