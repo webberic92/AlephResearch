@@ -7,30 +7,35 @@ use crate::structs::{dag::ReconstructedUnit, requests::{DagUnit, Transaction}};
 
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
-    let mut current_level = hashes.to_vec();
-    // info!("Initial level for Merkle root computation: {:?}", current_level);
-
-    while current_level.len() > 1 {
-        current_level = current_level
-            .chunks(2)
-            .map(|pair| {
-                let mut combined = pair[0].clone();
-                if pair.len() > 1 {
-                    combined.extend(&pair[1]);
-                } else {
-                    combined.extend(vec![0; 32]); // Padding for odd-sized levels
-                }
-                Sha256::digest(&combined).to_vec()
-            })
-            .collect();
-
-        // info!("Next level of Merkle tree: {:?}", current_level);
+    if hashes.is_empty() {
+        return vec![0; 32]; // Standard default empty Merkle root
     }
 
-    let root = current_level[0].clone();
-    // info!("Computed Merkle root: {:?}", root);
-    root
+    let mut current_level = hashes.to_vec();
+    
+    while current_level.len() > 1 {
+        let mut next_level = Vec::new();
+        
+        for chunk in current_level.chunks(2) {
+            let mut combined = chunk[0].clone();
+            
+            // If odd-sized level, duplicate the last element
+            if chunk.len() > 1 {
+                combined.extend(&chunk[1]);
+            } else {
+                combined.extend(&chunk[0]); // Duplication instead of zero-padding
+            }
+
+            next_level.push(Sha256::digest(&combined).to_vec());
+        }
+        
+        current_level = next_level;
+    }
+
+    current_level[0].clone()
 }
+
+
 
 
 pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
@@ -81,34 +86,29 @@ pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
 
 
 pub fn validate_merkle_branch(
-    shard_hashes: &[Vec<u8>],
-    proofs: &[Vec<u8>],
-    index: usize,
-    expected_root: &[u8],
+    leaf: &[u8],        // The leaf (shard hash)
+    proof: &[Vec<u8>],  // The proof path (Merkle branch)
+    index: usize,       // Index of the leaf in the original tree
+    expected_root: &[u8] // Expected Merkle root
 ) -> bool {
-    let mut current_hash = shard_hashes[index].clone();
+    let mut current_hash = leaf.to_vec();  // Start with the **actual leaf hash**
     let mut current_index = index;
 
-    for (_level, sibling_hash) in proofs.iter().enumerate() {
+    for sibling_hash in proof {
         let combined = if current_index % 2 == 0 {
             [current_hash.clone(), sibling_hash.clone()].concat()
         } else {
             [sibling_hash.clone(), current_hash.clone()].concat()
         };
 
-        // debug!(
-        //     "Validation Level {}: Current Hash = {:?}, Sibling Hash = {:?}, Combined Hash = {:?}",
-        //     level, current_hash, sibling_hash, combined
-        // );
-
         current_hash = Sha256::digest(&combined).to_vec();
         current_index /= 2;
     }
 
-    // debug!(
-    //     "Validation result: Final hash = {:?}, Expected root = {:?}",
-    //     current_hash, expected_root
-    // );
+    info!(
+        "Validation result: Final hash = {:?}, Expected root = {:?}",
+        current_hash, expected_root
+    );
 
     current_hash == expected_root
 }
