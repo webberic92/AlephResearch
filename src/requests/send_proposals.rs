@@ -7,8 +7,8 @@ use tracing::{error, info};
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use crate::{
-    handlers::handle_prevote::handle_prevote,
-    structs::{ node::Node, requests::{ BaseRequest, PrevoteRequest, ProposeRequest } },
+    handlers::handle_propose::handle_propose,
+    structs::{ node::Node, requests::{ BaseRequest, ProposeRequest } },
     utils::merkle_utils::{ compute_merkle_branch, compute_merkle_root },
 };
 
@@ -34,13 +34,15 @@ use crate::{
 6. `send propose(h, b_j, s_j) to P_j`:
    - The proposals are sent asynchronously using `reqwest::Client::post`.
 */
+
 pub async fn send_proposals(
-    client: Arc<Client>,  // ✅ Changed to Arc<Client>
+    client: Arc<Client>,  
     node: Arc<Mutex<Node>>,
-    shards: &[Vec<u8>],
-    merkle_root: &[u8],
+    shards: &[Vec<u8>],  // ✅ Raw binary shards (not encoded)
+    merkle_roots: &[Vec<u8>], // ✅ Multiple Merkle roots (one per transaction)
     parent_units: Vec<String>,
 ) -> Result<(), anyhow::Error> {
+    // ✅ **Step 1: Identify if P_i = P_s**
     let round;
     let node_id;
     let nodes;
@@ -57,76 +59,119 @@ pub async fn send_proposals(
         node_id, round, nodes
     );
 
-    // Step 3: Compute Merkle root
+    // ✅ **Step 2: Compute Merkle root validation for each transaction**
+    // ✅ **Step 2: Compute Merkle root validation for each transaction**
+    let data_shards = {
+        let node_guard = node.lock().await;
+        node_guard.data_shards  // ✅ Fetch from Node struct
+    };
+
+    // ✅ Compute hashes for each shard
     let shard_hashes: Vec<Vec<u8>> = shards
         .iter()
-        .map(|shard| Sha256::digest(shard).to_vec())
+        .map(|shard| Sha256::digest(shard).to_vec())  // ✅ Flatten nesting issue
         .collect();
 
-    let computed_root = compute_merkle_root(&shard_hashes);
-    if computed_root != merkle_root {
-        return Err(anyhow::anyhow!(
-            "Computed Merkle root does not match provided root.\nComputed: {:?}\nProvided: {:?}",
-            computed_root, merkle_root
-        ));
+    info!("sending proposal Computed shard {:?}", shard_hashes);
+
+    // ✅ Ensure each transaction’s shards are correctly grouped
+    let computed_roots: Vec<Vec<u8>> = shard_hashes
+        .chunks(data_shards) // ✅ Group shards into transactions
+        .map(|shard_group| compute_merkle_root(shard_group))
+        .collect();
+
+        info!("sending proposal Computed Merkle roots: {:?}", computed_roots);
+
+    // ✅ Ensure each computed root matches the expected one
+    for (i, (computed, provided)) in computed_roots.iter().zip(merkle_roots.iter()).enumerate() {
+        if computed != provided {
+            return Err(anyhow::anyhow!(
+                "Computed Merkle root for transaction {} does not match provided root.\nComputed: {:?}\nProvided: {:?}",
+                i, computed, provided
+            ));
+        }
     }
 
-    // Step 2: Encode shards for transmission
-    let encoded_shards: Vec<String> = shards
-        .iter()
-        .map(|shard| general_purpose::STANDARD.encode(shard))
-        .collect();
+    // ✅ **Step 5: Compute Merkle branches for each transaction**
+// ✅ Compute Merkle branches per transaction
+let encoded_proofs: Vec<Vec<Vec<String>>> = shard_hashes
+    .chunks(data_shards)  // ✅ Correctly group hashes per transaction
+    .map(|tx_shards| {
+        tx_shards
+            .iter()
+            .enumerate()
+            .map(|(i, _)| compute_merkle_branch(tx_shards, i))  // ✅ Pass correct slice `&[Vec<u8>]`
+            .map(|branch|
+                branch.iter()
+                    .map(|b| general_purpose::STANDARD.encode(b))  // ✅ Encode proof
+                    .collect()
+            )
+            .collect()
+    })
+    .collect();
 
-    // Step 5: Compute Merkle branches for each shard
-    let encoded_proofs: Vec<Vec<String>> = shard_hashes
-        .iter()
-        .enumerate()
-        .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
-        .map(|branch|
-            branch.iter()
-                .map(|b| general_purpose::STANDARD.encode(b))
-                .collect()
-        )
-        .collect();
+info!("sending proposal encoded_proofs: {:?}", encoded_proofs);
 
-    let base_request = BaseRequest {
-        proposing_node_id: node_id,
-        round_id: round,
-        root: merkle_root.to_vec(),
-    };
 
-    let propose_request = ProposeRequest {
-        base: base_request,
-        proofs: encoded_proofs.clone(),
-        shards: encoded_shards.clone(),
-        parents: parent_units.clone(),
-    };
 
-    // Step 6: Send `propose(h, b_j, s_j)` to all nodes
+        let data_shards = {
+            let node_guard = node.lock().await;
+            node_guard.data_shards  // ✅ Get the correct number of shards per transaction
+        };
+
+    // ✅ **Create individual proposals per transaction**
+    let propose_requests: Vec<ProposeRequest> = (0..merkle_roots.len())
+    .map(|i| {
+        let start_idx = i * data_shards; // Start of shard group
+        let end_idx = start_idx + data_shards; // End of shard group
+
+        ProposeRequest {
+            base: BaseRequest {
+                proposing_node_id: node_id,
+                round_id: round,
+                root: merkle_roots[i].clone(),
+            },
+            proofs: encoded_proofs[i].clone(),  // Correctly assigned proof per transaction
+            shards: shards[start_idx..end_idx] // Get the correct `data_shards` chunk per transaction
+                .iter()
+                .map(|s| general_purpose::STANDARD.encode(s))
+                .collect(),
+            parents: parent_units.clone(),
+        }
+    })
+    .collect();
+
+    // ✅ **Step 4: Iterate over all nodes `j ∈ N` and send proposals**
     let futures: Vec<_> = nodes.iter().map(|node_url| {
-        let propose_request = propose_request.clone();
+        let client = client.clone();
         let node_url = node_url.clone();
-        let client = client.clone(); // ✅ Clone client for each async call
-
+        let proposal = ProposeRequest {
+            base: BaseRequest {
+                proposing_node_id: node_id,
+                round_id: round,
+                root: compute_merkle_root(&shard_hashes).clone(),
+            },
+            proofs: encoded_proofs.iter().map(|tx_proofs| tx_proofs.concat()).collect(),  // ✅ Flattened properly
+            shards: shards.iter()
+                .map(|s| general_purpose::STANDARD.encode(s))
+                .collect(),
+            parents: parent_units.clone(),
+        };
+    
         async move {
             info!(
-                "Node sending proposal to {} for round {}",
-                node_url,
-                propose_request.base.round_id
+                "Node {} sending proposal to {} for round {}: {:?}",
+                node_id, node_url, proposal.base.round_id, proposal
             );
-
+    
             match client
                 .post(format!("http://{}/propose", node_url))
-                .json(&propose_request)
+                .json(&proposal)
                 .send()
                 .await
             {
                 Ok(res) if res.status().is_success() => {
-                    info!(
-                        "Proposal successfully delivered to Node {} (round {}).",
-                        node_url,
-                        propose_request.base.round_id
-                    );
+                    info!("Proposal successfully delivered to Node {} (round {}).", node_url, proposal.base.round_id);
                     Ok(())
                 }
                 Ok(res) => {
@@ -139,76 +184,23 @@ pub async fn send_proposals(
                     error!("{}", err_msg);
                     Err(anyhow::anyhow!(err_msg))
                 }
-                Err(e) => {
-                    let err_msg = format!(
-                        "Network error while sending proposal to {}: {:?}",
-                        node_url,
-                        e
-                    );
-                    error!("{}", err_msg);
-                    Err(anyhow::anyhow!(err_msg))
-                }
+                Err(e) => Err(anyhow::anyhow!("Network error while sending proposal to {}: {:?}", node_url, e)),
             }
         }
     }).collect();
+    
 
-    let results = join_all(futures).await;
 
-    // Step 7: If all proposals are sent, add self to proposal tracker
+    let results: Vec<Result<(), anyhow::Error>> = join_all(futures).await;
+
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for round {}.", round);
 
-        let update_result = {
-            let node_clone = node.clone();
-            Node::update_proposal_tracker(node_clone, propose_request.clone()).await
-        };
-
-        match update_result {
-            Ok((proposal_count, required_proposals, stored_proposals)) => {
-                info!(
-                    "Node {}: Proposal tracker updated. Proposals: {}/{}",
-                    propose_request.base.proposing_node_id,
-                    proposal_count,
-                    required_proposals
-                );
-
-                if proposal_count >= required_proposals {
-                    info!(
-                        "Node {}: Reached proposal threshold. Initiating prevote...",
-                        propose_request.base.proposing_node_id
-                    );
-
-                    // Send prevotes for all stored proposals
-                    for stored_propose in stored_proposals {
-                        let prevote_request = PrevoteRequest {
-                            propose: stored_propose.clone(),
-                            sender_url: {
-                                let node_guard = node.lock().await;
-                                node_guard.ip_address.clone()
-                            },
-                        };
-
-                        if let Err(e) = handle_prevote(node.clone(), client.clone(), prevote_request).await {
-                            error!(
-                                "Node {}: Failed to handle prevote. Error: {:?}",
-                                propose_request.base.proposing_node_id,
-                                e
-                            );
-                        }
-                    }
-
-                    // Clear proposal tracker after processing
-                    {
-                        let node_guard = node.lock().await;
-                        node_guard.proposal_tracker.lock().await.clear();
-                    }
-                }
-            }
-            Err(err) => {
+        for propose_request in propose_requests {
+            if let Err(e) = handle_propose(node.clone(), client.clone(), propose_request).await {
                 error!(
-                    "Node {}: Failed to update proposal tracker: {}",
-                    propose_request.base.proposing_node_id,
-                    err
+                    "Node {}: Failed to handle local proposal. Error: {:?}",
+                    node_id, e
                 );
             }
         }
@@ -218,3 +210,4 @@ pub async fn send_proposals(
         Err(anyhow::anyhow!("One or more proposals failed."))
     }
 }
+

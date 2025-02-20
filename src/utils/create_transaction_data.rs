@@ -11,7 +11,7 @@ use crate::{
 /// ✅ **Updated: Now using `Arc<Mutex<Node>>` for consistency with new architecture**
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>, 
-) -> Result<(Vec<Vec<u8>>, Vec<u8>, Vec<String>), Error> {  
+) -> Result<(Vec<Vec<u8>>, Vec<Vec<u8>>, Vec<String>), Error> {  
     
     let node_id;
     let node_number_of_transactions: usize;
@@ -50,7 +50,10 @@ pub async fn create_transaction_data(
         proofs.push(merkle_proofs);
     }
 
-    let merkle_root = compute_merkle_root(&proofs.concat()); // ✅ Compute Merkle root over all shards
+    // ✅ Compute a separate Merkle root for each transaction
+    let merkle_roots: Vec<Vec<u8>> = proofs.iter()
+        .map(|proofs_per_tx| compute_merkle_root(proofs_per_tx))
+        .collect();
 
     // ✅ Step 1: Re-acquire lock to get round information and parents
     let node_guard = node.lock().await;
@@ -65,10 +68,10 @@ pub async fn create_transaction_data(
         "Creating transaction: {} transactions, Parent Units = {:?} for round {}",
         node_number_of_transactions, parent_units, round_id
     );
-    // info!("Created transaction shards: {:?}", all_shards.concat());
-    // info!("Created transaction root: {:?}", merkle_root);
+    info!("Created transaction shards: {:?}", all_shards.concat());
+    info!("Created transaction roots: {:?}", merkle_roots);
     info!("Created transaction parents: {:?}", parent_units);
 
     // ✅ Return only shards, merkle_root, and parents
-    Ok((all_shards.concat(), merkle_root, parent_units))  // ✅ Flatten shard structure
+    Ok((all_shards.concat(), merkle_roots, parent_units))  // ✅ Flatten shard structure
 }

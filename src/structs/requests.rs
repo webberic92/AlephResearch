@@ -17,17 +17,17 @@ pub struct ProposeRequest {
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct PrevoteRequest {
-    pub propose: ProposeRequest,      // Embed the ProposeRequest
-    pub sender_url: String,           // URL of the sender
+    pub proposals: Vec<ProposeRequest>,  // ✅ Store multiple proposals in one struct
+    pub sender_url: String,  // ✅ Preserve sender info
 }
+
 
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct CommitRequest {
-    pub base: BaseRequest,       // Base fields common to all phases
-    pub units: Vec<DagUnit>,     // List of reconstructed units
-    pub proofs: Vec<Vec<String>>, // Merkle proofs
-    pub parents: Vec<String>,    // Parent units
+    pub units: Vec<DagUnit>, 
+    pub proposing_node_id: usize,  // ID of the node sending the message
+    pub round_id: u64, 
 }
 
 #[derive(Deserialize,Serialize)]
@@ -49,7 +49,7 @@ pub struct DagUnit {
     pub round: u64,
     pub transactions: Vec<Transaction>, // ✅ Store multiple transactions
     pub parent_units: Vec<String>,
-    pub merkle_root: String,
+    pub merkle_root: Vec<u8>, // ✅ Store Merkle root as bytes
     pub finalization_timestamp: u64,
 }
 
