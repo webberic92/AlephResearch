@@ -1,0 +1,53 @@
+{
+    "proposals": [
+      {
+        "base": {
+          "proposing_node_id": 1,
+          "round_id": 1
+        },
+        "transactions": [
+          {
+            "root": "Bqe5M9vMzpI4+OxZuxMXgYK/sXKQNicZHnA2qRs0UoM=",
+            "proofs": [
+              ["proof1_tx1_shard1", "proof1_tx1_shard2", "proof1_tx1_shard3", "proof1_tx1_shard4"],
+              ["proof2_tx1_shard1", "proof2_tx1_shard2", "proof2_tx1_shard3", "proof2_tx1_shard4"]
+            ],
+            "shards": [
+              "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ=="
+            ]
+          },
+          {
+            "root": "Ctf4M9vMzpI4+OxZuxMXgYK/sXKQNicZHnA2qRs0UoM=",
+            "proofs": [
+              ["proof1_tx2_shard1", "proof1_tx2_shard2", "proof1_tx2_shard3", "proof1_tx2_shard4"],
+              ["proof2_tx2_shard1", "proof2_tx2_shard2", "proof2_tx2_shard3", "proof2_tx2_shard4"]
+            ],
+            "shards": [
+              "AgICAgICAgICAg==", "AgICAgICAgICAg==", "AgICAgICAgICAg==", "AgICAgICAgICAg=="
+            ]
+          }
+        ],
+        "parents": []
+      },
+      {
+        "base": {
+          "proposing_node_id": 2,
+          "round_id": 1
+        },
+        "transactions": [
+          {
+            "root": "Dre8G9vNzpI4+OxZuxMXgYK/sXKQNicZHnA2qRs0UoM=",
+            "proofs": [
+              ["proof1_tx3_shard1", "proof1_tx3_shard2", "proof1_tx3_shard3", "proof1_tx3_shard4"],
+              ["proof2_tx3_shard1", "proof2_tx3_shard2", "proof2_tx3_shard3", "proof2_tx3_shard4"]
+            ],
+            "shards": [
+              "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw=="
+            ]
+          }
+        ],
+        "parents": []
+      }
+    ],
+    "sender_url": "10.0.162.212"
+  }

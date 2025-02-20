@@ -1,15 +1,14 @@
-use crate::structs::requests::DagUnit;
-use crate::structs::toml_config::TomlConfig;
+use serde_json::json;
+use tokio::fs::{self, OpenOptions};
+use tokio::io::AsyncWriteExt;
+use tracing::info;
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Arc;
-use base64::engine::general_purpose;
+use base64::{engine::general_purpose, Engine};
+use crate::structs::requests::DagUnit;
+use crate::structs::toml_config::TomlConfig;
 
-use base64::Engine;
-use serde_json::Value;
-use tokio::fs::{ self, OpenOptions };
-use tokio::io::AsyncWriteExt;
-use tracing::{error, info};
+
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
     let config_path = path.unwrap_or("/home/aleph-node/aleph-node-config.toml");
@@ -26,19 +25,17 @@ pub fn save_config(toml_config: &TomlConfig, path: Option<&str>) -> Result<(), B
     Ok(())
 }
 
-
-// **Writes the finalized unit to the round file**
+/// **Writes the finalized DAG to a file in a human-readable format.**
+/// **Writes the finalized DAG to a file in a human-readable format.**
 pub async fn write_finalized_dag_to_file(
     base_path: &str,
     dag: &HashMap<u64, Vec<DagUnit>>,
-    round_id: u64,  // ✅ Only write finalized units for this round
+    round_id: u64,  
 ) -> Result<(), Box<dyn std::error::Error>> {
     if dag.is_empty() {
-        error!("DAG is empty, nothing to write.");
-        return Ok(()); 
+        return Ok(()); // No units to write
     }
 
-    // ✅ Fetch only the finalized units for the given round
     if let Some(units) = dag.get(&round_id) {
         let round_file = format!("{}/round{}.json", base_path, round_id);
         let path = Path::new(&round_file);
@@ -49,23 +46,27 @@ pub async fn write_finalized_dag_to_file(
             }
         }
 
-        let round_data: Vec<Value> = units
-            .iter()
-            .map(|unit| serde_json::json!({
-                "unit_id": unit.unit_id,
-                "creator": unit.proposer_node,
-                "round": unit.round,
-                "transactions": unit.transactions.iter().map(|tx| {
-                    serde_json::json!({
-                        "tx_id": tx.tx_id,
-                        "data": &tx.data,
-                    })
-                }).collect::<Vec<Value>>(),
-                "parents": unit.parent_units,
-                "merkle_root": unit.merkle_root,
-                "finalization_timestamp": unit.finalization_timestamp,
-            }))
-            .collect();
+        let round_data: Vec<_> = units.iter().map(|unit| json!({
+            "unit_id": unit.unit_id,
+            "creator": unit.proposer_node,
+            "round": unit.round,
+            "transactions": unit.transactions.iter().map(|tx| json!({
+                "merkle_root": String::from_utf8(tx.root.clone()).unwrap_or_else(|_| format!("{:?}", tx.root)),  // ✅ FULLY DECODED
+                "proofs": tx.proofs.clone(),  // Keep proofs as-is
+                "shards": tx.shards.iter().map(|shard| {
+                    let decoded_bytes = general_purpose::STANDARD.decode(shard)
+                        .unwrap_or_else(|_| vec![]); // Handle decoding errors
+
+                    if let Ok(decoded_str) = String::from_utf8(decoded_bytes.clone()) {
+                        decoded_str // ✅ If it's valid UTF-8, store as string
+                    } else {
+                        format!("{:?}", decoded_bytes) // ✅ Otherwise, store raw byte array
+                    }
+                }).collect::<Vec<String>>(),
+            })).collect::<Vec<_>>(),
+            "parents": unit.parent_units,
+            "finalization_timestamp": unit.finalization_timestamp,
+        })).collect();
 
         let mut file = OpenOptions::new()
             .write(true)
@@ -81,5 +82,3 @@ pub async fn write_finalized_dag_to_file(
 
     Ok(())
 }
-
-

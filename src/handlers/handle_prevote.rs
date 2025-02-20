@@ -8,7 +8,7 @@ use crate::{
     handlers::handle_commit::handle_commit,
     structs::{
         node::Node,
-        requests::{CommitRequest, DagUnit, PrevoteRequest, ProposeRequest},
+        requests::{CommitRequest, DagUnit, PrevoteRequest, ProposeRequest, Transaction},
     },
     utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch},
 };
@@ -42,19 +42,18 @@ use crate::{
    - Remove the quorum vote entry from the tracking map after a successful commit.
 */
 
+
 /// **Handles an incoming PREVOTE request with multiple proposals**
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
-    prevote_request: PrevoteRequest,  // ✅ Now receives multiple proposals
+    prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
     info!(
         "🔹 handle_prevote: Processing {} proposals from {}",
         prevote_request.proposals.len(),
         prevote_request.sender_url
     );
-
-    info!("🔹 handle_prevote prevote request: {:?}", prevote_request);
 
     let node_id;
     let round_id;
@@ -63,7 +62,7 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
-        round_id = prevote_request.proposals[0].base.round_id; // ✅ Assume all proposals are from the same round
+        round_id = prevote_request.proposals[0].base.round_id;
         quorum_threshold = node_guard.get_quorum_threshold();
     }
 
@@ -71,67 +70,83 @@ pub async fn handle_prevote(
 
     // ✅ **Process each proposal separately**
     for proposal in &prevote_request.proposals {
-        info!("handle prevote proposal: {:?}", proposal);
+        info!("🔹 Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
 
-        // **Step 14:** Decode shards
-        let decoded_shards: Vec<Vec<u8>> = proposal
-            .shards
-            .iter()
-            .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-            .collect::<Result<Vec<Vec<u8>>, _>>()
-            .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
-        info!(" handle prevote Decoded shards: {:?}", decoded_shards);
+        let mut reconstructed_transactions = Vec::new();
 
-        // Compute hash of each decoded shard
-        let shard_hashes: Vec<Vec<u8>> = decoded_shards
-            .iter()
-            .map(|shard| Sha256::digest(shard).to_vec())
-            .collect();
-        info!(" handle prevote shard_hashes: {:?}", shard_hashes);
-        // **Step 15:** Validate Merkle proofs for each shard
-        for (index, proof) in proposal.proofs.iter().enumerate() {
-            let decoded_proof = proof
+        for transaction in &proposal.transactions {
+            info!("🔹 Processing transaction with Merkle root: {:?}", transaction.root);
+
+            // **Step 14:** Decode shards
+            let decoded_shards: Vec<Vec<u8>> = transaction.shards
                 .iter()
-                .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
+                .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
                 .collect::<Result<Vec<Vec<u8>>, _>>()
-                .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+                .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
+            
+            info!("🔹 handle prevote Decoded shards: {:?}", decoded_shards);
 
-            if !validate_merkle_branch(&shard_hashes, &decoded_proof, index, &proposal.base.root) {
-                return Err(format!("Node {}: Merkle root mismatch for shard {}", node_id, index));
+            // Compute hash of each decoded shard
+            let shard_hashes: Vec<Vec<u8>> = decoded_shards
+                .iter()
+                .map(|shard| Sha256::digest(shard).to_vec())
+                .collect();
+            info!("🔹 handle prevote shard_hashes: {:?}", shard_hashes);
+
+            // **Step 15:** Validate Merkle proofs for each shard
+            for (index, proof) in transaction.proofs.iter().enumerate() {
+                let decoded_proof = proof
+                    .iter()
+                    .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
+                    .collect::<Result<Vec<Vec<u8>>, _>>()
+                    .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+
+                if !validate_merkle_branch(&shard_hashes, &decoded_proof, index, &transaction.root) {
+                    return Err(format!("Node {}: Merkle root mismatch for shard {}", node_id, index));
+                }
             }
+
+            // **Step 18:** Interpolate missing shares (if needed)
+            let interpolated_shards = if round_id > 1 {
+                interpolate_shares(&decoded_shards, round_id)
+                    .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
+            } else {
+                decoded_shards.clone()
+            };
+            info!("🔹 handle prevote interpolated_shards: {:?}", interpolated_shards);
+
+            // **Step 19:** Compute Merkle root from interpolated shares
+            let new_merkle_root = compute_merkle_root(&interpolated_shards);
+
+            if new_merkle_root != transaction.root {
+                return Err(format!(
+                    "Node {}: Merkle root mismatch after interpolation. Expected {:?} but got {:?}",
+                    node_id, transaction.root, new_merkle_root
+                ));
+            }
+
+            // ✅ **Reconstruct transaction with decoded shards**
+            let reconstructed_tx = Transaction {
+                root: transaction.root.clone(),
+                proofs: transaction.proofs.clone(),
+                shards: interpolated_shards.iter().map(|s| String::from_utf8_lossy(s).to_string()).collect(), 
+            };
+
+            reconstructed_transactions.push(reconstructed_tx);
         }
 
-
-        // **Step 18:** Interpolate missing shares (if needed)
-        let interpolated_shards = if round_id > 1 {
-            interpolate_shares(&decoded_shards, round_id)
-                .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
-        } else {
-            decoded_shards.clone()
-        };
-        info!(" handle prevote interpolated_shards: {:?}", interpolated_shards);
-
-        // **Step 19:** Compute Merkle root from interpolated shares
-        let new_merkle_root = compute_merkle_root(&interpolated_shards);
-
-        if new_merkle_root != proposal.base.root {
-            return Err(format!("Node {}: Merkle root mismatch after interpolation. Expected {:?} but got {:?}", node_id ,proposal.base.root,new_merkle_root));
-        }
-
-        // **Step 15:** Reconstruct the unit (Now as `DagUnit`)
+        // ✅ **Step 15: Reconstruct the entire unit**
         let mut reconstructed_unit = reconstruct_unit(
-            &decoded_shards,
+            &reconstructed_transactions,  // ✅ Pass **transactions** instead of raw shards
             round_id,
             proposal.parents.clone(),
-            proposal.base.proposing_node_id, // ✅ Use proposer ID from request
+            proposal.base.proposing_node_id as usize,
         )
         .map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
 
         if reconstructed_unit.transactions.is_empty() {
             return Err(format!("Node {}: Reconstructed unit is invalid or empty", node_id));
         }
-
-        reconstructed_unit.merkle_root = proposal.base.root.clone(); // ✅ Use original Merkle root
 
         reconstructed_units.push(reconstructed_unit);
     }

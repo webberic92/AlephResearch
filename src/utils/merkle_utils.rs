@@ -115,56 +115,46 @@ pub fn validate_merkle_branch(
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+/**
+ * **Reconstructs a DAG Unit from received transactions**
+ * - Extracts transactions from decoded shards.
+ * - Computes a separate Merkle root per transaction.
+ * - Generates a unique unit ID for DAG tracking.
+ */
 pub fn reconstruct_unit(
-    shards: &[Vec<u8>],
+    transactions: &[Transaction],  // ✅ Directly take the decoded transactions
     round_id: u64,
     parent_units: Vec<String>, // ✅ Already stored as parent unit IDs
     proposer_node: usize, // ✅ We need to pass the proposing node ID
 ) -> Result<DagUnit, String> {
-    if shards.is_empty() {
-        return Err("Reconstruction failed: shards are empty".to_string());
+    if transactions.is_empty() {
+        return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    // Compute the Merkle root using shard hashes
-    let shard_hashes: Vec<Vec<u8>> = shards.iter()
-        .map(|shard| Sha256::digest(shard).to_vec())
+    // Compute separate Merkle roots for each transaction
+    let merkle_roots: Vec<Vec<u8>> = transactions.iter()
+        .map(|tx| {
+            let shard_hashes: Vec<Vec<u8>> = tx.shards.iter()
+                .map(|shard| Sha256::digest(shard.as_bytes()).to_vec())
+                .collect();
+            compute_merkle_root(&shard_hashes)
+        })
         .collect();
 
-    let merkle_root = compute_merkle_root(&shard_hashes);
-    info!("Computed Merkle root for reconstructed unit: {:?}", merkle_root);
+    // ✅ Log computed Merkle roots
+    info!("Computed Merkle roots for reconstructed unit: {:?}", merkle_roots);
 
-    // Generate a unique unit ID for the reconstructed unit
+    // Generate a unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);
-
-    // Convert shards into transactions
-    let transactions: Vec<Transaction> = shards.iter().enumerate().map(|(i, shard)| Transaction {
-        tx_id: format!("{}-{}", unit_id, i),
-        data: shard.clone(),
-    }).collect();
 
     // Create the DagUnit object
     Ok(DagUnit {
         unit_id,
         proposer_node,
         round: round_id,
-        transactions,
+        transactions: transactions.to_vec(),  // ✅ Store multiple transactions
         parent_units,
-        merkle_root, // ✅ Ensure Merkle root is encoded
+        merkle_root: merkle_roots.concat(), // ✅ Flatten all transaction Merkle roots
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }

@@ -1,0 +1,40 @@
+{
+    "base": {
+      "proposing_node_id": 1,
+      "round_id": 1
+    },
+    "transactions": [
+      {
+        "root": [190, 165, 51, 219, 204, 233, 146, 56, 248, 228, 89, 184, 19, 23, 129, 130, 251, 178, 144, 54, 39, 209, 25, 224, 230, 169, 23, 24, 222, 233, 59, 236],
+        "proofs": [
+          ["proof1_tx1_shard1", "proof1_tx1_shard2", "proof1_tx1_shard3", "proof1_tx1_shard4"],
+          ["proof2_tx1_shard1", "proof2_tx1_shard2", "proof2_tx1_shard3", "proof2_tx1_shard4"]
+        ],
+        "shards": [
+          "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ==", "AQEBAQEBAQEBAQ=="
+        ]
+      },
+      {
+        "root": [112, 54, 28, 47, 199, 201, 185, 238, 157, 132, 112, 74, 23, 68, 111, 98, 198, 219, 93, 50, 211, 241, 29, 84, 251, 128, 41, 111, 192, 89, 177, 60],
+        "proofs": [
+          ["proof1_tx2_shard1", "proof1_tx2_shard2", "proof1_tx2_shard3", "proof1_tx2_shard4"],
+          ["proof2_tx2_shard1", "proof2_tx2_shard2", "proof2_tx2_shard3", "proof2_tx2_shard4"]
+        ],
+        "shards": [
+          "AgICAgICAgICAg==", "AgICAgICAgICAg==", "AgICAgICAgICAg==", "AgICAgICAgICAg=="
+        ]
+      },
+      {
+        "root": [88, 245, 117, 196, 218, 129, 73, 215, 248, 189, 110, 97, 252, 164, 120, 33, 221, 48, 82, 117, 173, 137, 32, 79, 66, 66, 113, 249, 112, 59, 210, 167],
+        "proofs": [
+          ["proof1_tx3_shard1", "proof1_tx3_shard2", "proof1_tx3_shard3", "proof1_tx3_shard4"],
+          ["proof2_tx3_shard1", "proof2_tx3_shard2", "proof2_tx3_shard3", "proof2_tx3_shard4"]
+        ],
+        "shards": [
+          "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw==", "AwMDAwMDAwMDAw=="
+        ]
+      }
+    ],
+    "parents": []
+  }
+  

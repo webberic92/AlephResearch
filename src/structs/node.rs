@@ -136,7 +136,7 @@ impl Node {
         {
             let mut tracker = node_guard.proposal_tracker.lock().await;
             let entry = tracker.entry(round_id).or_insert_with(HashMap::new);
-            entry.insert(propose_request.base.proposing_node_id, propose_request.clone());
+            entry.insert(propose_request.base.proposing_node_id as usize, propose_request.clone());
             proposal_count = entry.len();
             stored_proposals = entry.values().cloned().collect();
         }
