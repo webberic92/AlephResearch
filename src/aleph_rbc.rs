@@ -11,6 +11,7 @@ use tracing_subscriber;
 use aleph_research::utils::config_util::load_config;
 use aleph_research::structs::node::Node;
 use anyhow::Result;
+use aleph_research::structs::requests::ProposeRequest;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -20,6 +21,7 @@ async fn main() -> Result<()> {
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     let client = Arc::new(Client::new());
     
+    // ✅ Create Node **WITHOUT extra Arc**
     // ✅ Create Node with Proposal Queue Handling
     let node = Node::new(
         config.node.id,
@@ -34,55 +36,53 @@ async fn main() -> Result<()> {
         client.clone(),
     );
     
-    // ✅ Node is already Arc<Mutex<Node>>, so no need to call `.read()`
-    let node_clone = Arc::clone(&node);
-    let client_clone = Arc::clone(&client);
-    
-    let app = initialize_apis(node.clone(), client.clone());
-    wait_for_all_nodes_health(&client, node.clone()).await?;
-    
-    // ✅ **Spawn the Transaction Execution Logic in Tokio (Non-Blocking)**
+    // ✅ **Pass node directly without extra wrapping**
+    let app = initialize_apis(node.clone(), client.clone());  // ✅ FIXED
+    wait_for_all_nodes_health(&client, node.clone()).await?;  // ✅ FIXED
+
+    // ✅ **Spawn Transaction Execution Logic**
+    let node_clone = node.clone();
+    let client_clone = client.clone();
     tokio::spawn(async move {
         if let Err(e) = execute_transaction_logic(node_clone, client_clone).await {
             error!("Transaction execution failed: {:?}", e);
         }
     });
-    
+
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);
 
     axum::serve(listener, app.into_make_service()).await?;
     Ok(())
 }
-
 async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
 
-    // ✅ Wait for all nodes to become healthy before starting.
-
-    // 🎯 Create transaction data
+    // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
-        Ok((shards, merkle_roots, parents)) => {
+        Ok(propose_request) => {
             let node_id = {
                 let node_guard = node.lock().await;
                 node_guard.id
             };
-            let round = 1; // Assuming round 1 for single-round logic
+            let round = propose_request.base.round_id;
 
-            info!("Node: Transaction data created for round {}.", round);
+            info!("Node {}: Created proposal with {} transactions for round {}.", 
+                node_id, propose_request.transactions.len(), round
+            );
 
-            // 🎯 Step 2: Send proposals for this round
-            info!("Node {}: Sending proposals for round {}...", node_id, round);
-            if let Err(e) = send_proposals(client, node.clone(), &shards, &merkle_roots, parents).await {
+            // ✅ Step 2: Send proposal
+            info!("Node {}: Sending proposal for round {}...", node_id, round);
+            if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
                 error!(
-                    "Node {}: Failed to send proposals for round {}. Error: {:?}",
+                    "Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e
                 );
             } else {
                 info!(
-                    "Node {}: Proposals for round {} sent successfully.",
+                    "Node {}: Proposal for round {} sent successfully.",
                     node_id, round
                 );
             }
@@ -92,10 +92,9 @@ async fn execute_transaction_logic(
                 let node_guard = node.lock().await;
                 node_guard.id
             };
-            let round = 1;
             error!(
-                "Node {}: Failed to create transaction data for round {}. Error: {:?}",
-                node_id, round, e
+                "Node {}: Failed to create transaction proposal. Error: {:?}",
+                node_id, e
             );
         }
     }
@@ -103,17 +102,3 @@ async fn execute_transaction_logic(
     info!("Node: All rounds completed successfully.");
     Ok(())
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-

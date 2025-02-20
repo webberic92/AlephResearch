@@ -1,18 +1,23 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug,Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BaseRequest {
-    pub proposing_node_id: usize,  // ID of the node sending the message
-    pub root: Vec<u8>,     // Merkle root of the tree
-    pub round_id: u64,     // round ID
+    pub proposing_node_id: u8,
+    pub round_id: u64,
 }
 
-#[derive(Serialize, Deserialize, Debug,Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transaction {
+    pub root: Vec<u8>,
+    pub proofs: Vec<Vec<String>>, // Each transaction has its own set of proofs
+    pub shards: Vec<String>, // Encoded shards for this transaction
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProposeRequest {
-    pub base: BaseRequest,            // Base request fields
-    pub proofs: Vec<Vec<String>>,     // Base64-encoded Merkle proofs for each shard
-    pub shards: Vec<String>,    
-    pub parents: Vec<String>,         // Base64-encoded parent hashes      // Base64-encoded data shards
+    pub base: BaseRequest,
+    pub transactions: Vec<Transaction>, // Array of transactions in a single proposal
+    pub parents: Vec<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
@@ -34,12 +39,6 @@ pub struct CommitRequest {
 pub struct SyncroundRequest {
 pub round_id: u64,
 pub sender: usize,
-}
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
-pub struct Transaction {
-    pub tx_id: String,
-    pub data: Vec<u8>, // Transaction payload
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
