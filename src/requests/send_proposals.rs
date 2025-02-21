@@ -63,8 +63,8 @@ pub async fn send_proposals(
 
         async move {
             info!(
-                "Node {} sending proposal to {} for round {}: {:?}",
-                node_id, node_url, proposal_clone.base.round_id, proposal_clone
+                "Node {} sending proposal to {} for round {}",
+                node_id, node_url, proposal_clone.base.round_id
             );
 
             match client
