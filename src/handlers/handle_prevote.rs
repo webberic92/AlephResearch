@@ -8,7 +8,7 @@ use crate::{
     handlers::handle_commit::handle_commit,
     structs::{
         node::Node,
-        requests::{CommitRequest, DagUnit, PrevoteRequest, ProposeRequest, Transaction},
+        requests::{CommitRequest, PrevoteRequest, Transaction},
     },
     utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch},
 };
@@ -54,7 +54,6 @@ pub async fn handle_prevote(
         prevote_request.proposals.len(),
         prevote_request.sender_url
     );
-
     let node_id;
     let round_id;
     let quorum_threshold;
@@ -77,7 +76,6 @@ pub async fn handle_prevote(
         let mut reconstructed_transactions = Vec::new();
 
         for transaction in &proposal.transactions {
-            info!("🔹 Processing transaction with Merkle root: {:?}", transaction.root);
 
             // **Step 14:** Decode shards
             let decoded_shards: Vec<Vec<u8>> = transaction.shards
@@ -86,29 +84,25 @@ pub async fn handle_prevote(
                 .collect::<Result<Vec<Vec<u8>>, _>>()
                 .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
             
-            info!("🔹 handle prevote Decoded shards: {:?}", decoded_shards);
+            // info!("🔹 handle prevote Decoded shards: {:?}", decoded_shards);
 
             // Compute hash of each decoded shard
             let shard_hashes: Vec<Vec<u8>> = decoded_shards
                 .iter()
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
-            info!("🔹 handle prevote shard_hashes: {:?}", shard_hashes);
+            // info!("🔹 handle prevote shard_hashes: {:?}", shard_hashes);
 
 
 
             // **Step 15:** Validate Merkle proofs for each shard
-            for (shard_index, shard) in decoded_shards.iter().enumerate() {
+            for (shard_index, _shard) in decoded_shards.iter().enumerate() {
                 let decoded_proof: Vec<Vec<u8>> = transaction.proofs[shard_index]
                     .iter()
                     .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
                     .collect::<Result<Vec<Vec<u8>>, _>>()
                     .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
-            
-                info!(
-                    "🔹 handle prevote: Validating Merkle proof for shard {} with proof: {:?}",
-                    shard_index, decoded_proof
-                );
+        
             
                 if !validate_merkle_branch(&shard_hashes[shard_index], &decoded_proof, shard_index, &transaction.root) {
                     return Err(format!(
@@ -120,15 +114,11 @@ pub async fn handle_prevote(
             
 
             // **Step 18:** Interpolate missing shares (if needed)
-            info!("========TEST==============");
             let interpolated_shards;
             if decoded_shards.len() < total_nodes {
-                info!("🔹TEST A decoded shards length < totalnodes with Merkle root: {:?}", transaction.root);
              interpolated_shards =  interpolate_shares(&decoded_shards, round_id)
                     .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
             } else {
-                info!("🔹TEST B Interpolating shares for transaction with Merkle root: {:?}", transaction.root);
-
                 interpolated_shards= decoded_shards.clone()
             };
 
@@ -137,12 +127,9 @@ pub async fn handle_prevote(
                 .iter()
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
-            info!("🔹 TEST C handle prevote interpolated_shard_hashes: {:?}", interpolated_shard_hashes);
 
             // **Step 19:** Compute Merkle root from hashed interpolated shares
             let new_merkle_root = compute_merkle_root(&interpolated_shard_hashes);
-
-            info!("🔹 handle prevote interpolated_shards: {:?}", interpolated_shard_hashes);
 
 
             if new_merkle_root != transaction.root {
@@ -180,13 +167,29 @@ pub async fn handle_prevote(
 
     // **Step 14 (continued):** Count quorum votes ONCE per PrevoteRequest (not per proposal)
     let epoch_key = round_id.to_be_bytes().to_vec();
-    let vote_count = {
+    let vote_count;
+    {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         let count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
+    
+        // ✅ **If quorum has already been met, ignore this prevote**
+        if *count >= quorum_threshold {
+            info!(
+                "🔹 Node {}: Ignoring prevote for round {}. Quorum already met.",
+                node_id, round_id
+            );
+            return Ok(());  // **Exit early**
+        }
+    
         *count += 1;
-        *count
-    };
+        vote_count = *count;
+    } // ⬅️ Lock is released before returning vote_count
+    
+    info!(
+        "🔹 Node {}: Quorum votes {}/{}",
+        node_id, vote_count, quorum_threshold
+    );
 
     info!(
         "🔹 Node {}: Quorum votes {}/{}",
@@ -223,82 +226,16 @@ pub async fn handle_prevote(
         });
     }
 
-    // **Step 21:** Trigger commit locally
-    handle_commit(node.clone(), commit_request)
-        .await
-        .map_err(|e| format!("Commit phase failed: {:?}", e))?;
+    // **Step 21:** Trigger commit locally and clean up qourum
+   let node_clone = node.clone();
+    tokio::spawn(async move {
+        if let Err(e) = handle_commit(node_clone, commit_request).await {
+            error!("Commit phase failed: {:?}", e);
+        }
+    });
 
     info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
 
     Ok(())
 }
 
-
-
-
-//WORKS
-// pub async fn handle_prevote(
-//     node: Arc<Mutex<Node>>,
-//     client: Arc<Client>,
-//     prevote_request: PrevoteRequest,  
-// ) -> Result<(), String> {
-//     let node_id;
-//     let round_id;
-
-//     {
-//         let node_guard = node.lock().await;
-//         node_id = node_guard.id;
-//         round_id = prevote_request.proposals[0].base.round_id;
-//     }
-
-//     for proposal in &prevote_request.proposals {
-//         info!(
-//             "🔹 handle_prevote: Processing proposal from Node {} for round {}",
-//             proposal.base.proposing_node_id, round_id
-//         );
-
-//         for transaction in &proposal.transactions {
-//             info!(
-//                 "🔹 handle_prevote: Processing transaction with received Merkle root: {:?}",
-//                 transaction.root
-//             );
-
-//             // **Step 1: Decode the received shards**
-//             let decoded_shards: Vec<Vec<u8>> = transaction.shards
-//                 .iter()
-//                 .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-//                 .collect::<Result<Vec<Vec<u8>>, _>>()
-//                 .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
-
-//             info!("🔹 handle_prevote: Decoded shards: {:?}", decoded_shards);
-
-//             // **Step 2: Compute the SHA-256 hash of each shard**
-//             let shard_hashes: Vec<Vec<u8>> = decoded_shards
-//                 .iter()
-//                 .map(|shard| Sha256::digest(shard).to_vec())
-//                 .collect();
-
-//             info!("🔹 handle_prevote: Computed shard hashes: {:?}", shard_hashes);
-
-//             // **Step 3: Compute Merkle root from the decoded shards**
-//             let computed_merkle_root = compute_merkle_root(&shard_hashes);
-
-//             info!(
-//                 "🔹 handle_prevote: Computed Merkle root: {:?}, Expected Merkle root: {:?}",
-//                 computed_merkle_root, transaction.root
-//             );
-
-//             // **Step 4: Validate the Merkle root**
-//             if computed_merkle_root != transaction.root {
-//                 return Err(format!(
-//                     "Node {}: Merkle root mismatch at Prevote! Expected {:?}, but computed {:?}",
-//                     node_id, transaction.root, computed_merkle_root
-//                 ));
-//             }
-
-//             info!("✅ Node {}: Merkle root verification PASSED at Prevote!", node_id);
-//         }
-//     }
-
-//     Ok(())
-// }

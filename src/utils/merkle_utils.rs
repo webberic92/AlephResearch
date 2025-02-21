@@ -105,10 +105,10 @@ pub fn validate_merkle_branch(
         current_index /= 2;
     }
 
-    info!(
-        "Validation result: Final hash = {:?}, Expected root = {:?}",
-        current_hash, expected_root
-    );
+    // info!(
+    //     "Validation result: Final hash = {:?}, Expected root = {:?}",
+    //     current_hash, expected_root
+    // );
 
     current_hash == expected_root
 }
@@ -142,7 +142,7 @@ pub fn reconstruct_unit(
         .collect();
 
     // ✅ Log computed Merkle roots
-    info!("Computed Merkle roots for reconstructed unit: {:?}", merkle_roots);
+    // info!("Computed Merkle roots for reconstructed unit: {:?}", merkle_roots);
 
     // Generate a unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);

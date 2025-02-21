@@ -70,11 +70,6 @@ pub async fn handle_propose(
             node_id, round_id, propose_request.base.proposing_node_id
         );
 
-        info!(
-            "Node {}: Received PROPOSE request: {:?}",
-            node_id, propose_request
-        );
-
         // 🔹 Step 2: Check if we already received a proposal from this node
         // 🔹 Step 2: Check if we already received a proposal from this node
         let duplicate = {
@@ -102,7 +97,7 @@ pub async fn handle_propose(
             .collect::<Result<Vec<Vec<u8>>, _>>()
             .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-        info!("handle proposal Decoded shards: {:?}", decoded_shards);
+        // info!("handle proposal Decoded shards: {:?}", decoded_shards);
 
         let (number_of_transactions, transaction_size);
         {
@@ -149,10 +144,10 @@ pub async fn handle_propose(
                 sender_url: node_guard.ip_address.clone(),
             }
         };
-        info!(
-            "Node {}: Created PrevoteRequest with data {:?}",
-            node_id, prevote_request
-        );
+        // info!(
+        //     "Node {}: Created PrevoteRequest with data {:?}",
+        //     node_id, prevote_request
+        // );
 
         let (node_ip, node_list) = {
             let node_guard = node.lock().await;
