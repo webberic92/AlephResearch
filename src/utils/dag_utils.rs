@@ -58,7 +58,7 @@ pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, current_round: u64) -
         let node_guard = node.lock().await;
         let dag = node_guard.dag.lock().await;
 
-        // 🔹 Clone the DAG keys instead of holding the lock
+        // Clone the DAG keys instead of holding the lock
         let dag_keys: Vec<u64> = dag.keys().copied().collect();
         let latest_round = dag_keys.iter().max().copied().unwrap_or(0);
         (latest_round, node_guard.id, dag_keys)

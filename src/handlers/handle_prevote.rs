@@ -50,7 +50,7 @@ pub async fn handle_prevote(
     prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
     info!(
-        "🔹 handle_prevote: Processing {} proposals from {}",
+        "handle_prevote: Processing {} proposals from {}",
         prevote_request.proposals.len(),
         prevote_request.sender_url
     );
@@ -71,7 +71,7 @@ pub async fn handle_prevote(
 
     // ✅ **Process each proposal separately**
     for proposal in &prevote_request.proposals {
-        info!("🔹 Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
+        info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
 
         let mut reconstructed_transactions = Vec::new();
 
@@ -84,14 +84,14 @@ pub async fn handle_prevote(
                 .collect::<Result<Vec<Vec<u8>>, _>>()
                 .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
             
-            // info!("🔹 handle prevote Decoded shards: {:?}", decoded_shards);
+            // info!("handle prevote Decoded shards: {:?}", decoded_shards);
 
             // Compute hash of each decoded shard
             let shard_hashes: Vec<Vec<u8>> = decoded_shards
                 .iter()
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
-            // info!("🔹 handle prevote shard_hashes: {:?}", shard_hashes);
+            // info!("handle prevote shard_hashes: {:?}", shard_hashes);
 
 
 
@@ -148,7 +148,7 @@ pub async fn handle_prevote(
 
             reconstructed_transactions.push(reconstructed_tx);
         }
-
+        
         // ✅ **Step 15: Reconstruct the entire unit**
         let reconstructed_unit = reconstruct_unit(
             &reconstructed_transactions,  // ✅ Pass **transactions** instead of raw shards
@@ -176,7 +176,7 @@ pub async fn handle_prevote(
         // ✅ **If quorum has already been met, ignore this prevote**
         if *count >= quorum_threshold {
             info!(
-                "🔹 Node {}: Ignoring prevote for round {}. Quorum already met.",
+                "Node {}: Ignoring prevote for round {}. Quorum already met.",
                 node_id, round_id
             );
             return Ok(());  // **Exit early**
@@ -187,18 +187,18 @@ pub async fn handle_prevote(
     } // ⬅️ Lock is released before returning vote_count
     
     info!(
-        "🔹 Node {}: Quorum votes {}/{}",
+        "Node {}: Quorum votes {}/{}",
         node_id, vote_count, quorum_threshold
     );
 
     info!(
-        "🔹 Node {}: Quorum votes {}/{}",
+        "Node {}: Quorum votes {}/{}",
         node_id, vote_count, quorum_threshold
     );
 
     if vote_count < quorum_threshold {
         info!(
-            "🔹 Node {}: Not enough prevote messages received. Waiting for quorum before proceeding to commit.",
+            "Node {}: Not enough prevote messages received. Waiting for quorum before proceeding to commit.",
             node_id
         );
         return Ok(());

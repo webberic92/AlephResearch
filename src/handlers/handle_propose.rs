@@ -60,7 +60,7 @@ pub async fn handle_propose(
     let round_id = propose_request.base.round_id;
     let node_id;
 
-    // 🔹 Step 1: Log receipt of the proposal
+    // Step 1: Log receipt of the proposal
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
@@ -70,8 +70,8 @@ pub async fn handle_propose(
             node_id, round_id, propose_request.base.proposing_node_id
         );
 
-        // 🔹 Step 2: Check if we already received a proposal from this node
-        // 🔹 Step 2: Check if we already received a proposal from this node
+        // Step 2: Check if we already received a proposal from this node
+        // Step 2: Check if we already received a proposal from this node
         let duplicate = {
             let proposal_tracker = node_guard.proposal_tracker.lock().await;
             proposal_tracker.get(&round_id) // Ensure `round_id` remains `u64`
@@ -89,7 +89,7 @@ pub async fn handle_propose(
         }
     }
 
-    // 🔹 Step 3: Decode transactions' shards and validate them
+    // Step 3: Decode transactions' shards and validate them
     for transaction in &propose_request.transactions {
         let decoded_shards: Vec<Vec<u8>> = transaction.shards
             .iter()
@@ -106,7 +106,7 @@ pub async fn handle_propose(
             transaction_size = node_guard.transaction_size;
         }
 
-        // 🔹 Step 3.1: Validate each transaction's shard size
+        // Step 3.1: Validate each transaction's shard size
         if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
             return Err(format!(
                 "Node {}: Received oversized unit, rejecting propose.",
@@ -115,10 +115,10 @@ pub async fn handle_propose(
         }
     }
 
-    // 🔹 Step 4: Ensure DAG is synchronized to round r - 1
+    // Step 4: Ensure DAG is synchronized to round r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    // 🔹 Step 5: Store the proposal
+    // Step 5: Store the proposal
     let (proposal_count, required_proposals, stored_proposals) = Node::update_proposal_tracker(
         node.clone(),
         propose_request.clone(),
@@ -129,7 +129,7 @@ pub async fn handle_propose(
         node_id, round_id, proposal_count, required_proposals
     );
 
-    // 🔹 Step 6: If quorum is met, multicast aggregated prevote
+    // Step 6: If quorum is met, multicast aggregated prevote
     if proposal_count >= required_proposals {
         info!(
             "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
@@ -192,7 +192,7 @@ pub async fn handle_propose(
             }
         }
 
-        // 🔹 Step 7: Also handle the prevote locally
+        // Step 7: Also handle the prevote locally
         info!("Node {}: Handling prevote locally.", node_id);
         handle_prevote(node.clone(), client, prevote_request).await.map_err(|e| {
             error!(
@@ -203,7 +203,7 @@ pub async fn handle_propose(
         })?;
     }
 
-    // 🔹 Step 8: Log successful handling
+    // Step 8: Log successful handling
     info!(
         "============== Node {}: Proposal successfully handled for round {} from sender {} ==============",
         node_id, round_id, propose_request.base.proposing_node_id
