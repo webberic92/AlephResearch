@@ -1,12 +1,12 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::Arc,
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex};
 use tracing::{error, info};
 use crate::handlers::handle_propose::handle_propose;
-use super::requests::{DagUnit, ProposeRequest};
+use super::requests::{CommitRequest, DagUnit, ProposeRequest};
 
 
 /// **📌 Node Struct: Represents a single node in the Aleph RBC protocol.**
@@ -26,7 +26,7 @@ pub struct Node {
     pub transaction_size: usize,
     pub data_shards: usize,
     pub total_rounds: usize,
-    pub commit_tracker: Arc<Mutex<std::collections::HashSet<String>>>, 
+    pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
     pub client: Arc<Client>,
 }
 
@@ -59,7 +59,7 @@ impl Node {
             transaction_size,
             data_shards,
             total_rounds,
-            commit_tracker: Arc::new(Mutex::new(std::collections::HashSet::new())),
+            commit_tracker: Arc::new(Mutex::new(HashMap::new())),
             client: client.clone(), // ✅ Store client instance
         }));
     
@@ -72,7 +72,7 @@ impl Node {
     }
     
 
-    /// **🔹 Asynchronous Proposal Processing**
+    /// **Asynchronous Proposal Processing**
     /// - Processes proposals as they arrive via the message queue.
     async fn process_proposals(
         node: Arc<Mutex<Node>>,
@@ -95,18 +95,18 @@ impl Node {
         }
     }
 
-    /// **🔹 Compute Fault Tolerance Threshold (f)**
+    /// **Compute Fault Tolerance Threshold (f)**
     pub fn get_fault_tolerance_threshold(&self) -> usize {
         (self.total_nodes - 1) / 3
     }
 
-    /// **🔹 Compute Quorum Threshold**
+    /// **Compute Quorum Threshold**
     pub fn get_quorum_threshold(&self) -> usize {
         let f = self.get_fault_tolerance_threshold();
         2 * f + 1
     }
 
-    /// **🔹 Check if Quorum is Reached**
+    /// **Check if Quorum is Reached**
     pub async fn is_quorum_reached(&self, round_id: u64) -> bool {
         let quorum_threshold = self.get_quorum_threshold();
         let vote_count = self.quorum_votes.lock().await.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);

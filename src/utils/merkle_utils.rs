@@ -142,7 +142,7 @@ pub fn reconstruct_unit(
         .collect();
 
     // ✅ Log computed Merkle roots
-    // info!("Computed Merkle roots for reconstructed unit: {:?}", merkle_roots);
+    info!("reconstructed transactions.to_vec(): {:?}", transactions.to_vec());
 
     // Generate a unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);

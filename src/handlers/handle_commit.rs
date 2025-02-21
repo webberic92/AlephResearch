@@ -19,6 +19,7 @@ use crate::{
 */
 
 /// **🔥 Handles the commit phase with multiple transactions per proposal**
+/// **🔥 Handles the commit phase with multiple transactions per proposal**
 pub async fn handle_commit(
     node: Arc<Mutex<Node>>,
     commit_request: CommitRequest,
@@ -36,108 +37,141 @@ pub async fn handle_commit(
         node_id, round_id
     );
 
-    // **Step 22:** Insert committed units into the DAG
+    let commit_count;
+
     {
         let node_guard = node.lock().await;
-        let mut dag = node_guard.dag.lock().await;
-
-        for unit in &commit_request.units {
-            let unit_merkle_root = &unit.merkle_root;
-
-            let units = dag.entry(round_id).or_insert_with(Vec::new);
-
-            // Ensure the unit is not already in the DAG
-            if !units.iter().any(|u| u.merkle_root == *unit_merkle_root) {
-                units.push(unit.clone());
-                info!(
-                    "Node {}: Added committed unit with Merkle root {:?} to DAG for round {}",
-                    node_id, unit_merkle_root, round_id
-                );
-            }
-        }
-
-        // **Step 23:** Check if commit has already been sent
         let mut commit_tracker = node_guard.commit_tracker.lock().await;
-        let commit_key = format!("{}-{}", commit_request.proposing_node_id, round_id);
-        if commit_tracker.contains(&commit_key) {
+
+        // ✅ **Ensure `commit_tracker` is a `HashMap<u64, Vec<CommitRequest>>`**
+        let round_commits = commit_tracker.entry(round_id).or_insert_with(Vec::new);
+
+        // ✅ **Ensure each proposer commits only once per round**
+        if round_commits.iter().any(|c| c.proposing_node_id == commit_request.proposing_node_id) {
             info!(
-                "Node {}: Commit message for round {} already sent.",
-                node_id, round_id
+                "Node {}: Duplicate commit from {} for round {}. Ignoring.",
+                node_id, commit_request.proposing_node_id, round_id
             );
             return Ok(());
         }
 
-        // **Mark commit as sent**
-        commit_tracker.insert(commit_key.clone());
+        // ✅ Store the commit request in commit_tracker
+        round_commits.push(commit_request.clone());
+        commit_count = round_commits.len();
+    } // 🔓 Release commit_tracker lock
 
-        // **Step 24:** Check if `2f+1` commits have been received
-        let quorum = node_guard.get_quorum_threshold();
-        if let Some(units) = dag.get(&round_id) {
-            if units.len() >= quorum {
-                info!("Node {}: DAG finalized for round {}.", node_id, round_id);
+    let quorum = {
+        let node_guard = node.lock().await;
+        node_guard.get_quorum_threshold()
+    };
 
-                // **Step 25:** Write finalized DAG to file
-                if let Err(e) = write_finalized_dag_to_file(
-                    "/home/aleph-node/logs/finalized_dag",
-                    &dag,
-                    round_id,
-                )
-                .await
-                {
-                    error!(
-                        "Node {}: Failed to write finalized DAG: {:?}",
-                        node_id, e
-                    );
-                    return Err(format!("Failed to write finalized DAG: {:?}", e));
+    info!(
+        "Node {}: Commit count for round {} is {}/{}.",
+        node_id, round_id, commit_count, quorum
+    );
+
+    // ✅ **Step 24: If quorum is met, finalize DAG**
+    if commit_count >= quorum {
+        info!("Node {}: Finalizing round {} with {}/{} commits.", node_id, round_id, commit_count, quorum);
+
+        // **Step 25:** Retrieve ALL stored commits for this round
+        let all_commits;
+        {
+            let node_guard = node.lock().await;
+            let mut commit_tracker = node_guard.commit_tracker.lock().await;
+
+            // ✅ Extract all commits for the round
+            all_commits = commit_tracker.remove(&round_id).unwrap_or_default();
+        } // 🔓 Release commit_tracker lock
+
+        // ✅ **Insert ALL committed units into the DAG**
+        {
+            let node_guard = node.lock().await;
+            let mut dag = node_guard.dag.lock().await;
+
+            for commit in all_commits {
+                for unit in &commit.units {
+                    let unit_merkle_root = &unit.merkle_root;
+                    let units = dag.entry(round_id).or_insert_with(Vec::new);
+
+                    // ✅ **Ensure unit isn't already in DAG**
+                    if !units.iter().any(|u| u.merkle_root == *unit_merkle_root) {
+                        units.push(unit.clone());
+                        info!(
+                            "Node {}: Added committed unit with Merkle root {:?} to DAG for round {}",
+                            node_id, unit_merkle_root, round_id
+                        );
+                    }
                 }
-
-                // **Step 23 (continued): Multicast commit message to all nodes**
-                let node_ips = &node_guard.nodes;
-                let commit_message =
-                    serde_json::to_string(&commit_request).map_err(|e| {
-                        format!("Serialization failed: {:?}", e)
-                    })?;
-
-                for target_node in node_ips {
-                    let target_url = format!("http://{}/commit", target_node);
-                    let client = Client::new();
-                    let commit_message_clone = commit_message.clone();
-
-                    tokio::spawn(async move {
-                        match client.post(&target_url).body(commit_message_clone).send().await {
-                            Ok(response) if response.status().is_success() => {
-                                info!(
-                                    "Node {}: Successfully sent commit to {}",
-                                    node_id, target_url
-                                );
-                            }
-                            Ok(response) => {
-                                error!(
-                                    "Node {}: Failed to send commit to {}. Status: {}",
-                                    node_id,
-                                    target_url,
-                                    response.status()
-                                );
-                            }
-                            Err(e) => {
-                                error!(
-                                    "Node {}: Network error while sending commit to {}: {:?}",
-                                    node_id, target_url, e
-                                );
-                            }
-                        }
-                    });
-                }
-            } else {
-                info!(
-                    "Node {}: Not enough commits yet. Waiting for 2f+1 commits.",
-                    node_id
-                );
             }
         }
+
+        // ✅ **Step 25: Write finalized DAG to file**
+        // ✅ **Step 25: Write finalized DAG to file**
+        let finalized_dag = {
+            let node_guard = node.lock().await;
+            let dag_guard = node_guard.dag.lock().await;
+            dag_guard.clone()  // ✅ Clone the DAG so we can use it outside the lock
+        }; // 🔓 Lock is released here
+
+        if let Err(e) = write_finalized_dag_to_file(
+            "/home/aleph-node/logs/finalized_dag",
+            &finalized_dag,  // ✅ Use the cloned DAG
+            round_id,
+        )
+        .await
+        {
+            error!(
+                "Node {}: Failed to write finalized DAG: {:?}",
+                node_id, e
+            );
+            return Err(format!("Failed to write finalized DAG: {:?}", e));
+        }
+        // ✅ **Step 23 (continued): Multicast commit message to all nodes**
+        let node_ips;
+        {
+            let node_guard = node.lock().await;
+            node_ips = node_guard.nodes.clone();
+        }
+
+        for target_node in node_ips {
+            let target_url = format!("http://{}/commit", target_node);
+            let client = Client::new();
+            let cloned_commit_request = commit_request.clone();
+
+            tokio::spawn(async move {
+                match client.post(&target_url).body(serde_json::to_string(&cloned_commit_request).unwrap()).send().await {
+                    Ok(response) if response.status().is_success() => {
+                        info!(
+                            "Node {}: Successfully sent commit to {}",
+                            node_id, target_url
+                        );
+                    }
+                    Ok(response) => {
+                        error!(
+                            "Node {}: Failed to send commit to {}. Status: {}",
+                            node_id,
+                            target_url,
+                            response.status()
+                        );
+                    }
+                    Err(e) => {
+                        error!(
+                            "Node {}: Network error while sending commit to {}: {:?}",
+                            node_id, target_url, e
+                        );
+                    }
+                }
+            });
+        }
+    } else {
+        info!(
+            "Node {}: Not enough commits yet. Waiting for {}/{} commits.",
+            node_id, commit_count, quorum
+        );
     }
 
-    // **Step 26:** Increment the round if applicable
+    // ✅ **Step 26:** Increment the round if applicable
     {
         let node_guard = node.lock().await;
         let mut current_round = node_guard.current_round.lock().await;
@@ -156,3 +190,4 @@ pub async fn handle_commit(
     );
     Ok(())
 }
+
