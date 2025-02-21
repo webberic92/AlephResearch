@@ -148,7 +148,7 @@ pub async fn handle_prevote(
 
             reconstructed_transactions.push(reconstructed_tx);
         }
-        
+        // info!("Reconstructed transactions: {:?}", reconstructed_transactions);
         // ✅ **Step 15: Reconstruct the entire unit**
         let reconstructed_unit = reconstruct_unit(
             &reconstructed_transactions,  // ✅ Pass **transactions** instead of raw shards
@@ -164,7 +164,6 @@ pub async fn handle_prevote(
 
         reconstructed_units.push(reconstructed_unit);
     }
-
     // **Step 14 (continued):** Count quorum votes ONCE per PrevoteRequest (not per proposal)
     let epoch_key = round_id.to_be_bytes().to_vec();
     let vote_count;
@@ -186,11 +185,6 @@ pub async fn handle_prevote(
         vote_count = *count;
     } // ⬅️ Lock is released before returning vote_count
     
-    info!(
-        "Node {}: Quorum votes {}/{}",
-        node_id, vote_count, quorum_threshold
-    );
-
     info!(
         "Node {}: Quorum votes {}/{}",
         node_id, vote_count, quorum_threshold

@@ -56,11 +56,11 @@ pub async fn write_finalized_dag_to_file(
                 "shards": tx.shards.iter().map(|shard| {
                     let decoded_bytes = general_purpose::STANDARD.decode(shard)
                         .unwrap_or_else(|_| vec![]); // Handle decoding errors
-
-                    if let Ok(decoded_str) = String::from_utf8(decoded_bytes.clone()) {
-                        decoded_str // ✅ If it's valid UTF-8, store as string
+                    if !decoded_bytes.is_empty() {
+                        let cloned_bytes = decoded_bytes.clone();
+                        String::from_utf8(cloned_bytes).unwrap_or_else(|_| format!("{:?}", decoded_bytes)) // ✅ Store valid UTF-8 or raw bytes
                     } else {
-                        format!("{:?}", decoded_bytes) // ✅ Otherwise, store raw byte array
+                        shard.clone() // ✅ If decoding fails, use the original Base64 string
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),

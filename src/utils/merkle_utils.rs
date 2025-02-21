@@ -122,10 +122,10 @@ pub fn validate_merkle_branch(
  * - Generates a unique unit ID for DAG tracking.
  */
 pub fn reconstruct_unit(
-    transactions: &[Transaction],  // ✅ Directly take the decoded transactions
+    transactions: &[Transaction],
     round_id: u64,
-    parent_units: Vec<String>, // ✅ Already stored as parent unit IDs
-    proposer_node: usize, // ✅ We need to pass the proposing node ID
+    parent_units: Vec<String>,
+    proposer_node: usize,
 ) -> Result<DagUnit, String> {
     if transactions.is_empty() {
         return Err("Reconstruction failed: No transactions provided".to_string());
@@ -135,14 +135,23 @@ pub fn reconstruct_unit(
     let merkle_roots: Vec<Vec<u8>> = transactions.iter()
         .map(|tx| {
             let shard_hashes: Vec<Vec<u8>> = tx.shards.iter()
-                .map(|shard| Sha256::digest(shard.as_bytes()).to_vec())
+                .map(|shard| Sha256::digest(shard.as_bytes()).to_vec()) // ✅ Ensure correct hashing
                 .collect();
             compute_merkle_root(&shard_hashes)
         })
         .collect();
 
+    // ✅ **Fix: Store Shards Properly**
+    let reconstructed_transactions: Vec<Transaction> = transactions.iter()
+        .map(|tx| Transaction {
+            root: tx.root.clone(),
+            proofs: tx.proofs.clone(),
+            shards: tx.shards.clone(), // ✅ **Ensure original shards are kept**
+        })
+        .collect();
+
     // ✅ Log computed Merkle roots
-    info!("reconstructed transactions.to_vec(): {:?}", transactions.to_vec());
+    // info!("Reconstructed transactions: {:?}", reconstructed_transactions);
 
     // Generate a unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);
@@ -152,9 +161,9 @@ pub fn reconstruct_unit(
         unit_id,
         proposer_node,
         round: round_id,
-        transactions: transactions.to_vec(),  // ✅ Store multiple transactions
+        transactions: reconstructed_transactions,  // ✅ **Ensure transactions keep correct shards**
         parent_units,
-        merkle_root: merkle_roots.concat(), // ✅ Flatten all transaction Merkle roots
+        merkle_root: merkle_roots.concat(), // ✅ **Flatten all transaction Merkle roots**
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }
