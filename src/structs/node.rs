@@ -63,10 +63,10 @@ impl Node {
             client: client.clone(), // ✅ Store client instance
         }));
     
-        let node_clone = Arc::clone(&node);
-        tokio::spawn(async move {
-            Node::process_proposals(node_clone, proposal_receiver).await;
-        });
+        // let node_clone = Arc::clone(&node);
+        // tokio::spawn(async move {
+        //     Node::process_proposals(node_clone, proposal_receiver).await;
+        // });
     
         node
     }
@@ -74,26 +74,26 @@ impl Node {
 
     /// **Asynchronous Proposal Processing**
     /// - Processes proposals as they arrive via the message queue.
-    async fn process_proposals(
-        node: Arc<Mutex<Node>>,
-        mut receiver: Receiver<ProposeRequest>,
-    ) {
-        while let Some(propose_request) = receiver.recv().await {
-            let (node_id, client) = {
-                let node_guard = node.lock().await;
-                (node_guard.id, node_guard.client.clone()) // ✅ Retrieve client
-            };
+    // async fn process_proposals(
+    //     node: Arc<Mutex<Node>>,
+    //     mut receiver: Receiver<ProposeRequest>,
+    // ) {
+    //     while let Some(propose_request) = receiver.recv().await {
+    //         let (node_id, client) = {
+    //             let node_guard = node.lock().await;
+    //             (node_guard.id, node_guard.client.clone()) // ✅ Retrieve client
+    //         };
     
-            info!(
-                "Node {}: Processing queued proposal for round {} from node {}",
-                node_id, propose_request.base.round_id, propose_request.base.proposing_node_id
-            );
+    //         info!(
+    //             "Node {}: Processing queued proposal for round {} from node {}",
+    //             node_id, propose_request.base.round_id, propose_request.base.proposing_node_id
+    //         );
     
-            if let Err(err) = handle_propose(node.clone(), client.clone(), propose_request).await {
-                error!("Node {}: Failed to process proposal: {:?}", node_id, err);
-            }
-        }
-    }
+    //         if let Err(err) = handle_propose(node.clone(), client.clone(), propose_request).await {
+    //             error!("Node {}: Failed to process proposal: {:?}", node_id, err);
+    //         }
+    //     }
+    // }
 
     /// **Compute Fault Tolerance Threshold (f)**
     pub fn get_fault_tolerance_threshold(&self) -> usize {
