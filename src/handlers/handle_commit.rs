@@ -209,13 +209,13 @@ pub async fn handle_commit(
     }
 
     info!(
-        "============== Node {}: Handling commit request for round {} ==============",
-        node_id, round_id
+        "============== Node {}: Handling commit request from {} for round {} ==============",
+        node_id,commit_request.proposing_node_id, round_id
     );
-    info!(
-        "Node {}: Received commit from {} : {:?}",
-        node_id, commit_request.proposing_node_id, commit_request.units
-    );
+    // info!(
+    //     "Node {}: Received commit from {} : {:?}",
+    //     node_id, commit_request.proposing_node_id, commit_request.units
+    // );
 
     let commit_count;
 
@@ -266,7 +266,7 @@ pub async fn handle_commit(
         } // 🔓 Release commit_tracker lock
 
 
-        info!("All commits: {:?}", all_commits);
+        // info!("All commits: {:?}", all_commits);
 
         // ✅ **Insert ALL committed units into the DAG**
         let mut all_units = Vec::new();
@@ -289,10 +289,10 @@ pub async fn handle_commit(
                 // ✅ **Ensure unit isn't already in DAG**
                 if !dag_units.iter().any(|u| u.merkle_root == *unit_merkle_root) {
                     dag_units.push(unit.clone());
-                    info!(
-                        "Node {}: Added committed unit with Merkle root {:?} to DAG for round {}",
-                        node_id, unit_merkle_root, round_id
-                    );
+                    // info!(
+                    //     "Node {}: Added committed unit with Merkle root {:?} to DAG for round {}",
+                    //     node_id, unit_merkle_root, round_id
+                    // );
                 }
             }
         }
