@@ -1,16 +1,17 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::HashMap,
     sync::Arc,
 };
 use reqwest::Client;
-use tokio::sync::{mpsc::{self, Receiver, Sender}, Mutex};
-use tracing::{error, info};
-use crate::handlers::handle_propose::handle_propose;
+use tokio::sync::{mpsc::{self}, Mutex};
+use tracing:: info;
+use crate::utils::round_manager::round_manager_task;
 use super::requests::{CommitRequest, DagUnit, ProposeRequest};
+use crate::utils::events::Event;
 
+/// **Events to notify the Round Manager**
 
 /// **📌 Node Struct: Represents a single node in the Aleph RBC protocol.**
-#[derive(Debug)]
 pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
@@ -21,13 +22,13 @@ pub struct Node {
     pub ip_address: String,
     pub ip_manager_address: String,
     pub nodes: Vec<String>,
-    pub proposal_sender: Sender<ProposeRequest>, // Proposal queue for async processing
     pub number_of_transactions: usize,
     pub transaction_size: usize,
     pub data_shards: usize,
     pub total_rounds: usize,
     pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
     pub client: Arc<Client>,
+    pub event_sender: mpsc::Sender<Event>,
 }
 
 impl Node {
@@ -41,9 +42,9 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
-        client: Arc<Client>, // ✅ Pass client
+        client: Arc<Client>,
     ) -> Arc<Mutex<Self>> {
-        let (proposal_sender, proposal_receiver) = mpsc::channel(100);
+        let (event_sender, event_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
             id,
             total_nodes,
@@ -54,46 +55,28 @@ impl Node {
             proposal_tracker: Arc::new(Mutex::new(HashMap::new())),
             dag: Arc::new(Mutex::new(HashMap::new())),
             nodes,
-            proposal_sender,
             number_of_transactions,
             transaction_size,
             data_shards,
             total_rounds,
             commit_tracker: Arc::new(Mutex::new(HashMap::new())),
-            client: client.clone(), // ✅ Store client instance
+            client: client.clone(),
+            event_sender,
         }));
     
-        // let node_clone = Arc::clone(&node);
-        // tokio::spawn(async move {
-        //     Node::process_proposals(node_clone, proposal_receiver).await;
-        // });
+        // Spawn the round manager task
+        let node_clone = node.clone();
+        tokio::spawn(async move {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
+                tracing::error!("RoundManager encountered an error: {:?}", e);
+            }
+        });
     
         node
     }
+
     
 
-    /// **Asynchronous Proposal Processing**
-    /// - Processes proposals as they arrive via the message queue.
-    // async fn process_proposals(
-    //     node: Arc<Mutex<Node>>,
-    //     mut receiver: Receiver<ProposeRequest>,
-    // ) {
-    //     while let Some(propose_request) = receiver.recv().await {
-    //         let (node_id, client) = {
-    //             let node_guard = node.lock().await;
-    //             (node_guard.id, node_guard.client.clone()) // ✅ Retrieve client
-    //         };
-    
-    //         info!(
-    //             "Node {}: Processing queued proposal for round {} from node {}",
-    //             node_id, propose_request.base.round_id, propose_request.base.proposing_node_id
-    //         );
-    
-    //         if let Err(err) = handle_propose(node.clone(), client.clone(), propose_request).await {
-    //             error!("Node {}: Failed to process proposal: {:?}", node_id, err);
-    //         }
-    //     }
-    // }
 
     /// **Compute Fault Tolerance Threshold (f)**
     pub fn get_fault_tolerance_threshold(&self) -> usize {
