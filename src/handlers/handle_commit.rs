@@ -1,10 +1,9 @@
 use std::sync::Arc;
 use tokio::sync::Mutex;
 use tracing::{info, error};
-use reqwest::Client;
 use crate::{
     structs::{node::Node, requests::CommitRequest},
-    utils::config_util::write_finalized_dag_to_file,
+    utils::{config_util::write_finalized_dag_to_file, events::Event},
 };
 
 pub async fn handle_commit(
@@ -162,6 +161,20 @@ pub async fn handle_commit(
             );
         }
     }
+    
+    // **Emit RoundFinalized Event** when the round is finalized
+    {
+        let node_guard = node.lock().await;
+        let event_sender = node_guard.event_sender.clone();
+        let round_id = commit_request.round_id;
+    
+        tokio::spawn(async move {
+            if let Err(e) = event_sender.send(Event::RoundFinalized(round_id)).await {
+                error!("Failed to send RoundFinalized event: {:?}", e);
+            }
+        });
+    }
+
 
     info!(
         "============== Node {}: Exiting commit handler.==============",
