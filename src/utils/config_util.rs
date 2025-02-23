@@ -26,7 +26,6 @@ pub fn save_config(toml_config: &TomlConfig, path: Option<&str>) -> Result<(), B
 }
 
 /// **Writes the finalized DAG to a file in a human-readable format.**
-/// **Writes the finalized DAG to a file in a human-readable format.**
 pub async fn write_finalized_dag_to_file(
     base_path: &str,
     dag: &HashMap<u64, Vec<DagUnit>>,
