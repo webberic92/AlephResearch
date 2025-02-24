@@ -11,18 +11,18 @@ pub async fn round_manager_task(
     while let Some(event) = event_receiver.recv().await {
         match event {
             Event::RoundFinalized(r) => {
-                let node_guard = node.lock().await;
-                let total_rounds = node_guard.total_rounds;
+                info!("Round Manager: Processing RoundFinalized event for round {}", r);
 
-                // Ensure there are still rounds left to execute
-                if r >= total_rounds.try_into().unwrap() {
-                    info!("Node {}: All rounds completed. Stopping Round Manager.", node_guard.id);
-                    break;
-                }
+                {
+                    let node_guard = node.lock().await;
+                    let total_rounds = node_guard.total_rounds;
 
-                drop(node_guard); // Release lock early
+                    if r >= total_rounds.try_into().unwrap() {
+                        info!("Node {}: All rounds completed. Stopping Round Manager.", node_guard.id);
+                        break;
+                    }
+                } // 🔓 Release the lock before sending a proposal
 
-                // Immediately create and propose the next round (r+1)
                 if let Err(e) = create_and_propose_round(node.clone(), r + 1).await {
                     error!("Failed to start next round {}: {:?}", r + 1, e);
                 }
