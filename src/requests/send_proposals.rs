@@ -1,17 +1,12 @@
-use base64::engine::general_purpose;
-use base64::Engine;
+
 use futures::future::join_all;
 use reqwest::Client;
-use sha2::{Digest, Sha256};
 use tracing::{error, info};
-use std::sync::Arc;
+use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use crate::{
     handlers::handle_propose::handle_propose,
-    structs::{ node::Node, requests::{ BaseRequest, ProposeRequest } },
-    utils::merkle_utils::{ compute_merkle_branch, compute_merkle_root },
-};
-
+    structs::{ node::Node, requests::ProposeRequest },};
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
 --------------------------------------------------
@@ -39,23 +34,20 @@ pub async fn send_proposals(
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
-    let round;
-    let node_id;
-    let nodes;
-
-    {
+    info!("Node {} : Entering sending proposals for round {}", propose_request.base.proposing_node_id, propose_request.base.round_id);   
+   
+    // Extract values quickly and release the lock
+    let (round, node_id, nodes) = {
         let node_guard = node.lock().await;
-        round = propose_request.base.round_id;
-        node_id = node_guard.id;
-        nodes = node_guard.nodes.clone();
-    }
+        (propose_request.base.round_id, node_guard.id, node_guard.nodes.clone())
+    }; 
 
     info!(
-        "Node {}: Preparing to send a proposal with {} transactions for round {} to nodes: {:?}",
-        node_id, propose_request.transactions.len(), round, nodes
+        "Node {} : Preparing to send proposal to nodes {:?} for round {}",
+        node_id, nodes, round
     );
 
-    // ✅ **Step 4: Iterate over all nodes `j ∈ N` and send the full proposal**
+    // Send proposals concurrently
     let futures: Vec<_> = nodes.iter().map(|node_url| {
         let client = client.clone();
         let node_url = node_url.clone();
@@ -68,10 +60,11 @@ pub async fn send_proposals(
             );
 
             match client
-                .post(format!("http://{}/propose", node_url))
-                .json(&proposal_clone)
-                .send()
-                .await
+            .post(format!("http://{}/propose", node_url))
+            .json(&proposal_clone)
+            .timeout(Duration::from_secs(5))  // 🔥 Add a timeout!
+            .send()
+            .await
             {
                 Ok(res) if res.status().is_success() => {
                     info!(
@@ -100,17 +93,25 @@ pub async fn send_proposals(
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for round {}.", round);
 
-        if let Err(e) = handle_propose(node.clone(), client.clone(), propose_request).await {
-            error!(
-                "Node {}: Failed to handle local proposal. Error: {:?}",
-                node_id, e
-            );
-        }
+        // 🔥 Run `handle_propose` in a separate **spawned task** to avoid blocking
+        let node_clone = node.clone();
+        let client_clone = client.clone();
+        let propose_request_clone = propose_request.clone();
+
+        tokio::spawn(async move {
+            if let Err(e) = handle_propose(node_clone, client_clone, propose_request_clone).await {
+                error!(
+                    "Node {}: Failed to handle local proposal. Error: {:?}",
+                    node_id, e
+                );
+            }
+        });
 
         Ok(())
     } else {
         Err(anyhow::anyhow!("One or more proposals failed."))
     }
 }
+
 
 

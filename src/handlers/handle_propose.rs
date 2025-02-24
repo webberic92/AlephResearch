@@ -60,36 +60,33 @@ pub async fn handle_propose(
     let round_id = propose_request.base.round_id;
     let node_id;
 
-    // Step 1: Log receipt of the proposal
+    // Step 1: Acquire the node ID & Log
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
-
         info!(
             "============== Node {}: Handling PROPOSE request for round {} from Node {} ==============",
             node_id, round_id, propose_request.base.proposing_node_id
         );
+    }
 
-        // Step 2: Check if we already received a proposal from this node
-        // Step 2: Check if we already received a proposal from this node
-        let duplicate = {
-            let proposal_tracker = node_guard.proposal_tracker.lock().await;
-            proposal_tracker.get(&round_id) // Ensure `round_id` remains `u64`
-                .map(|round_proposals| round_proposals.contains_key(&(propose_request.base.proposing_node_id as usize))) // Convert `proposing_node_id` to `u64`
-                .unwrap_or(false) 
-        };
+    // Step 2: Check if a proposal from this node has already been processed
+    {
+        let node_guard = node.lock().await;
+        let proposal_tracker = node_guard.proposal_tracker.lock().await;
 
-
-        if duplicate {
-            info!(
-                "Node {}: Already received propose for round {} from Node {}. Terminating.",
-                node_id, round_id, propose_request.base.proposing_node_id
-            );
-            return Ok(());
+        if let Some(round_proposals) = proposal_tracker.get(&round_id) {
+            if round_proposals.contains_key(&(propose_request.base.proposing_node_id as usize)) {
+                info!(
+                    "Node {}: Already received propose for round {} from Node {}. Ignoring duplicate.",
+                    node_id, round_id, propose_request.base.proposing_node_id
+                );
+                return Ok(()); // ✅ Exit early
+            }
         }
     }
 
-    // Step 3: Decode transactions' shards and validate them
+    // Step 3: Decode and validate transaction shards
     for transaction in &propose_request.transactions {
         let decoded_shards: Vec<Vec<u8>> = transaction.shards
             .iter()
@@ -97,16 +94,11 @@ pub async fn handle_propose(
             .collect::<Result<Vec<Vec<u8>>, _>>()
             .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
-        // info!("handle proposal Decoded shards: {:?}", decoded_shards);
-
-        let (number_of_transactions, transaction_size);
-        {
+        let (number_of_transactions, transaction_size) = {
             let node_guard = node.lock().await;
-            number_of_transactions = node_guard.number_of_transactions;
-            transaction_size = node_guard.transaction_size;
-        }
+            (node_guard.number_of_transactions, node_guard.transaction_size)
+        };
 
-        // Step 3.1: Validate each transaction's shard size
         if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
             return Err(format!(
                 "Node {}: Received oversized unit, rejecting propose.",
@@ -115,7 +107,7 @@ pub async fn handle_propose(
         }
     }
 
-    // Step 4: Ensure DAG is synchronized to round r - 1
+    // Step 4: Ensure DAG synchronization before processing the proposal
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
     // Step 5: Store the proposal
@@ -144,10 +136,6 @@ pub async fn handle_propose(
                 sender_url: node_guard.ip_address.clone(),
             }
         };
-        // info!(
-        //     "Node {}: Created PrevoteRequest with data {:?}",
-        //     node_id, prevote_request
-        // );
 
         let (node_ip, node_list) = {
             let node_guard = node.lock().await;
@@ -171,8 +159,8 @@ pub async fn handle_propose(
                     {
                         Ok(response) if response.status().is_success() => {
                             info!(
-                                "Node {}: Successfully sent prevote to {}",
-                                node_id, target_url
+                                "Node {}: Successfully sent prevote to {} for round {}",
+                                node_id, target_url, round_id
                             );
                         }
                         Ok(response) => {

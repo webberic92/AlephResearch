@@ -50,22 +50,33 @@ pub async fn handle_prevote(
     prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
     info!(
-        "handle_prevote: Processing {} proposals from {}",
+        "handle_prevote: Processing {} proposals from {} for round {}",
         prevote_request.proposals.len(),
-        prevote_request.sender_url
+        prevote_request.sender_url,
+        prevote_request.proposals[0].base.round_id
     );
-    let node_id;
-    let round_id;
-    let quorum_threshold;
-    let total_nodes;
 
+    // Extract values **without holding the lock** long
+    let (node_id, round_id, quorum_threshold, total_nodes) = {
+        let node_guard = node.lock().await;
+        (
+            node_guard.id,
+            prevote_request.proposals[0].base.round_id,
+            node_guard.get_quorum_threshold(),
+            node_guard.total_nodes,
+        )
+    };
+
+    // ✅ **Immediately exit if the round is already committed**
     {
         let node_guard = node.lock().await;
-        node_id = node_guard.id;
-        round_id = prevote_request.proposals[0].base.round_id;
-        quorum_threshold = node_guard.get_quorum_threshold();
-        total_nodes = node_guard.total_nodes;
-    }
+        let dag_guard = node_guard.dag.lock().await;
+
+        if dag_guard.contains_key(&round_id) {
+            info!("Node {}: Round {} already finalized, ignoring prevote.", node_id, round_id);
+            return Ok(());
+        }
+    } // 🔓 Release lock early
 
     let mut reconstructed_units = Vec::new();
 
