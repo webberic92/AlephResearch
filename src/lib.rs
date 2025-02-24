@@ -8,6 +8,7 @@ pub mod utils{
     pub mod create_transaction_data;
     pub mod round_manager;
     pub mod events;
+    pub mod rbc_processor;
 }
 
 pub mod structs{

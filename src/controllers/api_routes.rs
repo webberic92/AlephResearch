@@ -2,7 +2,7 @@ use axum::{routing::post, Json, Router};
 use reqwest::{Client, StatusCode};
 use serde_json::Value;
 use tokio::sync::Mutex;
-use tracing::info;
+use tracing::{error, info};
 use std::sync::Arc;
 
 use crate::{
@@ -11,50 +11,41 @@ use crate::{
         node::Node,
         requests::{ CommitRequest, DAGSyncRequest, PrevoteRequest, ProposeRequest, SyncroundRequest},
         responses::Response,
-    },
+    }, utils::rbc_processor::RBCProcessor,
 };
 
 /// **🔗 Initialize API Routes with `Arc<Mutex<Node>>`.**
 pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
+    let processor = Arc::new(RBCProcessor::new(node.clone(), client.clone())); // ✅ Fixed processor initialization
+
     Router::new()
-    .route("/propose", post({
-        let node = node.clone();
-        let client = client.clone();
-        move |Json(payload): Json<Value>| {
-            let node = node.clone();
-            let client = client.clone();
-            async move {
-                match serde_json::from_value::<ProposeRequest>(payload) {
-                    Ok(parsed_payload) => {
-                        match handle_propose(node, client, parsed_payload).await {
-                            Ok(_) => (
+        .route("/propose", post({
+            let processor = processor.clone();
+            move |Json(payload): Json<Value>| {
+                let processor = processor.clone();
+                async move {
+                    match serde_json::from_value::<ProposeRequest>(payload) {
+                        Ok(parsed_payload) => {
+                            processor.enqueue_proposal(parsed_payload).await; // ✅ Uses FIFO Queue
+                            (
                                 StatusCode::OK,
                                 Json(Response {
-                                    status: "Proposal successfully handled.".to_string(),
+                                    status: "Proposal successfully enqueued.".to_string(),
                                 }),
-                            ),
-                            Err(e) => {
-                                let error_message = format!("Failed to handle proposal: {:?}", e);
-                                tracing::error!("{}", error_message);
-                                (
-                                    StatusCode::INTERNAL_SERVER_ERROR,
-                                    Json(Response { status: error_message }),
-                                )
-                            }
+                            )
                         }
-                    }
-                    Err(err) => {
-                        let error_message = format!("Failed to parse ProposeRequest: {:?}", err);
-                        tracing::error!("{}", error_message);
-                        (
-                            StatusCode::BAD_REQUEST,
-                            Json(Response { status: error_message }),
-                        )
+                        Err(err) => {
+                            let error_message = format!("Failed to parse ProposeRequest: {:?}", err);
+                            error!("{}", error_message);
+                            (
+                                StatusCode::BAD_REQUEST,
+                                Json(Response { status: error_message }),
+                            )
+                        }
                     }
                 }
             }
-        }
-    }))
+        }))
     .route("/prevote", post({
         let node = node.clone();
         let client = client.clone();
