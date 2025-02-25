@@ -1,7 +1,6 @@
-use std::{error::Error, sync::Arc, usize};
+use std::{ sync::Arc, usize};
 use tokio::sync::Mutex;
 use tracing::{ error, info};
-use reqwest::Client;
 use crate::
     structs::node::Node;
 

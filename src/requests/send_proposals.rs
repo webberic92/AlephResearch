@@ -92,9 +92,7 @@ pub async fn send_proposals(
     if results.iter().all(|res| res.is_ok()) {
         info!("Successfully sent all proposals for round {}.", round);
 
-        // 🔥 Run `handle_propose` in a separate **spawned task** to avoid blocking
-        let node_clone = node.clone();
-        let client_clone = client.clone();
+
         let propose_request_clone = propose_request.clone();
 
         let proposal_message = RBCMessage::Proposal(propose_request_clone);
