@@ -5,7 +5,7 @@ use tracing::{error, info};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use crate::{
-    handlers::handle_propose::handle_propose, processors::rbc_processor::RBCProcessor, structs::{ node::Node, requests::ProposeRequest }};
+    handlers::handle_propose::handle_propose, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
 --------------------------------------------------
@@ -97,14 +97,20 @@ pub async fn send_proposals(
         let client_clone = client.clone();
         let propose_request_clone = propose_request.clone();
 
-        tokio::spawn(async move {
-            if let Err(e) = handle_propose(node_clone, client_clone, propose_request_clone).await {
-                error!(
-                    "Node {}: Failed to handle local proposal. Error: {:?}",
-                    node_id, e
-                );
+        let proposal_message = RBCMessage::Proposal(propose_request_clone);
+
+        // ✅ Get `rbc_processor` from `Node`
+        let node_guard = node.lock().await;
+        let rbc_processor = match &node_guard.rbc_processor {
+            Some(processor) => processor.clone(),
+            None => {
+                error!("Node {}: `rbc_processor` is not initialized!", node_id);
+                return Err(anyhow::anyhow!(format!("Node {}: `rbc_processor` is not initialized!", node_id)));
             }
-        });
+        };
+        
+        // ✅ Enqueue the proposal into the queue instead of spawning a task
+        rbc_processor.enqueue_message(proposal_message).await;
 
         Ok(())
     } else {
