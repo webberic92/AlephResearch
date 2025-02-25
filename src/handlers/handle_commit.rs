@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
@@ -8,6 +9,7 @@ use crate::{
 
 pub async fn handle_commit(
     node: Arc<Mutex<Node>>,
+    client: Arc<Client>,
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     let (node_id, round_id) = {

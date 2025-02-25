@@ -8,6 +8,13 @@ pub mod utils{
     pub mod create_transaction_data;
     pub mod round_manager;
     pub mod events;
+}
+
+pub mod processors{
+    pub mod process_proposals;
+    pub mod process_prevotes;
+    pub mod process_commits;
+    pub mod priority_queue;
     pub mod rbc_processor;
 }
 
@@ -23,8 +30,6 @@ pub mod handlers{
     pub mod handle_propose;
     pub mod handle_prevote;
     pub mod handle_commit;
-    pub mod handle_dag_sync;
-    pub mod handle_sync_round;
 }
 
 pub mod controllers{
