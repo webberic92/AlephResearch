@@ -9,17 +9,17 @@ use crate::{
 };
 
 #[derive(Debug)]
-enum RBCMessage {
+enum RBCProposeMessage {
     Proposal(ProposeRequest),
 }
 
-pub struct RBCProcessor {
-    queue_tx: mpsc::Sender<RBCMessage>,
+pub struct RBCProcessorProposal {
+    queue_tx: mpsc::Sender<RBCProposeMessage>,
 }
 
-impl RBCProcessor {
+impl RBCProcessorProposal {
     pub fn new(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Self {
-        let (tx, mut rx) = mpsc::channel::<RBCMessage>(100); // FIFO Queue
+        let (tx, mut rx) = mpsc::channel::<RBCProposeMessage>(100); // FIFO Queue
 
         // Worker that processes proposals **sequentially**
         let node_clone = node.clone();
@@ -28,7 +28,7 @@ impl RBCProcessor {
         tokio::spawn(async move {
             while let Some(msg) = rx.recv().await {
                 match msg {
-                    RBCMessage::Proposal(propose) => {
+                    RBCProposeMessage::Proposal(propose) => {
                         let node = node_clone.clone();
                         let client = client_clone.clone();
 
@@ -44,7 +44,7 @@ impl RBCProcessor {
     }
 
     pub async fn enqueue_proposal(&self, msg: ProposeRequest) {
-        if let Err(e) = self.queue_tx.send(RBCMessage::Proposal(msg)).await {
+        if let Err(e) = self.queue_tx.send(RBCProposeMessage::Proposal(msg)).await {
             error!("Failed to enqueue proposal: {:?}", e);
         }
     }

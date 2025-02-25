@@ -234,7 +234,7 @@ pub async fn handle_prevote(
     // **Step 21:** Trigger commit locally and clean up qourum
    let node_clone = node.clone();
     tokio::spawn(async move {
-        if let Err(e) = handle_commit(node_clone, commit_request).await {
+        if let Err(e) = handle_commit(node_clone, client, commit_request).await {
             error!("Commit phase failed: {:?}", e);
         }
     });
