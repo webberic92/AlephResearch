@@ -5,12 +5,10 @@ use std::sync::Arc;
 use tracing::{error, info};
 use reqwest::Client;
 use crate::{
-    handlers::handle_commit::handle_commit,
-    structs::{
+    handlers::handle_commit::handle_commit, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest, Transaction},
-    },
-    utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch},
+    }, utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch}
 };
 
 /*
@@ -231,13 +229,17 @@ pub async fn handle_prevote(
         });
     }
 
-    // **Step 21:** Trigger commit locally and clean up qourum
-   let node_clone = node.clone();
-    tokio::spawn(async move {
-        if let Err(e) = handle_commit(node_clone, client, commit_request).await {
-            error!("Commit phase failed: {:?}", e);
-        }
-    });
+
+    // Step 7: Also handle the prevote locally using `Node`'s `rbc_processor`
+    info!("Node {}: Enqueuing commit locally for round {}.", node_id, round_id);
+    let commit_message = RBCMessage::Commit(commit_request);
+
+    // ✅ Acquire lock on `node` to access `rbc_processor`
+    let node_guard = node.lock().await;
+    if let Some(rbc_processor) = &node_guard.rbc_processor {
+        rbc_processor.enqueue_message(commit_message).await; // ✅ Call from `node`
+    }
+
 
     info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
 

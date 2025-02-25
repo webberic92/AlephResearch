@@ -5,8 +5,7 @@ use tracing::{error, info};
 use std::{sync::Arc, time::Duration};
 use tokio::sync::Mutex;
 use crate::{
-    handlers::handle_propose::handle_propose,
-    structs::{ node::Node, requests::ProposeRequest },};
+    handlers::handle_propose::handle_propose, processors::rbc_processor::RBCProcessor, structs::{ node::Node, requests::ProposeRequest }};
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
 --------------------------------------------------

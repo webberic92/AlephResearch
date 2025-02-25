@@ -5,11 +5,12 @@ use std::{
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing:: info;
-use crate::utils::round_manager::round_manager_task;
+use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
 use super::requests::{CommitRequest, DagUnit, ProposeRequest};
 use crate::utils::events::Event;
 
 /// **Events to notify the Round Manager**
+
 
 /// **📌 Node Struct: Represents a single node in the Aleph RBC protocol.**
 pub struct Node {
@@ -29,6 +30,7 @@ pub struct Node {
     pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
     pub client: Arc<Client>,
     pub event_sender: mpsc::Sender<Event>,
+    pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
 }
 
 impl Node {
@@ -62,21 +64,43 @@ impl Node {
             commit_tracker: Arc::new(Mutex::new(HashMap::new())),
             client: client.clone(),
             event_sender,
+            rbc_processor: None, // ✅ Initialize as None, will be set later
         }));
-    
-        // Spawn the round manager task
+
+        // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
         tokio::spawn(async move {
             if let Err(e) = round_manager_task(node_clone, event_receiver).await {
                 tracing::error!("RoundManager encountered an error: {:?}", e);
             }
         });
-    
+
         node
     }
 
     
+    /// **✅ Set `rbc_processor` After Initialization**
+    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>) {
+        let mut node_guard = node.lock().await;
+        node_guard.rbc_processor = Some(rbc_processor.clone());
 
+        // ✅ Restart Round Manager with `rbc_processor`
+        let event_receiver = mpsc::channel(100).1;
+        let node_clone = node.clone();
+        tokio::spawn(async move {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
+                tracing::error!("RoundManager encountered an error after setting RBCProcessor: {:?}", e);
+            }
+        });
+    }
+
+    /// **✅ Get `rbc_processor`, Ensuring It Exists**
+    pub async fn get_rbc_processor(&self) -> Arc<RBCProcessor> {
+        match &self.rbc_processor {
+            Some(processor) => processor.clone(),
+            None => panic!("`rbc_processor` has not been set! Call `set_rbc_processor()` first."),
+        }
+    }
 
     /// **Compute Fault Tolerance Threshold (f)**
     pub fn get_fault_tolerance_threshold(&self) -> usize {

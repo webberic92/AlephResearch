@@ -1,6 +1,7 @@
 use tokio::sync::{mpsc, Mutex};
 use std::sync::Arc;
 use tracing::{error, info};
+use crate::processors::rbc_processor::RBCProcessor;
 use crate::{structs::node::Node, requests::send_proposals::send_proposals, utils::create_transaction_data::create_transaction_data};
 use crate::utils::events::Event;
 
@@ -32,7 +33,10 @@ pub async fn round_manager_task(
     Ok(())
 }
 
-async fn create_and_propose_round(node: Arc<Mutex<Node>>, r: u64) -> Result<(), anyhow::Error> {
+async fn create_and_propose_round(
+    node: Arc<Mutex<Node>>, 
+    r: u64, 
+) -> Result<(), anyhow::Error> {
     let propose_request = create_transaction_data(node.clone()).await?;
     let node_guard = node.lock().await;
 
