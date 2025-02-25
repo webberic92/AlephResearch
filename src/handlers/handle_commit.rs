@@ -3,7 +3,7 @@ use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
-    processors::rbc_processor::RBCProcessor, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
+    structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
 };
 
 pub async fn handle_commit(

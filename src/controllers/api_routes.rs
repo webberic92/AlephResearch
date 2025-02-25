@@ -6,36 +6,33 @@ use tracing::error;
 use std::sync::Arc;
 
 use crate::{
-    handlers::{handle_commit::handle_commit, handle_prevote::handle_prevote, handle_propose::handle_propose}, structs::{
+    processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor},
+    structs::{
         node::Node,
-        requests::{ CommitRequest, PrevoteRequest, ProposeRequest},
+        requests::{CommitRequest, PrevoteRequest, ProposeRequest},
         responses::Response,
-    }
+    },
 };
 
-
 /// **🔗 Initialize API Routes with `Arc<Mutex<Node>>`, `Client`, and `RBCProcessor`**
-pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
+pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processor: Arc<RBCProcessor>) -> Router {
     Router::new()
         .route("/propose", post({
             let node = node.clone();
             let client = client.clone();
+            let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
                 let client = client.clone();
+                let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if let Err(e) = handle_propose(node, client, parsed_payload).await {
-                                error!("Failed to handle proposal: {:?}", e);
-                                return (
-                                    StatusCode::INTERNAL_SERVER_ERROR,
-                                    Json(Response { status: format!("Failed to handle proposal: {:?}", e) }),
-                                );
-                            }
+                            let propose_message = RBCMessage::Proposal(parsed_payload);
+                            rbc_processor.enqueue_message(propose_message).await;
                             (
                                 StatusCode::OK,
-                                Json(Response { status: "Proposal successfully handled.".to_string() }),
+                                Json(Response { status: "Proposal successfully enqueued.".to_string() }),
                             )
                         }
                         Err(err) => {
@@ -53,22 +50,19 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
         .route("/prevote", post({
             let node = node.clone();
             let client = client.clone();
+            let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
                 let client = client.clone();
+                let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<PrevoteRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if let Err(e) = handle_prevote(node, client, parsed_payload).await {
-                                error!("Failed to handle prevote: {:?}", e);
-                                return (
-                                    StatusCode::INTERNAL_SERVER_ERROR,
-                                    Json(Response { status: format!("Failed to handle prevote: {:?}", e) }),
-                                );
-                            }
+                            let prevote_message = RBCMessage::Prevote(parsed_payload);
+                            rbc_processor.enqueue_message(prevote_message).await;
                             (
                                 StatusCode::OK,
-                                Json(Response { status: "Prevote successfully handled.".to_string() }),
+                                Json(Response { status: "Prevote successfully enqueued.".to_string() }),
                             )
                         }
                         Err(err) => {
@@ -86,22 +80,19 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
         .route("/commit", post({
             let node = node.clone();
             let client = client.clone();
+            let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
                 let client = client.clone();
+                let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<CommitRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if let Err(e) = handle_commit(node, client, parsed_payload).await {
-                                error!("Failed to handle commit: {:?}", e);
-                                return (
-                                    StatusCode::INTERNAL_SERVER_ERROR,
-                                    Json(Response { status: format!("Failed to handle commit: {:?}", e) }),
-                                );
-                            }
+                            let commit_message = RBCMessage::Commit(parsed_payload);
+                            rbc_processor.enqueue_message(commit_message).await;
                             (
                                 StatusCode::OK,
-                                Json(Response { status: "Commit successfully handled.".to_string() }),
+                                Json(Response { status: "Commit successfully enqueued.".to_string() }),
                             )
                         }
                         Err(err) => {
@@ -135,7 +126,3 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Router {
             }
         }))
 }
-
-
-
-

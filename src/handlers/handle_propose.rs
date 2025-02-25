@@ -1,8 +1,7 @@
 use std::sync::Arc;
 use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
-use sha2::{Digest, Sha256};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use tracing::{ error, info };
 use crate::{
     handlers::handle_prevote::handle_prevote, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
@@ -55,12 +54,11 @@ pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
     propose_request: ProposeRequest,
-    
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
-
-    // Step 1: Acquire the node ID & Log
+    
+    // ✅ Step 1: Acquire the node ID and log
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
@@ -70,7 +68,7 @@ pub async fn handle_propose(
         );
     }
 
-    // Step 2: Check if a proposal from this node has already been processed
+    // ✅ Step 2: Check if proposal was already processed
     {
         let node_guard = node.lock().await;
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
@@ -86,7 +84,7 @@ pub async fn handle_propose(
         }
     }
 
-    // Step 3: Decode and validate transaction shards
+    // ✅ Step 3: Decode and validate transaction shards
     for transaction in &propose_request.transactions {
         let decoded_shards: Vec<Vec<u8>> = transaction.shards
             .iter()
@@ -100,100 +98,91 @@ pub async fn handle_propose(
         };
 
         if !check_size(&decoded_shards, number_of_transactions, transaction_size) {
-            return Err(format!(
-                "Node {}: Received oversized unit, rejecting propose.",
-                node_id
-            ));
+            return Err(format!("Node {}: Received oversized unit, rejecting propose.", node_id));
         }
     }
 
-    // Step 4: Ensure DAG synchronization before processing the proposal
+    // ✅ Step 4: Ensure DAG synchronization before processing the proposal
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    // Step 5: Store the proposal
+    // ✅ Step 5: Store the proposal
     let (proposal_count, required_proposals, stored_proposals) = Node::update_proposal_tracker(
         node.clone(),
         propose_request.clone(),
     ).await?;
 
     info!(
-        "Node {}: Current Proposal Tracker for round {} has {} proposals (threshold: {}).",
+        "Node {}: Proposal Tracker for round {}: {}/{} proposals.",
         node_id, round_id, proposal_count, required_proposals
     );
 
-    // Step 6: If quorum is met, multicast aggregated prevote
+    // ✅ Step 6: If quorum is met, multicast aggregated prevote
     if proposal_count >= required_proposals {
         info!(
             "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
             node_id, stored_proposals.len()
         );
 
-        // ✅ Collect all proposals individually instead of aggregating them
+        // ✅ Collect all proposals instead of aggregating them
         let prevote_request = {
             let node_guard = node.lock().await;
             PrevoteRequest {
-                proposals: stored_proposals.clone(),  // ✅ Send as a list, not merged
+                proposals: stored_proposals.clone(),
                 sender_url: node_guard.ip_address.clone(),
             }
         };
 
-        let (node_ip, node_list) = {
+        // ✅ Extract `node_list` before dropping the lock
+        let node_list = {
             let node_guard = node.lock().await;
-            (node_guard.ip_address.clone(), node_guard.nodes.clone()) // Clone and drop lock early
+            node_guard.nodes.clone() // ✅ Clone the list before unlocking
         };
 
+        // ✅ Step 7: Send prevote requests in parallel (network is I/O bound)
         info!("Node {}: Multicasting prevote to all nodes...", node_id);
-        for target_node in node_list {
-            if target_node != node_ip {
-                let target_url = format!("http://{}/prevote", target_node);
-                info!("Node {}: Sending prevote to {}", node_id, target_url);
+        let client_clone = client.clone();
 
-                let client_clone = client.clone();
-                let prevote_request_clone = prevote_request.clone();
+        let prevote_futures: Vec<_> = node_list.into_iter().map(|target_node| {
+            let target_url = format!("http://{}/prevote", target_node);
+            let client = client_clone.clone();
+            let prevote_request = prevote_request.clone();
 
-                tokio::spawn(async move {
-                    match client_clone.post(&target_url)
-                        .json(&prevote_request_clone)
-                        .send()
-                        .await
-                    {
-                        Ok(response) if response.status().is_success() => {
-                            info!(
-                                "Node {}: Successfully sent prevote to {} for round {}",
-                                node_id, target_url, round_id
-                            );
-                        }
-                        Ok(response) => {
-                            error!(
-                                "Node {}: Failed to send prevote to {}. Status: {}",
-                                node_id, target_url, response.status()
-                            );
-                        }
-                        Err(e) => {
-                            error!(
-                                "Node {}: Network error while sending prevote to {}: {:?}",
-                                node_id, target_url, e
-                            );
-                        }
+            async move {
+                match client.post(&target_url).json(&prevote_request).send().await {
+                    Ok(response) if response.status().is_success() => {
+                        info!("✅ Node {}: Sent prevote to {} for round {}", node_id, target_url, round_id);
                     }
-                });
+                    Ok(response) => {
+                        error!("❌ Node {}: Failed to send prevote to {}. Status: {}", node_id, target_url, response.status());
+                    }
+                    Err(e) => {
+                        error!("❌ Node {}: Network error while sending prevote to {}: {:?}", node_id, target_url, e);
+                    }
+                }
             }
-        }
+        }).collect();
 
-        // Step 7: Also handle the prevote locally using `Node`'s `rbc_processor`
+        // ✅ Run all requests concurrently
+        futures::future::join_all(prevote_futures).await;
+
+        // ✅ Step 8: Handle prevote locally using `rbc_processor`
         info!("Node {}: Enqueuing prevote locally for round {}.", node_id, round_id);
         let prevote_message = RBCMessage::Prevote(prevote_request);
 
-        // ✅ Acquire lock on `node` to access `rbc_processor`
-        let node_guard = node.lock().await;
-        if let Some(rbc_processor) = &node_guard.rbc_processor {
-            rbc_processor.enqueue_message(prevote_message).await; // ✅ Call from `node`
-        }
-      
+        // ✅ Extract `rbc_processor` before unlocking
+        let rbc_processor = {
+            let node_guard = node.lock().await;
+            node_guard.rbc_processor.clone()
+        };
 
+        if let Some(rbc_processor) = rbc_processor {
+            rbc_processor.enqueue_message(prevote_message).await;
+        } else {
+            error!("❌ Node {}: RBCProcessor not initialized when enqueuing prevote!", node_id);
+        }
     }
 
-    // Step 8: Log successful handling
+    // ✅ Step 9: Log successful handling
     info!(
         "============== Node {}: Proposal successfully handled for round {} from sender {} ==============",
         node_id, round_id, propose_request.base.proposing_node_id

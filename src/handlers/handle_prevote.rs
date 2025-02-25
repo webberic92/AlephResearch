@@ -1,4 +1,5 @@
 use base64::{engine::general_purpose, Engine};
+use futures::future::join_all;
 use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
 use std::sync::Arc;
@@ -42,6 +43,8 @@ use crate::{
 
 
 // **Handles an incoming PREVOTE request with multiple proposals**
+
+// **Handles an incoming PREVOTE request with multiple proposals**
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
@@ -54,16 +57,18 @@ pub async fn handle_prevote(
         prevote_request.proposals[0].base.round_id
     );
 
-    // Extract values **without holding the lock** long
-    let (node_id, round_id, quorum_threshold, total_nodes) = {
+    // Extract values **without holding the lock long**
+    let (node_id, round_id, quorum_threshold, total_nodes, node_list, rbc_processor) = {
         let node_guard = node.lock().await;
         (
             node_guard.id,
             prevote_request.proposals[0].base.round_id,
             node_guard.get_quorum_threshold(),
             node_guard.total_nodes,
+            node_guard.nodes.clone(),
+            node_guard.rbc_processor.clone(),
         )
-    };
+    }; // ✅ Release lock immediately
 
     // ✅ **Immediately exit if the round is already committed**
     {
@@ -74,45 +79,33 @@ pub async fn handle_prevote(
             info!("Node {}: Round {} already finalized, ignoring prevote.", node_id, round_id);
             return Ok(());
         }
-    } // 🔓 Release lock early
+    } // ✅ Release lock before processing proposals
 
     let mut reconstructed_units = Vec::new();
 
     // ✅ **Process each proposal separately**
     for proposal in &prevote_request.proposals {
         info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
-
         let mut reconstructed_transactions = Vec::new();
 
         for transaction in &proposal.transactions {
-
-            // **Step 14:** Decode shards
             let decoded_shards: Vec<Vec<u8>> = transaction.shards
                 .iter()
                 .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
                 .collect::<Result<Vec<Vec<u8>>, _>>()
                 .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
-            
-            // info!("handle prevote Decoded shards: {:?}", decoded_shards);
 
-            // Compute hash of each decoded shard
-            let shard_hashes: Vec<Vec<u8>> = decoded_shards
-                .iter()
+            let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
-            // info!("handle prevote shard_hashes: {:?}", shard_hashes);
 
-
-
-            // **Step 15:** Validate Merkle proofs for each shard
-            for (shard_index, _shard) in decoded_shards.iter().enumerate() {
+            for (shard_index, _) in decoded_shards.iter().enumerate() {
                 let decoded_proof: Vec<Vec<u8>> = transaction.proofs[shard_index]
                     .iter()
                     .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
                     .collect::<Result<Vec<Vec<u8>>, _>>()
                     .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
-        
-            
+
                 if !validate_merkle_branch(&shard_hashes[shard_index], &decoded_proof, shard_index, &transaction.root) {
                     return Err(format!(
                         "Node {}: Merkle root mismatch for shard {}",
@@ -120,26 +113,19 @@ pub async fn handle_prevote(
                     ));
                 }
             }
-            
 
-            // **Step 18:** Interpolate missing shares (if needed)
-            let interpolated_shards;
-            if decoded_shards.len() < total_nodes {
-             interpolated_shards =  interpolate_shares(&decoded_shards, round_id)
+            let interpolated_shards = if decoded_shards.len() < total_nodes {
+                interpolate_shares(&decoded_shards, round_id)
                     .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
             } else {
-                interpolated_shards= decoded_shards.clone()
+                decoded_shards.clone()
             };
 
-            // ✅ Compute SHA-256 hashes before computing the Merkle root
-            let interpolated_shard_hashes: Vec<Vec<u8>> = interpolated_shards
-                .iter()
+            let interpolated_shard_hashes: Vec<Vec<u8>> = interpolated_shards.iter()
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
 
-            // **Step 19:** Compute Merkle root from hashed interpolated shares
             let new_merkle_root = compute_merkle_root(&interpolated_shard_hashes);
-
 
             if new_merkle_root != transaction.root {
                 return Err(format!(
@@ -148,7 +134,6 @@ pub async fn handle_prevote(
                 ));
             }
 
-            // ✅ **Reconstruct transaction with decoded shards**
             let reconstructed_tx = Transaction {
                 root: transaction.root.clone(),
                 proofs: transaction.proofs.clone(),
@@ -157,15 +142,13 @@ pub async fn handle_prevote(
 
             reconstructed_transactions.push(reconstructed_tx);
         }
-        // info!("Reconstructed transactions: {:?}", reconstructed_transactions);
-        // ✅ **Step 15: Reconstruct the entire unit**
+
         let reconstructed_unit = reconstruct_unit(
-            &reconstructed_transactions,  // ✅ Pass **transactions** instead of raw shards
+            &reconstructed_transactions,
             round_id,
             proposal.parents.clone(),
             proposal.base.proposing_node_id as usize,
-        )
-        .map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
+        ).map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
 
         if reconstructed_unit.transactions.is_empty() {
             return Err(format!("Node {}: Reconstructed unit is invalid or empty", node_id));
@@ -173,76 +156,68 @@ pub async fn handle_prevote(
 
         reconstructed_units.push(reconstructed_unit);
     }
-    // **Step 14 (continued):** Count quorum votes ONCE per PrevoteRequest (not per proposal)
+
     let epoch_key = round_id.to_be_bytes().to_vec();
     let vote_count;
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         let count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
-    
-        // ✅ **If quorum has already been met, ignore this prevote**
+
         if *count >= quorum_threshold {
-            info!(
-                "Node {}: Ignoring prevote for round {}. Quorum already met.",
-                node_id, round_id
-            );
-            return Ok(());  // **Exit early**
+            info!("Node {}: Ignoring prevote for round {}. Quorum already met.", node_id, round_id);
+            return Ok(());  
         }
-    
+
         *count += 1;
         vote_count = *count;
-    } // ⬅️ Lock is released before returning vote_count
-    
-    info!(
-        "Node {}: Quorum votes {}/{}",
-        node_id, vote_count, quorum_threshold
-    );
+    } 
 
     if vote_count < quorum_threshold {
-        info!(
-            "Node {}: Not enough prevote messages received. Waiting for quorum before proceeding to commit.",
-            node_id
-        );
+        info!("Node {}: Not enough prevote messages received. Waiting for quorum before proceeding to commit.", node_id);
         return Ok(());
     }
 
-    // **Step 20:** Prepare commit request
+    info!("Node {}: Quorum reached for round {}. Proceeding to send commits.", node_id, round_id);
+
     let commit_request = CommitRequest {
-        units: reconstructed_units,  // ✅ Use all reconstructed units
+        units: reconstructed_units,
         proposing_node_id: node_id,
         round_id,
     };
 
-    // **Step 20 (continued):** Multicast commit messages
-    let node_guard = node.lock().await;
-    for target_node in &node_guard.nodes {
+    let commit_payload = commit_request.clone();
+
+    let commit_futures: Vec<_> = node_list.iter().map(|target_node| {
         let target_url = format!("http://{}/commit", target_node);
         let client = client.clone();
-        let commit_payload = commit_request.clone();
-        tokio::spawn(async move {
-            if let Err(e) = client.post(&target_url).json(&commit_payload).send().await {
-                error!("Failed to send commit to {}: {:?}", target_url, e);
-            } else {
-                info!("✅ Sent commit message to {}", target_url);
+        let commit_payload = commit_payload.clone();
+
+        async move {
+            match client.post(&target_url).json(&commit_payload).send().await {
+                Ok(response) if response.status().is_success() => {
+                    info!("✅ Successfully sent commit to {}", target_url);
+                }
+                Ok(response) => {
+                    error!("❌ Commit failed to {}. Status: {:?}", target_url, response.status());
+                }
+                Err(e) => {
+                    error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                }
             }
-        });
+        }
+    }).collect();
+
+    join_all(commit_futures).await;
+
+    if let Some(rbc_processor) = &rbc_processor {
+        info!("Node {}: Adding commit to queue for round {}", node_id, round_id);
+        rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
+    } else {
+        error!("Node {}: RBCProcessor not initialized when trying to enqueue commit!", node_id);
     }
-
-
-    // Step 7: Also handle the prevote locally using `Node`'s `rbc_processor`
-    info!("Node {}: Enqueuing commit locally for round {}.", node_id, round_id);
-    let commit_message = RBCMessage::Commit(commit_request);
-
-    // ✅ Acquire lock on `node` to access `rbc_processor`
-    let node_guard = node.lock().await;
-    if let Some(rbc_processor) = &node_guard.rbc_processor {
-        rbc_processor.enqueue_message(commit_message).await; // ✅ Call from `node`
-    }
-
 
     info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
-
     Ok(())
 }
 

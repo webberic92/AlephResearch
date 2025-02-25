@@ -1,3 +1,4 @@
+use chrono::round;
 use tokio::sync::Mutex;
 use tokio::sync::mpsc;
 use tracing::{info, error};
@@ -25,12 +26,12 @@ impl RBCProcessor {
 
         tokio::spawn(async move {
             let mut priority_queue = BinaryHeap::new();
-            let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
+            let mut fifo_queues: [VecDeque<RBCMessage>; 3] = [VecDeque::new(), VecDeque::new(), VecDeque::new()];
 
             while let Some(msg) = rx.recv().await {
                 priority_queue.push(msg); // **Push message to priority queue**
 
-                // ✅ Always process commits first (Preemption)
+                // ✅ Take the highest-priority message and insert it into the correct FIFO queue
                 while let Some(task) = priority_queue.pop() {
                     match task.priority() {
                         1 => fifo_queues[0].push_back(task), // ✅ Commit Queue (Highest Priority)
@@ -40,7 +41,7 @@ impl RBCProcessor {
                     }
                 }
 
-                // ✅ Process FIFO queues with single clone of node & client
+                // ✅ Process FIFO queues
                 let node_ref = node_clone.clone();
                 let client_ref = client_clone.clone();
 
@@ -48,38 +49,44 @@ impl RBCProcessor {
                     let mut processed_any = false;
 
                     // ✅ Always prioritize commits first
-                    for queue in &mut fifo_queues {
+                    for (i, queue) in fifo_queues.iter_mut().enumerate() {
                         if let Some(task) = queue.pop_front() {
                             processed_any = true; // ✅ Track processed task
 
                             match task {
                                 RBCMessage::Commit(commit) => {
+                                    info!("Entering: Processing commit for round {}", commit.round_id);
                                     let node = node_ref.clone();
                                     let client = client_ref.clone();
+                                    let round_id = commit.round_id;
                                     if let Err(e) = process_commit(node, client, commit).await {
                                         error!("Error processing commit: {:?}", e);
                                     }
+                                    info!("Leaving: Processing commit for round {}", round_id);
+
                                 }
                                 RBCMessage::Prevote(prevote) => {
+                                    info!("Entering: Processing prevote for round {}", prevote.proposals[0].base.round_id);
                                     let node = node_ref.clone();
                                     let client = client_ref.clone();
+                                    let round_id = prevote.proposals[0].base.round_id;
                                     if let Err(e) = process_prevote(node, client, prevote).await {
                                         error!("Error processing prevote: {:?}", e);
                                     }
+                                    info!("Leaving: Processing prevote for round {}",round_id);
+
                                 }
                                 RBCMessage::Proposal(propose) => {
+                                    info!("Entering: Processing proposal for round {}", propose.base.round_id);
                                     let node = node_ref.clone();
                                     let client = client_ref.clone();
-                                    if let Err(e) = process_proposal(node, client,  propose).await {
+                                    let round_id = propose.base.round_id;
+                                    if let Err(e) = process_proposal(node, client, propose).await {
                                         error!("Error processing proposal: {:?}", e);
                                     }
-                                }
-                            }
+                                    info!("Leaving: Processing proposal for round {}",round_id);
 
-                            // ✅ If a commit was just processed, **re-check priority queue**
-                            if let Some(new_msg) = priority_queue.pop() {
-                                priority_queue.push(new_msg);
-                                break; // ✅ Immediately restart the loop
+                                }
                             }
                         }
                     }
