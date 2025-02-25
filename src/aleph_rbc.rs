@@ -1,4 +1,5 @@
 use aleph_research::controllers::api_routes::initialize_apis;
+use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
@@ -19,9 +20,8 @@ async fn main() -> Result<()> {
     let config = load_config(None);
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
     let client = Arc::new(Client::new());
-    
-    // ✅ Create Node **WITHOUT extra Arc**
-    // ✅ Create Node with Proposal Queue Handling
+
+    // ✅ Step 1: Create `Node` **without `RBCProcessor` initially**
     let node = Node::new(
         config.node.id,
         config.network.total_nodes,
@@ -34,9 +34,15 @@ async fn main() -> Result<()> {
         config.consensus.total_rounds.clone(),
         client.clone(),
     );
-    
-    // ✅ **Pass node directly without extra wrapping**
-    let app = initialize_apis(node.clone(), client.clone());  // ✅ FIXED
+
+    // ✅ Step 2: Now that `Node` exists, create `RBCProcessor`
+    let rbc_processor: Arc<RBCProcessor> = Arc::new(RBCProcessor::new(node.clone(), client.clone()));
+
+    // ✅ Step 3: Attach `rbc_processor` to `Node`
+    Node::set_rbc_processor(node.clone(), rbc_processor.clone()).await;
+
+    // ✅ Step 4: Pass everything to the API
+    let app = initialize_apis(node.clone(), client.clone());
 
     // ✅ **Spawn Transaction Execution Logic**
     let node_clone = node.clone();
@@ -46,6 +52,7 @@ async fn main() -> Result<()> {
             error!("Transaction execution failed: {:?}", e);
         }
     });
+
 
     let listener = TcpListener::bind(addr).await?;
     info!("API server running on {}", addr);

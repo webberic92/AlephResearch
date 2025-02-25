@@ -25,7 +25,7 @@ impl RBCProcessor {
 
         tokio::spawn(async move {
             let mut priority_queue = BinaryHeap::new();
-            let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()]; 
+            let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
 
             while let Some(msg) = rx.recv().await {
                 priority_queue.push(msg); // **Push message to priority queue**
@@ -70,7 +70,7 @@ impl RBCProcessor {
                                 RBCMessage::Proposal(propose) => {
                                     let node = node_ref.clone();
                                     let client = client_ref.clone();
-                                    if let Err(e) = process_proposal(node, client, propose).await {
+                                    if let Err(e) = process_proposal(node, client,  propose).await {
                                         error!("Error processing proposal: {:?}", e);
                                     }
                                 }
@@ -95,6 +95,7 @@ impl RBCProcessor {
         Self { queue_tx: tx }
     }
 
+    /// ✅ Enqueue messages into the queue instead of processing them directly
     pub async fn enqueue_message(&self, msg: RBCMessage) {
         if let Err(e) = self.queue_tx.send(msg).await {
             error!("Failed to enqueue message: {:?}", e);
@@ -102,15 +103,27 @@ impl RBCProcessor {
     }
 }
 
-// ✅ Calls `handle_*` functions based on priority
-async fn process_proposal(node: Arc<Mutex<Node>>, client: Arc<Client>, propose_request: ProposeRequest) -> Result<(), String> {
+// ✅ Calls `handle_*` functions with `rbc_processor`
+async fn process_proposal(
+    node: Arc<Mutex<Node>>, 
+    client: Arc<Client>, 
+    propose_request: ProposeRequest
+) -> Result<(), String> {
     handle_propose(node, client, propose_request).await
 }
 
-async fn process_prevote(node: Arc<Mutex<Node>>, client: Arc<Client>, prevote_request: PrevoteRequest) -> Result<(), String> {
+async fn process_prevote(
+    node: Arc<Mutex<Node>>, 
+    client: Arc<Client>, 
+    prevote_request: PrevoteRequest
+) -> Result<(), String> {
     handle_prevote(node, client, prevote_request).await
 }
 
-async fn process_commit(node: Arc<Mutex<Node>>, client: Arc<Client>, commit_request: CommitRequest) -> Result<(), String> {
+async fn process_commit(
+    node: Arc<Mutex<Node>>, 
+    client: Arc<Client>, 
+    commit_request: CommitRequest
+) -> Result<(), String> {
     handle_commit(node, client, commit_request).await
 }

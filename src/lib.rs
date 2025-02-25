@@ -11,9 +11,6 @@ pub mod utils{
 }
 
 pub mod processors{
-    pub mod process_proposals;
-    pub mod process_prevotes;
-    pub mod process_commits;
     pub mod priority_queue;
     pub mod rbc_processor;
 }

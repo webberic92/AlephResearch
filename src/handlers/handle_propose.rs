@@ -5,9 +5,7 @@ use sha2::{Digest, Sha256};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{ error, info };
 use crate::{
-    handlers::handle_prevote::handle_prevote,
-    structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } },
-    utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root},
+    handlers::handle_prevote::handle_prevote, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
 };
 
 
@@ -52,10 +50,12 @@ Each transaction has:
   - Encoded shards
 */
 
+
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
     propose_request: ProposeRequest,
+    
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
@@ -180,15 +180,17 @@ pub async fn handle_propose(
             }
         }
 
-        // Step 7: Also handle the prevote locally
-        info!("Node {}: Handling prevote locally.", node_id);
-        handle_prevote(node.clone(), client, prevote_request).await.map_err(|e| {
-            error!(
-                "Node {}: Failed to handle aggregated prevote for round {}. Error: {:?}",
-                node_id, round_id, e
-            );
-            format!("Aggregated prevote phase failed: {:?}", e)
-        })?;
+        // Step 7: Also handle the prevote locally using `Node`'s `rbc_processor`
+        info!("Node {}: Enqueuing prevote locally for round {}.", node_id, round_id);
+        let prevote_message = RBCMessage::Prevote(prevote_request);
+
+        // ✅ Acquire lock on `node` to access `rbc_processor`
+        let node_guard = node.lock().await;
+        if let Some(rbc_processor) = &node_guard.rbc_processor {
+            rbc_processor.enqueue_message(prevote_message).await; // ✅ Call from `node`
+        }
+      
+
     }
 
     // Step 8: Log successful handling
