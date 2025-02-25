@@ -1,7 +1,6 @@
 use tokio::sync::{mpsc, Mutex};
 use std::sync::Arc;
 use tracing::{error, info};
-use crate::processors::rbc_processor::RBCProcessor;
 use crate::{structs::node::Node, requests::send_proposals::send_proposals, utils::create_transaction_data::create_transaction_data};
 use crate::utils::events::Event;
 
