@@ -12,14 +12,14 @@ use crate::{
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>, 
 ) -> Result<ProposeRequest, Error> {  
-    info!("🔍 [DEBUG] Attempting to acquire node lock for create_transaction_data()");
+    //info!("🔍 [DEBUG] Attempting to acquire node lock for create_transaction_data()");
 
     // ✅ Extract necessary values as quickly as possible and then **drop** the lock
     let (node_id, node_number_of_transactions, transaction_size, data_shards);
     {
-        info!("🔍 [DEBUG] Waiting to acquire node lock for create_transaction_data()");
+        //info!("🔍 [DEBUG] Waiting to acquire node lock for create_transaction_data()");
         let node_guard = node.lock().await;
-        info!("🔓 [DEBUG] Acquired node lock for create_transaction_data()");
+        //info!("🔓 [DEBUG] Acquired node lock for create_transaction_data()");
         
         node_id = node_guard.id;
         node_number_of_transactions = node_guard.number_of_transactions;
@@ -70,11 +70,11 @@ pub async fn create_transaction_data(
     }
 
     // ✅ **Reacquire the lock only when needed**
-    info!("🔍 [DEBUG] Waiting to acquire node lock to retrieve round_id");
+    //info!("🔍 [DEBUG] Waiting to acquire node lock to retrieve round_id");
     let (round_id, parent_units);
     {
         let node_guard = node.lock().await;
-        info!("🔓 [DEBUG] Acquired node lock to retrieve round_id");
+        //info!("🔓 [DEBUG] Acquired node lock to retrieve round_id");
         round_id = *node_guard.current_round.lock().await;
         parent_units = node_guard.get_all_parents(round_id).await;
     } // 🔥 **Lock is dropped again here**

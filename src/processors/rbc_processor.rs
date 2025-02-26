@@ -36,9 +36,9 @@ impl RBCProcessor {
                         last_round = *new_round;
 
                         // ✅ Acquire node lock before checking total rounds
-                        info!("🔍 [DEBUG] RBCProcessor waiting to acquire node lock before checking termination condition.");
+                        //info!("🔍 [DEBUG] RBCProcessor waiting to acquire node lock before checking termination condition.");
                         let node_guard = node_clone.lock().await;
-                        info!("🔓 [DEBUG] RBCProcessor acquired node lock for termination check.");
+                        //info!("🔓 [DEBUG] RBCProcessor acquired node lock for termination check.");
 
                         let total_rounds = node_guard.total_rounds;
                         if last_round >= total_rounds.try_into().unwrap() {
@@ -171,6 +171,24 @@ impl RBCProcessor {
             error!("Failed to enqueue message: {:?}", e);
         }
     }
+
+    pub fn clear_queues(&self) {
+        info!("🧹 RBCProcessor: Clearing internal queues...");
+
+        // No need for locks, as this is only called when the processor is dropped
+        let mut priority_queue: BinaryHeap<RBCMessage> = BinaryHeap::new();
+        let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
+
+        priority_queue.clear();
+        for queue in fifo_queues.iter_mut() {
+            queue.clear();
+        }
+
+        info!("✅ RBCProcessor: Queues cleared successfully.");
+    }
+
+
+
 }
 
 

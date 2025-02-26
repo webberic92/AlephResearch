@@ -131,9 +131,9 @@ impl Node {
         node: Arc<Mutex<Node>>,
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
-        info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+        //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
 let node_guard = node.lock().await;
-info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
+//info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
         let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
 
