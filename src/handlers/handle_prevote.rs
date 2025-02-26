@@ -59,7 +59,9 @@ pub async fn handle_prevote(
 
     // Extract values **without holding the lock long**
     let (node_id, round_id, quorum_threshold, total_nodes, node_list, rbc_processor) = {
+        info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
+        info!("🔓 [DEBUG] Acquired node lock for handle prevote");
         (
             node_guard.id,
             prevote_request.proposals[0].base.round_id,
@@ -72,7 +74,9 @@ pub async fn handle_prevote(
 
     // ✅ **Immediately exit if the round is already committed**
     {
+        info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
+        info!("🔓 [DEBUG] Acquired node lock for handle prevote");
         let dag_guard = node_guard.dag.lock().await;
 
         if dag_guard.contains_key(&round_id) {
@@ -160,7 +164,9 @@ pub async fn handle_prevote(
     let epoch_key = round_id.to_be_bytes().to_vec();
     let vote_count;
     {
+        info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
+        info!("🔓 [DEBUG] Acquired node lock for handle prevote");
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         let count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
 

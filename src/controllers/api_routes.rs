@@ -2,7 +2,7 @@ use axum::{routing::post, Json, Router};
 use reqwest::{Client, StatusCode};
 use serde_json::Value;
 use tokio::sync::Mutex;
-use tracing::error;
+use tracing::{error, info};
 use std::sync::Arc;
 
 use crate::{
@@ -112,7 +112,9 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processo
             move || {
                 let node = node.clone();
                 async move {
+                    info!("🔍 [DEBUG] Waiting to acquire node lock for health API");
                     let node_guard = node.lock().await;
+                    info!("🔓 [DEBUG] Acquired node lock for health API");
                     let quorum_votes = node_guard.quorum_votes.lock().await;
                     let round_id = node_guard.current_round.lock().await;
 

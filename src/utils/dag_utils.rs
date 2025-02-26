@@ -11,12 +11,16 @@ use crate::
 /// Ensures that the DAG has reached the required round before progressing.
 pub async fn ensure_dag_round_sync(node: Arc<Mutex<Node>>, current_round: u64) -> Result<(), String> {
     let node_id = {
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for round dag utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round dag utils");
         node_guard.id
     };
     info!("Node {}: Ensuring DAG synchronization for round {}...", node_id, current_round);    let (latest_round, node_id, dag_keys) = {
         // 🔒 Lock the node only as long as necessary
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for round dag utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round dag utils");
         let dag = node_guard.dag.lock().await;
 
         // Clone the DAG keys instead of holding the lock

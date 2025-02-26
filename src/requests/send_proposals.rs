@@ -3,9 +3,10 @@ use futures::future::join_all;
 use reqwest::Client;
 use tracing::{error, info};
 use std::{sync::Arc, time::Duration};
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::timeout};
 use crate::{
     handlers::handle_propose::handle_propose, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
+use anyhow::anyhow;
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
 --------------------------------------------------
@@ -28,25 +29,38 @@ use crate::{
 6. `send propose(h, b_j, s_j) to P_j`:
    - The proposals are sent asynchronously using `reqwest::Client::post`.
 */
+
 pub async fn send_proposals(
     client: Arc<Client>,  
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
-    info!("Node {} : Entering sending proposals for round {}", propose_request.base.proposing_node_id, propose_request.base.round_id);   
-   
-    // Extract values quickly and release the lock
-    let (round, node_id, nodes) = {
-        let node_guard = node.lock().await;
-        (propose_request.base.round_id, node_guard.id, node_guard.nodes.clone())
-    }; 
+    info!("🔍 [DEBUG] Attempting to acquire lock for send_proposals() in round {}", propose_request.base.round_id);
+    
+    let lock_result = timeout(Duration::from_secs(5), node.lock()).await;
+    
+    let node_guard = match lock_result {
+        Ok(guard) => {
+            info!("🔓 [DEBUG] Acquired node lock for send_proposals() in round {}", propose_request.base.round_id);
+            guard
+        }
+        Err(_) => {
+            error!("❌ [ERROR] Timeout acquiring node lock for send_proposals() in round {}. Possible deadlock!", propose_request.base.round_id);
+            return Err(anyhow!("Timeout acquiring lock for send_proposals() in round {}", propose_request.base.round_id));
+        }
+    };
+
+    let round_id = propose_request.base.round_id;
+    let node_id = node_guard.id;
+    let nodes = node_guard.nodes.clone();
+    let rbc_processor = node_guard.rbc_processor.clone();  // ✅ Clone `rbc_processor` while holding the lock
+    drop(node_guard); // 🔥 **Explicitly drop lock after extracting values**
 
     info!(
-        "Node {} : Preparing to send proposal to nodes {:?} for round {}",
-        node_id, nodes, round
+        "🚀 [DEBUG] Node {} preparing to send proposals to {:?} for round {}",
+        node_id, nodes, round_id
     );
 
-    // Send proposals concurrently
     let futures: Vec<_> = nodes.iter().map(|node_url| {
         let client = client.clone();
         let node_url = node_url.clone();
@@ -54,35 +68,35 @@ pub async fn send_proposals(
 
         async move {
             info!(
-                "Node {} sending proposal to {} for round {}",
+                "📤 Node {} sending proposal to {} for round {}",
                 node_id, node_url, proposal_clone.base.round_id
             );
 
             match client
-            .post(format!("http://{}/propose", node_url))
-            .json(&proposal_clone)
-            .timeout(Duration::from_secs(5))  // 🔥 Add a timeout!
-            .send()
-            .await
+                .post(format!("http://{}/propose", node_url))
+                .json(&proposal_clone)
+                .timeout(Duration::from_secs(5))
+                .send()
+                .await
             {
                 Ok(res) if res.status().is_success() => {
                     info!(
-                        "Proposal successfully delivered to Node {} (round {}).",
+                        "✅ Proposal successfully delivered to Node {} (round {}).",
                         node_url, proposal_clone.base.round_id
                     );
                     Ok(())
                 }
                 Ok(res) => {
                     let err_msg = format!(
-                        "Proposal failed for {}. Status: {}. Response: {}",
+                        "❌ Proposal failed for {}. Status: {}. Response: {}",
                         node_url,
                         res.status(),
                         res.text().await.unwrap_or_else(|_| "No response body".to_string())
                     );
                     error!("{}", err_msg);
-                    Err(anyhow::anyhow!(err_msg))
+                    Err(anyhow!(err_msg))
                 }
-                Err(e) => Err(anyhow::anyhow!("Network error while sending proposal to {}: {:?}", node_url, e)),
+                Err(e) => Err(anyhow!("❌ Network error while sending proposal to {}: {:?}", node_url, e)),
             }
         }
     }).collect();
@@ -90,31 +104,24 @@ pub async fn send_proposals(
     let results: Vec<Result<(), anyhow::Error>> = join_all(futures).await;
 
     if results.iter().all(|res| res.is_ok()) {
-        info!("Successfully sent all proposals for round {}.", round);
+        info!("✅ Successfully sent all proposals for round {}.", round_id);
 
-
-        let propose_request_clone = propose_request.clone();
-
-        let proposal_message = RBCMessage::Proposal(propose_request_clone);
-
-        // ✅ Get `rbc_processor` from `Node`
-        let node_guard = node.lock().await;
-        let rbc_processor = match &node_guard.rbc_processor {
-            Some(processor) => processor.clone(),
-            None => {
-                error!("Node {}: `rbc_processor` is not initialized!", node_id);
-                return Err(anyhow::anyhow!(format!("Node {}: `rbc_processor` is not initialized!", node_id)));
-            }
-        };
-        
-        // ✅ Enqueue the proposal into the queue instead of spawning a task
-        rbc_processor.enqueue_message(proposal_message).await;
+        // ✅ **Enqueue the proposal into the RBC queue**
+        if let Some(rbc_processor) = rbc_processor {
+            let proposal_message = RBCMessage::Proposal(propose_request.clone());
+            info!("📥 [DEBUG] Node {} enqueuing proposal for round {} into RBCProcessor queue", node_id, round_id);
+            rbc_processor.enqueue_message(proposal_message).await;
+        } else {
+            error!("❌ [ERROR] Node {}: RBCProcessor is not initialized when enqueuing proposal!", node_id);
+            return Err(anyhow!("RBCProcessor not initialized when enqueuing proposal!"));
+        }
 
         Ok(())
     } else {
-        Err(anyhow::anyhow!("One or more proposals failed."))
+        Err(anyhow!("❌ One or more proposals failed."))
     }
 }
+
 
 
 
