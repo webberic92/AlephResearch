@@ -60,7 +60,9 @@ pub async fn handle_propose(
     
     // ✅ Step 1: Acquire the node ID and log
     {
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
         node_id = node_guard.id;
         info!(
             "============== Node {}: Handling PROPOSE request for round {} from Node {} ==============",
@@ -70,7 +72,9 @@ pub async fn handle_propose(
 
     // ✅ Step 2: Check if proposal was already processed
     {
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
 
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
@@ -93,7 +97,9 @@ pub async fn handle_propose(
             .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
 
         let (number_of_transactions, transaction_size) = {
-            let node_guard = node.lock().await;
+            info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
             (node_guard.number_of_transactions, node_guard.transaction_size)
         };
 
@@ -125,7 +131,9 @@ pub async fn handle_propose(
 
         // ✅ Collect all proposals instead of aggregating them
         let prevote_request = {
-            let node_guard = node.lock().await;
+            info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
             PrevoteRequest {
                 proposals: stored_proposals.clone(),
                 sender_url: node_guard.ip_address.clone(),
@@ -134,7 +142,9 @@ pub async fn handle_propose(
 
         // ✅ Extract `node_list` before dropping the lock
         let node_list = {
-            let node_guard = node.lock().await;
+            info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
             node_guard.nodes.clone() // ✅ Clone the list before unlocking
         };
 
@@ -171,7 +181,9 @@ pub async fn handle_propose(
 
         // ✅ Extract `rbc_processor` before unlocking
         let rbc_processor = {
-            let node_guard = node.lock().await;
+            info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
             node_guard.rbc_processor.clone()
         };
 

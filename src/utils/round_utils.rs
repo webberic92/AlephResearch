@@ -33,7 +33,9 @@ use crate::structs::{node::Node, requests::SyncroundRequest};
 pub async fn update_local_round(node: Arc<Mutex<Node>>) -> Result<(), Box<dyn std::error::Error>> {
     info!("Attempting to acquire lock on node...");
 
-    let node_guard = node.lock().await; // 🔒 Lock Node
+    info!("🔍 [DEBUG] Waiting to acquire node lock for rount utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for rount utils"); // 🔒 Lock Node
     let node_id = node_guard.id;
 
     info!("Lock acquired on node {}. Attempting to update current round...", node_id);

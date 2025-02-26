@@ -12,7 +12,9 @@ use crate::structs::node::Node;
 /// - Ensures consistency with the new thread-safe architecture.
 pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> bool {
     let nodes = {
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for start utils");
         node_guard.nodes.clone()
     }; // 🔓 Lock released immediately here
 
@@ -49,7 +51,9 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
         info!("Checking health of all nodes...");
 
         let nodes = {
-            let node_guard = node.lock().await;
+            info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for start utils");
             node_guard.nodes.clone()
         };
 
@@ -84,7 +88,9 @@ pub async fn wait_for_turn(client: &Client, node: Arc<Mutex<Node>>) -> Result<()
     loop {
         if is_node_turn(client, node.clone()).await {
             let (node_id, ip_address, latest_round) = {
-                let node_guard = node.lock().await;
+                info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for start utils");
                 let round = *node_guard.current_round.lock().await; 
                 (node_guard.id, node_guard.ip_address.clone(), round)
             };

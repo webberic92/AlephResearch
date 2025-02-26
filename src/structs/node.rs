@@ -70,7 +70,7 @@ impl Node {
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, client, event_receiver).await {
                 tracing::error!("RoundManager encountered an error: {:?}", e);
             }
         });
@@ -80,7 +80,7 @@ impl Node {
 
     
     /// **✅ Set `rbc_processor` After Initialization**
-    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>) {
+    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>, client: Arc<Client>) {
         let mut node_guard = node.lock().await;
         node_guard.rbc_processor = Some(rbc_processor.clone());
 
@@ -88,7 +88,7 @@ impl Node {
         let event_receiver = mpsc::channel(100).1;
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, client,event_receiver).await {
                 tracing::error!("RoundManager encountered an error after setting RBCProcessor: {:?}", e);
             }
         });
@@ -131,7 +131,9 @@ impl Node {
         node: Arc<Mutex<Node>>,
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
-        let node_guard = node.lock().await;
+        info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+let node_guard = node.lock().await;
+info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
         let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
 

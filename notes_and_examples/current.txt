@@ -1,134 +1,18 @@
-sh-4.2$ cat /home/aleph-node/logs/node_status
-PRIVATE_IP = 10.0.148.218
-Node registration success.
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.168.120:30333", "10.0.185.62:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.146.157"
-ip_address = "10.0.148.218"
-nodes = ["10.0.168.120:30333", "10.0.185.62:30333"]
-total_nodes = 3
-
-[consensus]
-number_of_transactions = 2
-transaction_size = 256 # bytes
-data_shards = 4 # Number of data shards for erasure coding
-total_rounds = 2 # Number of rounds
-
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
-
-[node]
-id = 1
-Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute aleph_rbc with configuration
-Waiting for aleph_rbc to be ready on port 30333
-aleph_rbc not ready, retrying...
-2025-02-25T02:40:49.562960Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-25T02:40:49.562975Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-aleph_rbc APIs are ready.
-Waiting for aleph_rbc API readiness...
-aleph_rbc API is ready.
-Done with aleph_rbc loop for node 1
-2025-02-25T02:40:50.742525Z  INFO aleph_research::processors::rbc_processor: Entering: Processing proposal for round 1
-2025-02-25T02:40:50.742625Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Handling PROPOSE request for round 1 from Node 3 ==============
-2025-02-25T02:40:50.742636Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
-2025-02-25T02:40:50.742641Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
-2025-02-25T02:40:50.742644Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
-2025-02-25T02:40:50.742653Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-25T02:40:50.742668Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 1/3
-2025-02-25T02:40:50.742674Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal Tracker for round 1: 1/3 proposals.
-2025-02-25T02:40:50.742679Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Proposal successfully handled for round 1 from sender 3 ==============
-2025-02-25T02:40:50.742687Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing proposal for round 1
-2025-02-25T02:40:51.030156Z  INFO aleph_research::processors::rbc_processor: Entering: Processing proposal for round 1
-2025-02-25T02:40:51.030187Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Handling PROPOSE request for round 1 from Node 2 ==============
-2025-02-25T02:40:51.030199Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
-2025-02-25T02:40:51.030203Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
-2025-02-25T02:40:51.030207Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
-2025-02-25T02:40:51.030216Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-25T02:40:51.030233Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 2/3
-2025-02-25T02:40:51.030240Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal Tracker for round 1: 2/3 proposals.
-2025-02-25T02:40:51.030251Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Proposal successfully handled for round 1 from sender 2 ==============
-2025-02-25T02:40:51.030259Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing proposal for round 1
-2025-02-25T02:40:52.565811Z  INFO aleph_research::utils::start_util: Checking health of all nodes...
-2025-02-25T02:40:52.566663Z  INFO aleph_research::utils::start_util: All nodes are healthy.
-2025-02-25T02:40:52.566675Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a transaction size of 256
-2025-02-25T02:40:52.566752Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 2 transactions, Parent Units = [] for round 1
-2025-02-25T02:40:52.566757Z  INFO aleph_rbc: Node 1: Created proposal with 2 transactions for round 1.
-2025-02-25T02:40:52.566761Z  INFO aleph_rbc: Node 1: Sending proposal for round 1...
-2025-02-25T02:40:52.566764Z  INFO aleph_research::requests::send_proposals: Node 1 : Entering sending proposals for round 1
-2025-02-25T02:40:52.566768Z  INFO aleph_research::requests::send_proposals: Node 1 : Preparing to send proposal to nodes ["10.0.168.120:30333", "10.0.185.62:30333"] for round 1
-2025-02-25T02:40:52.566788Z  INFO aleph_research::requests::send_proposals: Node 1 sending proposal to 10.0.168.120:30333 for round 1
-2025-02-25T02:40:52.566841Z  INFO aleph_research::requests::send_proposals: Node 1 sending proposal to 10.0.185.62:30333 for round 1
-2025-02-25T02:40:52.567285Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.168.120:30333 (round 1).
-2025-02-25T02:40:52.567373Z  INFO aleph_research::requests::send_proposals: Proposal successfully delivered to Node 10.0.185.62:30333 (round 1).
-2025-02-25T02:40:52.567398Z  INFO aleph_research::requests::send_proposals: Successfully sent all proposals for round 1.
-2025-02-25T02:40:52.567417Z  INFO aleph_rbc: Node 1: Proposal for round 1 sent successfully.
-2025-02-25T02:40:52.567422Z  INFO aleph_rbc: Node: All rounds completed successfully.
-2025-02-25T02:40:52.567432Z  INFO aleph_research::processors::rbc_processor: Entering: Processing proposal for round 1
-2025-02-25T02:40:52.567439Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Handling PROPOSE request for round 1 from Node 1 ==============
-2025-02-25T02:40:52.567448Z  INFO aleph_research::utils::dag_utils: Node 1: Ensuring DAG synchronization for round 1...
-2025-02-25T02:40:52.567451Z  INFO aleph_research::utils::dag_utils: Node 1: DAG latest round: 0, Target round: 1
-2025-02-25T02:40:52.567455Z  INFO aleph_research::utils::dag_utils: Node 1: First round detected (round 1). Skipping DAG sync check.
-2025-02-25T02:40:52.567462Z  INFO aleph_research::structs::node: Node 1: Updating proposal tracker for round 1...
-2025-02-25T02:40:52.567477Z  INFO aleph_research::structs::node: Node 1: Added proposal for round 1. Count: 3/3
-2025-02-25T02:40:52.567483Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal Tracker for round 1: 3/3 proposals.
-2025-02-25T02:40:52.567487Z  INFO aleph_research::handlers::handle_propose: Node 1: Proposal quorum met. Aggregating and multicasting prevote for 3 proposals.
-2025-02-25T02:40:52.567509Z  INFO aleph_research::handlers::handle_propose: Node 1: Multicasting prevote to all nodes...
-2025-02-25T02:40:52.568409Z  INFO aleph_research::handlers::handle_propose: ✅ Node 1: Sent prevote to http://10.0.168.120:30333/prevote for round 1
-2025-02-25T02:40:52.568563Z  INFO aleph_research::handlers::handle_propose: ✅ Node 1: Sent prevote to http://10.0.185.62:30333/prevote for round 1
-2025-02-25T02:40:52.568579Z  INFO aleph_research::handlers::handle_propose: Node 1: Enqueuing prevote locally for round 1.
-2025-02-25T02:40:52.568584Z  INFO aleph_research::handlers::handle_propose: ============== Node 1: Proposal successfully handled for round 1 from sender 1 ==============
-2025-02-25T02:40:52.568595Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing proposal for round 1
-2025-02-25T02:40:52.568600Z  INFO aleph_research::processors::rbc_processor: Entering: Processing prevote for round 1
-2025-02-25T02:40:52.568603Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 3 proposals from 10.0.168.120 for round 1
-2025-02-25T02:40:52.568608Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
-2025-02-25T02:40:52.568696Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
-2025-02-25T02:40:52.568767Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
-2025-02-25T02:40:52.568832Z  INFO aleph_research::handlers::handle_prevote: Node 1: Quorum reached for round 1. Proceeding to send commits.
-2025-02-25T02:40:52.569684Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.168.120:30333/commit
-2025-02-25T02:40:52.580298Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.185.62:30333/commit
-2025-02-25T02:40:52.580336Z  INFO aleph_research::handlers::handle_prevote: Node 1: Adding commit to queue for round 1
-2025-02-25T02:40:52.580342Z  INFO aleph_research::handlers::handle_prevote: ✅ Node 1: Successfully processed PREVOTE for round 1.
-2025-02-25T02:40:52.580363Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing prevote for round 1
-2025-02-25T02:40:52.580369Z  INFO aleph_research::processors::rbc_processor: Entering: Processing prevote for round 1
-2025-02-25T02:40:52.580373Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 3 proposals from 10.0.185.62 for round 1
-2025-02-25T02:40:52.580378Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
-2025-02-25T02:40:52.580455Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
-2025-02-25T02:40:52.580520Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
-2025-02-25T02:40:52.580587Z  INFO aleph_research::handlers::handle_prevote: Node 1: Ignoring prevote for round 1. Quorum already met.
-2025-02-25T02:40:52.580598Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing prevote for round 1
-2025-02-25T02:40:52.580601Z  INFO aleph_research::processors::rbc_processor: Entering: Processing prevote for round 1
-2025-02-25T02:40:52.580610Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 3 proposals from 10.0.148.218 for round 1
-2025-02-25T02:40:52.580613Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
-2025-02-25T02:40:52.580678Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
-2025-02-25T02:40:52.580742Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
-2025-02-25T02:40:52.580806Z  INFO aleph_research::handlers::handle_prevote: Node 1: Ignoring prevote for round 1. Quorum already met.
-2025-02-25T02:40:52.580817Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing prevote for round 1
-2025-02-25T02:40:52.580821Z  INFO aleph_research::processors::rbc_processor: Entering: Processing commit for round 1
-2025-02-25T02:40:52.580824Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 3 for round 1 ==============
-2025-02-25T02:40:52.580837Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit count for round 1 is 1/1.
-2025-02-25T02:40:52.580840Z  INFO aleph_research::handlers::handle_commit: Node 1: Finalizing round 1 with 1/1 commits.
-2025-02-25T02:40:52.581281Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/logs/finalized_dag/round1.json
-2025-02-25T02:40:52.581317Z  INFO aleph_research::handlers::handle_commit: Node 1: Local round advanced to 2
-2025-02-25T02:40:52.581323Z  INFO aleph_research::handlers::handle_commit: Node 1: Sent RoundFinalized event for round 1
-2025-02-25T02:40:52.581338Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Exiting commit handler.==============
-2025-02-25T02:40:52.581348Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing commit for round 1
-2025-02-25T02:40:52.581352Z  INFO aleph_research::processors::rbc_processor: Entering: Processing commit for round 1
-2025-02-25T02:40:52.581355Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 2 for round 1 ==============
-2025-02-25T02:40:52.581358Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit for round 1 already finalized. Ignoring duplicate commit request.
-2025-02-25T02:40:52.581368Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing commit for round 1
-2025-02-25T02:40:52.581371Z  INFO aleph_research::processors::rbc_processor: Entering: Processing commit for round 1
-2025-02-25T02:40:52.581374Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 1 for round 1 ==============
-2025-02-25T02:40:52.581377Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit for round 1 already finalized. Ignoring duplicate commit request.
-2025-02-25T02:40:52.581386Z  INFO aleph_research::processors::rbc_processor: Leaving: Processing commit for round 1
-2025-02-25T02:40:52.581391Z  INFO aleph_research::utils::round_manager: Round Manager: Processing RoundFinalized event for round 1
-2025-02-25T02:40:52.581394Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a transaction size of 256
-2025-02-25T02:40:52.581463Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 2 transactions, Parent Units = ["U1-3", "U1-1", "U1-2"] for round 2
-2025-02-25T02:40:52.581467Z  INFO aleph_research::utils::round_manager: Node 1: Created and sending proposal for round 2.
-2025-02-25T02:40:52.581470Z  INFO aleph_research::requests::send_proposals: Node 1 : Entering sending proposals for round 2
+2025-02-26T00:35:46.397249Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 3 for round 1 ==============
+2025-02-26T00:35:46.397261Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit count for round 1 is 1/1.
+2025-02-26T00:35:46.397264Z  INFO aleph_research::handlers::handle_commit: Node 1: Finalizing round 1 with 1/1 commits.
+2025-02-26T00:35:46.397770Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/logs/finalized_dag/round1.json
+2025-02-26T00:35:46.397800Z  INFO aleph_research::handlers::handle_commit: Node 1: Local round advanced to 2
+2025-02-26T00:35:46.397811Z  INFO aleph_research::handlers::handle_commit: Node 1: Enqueuing RoundFinalized event for round 1
+2025-02-26T00:35:46.397829Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Exiting commit handler.==============
+2025-02-26T00:35:46.397839Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-02-26T00:35:46.397842Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 3 proposals from 10.0.159.18 for round 1
+2025-02-26T00:35:46.397847Z  INFO aleph_research::handlers::handle_prevote: Node 1: Round 1 already finalized, ignoring prevote.
+2025-02-26T00:35:46.397855Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-02-26T00:35:46.397859Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 1 for round 1 ==============
+2025-02-26T00:35:46.397862Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-02-26T00:35:46.397873Z  INFO aleph_research::processors::rbc_processor: RBCProcessor: RoundFinalized received for round 1
+2025-02-26T00:35:46.397877Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a transaction size of 256
+2025-02-26T00:35:46.397943Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 2 transactions, Parent Units = ["U1-1", "U1-3", "U1-2"] for round 2
+2025-02-26T00:35:46.397948Z  INFO aleph_research::utils::round_manager: Node 1: Created and sending proposal for round 2.
+2025-02-26T00:35:46.397951Z  INFO aleph_research::requests::send_proposals: Node 1 : Entering sending proposals for round 2

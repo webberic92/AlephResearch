@@ -39,7 +39,7 @@ async fn main() -> Result<()> {
     let rbc_processor: Arc<RBCProcessor> = Arc::new(RBCProcessor::new(node.clone(), client.clone()));
 
     // ✅ Step 3: Attach `rbc_processor` to `Node`
-    Node::set_rbc_processor(node.clone(), rbc_processor.clone()).await;
+    Node::set_rbc_processor(node.clone(),rbc_processor.clone(), client.clone()).await;
 
     // ✅ Step 4: Pass everything to the API
     let app = initialize_apis(node.clone(), client.clone(), rbc_processor.clone());
@@ -70,7 +70,9 @@ async fn execute_transaction_logic(
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {
             let node_id = {
-                let node_guard = node.lock().await;
+                info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+            let node_guard = node.lock().await;
+            info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
                 node_guard.id
             };
             let round = propose_request.base.round_id;
@@ -95,7 +97,9 @@ async fn execute_transaction_logic(
         }
         Err(e) => {
             let node_id = {
+                info!("🔍 [DEBUG] Waiting to acquire node lock for aleph rbc rs");
                 let node_guard = node.lock().await;
+                info!("🔓 [DEBUG] Acquired node lock for  aleph rbc rs");
                 node_guard.id
             };
             error!(
@@ -104,7 +108,6 @@ async fn execute_transaction_logic(
             );
         }
     }
-
-    info!("Node: All rounds completed successfully.");
+    info!("Node: Exiting transaction logic from beggining.");
     Ok(())
 }
