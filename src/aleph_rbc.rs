@@ -70,9 +70,9 @@ async fn execute_transaction_logic(
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {
             let node_id = {
-                info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
+                //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
             let node_guard = node.lock().await;
-            info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
+            //info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
                 node_guard.id
             };
             let round = propose_request.base.round_id;
@@ -97,9 +97,9 @@ async fn execute_transaction_logic(
         }
         Err(e) => {
             let node_id = {
-                info!("🔍 [DEBUG] Waiting to acquire node lock for aleph rbc rs");
+                //info!("🔍 [DEBUG] Waiting to acquire node lock for aleph rbc rs");
                 let node_guard = node.lock().await;
-                info!("🔓 [DEBUG] Acquired node lock for  aleph rbc rs");
+                //info!("🔓 [DEBUG] Acquired node lock for  aleph rbc rs");
                 node_guard.id
             };
             error!(

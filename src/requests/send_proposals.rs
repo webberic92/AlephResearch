@@ -35,13 +35,13 @@ pub async fn send_proposals(
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
-    info!("🔍 [DEBUG] Attempting to acquire lock for send_proposals() in round {}", propose_request.base.round_id);
+    //info!("🔍 [DEBUG] Attempting to acquire lock for send_proposals() in round {}", propose_request.base.round_id);
     
     let lock_result = timeout(Duration::from_secs(5), node.lock()).await;
     
     let node_guard = match lock_result {
         Ok(guard) => {
-            info!("🔓 [DEBUG] Acquired node lock for send_proposals() in round {}", propose_request.base.round_id);
+            //info!("🔓 [DEBUG] Acquired node lock for send_proposals() in round {}", propose_request.base.round_id);
             guard
         }
         Err(_) => {

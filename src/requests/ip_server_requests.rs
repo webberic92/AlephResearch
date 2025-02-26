@@ -10,9 +10,9 @@ use crate::structs::node::Node;
 /// - Queries the Python server to determine if the node should propose.
 pub async fn is_node_turn(client: &Client, node: Arc<Mutex<Node>>) -> bool {
     let (node_id, ip_manager_address, current_round) = {
-        info!("🔍 [DEBUG] Waiting to acquire node lock for ip server requests");
+        //info!("🔍 [DEBUG] Waiting to acquire node lock for ip server requests");
         let node_guard = node.lock().await;
-        info!("🔓 [DEBUG] Acquired node lock for round ip server requests");
+        //info!("🔓 [DEBUG] Acquired node lock for round ip server requests");
         let round = *node_guard.current_round.lock().await;
         (node_guard.id, node_guard.ip_manager_address.clone(), round)
     }; // 🔓 Drop lock immediately
@@ -57,9 +57,9 @@ pub async fn notify_transaction_submitted(
     node: Arc<Mutex<Node>>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let (node_id, ip_manager_address) = {
-        info!("🔍 [DEBUG] Waiting to acquire node lock for ip server requests");
+        //info!("🔍 [DEBUG] Waiting to acquire node lock for ip server requests");
         let node_guard = node.lock().await;
-        info!("🔓 [DEBUG] Acquired node lock for round ip server requests");
+        //info!("🔓 [DEBUG] Acquired node lock for round ip server requests");
         (node_guard.id, node_guard.ip_manager_address.clone())
     };
 
