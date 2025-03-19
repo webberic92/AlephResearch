@@ -1,26 +1,10 @@
-Transaction Throughput: Number of transactions processed per second.
+(DONE) Transaction Throughput: Number of transactions processed per second.
 
-Latency: Time from the first node receiving a client request to the (N−f)th node completing the consensus process.
+(DONE) Latency: Time from the first node receiving a client request to the (N−f)th node completing the consensus process.
 
 Communication Overhead: Total number of messages exchanged during the consensus process.
 
 Resource Utilization: CPU and memory usage across nodes during the RBC process.
 
 
-
-
-cargo build --release --target x86_64-unknown-linux-musl
-
-
-
-Suggested Updates to Your Implementation
-
-    Epoch Tracking:
-        Modify aleph_start.rs to assign a unique epoch ID to each transaction.
-        Ensure transactions in the same epoch do not overlap until committed.
-
-    DAG Alignment Checks:
-        Implement a pre-check before broadcasting prevotes to ensure the DAG is ready for the round.
-
-    Concurrency Limit:
-        Introduce a concurrency limiter in aleph_rbc.rs to process only a few proposals simultaneously, based on available resources.
+ transaction throughput, latency, communication overhead, and resource utilization

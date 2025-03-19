@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use chrono::Local;
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
-    processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
+    logs::latencyLogger::log_latency, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
 };
 
 pub async fn handle_commit(
@@ -126,7 +127,10 @@ pub async fn handle_commit(
             return Err(format!("Failed to write finalized DAG: {:?}", e));
         }
 
-
+        info!(
+            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
+            node_id, round_id, commit_count, quorum_threshold
+        );
 
         let total_rounds: u64;
         let round_id: u64;
@@ -140,7 +144,9 @@ pub async fn handle_commit(
 
         if round_id >= total_rounds {
             info!("Node {}: Total Round {} finalized. Exiting commit handler Application DONE.", node_id,total_rounds);
-            
+                // Start Latency Logger
+                let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+                log_latency(&format!("LATENCY END: {}", current_time));
 
             {
                 let mut node_guard = node.lock().await;

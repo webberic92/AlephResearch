@@ -1,18 +1,7 @@
-2025-02-26T00:35:46.397249Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 3 for round 1 ==============
-2025-02-26T00:35:46.397261Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit count for round 1 is 1/1.
-2025-02-26T00:35:46.397264Z  INFO aleph_research::handlers::handle_commit: Node 1: Finalizing round 1 with 1/1 commits.
-2025-02-26T00:35:46.397770Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/logs/finalized_dag/round1.json
-2025-02-26T00:35:46.397800Z  INFO aleph_research::handlers::handle_commit: Node 1: Local round advanced to 2
-2025-02-26T00:35:46.397811Z  INFO aleph_research::handlers::handle_commit: Node 1: Enqueuing RoundFinalized event for round 1
-2025-02-26T00:35:46.397829Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Exiting commit handler.==============
-2025-02-26T00:35:46.397839Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
-2025-02-26T00:35:46.397842Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 3 proposals from 10.0.159.18 for round 1
-2025-02-26T00:35:46.397847Z  INFO aleph_research::handlers::handle_prevote: Node 1: Round 1 already finalized, ignoring prevote.
-2025-02-26T00:35:46.397855Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
-2025-02-26T00:35:46.397859Z  INFO aleph_research::handlers::handle_commit: ============== Node 1: Handling commit request from 1 for round 1 ==============
-2025-02-26T00:35:46.397862Z  INFO aleph_research::handlers::handle_commit: Node 1: Commit for round 1 already finalized. Ignoring duplicate commit request.
-2025-02-26T00:35:46.397873Z  INFO aleph_research::processors::rbc_processor: RBCProcessor: RoundFinalized received for round 1
-2025-02-26T00:35:46.397877Z  INFO aleph_research::utils::create_transaction_data: Node 1: Creating 2 transactions with 4 shards and a transaction size of 256
-2025-02-26T00:35:46.397943Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 2 transactions, Parent Units = ["U1-1", "U1-3", "U1-2"] for round 2
-2025-02-26T00:35:46.397948Z  INFO aleph_research::utils::round_manager: Node 1: Created and sending proposal for round 2.
-2025-02-26T00:35:46.397951Z  INFO aleph_research::requests::send_proposals: Node 1 : Entering sending proposals for round 2
+sh-4.2$ cat /home/aleph-node/logs/Latency.log
+[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:24
+[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
+[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
+[LATENCY] Starting Latency Logger sending proposal : TIME 2025-03-15 01:12:26
+[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
+[LATENCY] Ending Latency Logger : TIME 2025-03-15 01:12:26

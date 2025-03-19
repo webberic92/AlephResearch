@@ -1,11 +1,12 @@
 
+use chrono::Local;
 use futures::future::join_all;
 use reqwest::Client;
 use tracing::{error, info};
 use std::{sync::Arc, time::Duration};
 use tokio::{sync::Mutex, time::timeout};
 use crate::{
-    handlers::handle_propose::handle_propose, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
+    handlers::handle_propose::handle_propose, logs::latencyLogger::log_latency, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
@@ -100,6 +101,7 @@ pub async fn send_proposals(
             }
         }
     }).collect();
+
 
     let results: Vec<Result<(), anyhow::Error>> = join_all(futures).await;
 
