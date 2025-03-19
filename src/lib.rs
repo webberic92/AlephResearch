@@ -39,3 +39,10 @@ pub mod requests{
     pub mod synchronize_round_across_nodes;
 
 }
+
+pub mod logs{
+    pub mod latencyLogger;
+    pub mod communicationOverheadLogger;
+    pub mod resourceUtilizationLogger;
+    pub mod transactionThroughputLogger;
+}   

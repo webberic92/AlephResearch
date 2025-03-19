@@ -1,8 +1,10 @@
 use aleph_research::controllers::api_routes::initialize_apis;
+use aleph_research::logs::latencyLogger::log_latency;
 use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
+use chrono::Local;
 use reqwest::Client;
 use tokio::sync::Mutex;
 use std::{net::SocketAddr, sync::Arc};
@@ -51,6 +53,9 @@ async fn main() -> Result<()> {
         if let Err(e) = execute_transaction_logic(node_clone, client_clone).await {
             error!("Transaction execution failed: {:?}", e);
         }
+            let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+            log_latency(&format!("LATENCY START: {}", current_time));
+
     });
 
 

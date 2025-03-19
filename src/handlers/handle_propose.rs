@@ -1,13 +1,12 @@
 use std::sync::Arc;
 use base64::{ engine::general_purpose, Engine };
+use chrono::Local;
 use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{ error, info };
 use crate::{
-    handlers::handle_prevote::handle_prevote,
-    structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } },
-    utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root},
+    handlers::handle_prevote::handle_prevote, logs::latencyLogger::log_latency, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
 };
 
 
