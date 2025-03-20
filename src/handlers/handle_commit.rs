@@ -1,10 +1,10 @@
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 use chrono::Local;
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
-    logs::latencyLogger::log_latency, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
+    processors::priority_queue::RBCMessage, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
 };
 
 pub async fn handle_commit(
@@ -15,6 +15,8 @@ pub async fn handle_commit(
     let (node_id, round_id) = {
         //info!("🔍 [DEBUG] Waiting to acquire node lock for Entering handle commit");
         let node_guard = node.lock().await;
+        // ✅ Access message_count through the already locked `node_guard`
+        node_guard.message_count.fetch_add(1, Ordering::Relaxed);
 //info!("🔓 [DEBUG] Acquired node lock for Entering handle commit");
         (node_guard.id, commit_request.round_id)
     };
@@ -23,6 +25,7 @@ pub async fn handle_commit(
         "============== Node {}: Handling commit request from {} for round {} ==============",
         node_id, commit_request.proposing_node_id, round_id
     );
+
 
     // ✅ Exit early if the round is already finalized
     {
@@ -126,6 +129,12 @@ pub async fn handle_commit(
             );
             return Err(format!("Failed to write finalized DAG: {:?}", e));
         }
+        let message_count = node.lock().await.message_count.clone();
+
+        info!(
+            "Node {}: Finalized round {} USE THIS FOR COMMUNICATION OVERHEAD {:?}",
+            node_id, round_id, message_count
+        );
 
         info!(
             "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
@@ -146,7 +155,7 @@ pub async fn handle_commit(
             info!("Node {}: Total Round {} finalized. Exiting commit handler Application DONE.", node_id,total_rounds);
                 // Start Latency Logger
                 let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-                log_latency(&format!("LATENCY END: {}", current_time));
+                info!("LATENCY END: {}", current_time);
 
             {
                 let mut node_guard = node.lock().await;

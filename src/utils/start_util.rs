@@ -1,11 +1,10 @@
 use anyhow::Error;
 use reqwest::Client;
 use tokio::sync::Mutex;
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 use std::time::Duration;
 use tokio::time::sleep;
 use tracing::{error, info};
-use crate::requests::ip_server_requests::is_node_turn;
 use crate::structs::node::Node;
 
 /// **🔄 Updated: Use `Arc<Mutex<Node>>`**  
@@ -13,14 +12,16 @@ use crate::structs::node::Node;
 pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> bool {
     let nodes = {
         //info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
-let node_guard = node.lock().await;
-//info!("🔓 [DEBUG] Acquired node lock for start utils");
+        let node_guard = node.lock().await;
+        //info!("🔓 [DEBUG] Acquired node lock for start utils");
         node_guard.nodes.clone()
     }; // 🔓 Lock released immediately here
 
     let mut all_healthy = true;
 
     for peer in nodes {
+        let message_count = node.lock().await.message_count.clone();
+        message_count.fetch_add(1, Ordering::Relaxed);
         let url = format!("http://{}/health", peer);
         match client.get(&url).send().await {
             Ok(response) if response.status().is_success() => {
@@ -45,26 +46,35 @@ let node_guard = node.lock().await;
 /// - Retries up to 10 times, checking every 3 seconds.
 pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
     let max_retries = 10;
-    let mut attempts = 0;
+    let mut attempts = 1;
+    info!("Node: Entering wait_for_all_nodes_health.");
 
     while attempts < max_retries {
-        info!("Checking health of all nodes...");
+        info!("Checking health of all nodes...attempt {}", attempts);
 
         let nodes = {
             //info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
-let node_guard = node.lock().await;
-//info!("🔓 [DEBUG] Acquired node lock for start utils");
+        let node_guard = node.lock().await;
+        //info!("🔓 [DEBUG] Acquired node lock for start utils");
             node_guard.nodes.clone()
         };
 
+        let message_count = node.lock().await.message_count.clone(); // ✅ Clone before the async block
+
         let health_checks = nodes.into_iter().map(|node_url| {
             let client = client.clone();
+            let message_count = message_count.clone(); // ✅ Clone again for each async task
+        
             async move {
                 let health_url = format!("http://{}/health", node_url);
-                match client.get(&health_url).send().await {
+                let success = match client.get(&health_url).send().await {
                     Ok(response) => response.status().is_success(),
                     Err(_) => false,
-                }
+                };
+        
+                message_count.fetch_add(1, Ordering::Relaxed); // ✅ Always increment after request
+        
+                success
             }
         });
 
@@ -82,28 +92,4 @@ let node_guard = node.lock().await;
 }
 
 
-/// **🕰️ Wait for Node's Turn**  
-/// - Continuously checks if it is this node's turn.
-pub async fn wait_for_turn(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
-    loop {
-        if is_node_turn(client, node.clone()).await {
-            let (node_id, ip_address, latest_round) = {
-                //info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
-let node_guard = node.lock().await;
-//info!("🔓 [DEBUG] Acquired node lock for start utils");
-                let round = *node_guard.current_round.lock().await; 
-                (node_guard.id, node_guard.ip_address.clone(), round)
-            };
 
-            info!(
-                "Node {} {}: It's my turn to propose for round {}",
-                node_id, ip_address, latest_round
-            );
-
-            break;
-        }
-
-        sleep(Duration::from_secs(1)).await;
-    }
-    Ok(())
-}

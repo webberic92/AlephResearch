@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::Arc,
+    sync::{atomic::{AtomicU64, Ordering}, Arc},
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
@@ -31,7 +31,8 @@ pub struct Node {
     pub client: Arc<Client>,
     pub event_sender: mpsc::Sender<Event>,
     pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
-}
+    pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
+    }
 
 impl Node {
     pub fn new(
@@ -65,7 +66,8 @@ impl Node {
             client: client.clone(),
             event_sender,
             rbc_processor: None, // ✅ Initialize as None, will be set later
-        }));
+            message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required        
+            }));
 
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
@@ -78,6 +80,10 @@ impl Node {
         node
     }
 
+
+    // pub fn get_message_count(&self) -> u64 {
+    //     self.message_count.load(Ordering::Relaxed)
+    // }
     
     /// **✅ Set `rbc_processor` After Initialization**
     pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>, client: Arc<Client>) {

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 use base64::{ engine::general_purpose, Engine };
 use chrono::Local;
 use reqwest::Client;
@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use tokio::sync::{Mutex, RwLock};
 use tracing::{ error, info };
 use crate::{
-    handlers::handle_prevote::handle_prevote, logs::latencyLogger::log_latency, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
+    handlers::handle_prevote::handle_prevote, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
 };
 
 
@@ -68,7 +68,8 @@ pub async fn handle_propose(
             "============== Node {}: Handling PROPOSE request for round {} from Node {} ==============",
             node_id, round_id, propose_request.base.proposing_node_id
         );
-
+        // ✅ Access message_count through the already locked `node_guard`
+        node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         // Step 2: Check if we already received a proposal from this node
         // Step 2: Check if we already received a proposal from this node
         let duplicate = {
@@ -161,7 +162,8 @@ pub async fn handle_propose(
 
                 let client_clone = client.clone();
                 let prevote_request_clone = prevote_request.clone();
-
+                let message_count = node.lock().await.message_count.clone();
+                message_count.fetch_add(1, Ordering::Relaxed);
                 tokio::spawn(async move {
                     match client_clone.post(&target_url)
                         .json(&prevote_request_clone)

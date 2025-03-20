@@ -1,5 +1,4 @@
 use aleph_research::controllers::api_routes::initialize_apis;
-use aleph_research::logs::latencyLogger::log_latency;
 use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
@@ -54,8 +53,7 @@ async fn main() -> Result<()> {
             error!("Transaction execution failed: {:?}", e);
         }
             let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            log_latency(&format!("LATENCY START: {}", current_time));
-
+            info!("LATENCY START: {}", current_time);
     });
 
 
@@ -69,6 +67,7 @@ async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
+    info!("Node: Entering execute_transaction_logic.");
     wait_for_all_nodes_health(&client, node.clone()).await?;  // ✅ FIXED
 
     // ✅ Create transaction proposal with multiple transactions
