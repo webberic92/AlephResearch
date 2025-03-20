@@ -2,7 +2,6 @@ pub mod utils{
     pub mod merkle_utils; // Expose the structs module
     pub mod config_util;
     pub mod start_util; // Expose the structs module
-    pub mod round_utils; // Expose the structs module
     pub mod dag_utils; // Expose the structs module
     pub mod errors_util; // Expose the structs module
     pub mod create_transaction_data;
@@ -35,14 +34,4 @@ pub mod controllers{
 
 pub mod requests{
     pub mod send_proposals;
-    pub mod ip_server_requests;
-    pub mod synchronize_round_across_nodes;
-
 }
-
-pub mod logs{
-    pub mod latencyLogger;
-    pub mod communicationOverheadLogger;
-    pub mod resourceUtilizationLogger;
-    pub mod transactionThroughputLogger;
-}   

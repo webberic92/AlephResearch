@@ -8,8 +8,6 @@ use reqwest::Client;
 use crate::handlers::handle_commit::handle_commit;
 use crate::handlers::handle_prevote::handle_prevote;
 use crate::handlers::handle_propose::handle_propose;
-use crate::logs::latencyLogger;
-use crate::logs::latencyLogger::log_latency;
 use crate::structs::{node::Node, requests::{CommitRequest, PrevoteRequest, ProposeRequest}};
 use crate::utils::create_transaction_data::create_transaction_data;
 use crate::requests::send_proposals::send_proposals;
@@ -47,7 +45,7 @@ impl RBCProcessor {
                         if last_round >= total_rounds.try_into().unwrap() {
                             info!("✅ RBCProcessor: All {} rounds completed. Stopping RBCProcessor.", total_rounds);
                             let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-                            log_latency(&format!("Ending Latency Logger : TIME {}", current_time));
+                            info!("Ending Latency Logger : TIME {}", current_time);
                             break; // 🔥 **Exit the loop when total rounds are reached**
                         }
 

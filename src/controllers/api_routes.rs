@@ -3,7 +3,7 @@ use reqwest::{Client, StatusCode};
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tracing::{error, info};
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 
 use crate::{
     processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor},
@@ -150,10 +150,13 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processo
             move || {
                 let node = node.clone();
                 async move {
-                    let node_guard = node.lock().await;
+                    let node_guard = node.lock().await; // ✅ Lock node once
                     let quorum_votes = node_guard.quorum_votes.lock().await;
                     let round_id = node_guard.current_round.lock().await;
-
+        
+                    // ✅ Directly increment the message count without locking the whole node
+                    node_guard.message_count.fetch_add(1, Ordering::Relaxed);
+        
                     Json(Response {
                         status: format!(
                             "Node {} is healthy. Quorum votes: {:?}, Rounds: {}",

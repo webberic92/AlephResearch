@@ -3,10 +3,10 @@ use chrono::Local;
 use futures::future::join_all;
 use reqwest::Client;
 use tracing::{error, info};
-use std::{sync::Arc, time::Duration};
+use std::{sync::{atomic::Ordering, Arc}, time::Duration};
 use tokio::{sync::Mutex, time::timeout};
 use crate::{
-    handlers::handle_propose::handle_propose, logs::latencyLogger::log_latency, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
+    handlers::handle_propose::handle_propose, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
 /* 
 **ch-RBC Proof Validation for `send_proposals`**
@@ -62,16 +62,21 @@ pub async fn send_proposals(
         node_id, nodes, round_id
     );
 
+
+    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
+
     let futures: Vec<_> = nodes.iter().map(|node_url| {
         let client = client.clone();
         let node_url = node_url.clone();
         let proposal_clone = propose_request.clone();
+        let message_count = message_count.clone(); // ✅ Correctly cloned inside the async block
 
         async move {
             info!(
                 "📤 Node {} sending proposal to {} for round {}",
                 node_id, node_url, proposal_clone.base.round_id
             );
+            message_count.fetch_add(1, Ordering::Relaxed);
 
             match client
                 .post(format!("http://{}/propose", node_url))

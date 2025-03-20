@@ -2,7 +2,7 @@ use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
 use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
-use std::sync::Arc;
+use std::sync::{atomic::Ordering, Arc};
 use tracing::{error, info};
 use reqwest::Client;
 use crate::{
@@ -62,6 +62,8 @@ pub async fn handle_prevote(
         //info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
         //info!("🔓 [DEBUG] Acquired node lock for handle prevote");
+                // ✅ Access message_count through the already locked `node_guard`
+        node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
             node_guard.id,
             prevote_request.proposals[0].base.round_id,
@@ -69,6 +71,7 @@ pub async fn handle_prevote(
             node_guard.total_nodes,
             node_guard.nodes.clone(),
             node_guard.rbc_processor.clone(),
+            
         )
     }; // ✅ Release lock immediately
 
@@ -193,19 +196,23 @@ pub async fn handle_prevote(
     };
 
     let commit_payload = commit_request.clone();
+    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
 
     let commit_futures: Vec<_> = node_list.iter().map(|target_node| {
         let target_url = format!("http://{}/commit", target_node);
         let client = client.clone();
         let commit_payload = commit_payload.clone();
+        let message_count = message_count.clone(); // ✅ Correctly cloned inside the async block
 
         async move {
+            message_count.fetch_add(1, Ordering::Relaxed);
+
             match client.post(&target_url).json(&commit_payload).send().await {
                 Ok(response) if response.status().is_success() => {
                     info!("✅ Successfully sent commit to {}", target_url);
                 }
                 Ok(response) => {
-                    error!("❌ Commit failed to {}. Status: {:?}", target_url, response.status());
+                    error!("❌ Commit failed to {}. Status: {:?}", target_url, response);
                 }
                 Err(e) => {
                     error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
