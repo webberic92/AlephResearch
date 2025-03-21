@@ -58,7 +58,8 @@ pub async fn handle_propose(
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
-
+    let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
+    info!("LATENCY START: {}", current_time);
     // Step 1: Log receipt of the proposal
     {
         let node_guard = node.lock().await;

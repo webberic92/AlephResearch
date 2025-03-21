@@ -52,8 +52,6 @@ async fn main() -> Result<()> {
         if let Err(e) = execute_transaction_logic(node_clone, client_clone).await {
             error!("Transaction execution failed: {:?}", e);
         }
-            let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-            info!("LATENCY START: {}", current_time);
     });
 
 
