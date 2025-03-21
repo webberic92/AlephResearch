@@ -117,7 +117,7 @@ pub async fn handle_commit(
         }; 
 
         if let Err(e) = write_finalized_dag_to_file(
-            "/home/aleph-node/logs/finalized_dag",
+            "/home/aleph-node/finalized_dag",
             &finalized_dag,
             round_id,
         )

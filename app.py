@@ -14,10 +14,10 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 5 # Define the number of instances
-        NUMBER_OF_TRANSACTIONS = 3  # Define the number of transactions per round per that node
+        NUMBER_OF_TRANSACTIONS = 5  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
-        TOTAL_ROUNDS = 3 
+        TOTAL_ROUNDS = 5 
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -41,7 +41,8 @@ class TestAleph(Stack):
         )
         # Attach policies for S3, CloudWatch Logs, and SSM Session Manager
         instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess"))
-        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3ReadOnlyAccess"))
+        # instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3ReadOnlyAccess"))
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess"))
         instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"))
 
         # Define a lightweight t2.micro instance as the IP Manager
@@ -79,15 +80,16 @@ class TestAleph(Stack):
 
                 # Create necessary logs
                 "mkdir -p /home/aleph-node/logs/",
-                "touch /home/aleph-node/logs/resource_usage",
                 "touch /home/aleph-node/logs/node_status",
-                "touch /home/aleph-node/logs/transaction_metrics",
+                "touch /home/aleph-node/logs/cpu_usage",
+                "touch /home/aleph-node/logs/mem_usage",
                 "chmod -R 777 /home/aleph-node/logs/",
-
+                "echo 'Starting cpu and memory logs' >> /home/aleph-node/logs/node_status",
+                "nohup sar -u 1 >> /home/aleph-node/logs/cpu_usage 2>&1 &",
+                "nohup sar -r 1 >> /home/aleph-node/logs/mem_usage 2>&1 &",
                 # Continue setup for Aleph node
                 "aws s3 cp s3://aleph-research/aleph_rbc /home/aleph-node/ --quiet",
                 # "aws s3 cp s3://aleph-research/aleph_start /home/aleph-node/ --quiet",
-                "aws s3 cp s3://aleph-research/generate_keys /home/aleph-node/ --quiet",
                 "sudo chmod -R 777 /home/aleph-node/",
 
                 # Retrieve and log the private IP for ongoing reference
@@ -156,7 +158,6 @@ class TestAleph(Stack):
             # Part 3: Start aleph_rbc
             ec2_instance.user_data.add_commands(
                 "echo 'Starting aleph_rbc execution' >> /home/aleph-node/logs/node_status",
-
                 # Check if the aleph_rbc binary is reachable and log the result
                 "if [ -f /home/aleph-node/aleph_rbc ]; then",
                 "  echo 'aleph_rbc binary is found at /home/aleph-node/aleph_rbc' >> /home/aleph-node/logs/node_status;",
@@ -210,15 +211,12 @@ class TestAleph(Stack):
                 "fi",
 
                 f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /home/aleph-node/logs/node_status;",
-
+                
+                f"""(sleep 30 && \
+                S3_FOLDER="logs/nodes_N{INSTANCES_NUMBER}_T{NUMBER_OF_TRANSACTIONS}_R{TOTAL_ROUNDS}/node-$(hostname)" && \
+                aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"""
             )
 
-            # Part 4: Start Aleph Node and Monitor Logs
-            # ec2_instance.user_data.add_commands(                
-            #     # Start the Aleph testing
-            #     "echo 'Attempting to execute aleph_start with configuration' >> /home/aleph-node/logs/node_status;",
-            #     "/home/aleph-node/aleph_start --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 || echo 'Execution failed' >> /home/aleph-node/logs/node_status"
-            # )
 
             # Output the instance ID for debugging
             CfnOutput(self, f"InstanceIdOutput{i+1}",
