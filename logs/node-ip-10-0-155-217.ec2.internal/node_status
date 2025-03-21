@@ -1,0 +1,1142 @@
+Starting cpu and memory logs
+PRIVATE_IP = 10.0.155.217
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.165.39"
+ip_address = "10.0.155.217"
+nodes = ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"]
+total_nodes = 5
+
+[consensus]
+number_of_transactions = 5
+transaction_size = 256 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+total_rounds = 5 # Number of rounds
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 2
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+[2m2025-03-21T00:56:54.470488Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m Node: Entering execute_transaction_logic.
+[2m2025-03-21T00:56:54.470499Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m API server running on 0.0.0.0:30333
+[2m2025-03-21T00:56:54.470524Z[0m [32m INFO[0m [2maleph_research::utils::start_util[0m[2m:[0m Node: Entering wait_for_all_nodes_health.
+[2m2025-03-21T00:56:54.470531Z[0m [32m INFO[0m [2maleph_research::utils::start_util[0m[2m:[0m Checking health of all nodes...attempt 1
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 2 
+[2m2025-03-21T00:56:55.994460Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 1
+[2m2025-03-21T00:56:55.994483Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 1 from Node 5 ==============
+[2m2025-03-21T00:56:55.994502Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 1...
+[2m2025-03-21T00:56:55.994506Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 0, Target round: 1
+[2m2025-03-21T00:56:55.994509Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: First round detected (round 1). Skipping DAG sync check.
+[2m2025-03-21T00:56:55.994522Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 1...
+[2m2025-03-21T00:56:55.994544Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 1. Count: 1/4
+[2m2025-03-21T00:56:55.994551Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 1 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:55.994555Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 1 from sender 5 ==============
+[2m2025-03-21T00:56:56.534863Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 1
+[2m2025-03-21T00:56:56.534894Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 1 from Node 3 ==============
+[2m2025-03-21T00:56:56.534988Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 1...
+[2m2025-03-21T00:56:56.534992Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 0, Target round: 1
+[2m2025-03-21T00:56:56.535000Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: First round detected (round 1). Skipping DAG sync check.
+[2m2025-03-21T00:56:56.535014Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 1...
+[2m2025-03-21T00:56:56.535051Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 1. Count: 2/4
+[2m2025-03-21T00:56:56.535059Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 1 has 2 proposals (threshold: 4).
+[2m2025-03-21T00:56:56.535063Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 1 from sender 3 ==============
+[2m2025-03-21T00:56:56.794044Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 1
+[2m2025-03-21T00:56:56.794073Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 1 from Node 1 ==============
+[2m2025-03-21T00:56:56.794089Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 1...
+[2m2025-03-21T00:56:56.794094Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 0, Target round: 1
+[2m2025-03-21T00:56:56.794097Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: First round detected (round 1). Skipping DAG sync check.
+[2m2025-03-21T00:56:56.794109Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 1...
+[2m2025-03-21T00:56:56.794141Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 1. Count: 3/4
+[2m2025-03-21T00:56:56.794149Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 1 has 3 proposals (threshold: 4).
+[2m2025-03-21T00:56:56.794152Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 1 from sender 1 ==============
+[2m2025-03-21T00:56:57.473907Z[0m [32m INFO[0m [2maleph_research::utils::start_util[0m[2m:[0m Checking health of all nodes...attempt 2
+[2m2025-03-21T00:56:57.474792Z[0m [32m INFO[0m [2maleph_research::utils::start_util[0m[2m:[0m All nodes are healthy.
+[2m2025-03-21T00:56:57.474805Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
+[2m2025-03-21T00:56:57.475028Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Creating proposal: 5 transactions, Parent Units = [] for round 1
+[2m2025-03-21T00:56:57.475035Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m Node 2: Created proposal with 5 transactions for round 1.
+[2m2025-03-21T00:56:57.475039Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m Node 2: Sending proposal for round 1...
+[2m2025-03-21T00:56:57.475045Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 🚀 [DEBUG] Node 2 preparing to send proposals to ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"] for round 1
+[2m2025-03-21T00:56:57.475092Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.130.106:30333 for round 1
+[2m2025-03-21T00:56:57.475199Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.131.3:30333 for round 1
+[2m2025-03-21T00:56:57.475264Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.161.91:30333 for round 1
+[2m2025-03-21T00:56:57.475346Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.181.16:30333 for round 1
+[2m2025-03-21T00:56:57.475687Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.130.106:30333 (round 1).
+[2m2025-03-21T00:56:57.475822Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.131.3:30333 (round 1).
+[2m2025-03-21T00:56:57.476108Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.161.91:30333 (round 1).
+[2m2025-03-21T00:56:57.476139Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.181.16:30333 (round 1).
+[2m2025-03-21T00:56:57.476166Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Successfully sent all proposals for round 1.
+[2m2025-03-21T00:56:57.476181Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📥 [DEBUG] Node 2 enqueuing proposal for round 1 into RBCProcessor queue
+[2m2025-03-21T00:56:57.476199Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m Node 2: Proposal for round 1 sent successfully.
+[2m2025-03-21T00:56:57.476204Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m Node: Exiting transaction logic from beggining.
+[2m2025-03-21T00:56:57.476321Z[0m [32m INFO[0m [2maleph_rbc[0m[2m:[0m LATENCY START: 2025-03-21 00:56:57
+[2m2025-03-21T00:56:57.476333Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 1
+[2m2025-03-21T00:56:57.476338Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 1 from Node 2 ==============
+[2m2025-03-21T00:56:57.476351Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 1...
+[2m2025-03-21T00:56:57.476354Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 0, Target round: 1
+[2m2025-03-21T00:56:57.476358Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: First round detected (round 1). Skipping DAG sync check.
+[2m2025-03-21T00:56:57.476367Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 1...
+[2m2025-03-21T00:56:57.476420Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 1. Count: 4/4
+[2m2025-03-21T00:56:57.476427Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 1 has 4 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.476430Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+[2m2025-03-21T00:56:57.476460Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.476465Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.476513Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.476589Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.476851Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.477071Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.477079Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.155.217 for round 1
+[2m2025-03-21T00:56:57.477085Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 1
+[2m2025-03-21T00:56:57.477159Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477275Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477364Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477547Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477626Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477837Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 1
+[2m2025-03-21T00:56:57.477893Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.477956Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478087Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478148Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478234Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478395Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 1
+[2m2025-03-21T00:56:57.478462Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478528Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478592Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478630Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.478724Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479064Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 1
+[2m2025-03-21T00:56:57.479248Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479379Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479501Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479620Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479690Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.479838Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.480060Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 1 from sender 2 ==============
+[2m2025-03-21T00:56:57.480160Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 1
+[2m2025-03-21T00:56:57.480182Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.130.106 for round 1
+[2m2025-03-21T00:56:57.480236Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 1
+[2m2025-03-21T00:56:57.480288Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480497Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480555Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480626Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480664Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480697Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.480777Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 1
+[2m2025-03-21T00:56:57.480800Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.480810Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480912Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.480998Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481081Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481165Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481479Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 1
+[2m2025-03-21T00:56:57.481595Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481641Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481686Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.481695Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481737Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481764Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.481972Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 1
+[2m2025-03-21T00:56:57.481993Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482019Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482046Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482072Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482098Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482155Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.482188Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 1
+[2m2025-03-21T00:56:57.482191Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.161.91 for round 1
+[2m2025-03-21T00:56:57.482195Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 1
+[2m2025-03-21T00:56:57.482212Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482237Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482262Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482287Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482314Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482367Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 1
+[2m2025-03-21T00:56:57.482383Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482440Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482466Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482492Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482517Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482592Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 1
+[2m2025-03-21T00:56:57.482610Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482635Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482660Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482689Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482714Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482767Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 1
+[2m2025-03-21T00:56:57.482783Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482808Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482833Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482857Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.482882Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.483054Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Quorum reached for round 1. Proceeding to send commits.
+[2m2025-03-21T00:56:57.487269Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.130.106:30333/commit
+[2m2025-03-21T00:56:57.487365Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.131.3:30333/commit
+[2m2025-03-21T00:56:57.488719Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.489579Z[0m [31mERROR[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ❌ Commit failed to http://10.0.161.91:30333/commit. Status: Response { url: "http://10.0.161.91:30333/commit", status: 400, headers: {"content-type": "application/json", "content-length": "64", "date": "Fri, 21 Mar 2025 00:56:57 GMT"} }
+[2m2025-03-21T00:56:57.490708Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.181.16:30333/commit
+[2m2025-03-21T00:56:57.490788Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Adding commit to queue for round 1
+[2m2025-03-21T00:56:57.490796Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Node 2: Successfully processed PREVOTE for round 1.
+[2m2025-03-21T00:56:57.490872Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 1
+[2m2025-03-21T00:56:57.490877Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.131.3 for round 1
+[2m2025-03-21T00:56:57.490883Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 1
+[2m2025-03-21T00:56:57.490987Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491020Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491047Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491075Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491108Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491192Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 1
+[2m2025-03-21T00:56:57.491218Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491243Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491268Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491293Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491318Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491371Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 1
+[2m2025-03-21T00:56:57.491414Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491521Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491660Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491691Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491717Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491773Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 1
+[2m2025-03-21T00:56:57.491791Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491816Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.491841Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492079Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492110Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492168Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 1. Quorum already met.
+[2m2025-03-21T00:56:57.492207Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 1
+[2m2025-03-21T00:56:57.492210Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.181.16 for round 1
+[2m2025-03-21T00:56:57.492214Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 1
+[2m2025-03-21T00:56:57.492231Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492262Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492288Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492313Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492337Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492415Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 1
+[2m2025-03-21T00:56:57.492435Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492460Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492485Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492510Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492536Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492613Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 1
+[2m2025-03-21T00:56:57.492634Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492661Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492685Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492710Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492735Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492788Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 1
+[2m2025-03-21T00:56:57.492804Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492829Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492854Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492878Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492903Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Round 1 detected: Skipping interpolation, returning provided shards.
+[2m2025-03-21T00:56:57.492956Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 1. Quorum already met.
+[2m2025-03-21T00:56:57.492983Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 1
+[2m2025-03-21T00:56:57.492991Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 1 for round 1 ==============
+[2m2025-03-21T00:56:57.493016Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 1 is 1/3.
+[2m2025-03-21T00:56:57.493020Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.493035Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 1
+[2m2025-03-21T00:56:57.493038Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 5 for round 1 ==============
+[2m2025-03-21T00:56:57.493062Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 1 is 2/3.
+[2m2025-03-21T00:56:57.493065Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.493080Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 1
+[2m2025-03-21T00:56:57.493083Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 3 for round 1 ==============
+[2m2025-03-21T00:56:57.493104Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 1 is 3/3.
+[2m2025-03-21T00:56:57.493108Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalizing round 1 with 3/3 commits.
+[2m2025-03-21T00:56:57.494131Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/finalized_dag/round1.json
+[2m2025-03-21T00:56:57.494200Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 1 USE THIS FOR COMMUNICATION OVERHEAD 38
+[2m2025-03-21T00:56:57.494206Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 1 with 3/3 commits. USE THIS FOR TPS METRIC
+[2m2025-03-21T00:56:57.494210Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Local round advanced to 2
+[2m2025-03-21T00:56:57.494213Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Enqueuing RoundFinalized event for round 1
+[2m2025-03-21T00:56:57.494280Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.494298Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 1
+[2m2025-03-21T00:56:57.494302Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 2 for round 1 ==============
+[2m2025-03-21T00:56:57.494306Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit for round 1 already finalized. Ignoring duplicate commit request.
+[2m2025-03-21T00:56:57.494334Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.494338Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 1 ==============
+[2m2025-03-21T00:56:57.494348Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 2...
+[2m2025-03-21T00:56:57.494352Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 1, Target round: 2
+[2m2025-03-21T00:56:57.494356Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 1 or beyond.
+[2m2025-03-21T00:56:57.494369Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 2...
+[2m2025-03-21T00:56:57.494385Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 2. Count: 1/4
+[2m2025-03-21T00:56:57.494417Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 2 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.494421Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 2 from sender 1 ==============
+[2m2025-03-21T00:56:57.494431Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.494435Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 3 ==============
+[2m2025-03-21T00:56:57.494443Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 2...
+[2m2025-03-21T00:56:57.494446Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 1, Target round: 2
+[2m2025-03-21T00:56:57.494449Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 1 or beyond.
+[2m2025-03-21T00:56:57.494457Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 2...
+[2m2025-03-21T00:56:57.494475Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 2. Count: 2/4
+[2m2025-03-21T00:56:57.494481Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 2 has 2 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.494484Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 2 from sender 3 ==============
+[2m2025-03-21T00:56:57.494496Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: RoundFinalized received for round 1
+[2m2025-03-21T00:56:57.494499Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🧹 RBCProcessor: Removed stale messages. Deleted: 0 commits, 0 prevotes, 0 proposals.
+[2m2025-03-21T00:56:57.494502Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: Creating and proposing next round 2
+[2m2025-03-21T00:56:57.494506Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
+[2m2025-03-21T00:56:57.494689Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Creating proposal: 5 transactions, Parent Units = ["U1-3", "U1-2", "U1-5", "U1-1"] for round 2
+[2m2025-03-21T00:56:57.494697Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Successfully created transaction data for round 2.
+[2m2025-03-21T00:56:57.494706Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 🚀 [DEBUG] Node 2 preparing to send proposals to ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"] for round 2
+[2m2025-03-21T00:56:57.494754Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.130.106:30333 for round 2
+[2m2025-03-21T00:56:57.494857Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.131.3:30333 for round 2
+[2m2025-03-21T00:56:57.495085Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.161.91:30333 for round 2
+[2m2025-03-21T00:56:57.495212Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.181.16:30333 for round 2
+[2m2025-03-21T00:56:57.495812Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.161.91:30333 (round 2).
+[2m2025-03-21T00:56:57.496043Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.131.3:30333 (round 2).
+[2m2025-03-21T00:56:57.496104Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.181.16:30333 (round 2).
+[2m2025-03-21T00:56:57.496146Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 1 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.497006Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.130.106:30333 (round 2).
+[2m2025-03-21T00:56:57.497026Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Successfully sent all proposals for round 2.
+[2m2025-03-21T00:56:57.497038Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📥 [DEBUG] Node 2 enqueuing proposal for round 2 into RBCProcessor queue
+[2m2025-03-21T00:56:57.497047Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Proposal for round 2 sent successfully.
+[2m2025-03-21T00:56:57.497051Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 📥 RBCProcessor: Proposal for round 2 added to queue.
+[2m2025-03-21T00:56:57.497056Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.497059Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 2 ==============
+[2m2025-03-21T00:56:57.497070Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 2...
+[2m2025-03-21T00:56:57.497074Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 1, Target round: 2
+[2m2025-03-21T00:56:57.497078Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 1 or beyond.
+[2m2025-03-21T00:56:57.497087Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 2...
+[2m2025-03-21T00:56:57.497115Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 2. Count: 3/4
+[2m2025-03-21T00:56:57.497121Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 2 has 3 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.497124Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 2 from sender 2 ==============
+[2m2025-03-21T00:56:57.497139Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.497142Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 2 ==============
+[2m2025-03-21T00:56:57.497146Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Already received propose for round 2 from Node 2. Terminating.
+[2m2025-03-21T00:56:57.497453Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.497461Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 5 ==============
+[2m2025-03-21T00:56:57.497475Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 2...
+[2m2025-03-21T00:56:57.497483Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 1, Target round: 2
+[2m2025-03-21T00:56:57.497487Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 1 or beyond.
+[2m2025-03-21T00:56:57.497496Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 2...
+[2m2025-03-21T00:56:57.497529Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 2. Count: 4/4
+[2m2025-03-21T00:56:57.497535Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 2 has 4 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.497538Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+[2m2025-03-21T00:56:57.497591Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.497599Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.497627Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.497660Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.497833Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.497919Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.497927Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.155.217 for round 2
+[2m2025-03-21T00:56:57.497934Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 2
+[2m2025-03-21T00:56:57.497992Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498120Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498212Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498272Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498361Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498519Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 2
+[2m2025-03-21T00:56:57.498617Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498852Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.498954Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499055Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499145Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499312Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 2
+[2m2025-03-21T00:56:57.499358Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499441Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499591Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.499701Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500097Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500338Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 2
+[2m2025-03-21T00:56:57.500384Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500469Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500518Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500546Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.500712Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500748Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.500768Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.500827Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.500872Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.501000Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 2 from sender 5 ==============
+[2m2025-03-21T00:56:57.501031Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 2
+[2m2025-03-21T00:56:57.501035Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.131.3 for round 2
+[2m2025-03-21T00:56:57.501039Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 2
+[2m2025-03-21T00:56:57.501061Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501095Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501233Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501293Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501322Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501379Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 2
+[2m2025-03-21T00:56:57.501417Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501452Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501480Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501507Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501628Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501686Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 2
+[2m2025-03-21T00:56:57.501706Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501733Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501761Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501788Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501816Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501870Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 2
+[2m2025-03-21T00:56:57.501888Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501916Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501943Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.501970Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.502221Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.502470Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.502720Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 2
+[2m2025-03-21T00:56:57.502728Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.161.91 for round 2
+[2m2025-03-21T00:56:57.502737Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 2
+[2m2025-03-21T00:56:57.502809Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503114Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503210Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503307Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503368Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503497Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 2
+[2m2025-03-21T00:56:57.503529Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503635Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503722Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503789Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503862Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.503994Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 2
+[2m2025-03-21T00:56:57.504044Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.505202Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.505418Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.505473Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.505685Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.505953Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 2
+[2m2025-03-21T00:56:57.506023Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.506138Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.506210Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.506278Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.506316Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.506507Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Quorum reached for round 2. Proceeding to send commits.
+[2m2025-03-21T00:56:57.510349Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.161.91:30333/commit
+[2m2025-03-21T00:56:57.511486Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.131.3:30333/commit
+[2m2025-03-21T00:56:57.511580Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.130.106:30333/commit
+[2m2025-03-21T00:56:57.513740Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.181.16:30333/commit
+[2m2025-03-21T00:56:57.513775Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Adding commit to queue for round 2
+[2m2025-03-21T00:56:57.513780Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Node 2: Successfully processed PREVOTE for round 2.
+[2m2025-03-21T00:56:57.513831Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 2
+[2m2025-03-21T00:56:57.513835Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.130.106 for round 2
+[2m2025-03-21T00:56:57.513840Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 2
+[2m2025-03-21T00:56:57.513869Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.513909Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.513939Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.513967Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.513994Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514052Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 2
+[2m2025-03-21T00:56:57.514071Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514099Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514227Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514259Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514287Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514343Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 2
+[2m2025-03-21T00:56:57.514362Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514417Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514450Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514480Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514508Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514586Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 2
+[2m2025-03-21T00:56:57.514607Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514636Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514663Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514737Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514770Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.514826Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 2. Quorum already met.
+[2m2025-03-21T00:56:57.514861Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 2
+[2m2025-03-21T00:56:57.514865Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 3 for round 2 ==============
+[2m2025-03-21T00:56:57.514952Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 2 is 1/3.
+[2m2025-03-21T00:56:57.514958Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.514975Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 2
+[2m2025-03-21T00:56:57.514983Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 2 from Node 4 ==============
+[2m2025-03-21T00:56:57.514993Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 2...
+[2m2025-03-21T00:56:57.514999Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 1, Target round: 2
+[2m2025-03-21T00:56:57.515073Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 1 or beyond.
+[2m2025-03-21T00:56:57.515083Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 2...
+[2m2025-03-21T00:56:57.515143Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 2. Count: 5/4
+[2m2025-03-21T00:56:57.515160Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 2 has 5 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.515164Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 5 proposals.
+[2m2025-03-21T00:56:57.515196Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.515201Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.515308Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.515368Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.515616Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.515726Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.515732Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 5 proposals from 10.0.155.217 for round 2
+[2m2025-03-21T00:56:57.515758Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 2
+[2m2025-03-21T00:56:57.515793Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.515864Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.515975Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516039Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516101Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516304Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 2
+[2m2025-03-21T00:56:57.516336Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516379Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516515Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516608Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.516657Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517059Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 2
+[2m2025-03-21T00:56:57.517095Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517135Z[0m [31mERROR[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Failed to send prevote to http://10.0.131.3:30333/prevote. Status: 400 Bad Request
+[2m2025-03-21T00:56:57.517160Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517211Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517214Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.517286Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517323Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517380Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 2
+[2m2025-03-21T00:56:57.517454Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517478Z[0m [31mERROR[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Failed to send prevote to http://10.0.161.91:30333/prevote. Status: 400 Bad Request
+[2m2025-03-21T00:56:57.517518Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517578Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517610Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517638Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517696Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 4 for round 2
+[2m2025-03-21T00:56:57.517715Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517744Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517772Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517800Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517829Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.517887Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 2. Quorum already met.
+[2m2025-03-21T00:56:57.517928Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 2 from sender 4 ==============
+[2m2025-03-21T00:56:57.517959Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 2
+[2m2025-03-21T00:56:57.517963Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 1 for round 2 ==============
+[2m2025-03-21T00:56:57.517996Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 2 is 2/3.
+[2m2025-03-21T00:56:57.518000Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.518015Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 2
+[2m2025-03-21T00:56:57.518018Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 5 for round 2 ==============
+[2m2025-03-21T00:56:57.518043Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 2 is 3/3.
+[2m2025-03-21T00:56:57.518046Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalizing round 2 with 3/3 commits.
+[2m2025-03-21T00:56:57.519254Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 2 to file: /home/aleph-node/finalized_dag/round2.json
+[2m2025-03-21T00:56:57.519355Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 2 USE THIS FOR COMMUNICATION OVERHEAD 69
+[2m2025-03-21T00:56:57.519362Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 2 with 3/3 commits. USE THIS FOR TPS METRIC
+[2m2025-03-21T00:56:57.519368Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Local round advanced to 3
+[2m2025-03-21T00:56:57.519373Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Enqueuing RoundFinalized event for round 2
+[2m2025-03-21T00:56:57.519618Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.519666Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 2
+[2m2025-03-21T00:56:57.519671Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 5 proposals from 10.0.131.3 for round 2
+[2m2025-03-21T00:56:57.519679Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Round 2 already finalized, ignoring prevote.
+[2m2025-03-21T00:56:57.519726Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 2
+[2m2025-03-21T00:56:57.519730Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 5 proposals from 10.0.161.91 for round 2
+[2m2025-03-21T00:56:57.519737Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Round 2 already finalized, ignoring prevote.
+[2m2025-03-21T00:56:57.519774Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 2 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.519778Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 2
+[2m2025-03-21T00:56:57.519783Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 2 for round 2 ==============
+[2m2025-03-21T00:56:57.519788Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit for round 2 already finalized. Ignoring duplicate commit request.
+[2m2025-03-21T00:56:57.519822Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 3
+[2m2025-03-21T00:56:57.519827Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 3 from Node 3 ==============
+[2m2025-03-21T00:56:57.519840Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 3...
+[2m2025-03-21T00:56:57.519848Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 2, Target round: 3
+[2m2025-03-21T00:56:57.519852Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 2 or beyond.
+[2m2025-03-21T00:56:57.519866Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 3...
+[2m2025-03-21T00:56:57.519884Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 3. Count: 1/4
+[2m2025-03-21T00:56:57.519891Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 3 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.519894Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 3 from sender 3 ==============
+[2m2025-03-21T00:56:57.519904Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 3
+[2m2025-03-21T00:56:57.519907Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 3 from Node 1 ==============
+[2m2025-03-21T00:56:57.519914Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 3...
+[2m2025-03-21T00:56:57.519917Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 2, Target round: 3
+[2m2025-03-21T00:56:57.519920Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 2 or beyond.
+[2m2025-03-21T00:56:57.519928Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 3...
+[2m2025-03-21T00:56:57.519946Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 3. Count: 2/4
+[2m2025-03-21T00:56:57.519952Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 3 has 2 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.519955Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 3 from sender 1 ==============
+[2m2025-03-21T00:56:57.519966Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: RoundFinalized received for round 2
+[2m2025-03-21T00:56:57.519970Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🧹 RBCProcessor: Removed stale messages. Deleted: 0 commits, 0 prevotes, 0 proposals.
+[2m2025-03-21T00:56:57.519973Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: Creating and proposing next round 3
+[2m2025-03-21T00:56:57.519976Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
+[2m2025-03-21T00:56:57.520165Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Creating proposal: 5 transactions, Parent Units = ["U2-3", "U2-1", "U2-2", "U2-5"] for round 3
+[2m2025-03-21T00:56:57.520170Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Successfully created transaction data for round 3.
+[2m2025-03-21T00:56:57.520179Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 🚀 [DEBUG] Node 2 preparing to send proposals to ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"] for round 3
+[2m2025-03-21T00:56:57.520217Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.130.106:30333 for round 3
+[2m2025-03-21T00:56:57.520290Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.131.3:30333 for round 3
+[2m2025-03-21T00:56:57.520346Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.161.91:30333 for round 3
+[2m2025-03-21T00:56:57.520438Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.181.16:30333 for round 3
+[2m2025-03-21T00:56:57.520614Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.520769Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.130.106:30333 (round 3).
+[2m2025-03-21T00:56:57.520854Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.131.3:30333 (round 3).
+[2m2025-03-21T00:56:57.521131Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.161.91:30333 (round 3).
+[2m2025-03-21T00:56:57.521222Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 2 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.522010Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.522999Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.181.16:30333 (round 3).
+[2m2025-03-21T00:56:57.523030Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Successfully sent all proposals for round 3.
+[2m2025-03-21T00:56:57.523056Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📥 [DEBUG] Node 2 enqueuing proposal for round 3 into RBCProcessor queue
+[2m2025-03-21T00:56:57.523069Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Proposal for round 3 sent successfully.
+[2m2025-03-21T00:56:57.523258Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 📥 RBCProcessor: Proposal for round 3 added to queue.
+[2m2025-03-21T00:56:57.523276Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 3
+[2m2025-03-21T00:56:57.523283Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 3 from Node 2 ==============
+[2m2025-03-21T00:56:57.523300Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 3...
+[2m2025-03-21T00:56:57.523306Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 2, Target round: 3
+[2m2025-03-21T00:56:57.523310Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 2 or beyond.
+[2m2025-03-21T00:56:57.523326Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 3...
+[2m2025-03-21T00:56:57.523387Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 3. Count: 3/4
+[2m2025-03-21T00:56:57.523443Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 3 has 3 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.523452Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 3 from sender 2 ==============
+[2m2025-03-21T00:56:57.523496Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 3
+[2m2025-03-21T00:56:57.523502Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 3 from Node 2 ==============
+[2m2025-03-21T00:56:57.523514Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Already received propose for round 3 from Node 2. Terminating.
+[2m2025-03-21T00:56:57.523886Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 2 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.526214Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 3
+[2m2025-03-21T00:56:57.526224Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 3 from Node 5 ==============
+[2m2025-03-21T00:56:57.526241Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 3...
+[2m2025-03-21T00:56:57.526245Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 2, Target round: 3
+[2m2025-03-21T00:56:57.526249Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 2 or beyond.
+[2m2025-03-21T00:56:57.526261Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 3...
+[2m2025-03-21T00:56:57.526299Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 3. Count: 4/4
+[2m2025-03-21T00:56:57.526306Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 3 has 4 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.526309Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+[2m2025-03-21T00:56:57.526336Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.526341Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.526368Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.526430Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.526524Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.526621Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.526628Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.155.217 for round 3
+[2m2025-03-21T00:56:57.526637Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 3
+[2m2025-03-21T00:56:57.526782Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.526831Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.526938Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527025Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527072Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527245Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 3
+[2m2025-03-21T00:56:57.527307Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527378Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527502Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527617Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527695Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.527900Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 3
+[2m2025-03-21T00:56:57.527941Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528007Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528060Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528182Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528282Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528578Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 3
+[2m2025-03-21T00:56:57.528618Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528699Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528761Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528867Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528919Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.528941Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.529015Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.529027Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.529077Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.529091Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 3 from sender 5 ==============
+[2m2025-03-21T00:56:57.529127Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 3
+[2m2025-03-21T00:56:57.529132Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.131.3 for round 3
+[2m2025-03-21T00:56:57.529136Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 3
+[2m2025-03-21T00:56:57.529157Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529191Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529220Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529287Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529316Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529371Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 3
+[2m2025-03-21T00:56:57.529418Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529448Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529475Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529633Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529667Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529725Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 3
+[2m2025-03-21T00:56:57.529745Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529774Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529801Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529829Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529856Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529910Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 3
+[2m2025-03-21T00:56:57.529928Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529955Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.529982Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530010Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530037Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530092Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.530121Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 3
+[2m2025-03-21T00:56:57.530124Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.161.91 for round 3
+[2m2025-03-21T00:56:57.530128Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 3
+[2m2025-03-21T00:56:57.530147Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530174Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530206Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530233Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530260Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530313Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 3
+[2m2025-03-21T00:56:57.530333Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530360Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530412Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530441Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530468Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530522Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 3
+[2m2025-03-21T00:56:57.530565Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530857Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530896Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530924Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.530953Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531222Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 3
+[2m2025-03-21T00:56:57.531255Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531285Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531314Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531342Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531370Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.531452Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Quorum reached for round 3. Proceeding to send commits.
+[2m2025-03-21T00:56:57.535156Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.131.3:30333/commit
+[2m2025-03-21T00:56:57.535369Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.536109Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.161.91:30333/commit
+[2m2025-03-21T00:56:57.545200Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.130.106:30333/commit
+[2m2025-03-21T00:56:57.547190Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.181.16:30333/commit
+[2m2025-03-21T00:56:57.547238Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Adding commit to queue for round 3
+[2m2025-03-21T00:56:57.547244Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Node 2: Successfully processed PREVOTE for round 3.
+[2m2025-03-21T00:56:57.547302Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 3
+[2m2025-03-21T00:56:57.547306Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 3 for round 3 ==============
+[2m2025-03-21T00:56:57.547343Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 3 is 1/3.
+[2m2025-03-21T00:56:57.547346Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.547362Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 3
+[2m2025-03-21T00:56:57.547365Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 1 for round 3 ==============
+[2m2025-03-21T00:56:57.547423Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 3 is 2/3.
+[2m2025-03-21T00:56:57.547429Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.547445Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 3
+[2m2025-03-21T00:56:57.547448Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 5 for round 3 ==============
+[2m2025-03-21T00:56:57.547477Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 3 is 3/3.
+[2m2025-03-21T00:56:57.547481Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalizing round 3 with 3/3 commits.
+[2m2025-03-21T00:56:57.548569Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 3 to file: /home/aleph-node/finalized_dag/round3.json
+[2m2025-03-21T00:56:57.548643Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 3 USE THIS FOR COMMUNICATION OVERHEAD 95
+[2m2025-03-21T00:56:57.548675Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 3 with 3/3 commits. USE THIS FOR TPS METRIC
+[2m2025-03-21T00:56:57.548681Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Local round advanced to 4
+[2m2025-03-21T00:56:57.548685Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Enqueuing RoundFinalized event for round 3
+[2m2025-03-21T00:56:57.548968Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.549180Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 3
+[2m2025-03-21T00:56:57.549188Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 2 for round 3 ==============
+[2m2025-03-21T00:56:57.549194Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit for round 3 already finalized. Ignoring duplicate commit request.
+[2m2025-03-21T00:56:57.549222Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: RoundFinalized received for round 3
+[2m2025-03-21T00:56:57.549226Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🧹 RBCProcessor: Removed stale messages. Deleted: 0 commits, 0 prevotes, 0 proposals.
+[2m2025-03-21T00:56:57.549231Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: Creating and proposing next round 4
+[2m2025-03-21T00:56:57.549235Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
+[2m2025-03-21T00:56:57.549520Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Creating proposal: 5 transactions, Parent Units = ["U3-2", "U3-3", "U3-5", "U3-1"] for round 4
+[2m2025-03-21T00:56:57.549528Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Successfully created transaction data for round 4.
+[2m2025-03-21T00:56:57.549539Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 🚀 [DEBUG] Node 2 preparing to send proposals to ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"] for round 4
+[2m2025-03-21T00:56:57.549602Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.130.106:30333 for round 4
+[2m2025-03-21T00:56:57.549694Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.131.3:30333 for round 4
+[2m2025-03-21T00:56:57.549754Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.161.91:30333 for round 4
+[2m2025-03-21T00:56:57.549832Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.181.16:30333 for round 4
+[2m2025-03-21T00:56:57.550080Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.130.106:30333 (round 4).
+[2m2025-03-21T00:56:57.550240Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.131.3:30333 (round 4).
+[2m2025-03-21T00:56:57.550497Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.161.91:30333 (round 4).
+[2m2025-03-21T00:56:57.551889Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 2 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.552480Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.181.16:30333 (round 4).
+[2m2025-03-21T00:56:57.552502Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Successfully sent all proposals for round 4.
+[2m2025-03-21T00:56:57.552580Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📥 [DEBUG] Node 2 enqueuing proposal for round 4 into RBCProcessor queue
+[2m2025-03-21T00:56:57.552590Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Proposal for round 4 sent successfully.
+[2m2025-03-21T00:56:57.552593Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 📥 RBCProcessor: Proposal for round 4 added to queue.
+[2m2025-03-21T00:56:57.552599Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 4
+[2m2025-03-21T00:56:57.552602Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 4 from Node 1 ==============
+[2m2025-03-21T00:56:57.552737Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 4...
+[2m2025-03-21T00:56:57.552743Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 3, Target round: 4
+[2m2025-03-21T00:56:57.552750Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 3 or beyond.
+[2m2025-03-21T00:56:57.552762Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 4...
+[2m2025-03-21T00:56:57.552781Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 4. Count: 1/4
+[2m2025-03-21T00:56:57.552788Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 4 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.552792Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 4 from sender 1 ==============
+[2m2025-03-21T00:56:57.552803Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 4
+[2m2025-03-21T00:56:57.552806Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 4 from Node 2 ==============
+[2m2025-03-21T00:56:57.552814Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 4...
+[2m2025-03-21T00:56:57.552817Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 3, Target round: 4
+[2m2025-03-21T00:56:57.552820Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 3 or beyond.
+[2m2025-03-21T00:56:57.552828Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 4...
+[2m2025-03-21T00:56:57.552866Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 4. Count: 2/4
+[2m2025-03-21T00:56:57.552873Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 4 has 2 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.552876Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 4 from sender 2 ==============
+[2m2025-03-21T00:56:57.552888Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 4
+[2m2025-03-21T00:56:57.552891Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 4 from Node 2 ==============
+[2m2025-03-21T00:56:57.552894Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Already received propose for round 4 from Node 2. Terminating.
+[2m2025-03-21T00:56:57.553093Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 4
+[2m2025-03-21T00:56:57.553101Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 4 from Node 3 ==============
+[2m2025-03-21T00:56:57.553113Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 4...
+[2m2025-03-21T00:56:57.553118Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 3, Target round: 4
+[2m2025-03-21T00:56:57.553122Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 3 or beyond.
+[2m2025-03-21T00:56:57.553133Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 4...
+[2m2025-03-21T00:56:57.553162Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 4. Count: 3/4
+[2m2025-03-21T00:56:57.553169Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 4 has 3 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.553172Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 4 from sender 3 ==============
+[2m2025-03-21T00:56:57.557908Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 3 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.559531Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 3 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.561742Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 4
+[2m2025-03-21T00:56:57.561754Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 4 from Node 5 ==============
+[2m2025-03-21T00:56:57.561770Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 4...
+[2m2025-03-21T00:56:57.561774Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 3, Target round: 4
+[2m2025-03-21T00:56:57.561778Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 3 or beyond.
+[2m2025-03-21T00:56:57.561790Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 4...
+[2m2025-03-21T00:56:57.561837Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 4. Count: 4/4
+[2m2025-03-21T00:56:57.561844Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 4 has 4 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.561847Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+[2m2025-03-21T00:56:57.561876Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.561880Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.561909Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.561943Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.562034Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.562214Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.562223Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.155.217 for round 4
+[2m2025-03-21T00:56:57.562229Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 4
+[2m2025-03-21T00:56:57.562313Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.562361Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.562505Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.562617Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.562684Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.562920Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 4
+[2m2025-03-21T00:56:57.562996Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.563113Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.563182Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.563263Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.563368Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.563740Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 4
+[2m2025-03-21T00:56:57.565266Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565358Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565472Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565532Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565621Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565735Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 4
+[2m2025-03-21T00:56:57.565778Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.565868Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566007Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566115Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566178Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566287Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.566418Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 4 from sender 5 ==============
+[2m2025-03-21T00:56:57.566504Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 4
+[2m2025-03-21T00:56:57.566512Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.130.106 for round 4
+[2m2025-03-21T00:56:57.566520Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 4
+[2m2025-03-21T00:56:57.566618Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566688Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566779Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566848Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566898Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.566946Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.566998Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 4
+[2m2025-03-21T00:56:57.567017Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.567039Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567086Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.567091Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567157Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567194Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567225Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567439Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 4
+[2m2025-03-21T00:56:57.567466Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567497Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567526Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567583Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567648Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567748Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 4
+[2m2025-03-21T00:56:57.567771Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567801Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567831Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567860Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567893Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.567988Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.568139Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 4
+[2m2025-03-21T00:56:57.568146Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.161.91 for round 4
+[2m2025-03-21T00:56:57.568152Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 4
+[2m2025-03-21T00:56:57.568182Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.568350Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.568524Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.568648Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.568710Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.568873Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 4
+[2m2025-03-21T00:56:57.568924Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569005Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569055Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569104Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569151Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569364Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 4
+[2m2025-03-21T00:56:57.569430Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569496Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569575Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569622Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569727Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569851Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 4
+[2m2025-03-21T00:56:57.569902Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.569987Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.570041Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.570122Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.570170Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.570321Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Quorum reached for round 4. Proceeding to send commits.
+[2m2025-03-21T00:56:57.573961Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.130.106:30333/commit
+[2m2025-03-21T00:56:57.575511Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.131.3:30333/commit
+[2m2025-03-21T00:56:57.575748Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.576454Z[0m [31mERROR[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ❌ Commit failed to http://10.0.161.91:30333/commit. Status: Response { url: "http://10.0.161.91:30333/commit", status: 400, headers: {"content-type": "application/json", "content-length": "64", "date": "Fri, 21 Mar 2025 00:56:57 GMT"} }
+[2m2025-03-21T00:56:57.579732Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 3 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.580186Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.181.16:30333/commit
+[2m2025-03-21T00:56:57.580222Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Adding commit to queue for round 4
+[2m2025-03-21T00:56:57.580228Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Node 2: Successfully processed PREVOTE for round 4.
+[2m2025-03-21T00:56:57.580359Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 4
+[2m2025-03-21T00:56:57.580365Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.131.3 for round 4
+[2m2025-03-21T00:56:57.580371Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 4
+[2m2025-03-21T00:56:57.580426Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580463Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580494Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580523Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580578Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580643Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 4
+[2m2025-03-21T00:56:57.580664Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580694Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580722Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580749Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580777Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580832Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 4
+[2m2025-03-21T00:56:57.580851Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580879Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580907Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580935Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.580962Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581016Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 4
+[2m2025-03-21T00:56:57.581035Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581069Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581098Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581125Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581153Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.581207Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 4. Quorum already met.
+[2m2025-03-21T00:56:57.581263Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 4
+[2m2025-03-21T00:56:57.581268Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 1 for round 4 ==============
+[2m2025-03-21T00:56:57.581307Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 4 is 1/3.
+[2m2025-03-21T00:56:57.581311Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.581329Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 4
+[2m2025-03-21T00:56:57.581332Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 5 for round 4 ==============
+[2m2025-03-21T00:56:57.581359Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 4 is 2/3.
+[2m2025-03-21T00:56:57.581363Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.581380Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 4
+[2m2025-03-21T00:56:57.581400Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 3 for round 4 ==============
+[2m2025-03-21T00:56:57.581427Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 4 is 3/3.
+[2m2025-03-21T00:56:57.581430Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalizing round 4 with 3/3 commits.
+[2m2025-03-21T00:56:57.582789Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 4 to file: /home/aleph-node/finalized_dag/round4.json
+[2m2025-03-21T00:56:57.582855Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 4 USE THIS FOR COMMUNICATION OVERHEAD 120
+[2m2025-03-21T00:56:57.582861Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 4 with 3/3 commits. USE THIS FOR TPS METRIC
+[2m2025-03-21T00:56:57.582865Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Local round advanced to 5
+[2m2025-03-21T00:56:57.582868Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Enqueuing RoundFinalized event for round 4
+[2m2025-03-21T00:56:57.583260Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.583306Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 5
+[2m2025-03-21T00:56:57.583313Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 5 from Node 1 ==============
+[2m2025-03-21T00:56:57.583326Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 5...
+[2m2025-03-21T00:56:57.583333Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 4, Target round: 5
+[2m2025-03-21T00:56:57.583337Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 4 or beyond.
+[2m2025-03-21T00:56:57.583347Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 5...
+[2m2025-03-21T00:56:57.583365Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 5. Count: 1/4
+[2m2025-03-21T00:56:57.583372Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 5 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.583376Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 5 from sender 1 ==============
+[2m2025-03-21T00:56:57.583421Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 5
+[2m2025-03-21T00:56:57.583425Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 5 from Node 3 ==============
+[2m2025-03-21T00:56:57.583434Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 5...
+[2m2025-03-21T00:56:57.583437Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 4, Target round: 5
+[2m2025-03-21T00:56:57.583440Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 4 or beyond.
+[2m2025-03-21T00:56:57.583449Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 5...
+[2m2025-03-21T00:56:57.583468Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 5. Count: 2/4
+[2m2025-03-21T00:56:57.583474Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 5 has 2 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.583477Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 5 from sender 3 ==============
+[2m2025-03-21T00:56:57.583489Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 4
+[2m2025-03-21T00:56:57.583493Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 2 for round 4 ==============
+[2m2025-03-21T00:56:57.583496Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit for round 4 already finalized. Ignoring duplicate commit request.
+[2m2025-03-21T00:56:57.583521Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: RoundFinalized received for round 4
+[2m2025-03-21T00:56:57.583525Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🧹 RBCProcessor: Removed stale messages. Deleted: 0 commits, 0 prevotes, 0 proposals.
+[2m2025-03-21T00:56:57.583528Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 🔄 RBCProcessor: Creating and proposing next round 5
+[2m2025-03-21T00:56:57.583642Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Node 2: Creating 5 transactions with 4 shards and a transaction size of 256
+[2m2025-03-21T00:56:57.583924Z[0m [32m INFO[0m [2maleph_research::utils::create_transaction_data[0m[2m:[0m Creating proposal: 5 transactions, Parent Units = ["U4-3", "U4-2", "U4-1", "U4-5"] for round 5
+[2m2025-03-21T00:56:57.583929Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Successfully created transaction data for round 5.
+[2m2025-03-21T00:56:57.583942Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 🚀 [DEBUG] Node 2 preparing to send proposals to ["10.0.130.106:30333", "10.0.131.3:30333", "10.0.161.91:30333", "10.0.181.16:30333"] for round 5
+[2m2025-03-21T00:56:57.583976Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.130.106:30333 for round 5
+[2m2025-03-21T00:56:57.584062Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.131.3:30333 for round 5
+[2m2025-03-21T00:56:57.584116Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.161.91:30333 for round 5
+[2m2025-03-21T00:56:57.584187Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📤 Node 2 sending proposal to 10.0.181.16:30333 for round 5
+[2m2025-03-21T00:56:57.584685Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.130.106:30333 (round 5).
+[2m2025-03-21T00:56:57.584712Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.131.3:30333 (round 5).
+[2m2025-03-21T00:56:57.585097Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.161.91:30333 (round 5).
+[2m2025-03-21T00:56:57.585991Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Proposal successfully delivered to Node 10.0.181.16:30333 (round 5).
+[2m2025-03-21T00:56:57.586021Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m ✅ Successfully sent all proposals for round 5.
+[2m2025-03-21T00:56:57.586074Z[0m [32m INFO[0m [2maleph_research::requests::send_proposals[0m[2m:[0m 📥 [DEBUG] Node 2 enqueuing proposal for round 5 into RBCProcessor queue
+[2m2025-03-21T00:56:57.586088Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m ✅ RBCProcessor: Proposal for round 5 sent successfully.
+[2m2025-03-21T00:56:57.586093Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m 📥 RBCProcessor: Proposal for round 5 added to queue.
+[2m2025-03-21T00:56:57.586163Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 5
+[2m2025-03-21T00:56:57.586172Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 5 from Node 5 ==============
+[2m2025-03-21T00:56:57.586211Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 5...
+[2m2025-03-21T00:56:57.586217Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 4, Target round: 5
+[2m2025-03-21T00:56:57.586222Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 4 or beyond.
+[2m2025-03-21T00:56:57.586236Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 5...
+[2m2025-03-21T00:56:57.586291Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 5. Count: 3/4
+[2m2025-03-21T00:56:57.586322Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 5 has 3 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.586330Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 5 from sender 5 ==============
+[2m2025-03-21T00:56:57.586428Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 5
+[2m2025-03-21T00:56:57.586434Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.130.106 for round 5
+[2m2025-03-21T00:56:57.586446Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 5
+[2m2025-03-21T00:56:57.586490Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.586766Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.586839Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.586892Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.586985Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587070Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 4 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.587179Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 5
+[2m2025-03-21T00:56:57.587328Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587466Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587623Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587715Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587784Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587894Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 5
+[2m2025-03-21T00:56:57.587917Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587952Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.587981Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588010Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588038Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588097Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 5
+[2m2025-03-21T00:56:57.588117Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588149Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588178Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588206Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588302Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588368Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.588430Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 5
+[2m2025-03-21T00:56:57.588438Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 5 from Node 2 ==============
+[2m2025-03-21T00:56:57.588448Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 5...
+[2m2025-03-21T00:56:57.588451Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 4, Target round: 5
+[2m2025-03-21T00:56:57.588454Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 4 or beyond.
+[2m2025-03-21T00:56:57.588463Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 5...
+[2m2025-03-21T00:56:57.588495Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 5. Count: 4/4
+[2m2025-03-21T00:56:57.588501Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 5 has 4 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.588505Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+[2m2025-03-21T00:56:57.588557Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Multicasting prevote to all nodes...
+[2m2025-03-21T00:56:57.588564Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.588605Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.588648Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.588729Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Sending prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.588805Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Handling prevote locally.
+[2m2025-03-21T00:56:57.588811Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.155.217 for round 5
+[2m2025-03-21T00:56:57.588820Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 5
+[2m2025-03-21T00:56:57.588865Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.588940Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589028Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589107Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589198Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589350Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 5
+[2m2025-03-21T00:56:57.589406Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589443Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589722Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589770Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.130.106:30333/prevote
+[2m2025-03-21T00:56:57.589775Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589827Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589887Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 5
+[2m2025-03-21T00:56:57.589906Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589934Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589962Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.589989Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590017Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590071Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 5
+[2m2025-03-21T00:56:57.590090Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590117Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590144Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590171Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590247Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590284Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.161.91:30333/prevote
+[2m2025-03-21T00:56:57.590560Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+[2m2025-03-21T00:56:57.590602Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.131.3:30333/prevote
+[2m2025-03-21T00:56:57.590622Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 5 from sender 2 ==============
+[2m2025-03-21T00:56:57.590663Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 5
+[2m2025-03-21T00:56:57.590669Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 5 from Node 2 ==============
+[2m2025-03-21T00:56:57.590673Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Already received propose for round 5 from Node 2. Terminating.
+[2m2025-03-21T00:56:57.590687Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 5
+[2m2025-03-21T00:56:57.590691Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.131.3 for round 5
+[2m2025-03-21T00:56:57.590696Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 5
+[2m2025-03-21T00:56:57.590785Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590845Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590919Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.590967Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.591049Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.591188Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 5
+[2m2025-03-21T00:56:57.591267Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.591451Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.591618Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.591786Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592036Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592370Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 5
+[2m2025-03-21T00:56:57.592446Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592516Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592599Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592696Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592791Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.592910Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 5
+[2m2025-03-21T00:56:57.592981Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.593032Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.593078Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.593381Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.593463Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.593660Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Quorum reached for round 5. Proceeding to send commits.
+[2m2025-03-21T00:56:57.597146Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 4 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.597617Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 4 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.597715Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.131.3:30333/commit
+[2m2025-03-21T00:56:57.597966Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.130.106:30333/commit
+[2m2025-03-21T00:56:57.598020Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Successfully sent prevote to http://10.0.181.16:30333/prevote
+[2m2025-03-21T00:56:57.598181Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.161.91:30333/commit
+[2m2025-03-21T00:56:57.602159Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Successfully sent commit to http://10.0.181.16:30333/commit
+[2m2025-03-21T00:56:57.602206Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Adding commit to queue for round 5
+[2m2025-03-21T00:56:57.602212Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m ✅ Node 2: Successfully processed PREVOTE for round 5.
+[2m2025-03-21T00:56:57.602286Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing prevote for round 5
+[2m2025-03-21T00:56:57.602289Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m handle_prevote: Processing 4 proposals from 10.0.161.91 for round 5
+[2m2025-03-21T00:56:57.602294Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 5 for round 5
+[2m2025-03-21T00:56:57.602325Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602358Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602417Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602450Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602479Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602562Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 3 for round 5
+[2m2025-03-21T00:56:57.602583Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602614Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602643Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602671Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602698Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602753Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 1 for round 5
+[2m2025-03-21T00:56:57.602772Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602800Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602828Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602855Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.602883Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603008Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Processing proposal from Node 2 for round 5
+[2m2025-03-21T00:56:57.603030Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603065Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603358Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603429Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603463Z[0m [32m INFO[0m [2maleph_research::utils::merkle_utils[0m[2m:[0m Interpolated missing shares successfully.
+[2m2025-03-21T00:56:57.603526Z[0m [32m INFO[0m [2maleph_research::handlers::handle_prevote[0m[2m:[0m Node 2: Ignoring prevote for round 5. Quorum already met.
+[2m2025-03-21T00:56:57.603680Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 5
+[2m2025-03-21T00:56:57.603685Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 3 for round 5 ==============
+[2m2025-03-21T00:56:57.603724Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 5 is 1/3.
+[2m2025-03-21T00:56:57.603728Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.603750Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 5
+[2m2025-03-21T00:56:57.603752Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 1 for round 5 ==============
+[2m2025-03-21T00:56:57.603782Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 5 is 2/3.
+[2m2025-03-21T00:56:57.603786Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Exiting commit handler.==============
+[2m2025-03-21T00:56:57.603802Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 5
+[2m2025-03-21T00:56:57.603805Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 5 for round 5 ==============
+[2m2025-03-21T00:56:57.603829Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit count for round 5 is 3/3.
+[2m2025-03-21T00:56:57.603833Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalizing round 5 with 3/3 commits.
+[2m2025-03-21T00:56:57.605456Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 5 to file: /home/aleph-node/finalized_dag/round5.json
+[2m2025-03-21T00:56:57.605581Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 5 USE THIS FOR COMMUNICATION OVERHEAD 145
+[2m2025-03-21T00:56:57.605588Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Finalized round 5 with 3/3 commits. USE THIS FOR TPS METRIC
+[2m2025-03-21T00:56:57.605592Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Total Round 5 finalized. Exiting commit handler Application DONE.
+[2m2025-03-21T00:56:57.605631Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m LATENCY END: 2025-03-21 00:56:57
+[2m2025-03-21T00:56:57.605637Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m 🛑 Terminating RBCProcessor...
+[2m2025-03-21T00:56:57.605641Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m 🗑️ Dropping RBCProcessor instance...
+[2m2025-03-21T00:56:57.605644Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ✅ RBCProcessor successfully terminated.
+[2m2025-03-21T00:56:57.605648Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Local round advanced to 6
+[2m2025-03-21T00:56:57.605883Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing commit for round 5
+[2m2025-03-21T00:56:57.605889Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m ============== Node 2: Handling commit request from 2 for round 5 ==============
+[2m2025-03-21T00:56:57.605893Z[0m [32m INFO[0m [2maleph_research::handlers::handle_commit[0m[2m:[0m Node 2: Commit for round 5 already finalized. Ignoring duplicate commit request.
+[2m2025-03-21T00:56:57.618501Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 5 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.624799Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 5 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.626439Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 4 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.633840Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 5 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.643091Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 6
+[2m2025-03-21T00:56:57.643120Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 6 from Node 4 ==============
+[2m2025-03-21T00:56:57.643168Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: Ensuring DAG synchronization for round 6...
+[2m2025-03-21T00:56:57.643175Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG latest round: 5, Target round: 6
+[2m2025-03-21T00:56:57.643179Z[0m [32m INFO[0m [2maleph_research::utils::dag_utils[0m[2m:[0m Node 2: DAG is synchronized for round 5 or beyond.
+[2m2025-03-21T00:56:57.643195Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Updating proposal tracker for round 6...
+[2m2025-03-21T00:56:57.644328Z[0m [32m INFO[0m [2maleph_research::structs::node[0m[2m:[0m Node 2: Added proposal for round 6. Count: 1/4
+[2m2025-03-21T00:56:57.644347Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Current Proposal Tracker for round 6 has 1 proposals (threshold: 4).
+[2m2025-03-21T00:56:57.644352Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Proposal successfully handled for round 6 from sender 4 ==============
+[2m2025-03-21T00:56:57.645771Z[0m [32m INFO[0m [2maleph_research::controllers::api_routes[0m[2m:[0m 🛑  Node 2: Round 5 is already finalized in DAG. Denying request.
+[2m2025-03-21T00:56:57.675737Z[0m [32m INFO[0m [2maleph_research::processors::rbc_processor[0m[2m:[0m Processing proposal for round 6
+[2m2025-03-21T00:56:57.675765Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m ============== Node 2: Handling PROPOSE request for round 6 from Node 4 ==============
+[2m2025-03-21T00:56:57.675772Z[0m [32m INFO[0m [2maleph_research::handlers::handle_propose[0m[2m:[0m Node 2: Already received propose for round 6 from Node 4. Terminating.

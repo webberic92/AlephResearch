@@ -4,7 +4,7 @@
 
 (DONE) Communication Overhead: Total number of messages exchanged during the consensus process.
 
-Resource Utilization: CPU and memory usage across nodes during the RBC process.
+(DONE) Resource Utilization: CPU and memory usage across nodes during the RBC process.
 
 
  transaction throughput, latency, communication overhead, and resource utilization
