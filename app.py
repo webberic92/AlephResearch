@@ -13,11 +13,11 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 5 # Define the number of instances
-        NUMBER_OF_TRANSACTIONS = 5  # Define the number of transactions per round per that node
+        INSTANCES_NUMBER = 12 # Define the number of instances
+        NUMBER_OF_TRANSACTIONS = 128  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
-        TOTAL_ROUNDS = 5 
+        TOTAL_ROUNDS = 128 
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -212,7 +212,7 @@ class TestAleph(Stack):
 
                 f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /home/aleph-node/logs/node_status;",
                 
-                f"""(sleep 30 && \
+                f"""(sleep 120 && \
                 S3_FOLDER="logs/nodes_N{INSTANCES_NUMBER}_T{NUMBER_OF_TRANSACTIONS}_R{TOTAL_ROUNDS}/node-$(hostname)" && \
                 aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"""
             )

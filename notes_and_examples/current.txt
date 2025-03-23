@@ -1,7 +1,15 @@
-sh-4.2$ cat /home/aleph-node/logs/Latency.log
-[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:24
-[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
-[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
-[LATENCY] Starting Latency Logger sending proposal : TIME 2025-03-15 01:12:26
-[LATENCY] Starting Latency Logger handle proposal : TIME 2025-03-15 01:12:26
-[LATENCY] Ending Latency Logger : TIME 2025-03-15 01:12:26
+12:06:34 PM | CREATE_FAILED        | AWS::EC2::Instance                    | MyInstance4
+Resource handler returned message: "You have requested more vCPU capacity than your current vCPU limit of 32 allows for the
+instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to r
+equest an adjustment to this limit. (Service: Ec2, Status Code: 400, Request ID: 462fd02d-78ab-4ecc-927a-72ac2d2b0cc8) (SDK
+Attempt Count: 2)" (RequestToken: 6055d09c-b3ee-bb4f-9217-1ac2520086cd, HandlerErrorCode: InvalidRequest)
+12:06:36 PM | ROLLBACK_IN_PROGRESS | AWS::CloudFormation::Stack            | TestAleph
+The following resource(s) failed to create: [MyInstance8D4511420, MyInstance4B58A6053, MyInstance7CEBC1B34, MyInstance160C4
+3B251, MyInstance13DF18529F, MyInstance112D34FCEF, MyInstance2C26007AF, MyInstance95ADDBBC0, MyInstance5FC4A42E5, MyInstanc
+e14D5FCCFA5, MyInstance322F2476D, MyInstance10705FAC23, MyInstance156C943312, MyInstance6DD6E148B, MyInstance12765005E3, My
+Instance12C7E210C]. Rollback requested by user.
+12:06:36 PM | ROLLBACK_IN_PROGRESS | AWS::CloudFormation::Stack            | TestAleph
+The following resource(s) failed to create: [MyInstance8D4511420, MyInstance4B58A6053, MyInstance7CEBC1B34, MyInstance160C4
+3B251, MyInstance13DF18529F, MyInstance112D34FCEF, MyInstance2C26007AF, MyInstance95ADDBBC0, MyInstance5FC4A42E5, MyInstanc
+e14D5FCCFA5, MyInstance322F2476D, MyInstance10705FAC23, MyInstance156C943312, MyInstance6DD6E148B, MyInstance12765005E3, My
+Instance12C7E210C]. Rollback requested by user.
