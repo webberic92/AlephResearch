@@ -206,7 +206,7 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
 pub fn interpolate_shares(decoded_shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u8>>, String> {
     // ✅ Handle round 1: No interpolation required
     if round_id == 1 {
-        info!("Round 1 detected: Skipping interpolation, returning provided shards.");
+        // info!("Round 1 detected: Skipping interpolation, returning provided shards.");
         return Ok(decoded_shards.to_vec());
     }
 
@@ -248,6 +248,6 @@ pub fn interpolate_shares(decoded_shards: &[Vec<u8>], round_id: u64) -> Result<V
         return Err("Interpolation failed: Not all shares were recovered".to_string());
     }
 
-    info!("Interpolated missing shares successfully.");
+    // info!("Interpolated missing shares successfully.");
     Ok(recovered_shards)
 }
