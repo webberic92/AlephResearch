@@ -157,6 +157,40 @@ pub async fn handle_commit(
                 let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
                 info!("LATENCY END: {}", current_time);
 
+                let (instances, txs, rounds, node_id) = {
+                    let node_guard = node.lock().await;
+                    (
+                        node_guard.total_nodes,
+                        node_guard.number_of_transactions,
+                        node_guard.total_rounds,
+                        node_guard.id,
+                    )
+                };
+                
+                let s3_upload_cmd = format!(
+                    r#"(S3_FOLDER="logs/nodes_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
+                    instances = instances,
+                    txs = txs,
+                    rounds = rounds,
+                    node_id = node_id,
+                );
+                
+                // 🔁 Spawn the background process to upload logs to S3
+                tokio::spawn(async move {
+                    match Command::new("sh")
+                        .arg("-c")
+                        .arg(&s3_upload_cmd)
+                        .spawn()
+                    {
+                        Ok(_) => info!("✅ S3 upload command executed: {}", s3_upload_cmd),
+                        Err(e) => error!("❌ Failed to execute S3 upload command: {:?}", e),
+                    }
+                });
+            
+            
+            
+            
             {
                 let mut node_guard = node.lock().await;
             
@@ -230,32 +264,7 @@ pub async fn handle_commit(
         }
     }
 
-
-    let (instances, txs, rounds) = {
-        let node_guard = node.lock().await;
-        (
-            node_guard.total_nodes,
-            node_guard.number_of_transactions,
-            node_guard.total_rounds,
-        )
-    };
     
-    let s3_upload_cmd = format!(
-        r#"(sleep 120 && \
-        S3_FOLDER="logs/nodes_N{instances}_T{txs}_R{rounds}/node-$(hostname)" && \
-        aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
-        instances = instances,
-        txs = txs,
-        rounds = rounds,
-    );
-    
-    // Spawn as background shell task
-    tokio::spawn(async move {
-        let _ = Command::new("sh")
-            .arg("-c")
-            .arg(s3_upload_cmd)
-            .spawn();
-    });
     info!(
         "============== Node {}: Exiting commit handler.==============",
         node_id
