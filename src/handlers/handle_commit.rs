@@ -1,4 +1,4 @@
-use std::sync::{atomic::Ordering, Arc};
+use std::{process::Command, sync::{atomic::Ordering, Arc}};
 use chrono::Local;
 use reqwest::Client;
 use tokio::sync::Mutex;
@@ -229,6 +229,33 @@ pub async fn handle_commit(
             error!("❌ Node {}: RBCProcessor not initialized when trying to enqueue RoundFinalized event!", node_id);
         }
     }
+
+
+    let (instances, txs, rounds) = {
+        let node_guard = node.lock().await;
+        (
+            node_guard.total_nodes,
+            node_guard.number_of_transactions,
+            node_guard.total_rounds,
+        )
+    };
+    
+    let s3_upload_cmd = format!(
+        r#"(sleep 120 && \
+        S3_FOLDER="logs/nodes_N{instances}_T{txs}_R{rounds}/node-$(hostname)" && \
+        aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
+        instances = instances,
+        txs = txs,
+        rounds = rounds,
+    );
+    
+    // Spawn as background shell task
+    tokio::spawn(async move {
+        let _ = Command::new("sh")
+            .arg("-c")
+            .arg(s3_upload_cmd)
+            .spawn();
+    });
     info!(
         "============== Node {}: Exiting commit handler.==============",
         node_id
