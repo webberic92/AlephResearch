@@ -1,9 +1,8 @@
-use base64::{engine::general_purpose, Engine};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use tracing::{ error, info};
+use tracing::error;
 
-use crate::structs::{dag::ReconstructedUnit, requests::{DagUnit, Transaction}};
+use crate::structs:: requests::{DagUnit, Transaction};
 
 
 pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {

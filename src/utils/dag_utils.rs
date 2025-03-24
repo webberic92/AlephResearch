@@ -16,7 +16,7 @@ let node_guard = node.lock().await;
 //info!("🔓 [DEBUG] Acquired node lock for round dag utils");
         node_guard.id
     };
-    info!("Node {}: Ensuring DAG synchronization for round {}...", node_id, current_round);    let (latest_round, node_id, dag_keys) = {
+    info!("Node {}: Ensuring DAG synchronization for round {}...", node_id, current_round);    let (latest_round, node_id, _dag_keys) = {
         // 🔒 Lock the node only as long as necessary
         //info!("🔍 [DEBUG] Waiting to acquire node lock for round dag utils");
 let node_guard = node.lock().await;

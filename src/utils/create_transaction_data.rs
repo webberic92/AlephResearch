@@ -3,29 +3,33 @@ use base64::Engine;
 use tokio::sync::Mutex;
 use sha2::{Digest, Sha256};
 use tracing::info;
-use anyhow::{anyhow, Error};
+use anyhow::Error;
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
     utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, split_into_shards, validate_shard_sizes}
 };
 
+/// 🧰 Pads or truncates a vector to match the given size
+fn pad_to_size(mut data: Vec<u8>, size: usize) -> Vec<u8> {
+    if data.len() >= size {
+        data.truncate(size);
+    } else {
+        data.resize(size, 0);
+    }
+    data
+}
+
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>, 
 ) -> Result<ProposeRequest, Error> {  
-    //info!("🔍 [DEBUG] Attempting to acquire node lock for create_transaction_data()");
-
-    // ✅ Extract necessary values as quickly as possible and then **drop** the lock
     let (node_id, node_number_of_transactions, transaction_size, data_shards);
     {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for create_transaction_data()");
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for create_transaction_data()");
-        
         node_id = node_guard.id;
         node_number_of_transactions = node_guard.number_of_transactions;
         transaction_size = node_guard.transaction_size;
         data_shards = node_guard.data_shards;
-    } // 🔥 **Lock is dropped here automatically!**
+    }
 
     info!(
         "Node {}: Creating {} transactions with {} shards and a transaction size of {}",
@@ -34,20 +38,23 @@ pub async fn create_transaction_data(
 
     let mut transactions = Vec::new();
 
-    for _ in 0..node_number_of_transactions {
-        let transaction_data = vec![node_id as u8; transaction_size]; // ✅ Convert safely
+    for tx_index in 0..node_number_of_transactions {
+        // 🧠 Option 1: UTF-8 string-based padded data
+        let content = format!("node{}_tx{}", node_id, tx_index);
+        let transaction_data = pad_to_size(content.into_bytes(), transaction_size);
+        
         let shards = split_into_shards(&transaction_data, data_shards);
 
         let shard_hashes: Vec<Vec<u8>> = shards.iter()
-            .map(|shard| Sha256::digest(shard).to_vec())  // ✅ Hash each shard
+            .map(|shard| Sha256::digest(shard).to_vec())
             .collect();
         
-        let merkle_root = compute_merkle_root(&shard_hashes); // ✅ Compute root from hashed shards
+        let merkle_root = compute_merkle_root(&shard_hashes);
 
         let proofs: Vec<Vec<Vec<u8>>> = shard_hashes
             .iter()
             .enumerate()
-            .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))  // ✅ Generate correct Merkle proof
+            .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
             .collect();
 
         validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
@@ -63,21 +70,18 @@ pub async fn create_transaction_data(
             ).collect();
 
         transactions.push(Transaction {
-            root: merkle_root,  
+            root: merkle_root,
             proofs: encoded_proofs,
             shards: encoded_shards,
         });
     }
 
-    // ✅ **Reacquire the lock only when needed**
-    //info!("🔍 [DEBUG] Waiting to acquire node lock to retrieve round_id");
     let (round_id, parent_units);
     {
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock to retrieve round_id");
         round_id = *node_guard.current_round.lock().await;
         parent_units = node_guard.get_all_parents(round_id).await;
-    } // 🔥 **Lock is dropped again here**
+    }
 
     info!(
         "Creating proposal: {} transactions, Parent Units = {:?} for round {}",
@@ -86,12 +90,10 @@ pub async fn create_transaction_data(
 
     Ok(ProposeRequest {
         base: BaseRequest {
-            proposing_node_id: node_id as u8,  // ✅ Safe conversion
+            proposing_node_id: node_id as u8,
             round_id,
         },
         transactions,
         parents: parent_units,
     })
 }
-
-
