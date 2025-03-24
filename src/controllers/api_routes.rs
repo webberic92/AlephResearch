@@ -45,7 +45,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                         Ok(parsed_payload) => {
                             if !should_process_request(node.clone(), parsed_payload.base.round_id).await {
                                 return (
-                                    StatusCode::BAD_REQUEST,
+                                    StatusCode::OK,
                                     Json(Response { status: "🛑 Propose Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }
@@ -80,7 +80,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                         Ok(parsed_payload) => {
                             if !should_process_request(node.clone(),parsed_payload.proposals[0].base.round_id).await {
                                 return (
-                                    StatusCode::BAD_REQUEST,
+                                    StatusCode::OK,
                                     Json(Response { status: "🛑 Prevote Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }
@@ -115,7 +115,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                         Ok(parsed_payload) => {
                             if !should_process_request(node.clone(), parsed_payload.round_id).await {
                                 return (
-                                    StatusCode::BAD_REQUEST,
+                                    StatusCode::OK,
                                     Json(Response { status: "🛑 Commit Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }

@@ -1,8 +1,8 @@
 use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
 use sha2::{Digest, Sha256};
-use tokio::sync::Mutex;
-use std::sync::{atomic::Ordering, Arc};
+use tokio::{sync::Mutex, time::timeout};
+use std::{sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info};
 use reqwest::Client;
 use crate::{
@@ -195,32 +195,51 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    let commit_payload = commit_request.clone();
-    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
+    let message_count = node.lock().await.message_count.clone();
+    info!(
+        "Node {}: Sending commit messages for round {} to all nodes {:?}.",
+        node_id, round_id, node_list
+    );
 
     let commit_futures: Vec<_> = node_list.iter().map(|target_node| {
         let target_url = format!("http://{}/commit", target_node);
         let client = client.clone();
-        let commit_payload = commit_payload.clone();
-        let message_count = message_count.clone(); // ✅ Correctly cloned inside the async block
-
+        let commit_payload = commit_request.clone();
+        let message_count = message_count.clone();
+    
         async move {
             message_count.fetch_add(1, Ordering::Relaxed);
-
-            match client.post(&target_url).json(&commit_payload).send().await {
-                Ok(response) if response.status().is_success() => {
+    
+            match timeout(
+                Duration::from_millis(200),
+                client.post(&target_url).json(&commit_payload).send(),
+            )
+            .await
+            {
+                Ok(Ok(response)) if response.status().is_success() => {
                     info!("✅ Successfully sent commit to {}", target_url);
                 }
-                Ok(response) => {
-                    error!("❌ Commit failed to {}. Status: {:?}", target_url, response);
+                Ok(Ok(response)) => {
+                    let status = response.status();
+                    let text = response.text().await.unwrap_or_default();
+                    error!(
+                        "❌ Commit failed to {}. Status: {} | Response Body: {}",
+                        target_url, status, text
+                    );
                 }
-                Err(e) => {
-                    error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                Ok(Err(e)) => {
+                    error!(
+                        "❌ Network error while sending commit to {}: {:?}",
+                        target_url, e
+                    );
+                }
+                Err(_) => {
+                    error!("⏰ Timeout: Commit to {} took more than 5 seconds", target_url);
                 }
             }
         }
     }).collect();
-
+    
     join_all(commit_futures).await;
 
     if let Some(rbc_processor) = &rbc_processor {
