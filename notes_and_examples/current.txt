@@ -1,15 +1,439 @@
-12:06:34 PM | CREATE_FAILED        | AWS::EC2::Instance                    | MyInstance4
-Resource handler returned message: "You have requested more vCPU capacity than your current vCPU limit of 32 allows for the
-instance bucket that the specified instance type belongs to. Please visit http://aws.amazon.com/contact-us/ec2-request to r
-equest an adjustment to this limit. (Service: Ec2, Status Code: 400, Request ID: 462fd02d-78ab-4ecc-927a-72ac2d2b0cc8) (SDK
-Attempt Count: 2)" (RequestToken: 6055d09c-b3ee-bb4f-9217-1ac2520086cd, HandlerErrorCode: InvalidRequest)
-12:06:36 PM | ROLLBACK_IN_PROGRESS | AWS::CloudFormation::Stack            | TestAleph
-The following resource(s) failed to create: [MyInstance8D4511420, MyInstance4B58A6053, MyInstance7CEBC1B34, MyInstance160C4
-3B251, MyInstance13DF18529F, MyInstance112D34FCEF, MyInstance2C26007AF, MyInstance95ADDBBC0, MyInstance5FC4A42E5, MyInstanc
-e14D5FCCFA5, MyInstance322F2476D, MyInstance10705FAC23, MyInstance156C943312, MyInstance6DD6E148B, MyInstance12765005E3, My
-Instance12C7E210C]. Rollback requested by user.
-12:06:36 PM | ROLLBACK_IN_PROGRESS | AWS::CloudFormation::Stack            | TestAleph
-The following resource(s) failed to create: [MyInstance8D4511420, MyInstance4B58A6053, MyInstance7CEBC1B34, MyInstance160C4
-3B251, MyInstance13DF18529F, MyInstance112D34FCEF, MyInstance2C26007AF, MyInstance95ADDBBC0, MyInstance5FC4A42E5, MyInstanc
-e14D5FCCFA5, MyInstance322F2476D, MyInstance10705FAC23, MyInstance156C943312, MyInstance6DD6E148B, MyInstance12765005E3, My
-Instance12C7E210C]. Rollback requested by user.
+sh-4.2$ cat /home/aleph-node/finalized_dag/round1.json | grep creator -A40
+    "creator": 10,
+    "finalization_timestamp": 1742763269579,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[136, 31, 118, 115, 224, 119, 66, 234, 57, 51, 218, 149, 36, 185, 167, 243, 15, 84, 43, 40, 105, 59, 7, 41, 106, 242, 13, 133, 115, 233, 10, 155]",
+        "proofs": [
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+            "GlBD4BWzO+5uRdGSEpKgpQqxG0Eg5yM0N0IwbQ4NDB4="
+          ],
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+            "GlBD4BWzO+5uRdGSEpKgpQqxG0Eg5yM0N0IwbQ4NDB4="
+          ],
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+            "GlBD4BWzO+5uRdGSEpKgpQqxG0Eg5yM0N0IwbQ4NDB4="
+          ],
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+            "GlBD4BWzO+5uRdGSEpKgpQqxG0Eg5yM0N0IwbQ4NDB4="
+          ]
+        ],
+        "shards": [
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+        ]
+      },
+      {
+        "merkle_root": "[136, 31, 118, 115, 224, 119, 66, 234, 57, 51, 218, 149, 36, 185, 167, 243, 15, 84, 43, 40, 105, 59, 7, 41, 106, 242, 13, 133, 115, 233, 10, 155]",
+        "proofs": [
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+            "GlBD4BWzO+5uRdGSEpKgpQqxG0Eg5yM0N0IwbQ4NDB4="
+          ],
+          [
+            "wqdNrqIfbKrWt3lNz9Ehy6oL3cNAfOX1/cGRS9Xn/5A=",
+--
+    "creator": 8,
+    "finalization_timestamp": 1742763269583,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[162, 251, 129, 118, 87, 244, 235, 242, 10, 10, 143, 27, 9, 18, 28, 27, 159, 163, 48, 110, 245, 94, 185, 170, 182, 158, 224, 227, 182, 19, 214, 152]",
+        "proofs": [
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+            "46aJY3/cvdaJqgdgCHSKFBYwbqTi1nvhENGZ7yYzwWY="
+          ],
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+            "46aJY3/cvdaJqgdgCHSKFBYwbqTi1nvhENGZ7yYzwWY="
+          ],
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+            "46aJY3/cvdaJqgdgCHSKFBYwbqTi1nvhENGZ7yYzwWY="
+          ],
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+            "46aJY3/cvdaJqgdgCHSKFBYwbqTi1nvhENGZ7yYzwWY="
+          ]
+        ],
+        "shards": [
+          "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b",
+          "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b",
+          "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b",
+          "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b"
+        ]
+      },
+      {
+        "merkle_root": "[162, 251, 129, 118, 87, 244, 235, 242, 10, 10, 143, 27, 9, 18, 28, 27, 159, 163, 48, 110, 245, 94, 185, 170, 182, 158, 224, 227, 182, 19, 214, 152]",
+        "proofs": [
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+            "46aJY3/cvdaJqgdgCHSKFBYwbqTi1nvhENGZ7yYzwWY="
+          ],
+          [
+            "Il66ed4bh4hVVMFrKqxrO/hztiCCp58ac0IOAbxEDKM=",
+--
+    "creator": 9,
+    "finalization_timestamp": 1742763269589,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[5, 75, 84, 219, 87, 66, 205, 112, 39, 198, 95, 69, 12, 18, 91, 254, 248, 90, 165, 74, 240, 2, 129, 206, 68, 154, 106, 148, 104, 90, 217, 70]",
+        "proofs": [
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+            "mp9gm4OavwtZVTKOkXpL4LUadyqXrDPuB78Z1/3yOYU="
+          ],
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+            "mp9gm4OavwtZVTKOkXpL4LUadyqXrDPuB78Z1/3yOYU="
+          ],
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+            "mp9gm4OavwtZVTKOkXpL4LUadyqXrDPuB78Z1/3yOYU="
+          ],
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+            "mp9gm4OavwtZVTKOkXpL4LUadyqXrDPuB78Z1/3yOYU="
+          ]
+        ],
+        "shards": [
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t",
+          "\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t"
+        ]
+      },
+      {
+        "merkle_root": "[5, 75, 84, 219, 87, 66, 205, 112, 39, 198, 95, 69, 12, 18, 91, 254, 248, 90, 165, 74, 240, 2, 129, 206, 68, 154, 106, 148, 104, 90, 217, 70]",
+        "proofs": [
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+            "mp9gm4OavwtZVTKOkXpL4LUadyqXrDPuB78Z1/3yOYU="
+          ],
+          [
+            "qnJeUanY6air4876aFYdGaSwbG8VJuRuOlWiOu91PHM=",
+--
+    "creator": 2,
+    "finalization_timestamp": 1742763269594,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[161, 84, 83, 205, 243, 6, 118, 230, 204, 148, 114, 1, 35, 80, 21, 84, 53, 6, 137, 144, 44, 159, 49, 35, 186, 10, 227, 209, 41, 74, 123, 2]",
+        "proofs": [
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+            "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4="
+          ],
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+            "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4="
+          ],
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+            "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4="
+          ],
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+            "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4="
+          ]
+        ],
+        "shards": [
+          "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002",
+          "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002",
+          "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002",
+          "\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002\u0002"
+        ]
+      },
+      {
+        "merkle_root": "[161, 84, 83, 205, 243, 6, 118, 230, 204, 148, 114, 1, 35, 80, 21, 84, 53, 6, 137, 144, 44, 159, 49, 35, 186, 10, 227, 209, 41, 74, 123, 2]",
+        "proofs": [
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+            "wPMm3dgjAXHxpkDwDeP6Qdy9zx/nn5aj9Ol4vHbcDQ4="
+          ],
+          [
+            "+DszK+TmpaSxxWqvbbUmV9pJXhSYcAV9hZCrnXphZ60=",
+--
+    "creator": 6,
+    "finalization_timestamp": 1742763269599,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[101, 38, 210, 35, 146, 52, 247, 183, 88, 153, 250, 101, 153, 216, 186, 187, 89, 54, 0, 51, 25, 45, 183, 30, 86, 66, 220, 221, 226, 90, 114, 67]",
+        "proofs": [
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+            "twi2F6KB0MM2hMCSddekDKwIeFQ4tGsSOf3g6Q42pF4="
+          ],
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+            "twi2F6KB0MM2hMCSddekDKwIeFQ4tGsSOf3g6Q42pF4="
+          ],
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+            "twi2F6KB0MM2hMCSddekDKwIeFQ4tGsSOf3g6Q42pF4="
+          ],
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+            "twi2F6KB0MM2hMCSddekDKwIeFQ4tGsSOf3g6Q42pF4="
+          ]
+        ],
+        "shards": [
+          "\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006",
+          "\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006",
+          "\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006",
+          "\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006\u0006"
+        ]
+      },
+      {
+        "merkle_root": "[101, 38, 210, 35, 146, 52, 247, 183, 88, 153, 250, 101, 153, 216, 186, 187, 89, 54, 0, 51, 25, 45, 183, 30, 86, 66, 220, 221, 226, 90, 114, 67]",
+        "proofs": [
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+            "twi2F6KB0MM2hMCSddekDKwIeFQ4tGsSOf3g6Q42pF4="
+          ],
+          [
+            "E1Iob33d9l785Sx4lHbH6Rfs3ZjRwcqast3h5JZMrv4=",
+--
+    "creator": 4,
+    "finalization_timestamp": 1742763269603,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[8, 206, 155, 9, 79, 192, 187, 118, 54, 247, 151, 228, 162, 18, 242, 129, 56, 3, 11, 100, 141, 227, 77, 141, 112, 132, 154, 7, 47, 1, 22, 43]",
+        "proofs": [
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+            "np8KQN7T41ASnL4LPoWRH6ETo7Pq9MnaBJpShm6gZvM="
+          ],
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+            "np8KQN7T41ASnL4LPoWRH6ETo7Pq9MnaBJpShm6gZvM="
+          ],
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+            "np8KQN7T41ASnL4LPoWRH6ETo7Pq9MnaBJpShm6gZvM="
+          ],
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+            "np8KQN7T41ASnL4LPoWRH6ETo7Pq9MnaBJpShm6gZvM="
+          ]
+        ],
+        "shards": [
+          "\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004",
+          "\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004",
+          "\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004",
+          "\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004\u0004"
+        ]
+      },
+      {
+        "merkle_root": "[8, 206, 155, 9, 79, 192, 187, 118, 54, 247, 151, 228, 162, 18, 242, 129, 56, 3, 11, 100, 141, 227, 77, 141, 112, 132, 154, 7, 47, 1, 22, 43]",
+        "proofs": [
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+            "np8KQN7T41ASnL4LPoWRH6ETo7Pq9MnaBJpShm6gZvM="
+          ],
+          [
+            "y0zfE1HHt4EuUrhzZAqyC9dIpxQv/sFEsYQ5vIuDOSQ=",
+--
+    "creator": 7,
+    "finalization_timestamp": 1742763269609,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[54, 216, 184, 116, 233, 74, 213, 236, 170, 92, 132, 36, 45, 125, 83, 48, 60, 249, 228, 154, 65, 68, 84, 163, 187, 35, 106, 249, 7, 181, 12, 223]",
+        "proofs": [
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+            "oOrDPklCXhh6oVNAAbEb62/Q+lNB5xSrulKhvA+i5JI="
+          ],
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+            "oOrDPklCXhh6oVNAAbEb62/Q+lNB5xSrulKhvA+i5JI="
+          ],
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+            "oOrDPklCXhh6oVNAAbEb62/Q+lNB5xSrulKhvA+i5JI="
+          ],
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+            "oOrDPklCXhh6oVNAAbEb62/Q+lNB5xSrulKhvA+i5JI="
+          ]
+        ],
+        "shards": [
+          "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007",
+          "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007",
+          "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007",
+          "\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007\u0007"
+        ]
+      },
+      {
+        "merkle_root": "[54, 216, 184, 116, 233, 74, 213, 236, 170, 92, 132, 36, 45, 125, 83, 48, 60, 249, 228, 154, 65, 68, 84, 163, 187, 35, 106, 249, 7, 181, 12, 223]",
+        "proofs": [
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+            "oOrDPklCXhh6oVNAAbEb62/Q+lNB5xSrulKhvA+i5JI="
+          ],
+          [
+            "bP7rOqJdP0Edrl7sF9c2nKcVPnLc9UvPTD2uwPWyH8c=",
+--
+    "creator": 1,
+    "finalization_timestamp": 1742763269613,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]",
+        "proofs": [
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+            "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY="
+          ],
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+            "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY="
+          ],
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+            "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY="
+          ],
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+            "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY="
+          ]
+        ],
+        "shards": [
+          "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001",
+          "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001",
+          "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001",
+          "\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001\u0001"
+        ]
+      },
+      {
+        "merkle_root": "[76, 69, 12, 196, 182, 153, 238, 47, 214, 246, 59, 183, 10, 4, 226, 175, 219, 92, 73, 192, 202, 11, 56, 146, 99, 60, 192, 114, 207, 141, 159, 33]",
+        "proofs": [
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+            "pQI4RH5N94X0DVxPO/6R15QrE8Kn8y1vWTxEhaz/rJY="
+          ],
+          [
+            "fIl14eYKXIM38o7fjDPDsYA2C3J5ZEqbwa88UeYiC/U=",
+--
+    "creator": 12,
+    "finalization_timestamp": 1742763269618,
+    "parents": [],
+    "round": 1,
+    "transactions": [
+      {
+        "merkle_root": "[145, 248, 206, 81, 47, 97, 117, 114, 109, 114, 251, 19, 141, 56, 109, 121, 83, 165, 251, 101, 64, 236, 158, 188, 133, 215, 155, 232, 208, 161, 126, 189]",
+        "proofs": [
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+            "hfMvFeH32Gca8BnvGlLIAZO2SeSJ/eTt4hAXmcss9W4="
+          ],
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+            "hfMvFeH32Gca8BnvGlLIAZO2SeSJ/eTt4hAXmcss9W4="
+          ],
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+            "hfMvFeH32Gca8BnvGlLIAZO2SeSJ/eTt4hAXmcss9W4="
+          ],
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+            "hfMvFeH32Gca8BnvGlLIAZO2SeSJ/eTt4hAXmcss9W4="
+          ]
+        ],
+        "shards": [
+          "\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f",
+          "\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f",
+          "\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f",
+          "\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f\f"
+        ]
+      },
+      {
+        "merkle_root": "[145, 248, 206, 81, 47, 97, 117, 114, 109, 114, 251, 19, 141, 56, 109, 121, 83, 165, 251, 101, 64, 236, 158, 188, 133, 215, 155, 232, 208, 161, 126, 189]",
+        "proofs": [
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+            "hfMvFeH32Gca8BnvGlLIAZO2SeSJ/eTt4hAXmcss9W4="
+          ],
+          [
+            "hYtz1j6yQ59dN1X+YALZQfzJnppf2wb7Vooh/yWZJi8=",
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+            

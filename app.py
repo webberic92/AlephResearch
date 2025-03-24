@@ -212,9 +212,6 @@ class TestAleph(Stack):
 
                 f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /home/aleph-node/logs/node_status;",
                 
-                # f"""(sleep 120 && \
-                # S3_FOLDER="logs/nodes_N{INSTANCES_NUMBER}_T{NUMBER_OF_TRANSACTIONS}_R{TOTAL_ROUNDS}/node-$(hostname)" && \
-                # aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"""
             )
 
 

@@ -3,7 +3,6 @@ use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
-use chrono::Local;
 use reqwest::Client;
 use tokio::sync::Mutex;
 use std::{net::SocketAddr, sync::Arc};
@@ -43,7 +42,7 @@ async fn main() -> Result<()> {
     Node::set_rbc_processor(node.clone(),rbc_processor.clone(), client.clone()).await;
 
     // ✅ Step 4: Pass everything to the API
-    let app = initialize_apis(node.clone(), client.clone(), rbc_processor.clone());
+    let app = initialize_apis(node.clone(), rbc_processor.clone());
 
     // ✅ **Spawn Transaction Execution Logic**
     let node_clone = node.clone();

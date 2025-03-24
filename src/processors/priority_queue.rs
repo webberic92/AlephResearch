@@ -1,4 +1,3 @@
-use crate::utils::events::Event;
 use std::cmp::Ordering;
 use crate::structs::requests::{CommitRequest, PrevoteRequest, ProposeRequest};
 

@@ -4,7 +4,7 @@ use tokio::sync::Mutex;
 use std::sync::{atomic::Ordering, Arc};
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::{error, info};
+use tracing::info;
 use crate::structs::node::Node;
 
 /// **🔄 Updated: Use `Arc<Mutex<Node>>`**  

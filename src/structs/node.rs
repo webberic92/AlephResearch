@@ -1,6 +1,6 @@
 use std::{
     collections::HashMap,
-    sync::{atomic::{AtomicU64, Ordering}, Arc},
+    sync::{atomic::AtomicU64, Arc},
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
