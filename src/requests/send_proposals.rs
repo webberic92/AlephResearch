@@ -78,7 +78,7 @@ pub async fn send_proposals(
             match client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal_clone)
-                .timeout(Duration::from_secs(5))
+                .timeout(Duration::from_secs(1))
                 .send()
                 .await
             {
