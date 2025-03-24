@@ -1,8 +1,8 @@
-use std::sync::{atomic::Ordering, Arc};
+use std::{sync::{atomic::Ordering, Arc}, time::Duration};
 use base64::{ engine::general_purpose, Engine };
 use chrono::Local;
 use reqwest::Client;
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::{sleep, timeout}};
 use tracing::{ error, info };
 use crate::{
     handlers::handle_prevote::handle_prevote, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
@@ -154,52 +154,65 @@ pub async fn handle_propose(
             (node_guard.ip_address.clone(), node_guard.nodes.clone()) // Clone and drop lock early
         };
 
+
         info!("Node {}: Multicasting prevote to all nodes...", node_id);
+        
         for target_node in node_list {
             if target_node != node_ip {
                 let target_url = format!("http://{}/prevote", target_node);
                 info!("Node {}: Sending prevote to {}", node_id, target_url);
-
+        
                 let client_clone = client.clone();
                 let prevote_request_clone = prevote_request.clone();
                 let message_count = node.lock().await.message_count.clone();
-                message_count.fetch_add(1, Ordering::Relaxed);
+        
                 tokio::spawn(async move {
-                    match client_clone
-                        .post(&target_url)
-                        .json(&prevote_request_clone)
-                        .send()
+                    for attempt in 1..=10 {
+                        message_count.fetch_add(1, Ordering::Relaxed);
+                        info!("📤 Attempt {}/10: Sending prevote to {}", attempt, target_url);
+        
+                        match timeout(
+                            Duration::from_millis(200),
+                            client_clone.post(&target_url).json(&prevote_request_clone).send(),
+                        )
                         .await
-                    {
-                        Ok(response) => {
-                            let status = response.status();
-                            let text = match response.text().await {
-                                Ok(body) => body,
-                                Err(e) => format!("<Failed to read response body: {:?}>", e),
-                            };
-                
-                            if status.is_success() {
+                        {
+                            Ok(Ok(response)) if response.status().is_success() => {
                                 info!(
-                                    "Node {}: ✅ Successfully sent prevote to {}",
-                                    node_id, target_url
+                                    "✅ Node {}: Successfully sent prevote to {} on attempt {}",
+                                    node_id, target_url, attempt
                                 );
-                            } else {
+                                break;
+                            }
+                            Ok(Ok(response)) => {
+                                let status = response.status();
+                                let text = response.text().await.unwrap_or_default();
                                 error!(
-                                    "Node {}: ❌ Failed to send prevote to {}. Status: {} | Body: {}",
-                                    node_id, target_url, status, text
+                                    "❌ Node {}: Attempt {}/10: Prevote failed to {}. Status: {} | Response Body: {}",
+                                    node_id, attempt, target_url, status, text
+                                );
+                            }
+                            Ok(Err(e)) => {
+                                error!(
+                                    "❌ Node {}: Attempt {}/10: Network error while sending prevote to {}: {:?}",
+                                    node_id, attempt, target_url, e
+                                );
+                            }
+                            Err(_) => {
+                                error!(
+                                    "⏰ Node {}: Attempt {}/10: Timeout after 200ms trying to send prevote to {}",
+                                    node_id, attempt, target_url
                                 );
                             }
                         }
-                        Err(e) => {
-                            error!(
-                                "Node {}: ❌ Network error while sending prevote to {}: {:?}",
-                                node_id, target_url, e
-                            );
-                        }
+        
+                        // Delay between retries
+                        sleep(Duration::from_millis(200)).await;
                     }
                 });
             }
         }
+        
 
         // Step 7: Also handle the prevote locally
         info!("Node {}: Handling prevote locally.", node_id);
