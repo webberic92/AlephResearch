@@ -1,4 +1,4 @@
-use axum::{routing::post, Json, Router};
+use axum::{extract::DefaultBodyLimit, routing::post, Json, Router};
 use reqwest::StatusCode;
 use serde_json::Value;
 use tokio::sync::Mutex;
@@ -46,7 +46,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                             if !should_process_request(node.clone(), parsed_payload.base.round_id).await {
                                 return (
                                     StatusCode::BAD_REQUEST,
-                                    Json(Response { status: "🛑 Request dropped: Node has reached final round.".to_string() }),
+                                    Json(Response { status: "🛑 Propose Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }
 
@@ -81,7 +81,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                             if !should_process_request(node.clone(),parsed_payload.proposals[0].base.round_id).await {
                                 return (
                                     StatusCode::BAD_REQUEST,
-                                    Json(Response { status: "🛑 Request dropped: Node has reached final round.".to_string() }),
+                                    Json(Response { status: "🛑 Prevote Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }
 
@@ -116,7 +116,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                             if !should_process_request(node.clone(), parsed_payload.round_id).await {
                                 return (
                                     StatusCode::BAD_REQUEST,
-                                    Json(Response { status: "🛑 Request dropped: Node has reached final round.".to_string() }),
+                                    Json(Response { status: "🛑 Commit Request dropped: Node has reached that round.".to_string() }),
                                 );
                             }
 
@@ -160,4 +160,5 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                 }
             }
         }))
+        .layer(DefaultBodyLimit::disable())
 }
