@@ -1,7 +1,7 @@
 use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{sync::Mutex, time::{sleep, timeout}};
 use std::{sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info};
 use reqwest::Client;
@@ -208,39 +208,50 @@ pub async fn handle_prevote(
         let message_count = message_count.clone();
     
         async move {
-            message_count.fetch_add(1, Ordering::Relaxed);
+            for attempt in 1..=10 {
+                message_count.fetch_add(1, Ordering::Relaxed);
+                info!("📤 Attempt {}/10: Sending commit to {}", attempt, target_url);
     
-            match timeout(
-                Duration::from_millis(200),
-                client.post(&target_url).json(&commit_payload).send(),
-            )
-            .await
-            {
-                Ok(Ok(response)) if response.status().is_success() => {
-                    info!("✅ Successfully sent commit to {}", target_url);
+                match timeout(
+                    Duration::from_millis(200),
+                    client.post(&target_url).json(&commit_payload).send(),
+                )
+                .await
+                {
+                    Ok(Ok(response)) if response.status().is_success() => {
+                        info!("✅ Successfully sent commit to {} on attempt {}", target_url, attempt);
+                        break;
+                    }
+                    Ok(Ok(response)) => {
+                        let status = response.status();
+                        let text = response.text().await.unwrap_or_default();
+                        error!(
+                            "❌ Attempt {}/10: Commit failed to {}. Status: {} | Response Body: {}",
+                            attempt, target_url, status, text
+                        );
+                    }
+                    Ok(Err(e)) => {
+                        error!(
+                            "❌ Attempt {}/10: Network error while sending commit to {}: {:?}",
+                            attempt, target_url, e
+                        );
+                    }
+                    Err(_) => {
+                        error!(
+                            "⏰ Attempt {}/10: Timeout after 200ms trying to send commit to {}",
+                            attempt, target_url
+                        );
+                    }
                 }
-                Ok(Ok(response)) => {
-                    let status = response.status();
-                    let text = response.text().await.unwrap_or_default();
-                    error!(
-                        "❌ Commit failed to {}. Status: {} | Response Body: {}",
-                        target_url, status, text
-                    );
-                }
-                Ok(Err(e)) => {
-                    error!(
-                        "❌ Network error while sending commit to {}: {:?}",
-                        target_url, e
-                    );
-                }
-                Err(_) => {
-                    error!("⏰ Timeout: Commit to {} took more than 5 seconds", target_url);
-                }
+    
+                // Optional delay before retrying
+                sleep(Duration::from_millis(200)).await;
             }
         }
     }).collect();
     
     join_all(commit_futures).await;
+    
 
     if let Some(rbc_processor) = &rbc_processor {
         info!("Node {}: Adding commit to queue for round {}", node_id, round_id);

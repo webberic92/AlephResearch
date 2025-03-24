@@ -2,7 +2,7 @@ use futures::future::join_all;
 use reqwest::Client;
 use tracing::{error, info};
 use std::{sync::{atomic::Ordering, Arc}, time::Duration};
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{sync::Mutex, time::{sleep, timeout}};
 use crate::{processors::priority_queue::RBCMessage, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
 /* 
@@ -62,47 +62,72 @@ pub async fn send_proposals(
 
     let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
 
+
     let futures: Vec<_> = nodes.iter().map(|node_url| {
         let client = client.clone();
         let node_url = node_url.clone();
         let proposal_clone = propose_request.clone();
-        let message_count = message_count.clone(); // ✅ Correctly cloned inside the async block
-
+        let message_count = message_count.clone();
+    
         async move {
-            info!(
-                "📤 Node {} sending proposal to {} for round {}",
-                node_id, node_url, proposal_clone.base.round_id
-            );
-            message_count.fetch_add(1, Ordering::Relaxed);
-
-            match client
-                .post(format!("http://{}/propose", node_url))
-                .json(&proposal_clone)
-                .timeout(Duration::from_secs(1))
-                .send()
-                .await
-            {
-                Ok(res) if res.status().is_success() => {
-                    info!(
-                        "✅ Proposal successfully delivered to Node {} (round {}).",
-                        node_url, proposal_clone.base.round_id
-                    );
-                    Ok(())
+            for attempt in 1..=10 {
+                info!(
+                    "📤 Attempt {}/10: Node {} sending proposal to {} for round {}",
+                    attempt, node_id, node_url, proposal_clone.base.round_id
+                );
+    
+                message_count.fetch_add(1, Ordering::Relaxed);
+    
+                let result = timeout(
+                    Duration::from_millis(200),
+                    client
+                        .post(format!("http://{}/propose", node_url))
+                        .json(&proposal_clone)
+                        .send(),
+                )
+                .await;
+    
+                match result {
+                    Ok(Ok(res)) if res.status().is_success() => {
+                        info!(
+                            "✅ Proposal successfully delivered to Node {} (round {}) on attempt {}.",
+                            node_url, proposal_clone.base.round_id, attempt
+                        );
+                        return Ok(());
+                    }
+                    Ok(Ok(res)) => {
+                        let status = res.status();
+                        let text = res.text().await.unwrap_or_else(|_| "No response body".to_string());
+                        error!(
+                            "❌ Attempt {}/10: Proposal failed for {}. Status: {}. Response: {}",
+                            attempt, node_url, status, text
+                        );
+                    }
+                    Ok(Err(e)) => {
+                        error!(
+                            "❌ Attempt {}/10: Network error while sending proposal to {}: {:?}",
+                            attempt, node_url, e
+                        );
+                    }
+                    Err(_) => {
+                        error!(
+                            "⏰ Attempt {}/10: Timeout after 200ms trying to send proposal to {}",
+                            attempt, node_url
+                        );
+                    }
                 }
-                Ok(res) => {
-                    let err_msg = format!(
-                        "❌ Proposal failed for {}. Status: {}. Response: {}",
-                        node_url,
-                        res.status(),
-                        res.text().await.unwrap_or_else(|_| "No response body".to_string())
-                    );
-                    error!("{}", err_msg);
-                    Err(anyhow!(err_msg))
-                }
-                Err(e) => Err(anyhow!("❌ Network error while sending proposal to {}: {:?}", node_url, e)),
+    
+                sleep(Duration::from_millis(200)).await;
             }
+    
+            Err(anyhow!(
+                "❌ Node {}: Failed to send proposal to {} after 10 attempts.",
+                node_id,
+                node_url
+            ))
         }
     }).collect();
+    
 
 
     let results: Vec<Result<(), anyhow::Error>> = join_all(futures).await;
