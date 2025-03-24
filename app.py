@@ -17,7 +17,7 @@ class TestAleph(Stack):
         NUMBER_OF_TRANSACTIONS = 128  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
-        TOTAL_ROUNDS = 128 
+        TOTAL_ROUNDS = 128
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -65,7 +65,7 @@ class TestAleph(Stack):
 
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
-                                        instance_type=ec2.InstanceType("t3.medium"),
+                                        instance_type=ec2.InstanceType("t3.large"),
                                         machine_image=ec2.MachineImage.latest_amazon_linux2(),
                                         vpc=vpc,
                                         security_group=security_group,

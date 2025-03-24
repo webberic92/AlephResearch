@@ -6,7 +6,7 @@ use std::sync::{atomic::Ordering, Arc};
 use tracing::{error, info};
 use reqwest::Client;
 use crate::{
-    handlers::handle_commit::handle_commit, processors::{priority_queue::RBCMessage, rbc_processor::RBCProcessor}, structs::{
+    processors::priority_queue::RBCMessage, structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest, Transaction},
     }, utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch}

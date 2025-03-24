@@ -137,9 +137,8 @@ impl RBCProcessor {
                     match task {
                         RBCMessage::Commit(commit) => {
                             let node = node_clone.clone();
-                            let client = client_clone.clone();
                             info!("Processing commit for round {}", commit.round_id);
-                            if let Err(e) = process_commit(node, client, commit).await {
+                            if let Err(e) = process_commit(node, commit).await {
                                 error!("Error processing commit: {:?}", e);
                             }
                         }
@@ -216,8 +215,7 @@ async fn process_prevote(
 
 async fn process_commit(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>, 
     commit_request: CommitRequest
 ) -> Result<(), String> {
-    handle_commit(node, client, commit_request).await
+    handle_commit(node, commit_request).await
 }
