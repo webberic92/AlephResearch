@@ -2,11 +2,10 @@ use std::sync::{atomic::Ordering, Arc};
 use base64::{ engine::general_purpose, Engine };
 use chrono::Local;
 use reqwest::Client;
-use sha2::{Digest, Sha256};
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::Mutex;
 use tracing::{ error, info };
 use crate::{
-    handlers::handle_prevote::handle_prevote, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::compute_merkle_root}
+    handlers::handle_prevote::handle_prevote, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
 };
 
 
@@ -166,26 +165,34 @@ pub async fn handle_propose(
                 let message_count = node.lock().await.message_count.clone();
                 message_count.fetch_add(1, Ordering::Relaxed);
                 tokio::spawn(async move {
-                    match client_clone.post(&target_url)
+                    match client_clone
+                        .post(&target_url)
                         .json(&prevote_request_clone)
                         .send()
                         .await
                     {
-                        Ok(response) if response.status().is_success() => {
-                            info!(
-                                "Node {}: Successfully sent prevote to {}",
-                                node_id, target_url
-                            );
-                        }
                         Ok(response) => {
-                            error!(
-                                "Node {}: Failed to send prevote to {}. Status: {}",
-                                node_id, target_url, response.status()
-                            );
+                            let status = response.status();
+                            let text = match response.text().await {
+                                Ok(body) => body,
+                                Err(e) => format!("<Failed to read response body: {:?}>", e),
+                            };
+                
+                            if status.is_success() {
+                                info!(
+                                    "Node {}: ✅ Successfully sent prevote to {}",
+                                    node_id, target_url
+                                );
+                            } else {
+                                error!(
+                                    "Node {}: ❌ Failed to send prevote to {}. Status: {} | Body: {}",
+                                    node_id, target_url, status, text
+                                );
+                            }
                         }
                         Err(e) => {
                             error!(
-                                "Node {}: Network error while sending prevote to {}: {:?}",
+                                "Node {}: ❌ Network error while sending prevote to {}: {:?}",
                                 node_id, target_url, e
                             );
                         }

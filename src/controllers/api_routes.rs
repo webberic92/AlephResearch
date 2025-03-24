@@ -1,5 +1,5 @@
 use axum::{routing::post, Json, Router};
-use reqwest::{Client, StatusCode};
+use reqwest::StatusCode;
 use serde_json::Value;
 use tokio::sync::Mutex;
 use tracing::{error, info};
@@ -32,15 +32,13 @@ async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64) -> b
 
 
 /// **🔗 Initialize API Routes with `Arc<Mutex<Node>>`, `Client`, and `RBCProcessor`**
-pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processor: Arc<RBCProcessor>) -> Router {
+pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) -> Router {
     Router::new()
         .route("/propose", post({
             let node = node.clone();
-            let client = client.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
-                let client = client.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
@@ -73,11 +71,9 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processo
         }))
         .route("/prevote", post({
             let node = node.clone();
-            let client = client.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
-                let client = client.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<PrevoteRequest>(payload) {
@@ -110,11 +106,9 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>, client: Arc<Client>, rbc_processo
         }))
         .route("/commit", post({
             let node = node.clone();
-            let client = client.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
                 let node = node.clone();
-                let client = client.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<CommitRequest>(payload) {

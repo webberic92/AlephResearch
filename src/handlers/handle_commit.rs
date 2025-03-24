@@ -1,15 +1,13 @@
 use std::{process::Command, sync::{atomic::Ordering, Arc}};
 use chrono::Local;
-use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{node::Node, requests::CommitRequest}, utils::{config_util::write_finalized_dag_to_file, events::Event}
+    processors::priority_queue::RBCMessage, structs::{node::Node, requests::CommitRequest}, utils::config_util::write_finalized_dag_to_file
 };
 
 pub async fn handle_commit(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     let (node_id, round_id) = {
