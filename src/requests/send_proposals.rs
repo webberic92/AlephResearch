@@ -70,9 +70,9 @@ pub async fn send_proposals(
         let message_count = message_count.clone();
     
         async move {
-            for attempt in 1..=10 {
+            for attempt in 1..=20 {
                 info!(
-                    "📤 Attempt {}/10: Node {} sending proposal to {} for round {}",
+                    "📤 Attempt {}/20: Node {} sending proposal to {} for round {}",
                     attempt, node_id, node_url, proposal_clone.base.round_id
                 );
     
@@ -99,19 +99,19 @@ pub async fn send_proposals(
                         let status = res.status();
                         let text = res.text().await.unwrap_or_else(|_| "No response body".to_string());
                         error!(
-                            "❌ Attempt {}/10: Proposal failed for {}. Status: {}. Response: {}",
+                            "❌ Attempt {}/20: Proposal failed for {}. Status: {}. Response: {}",
                             attempt, node_url, status, text
                         );
                     }
                     Ok(Err(e)) => {
                         error!(
-                            "❌ Attempt {}/10: Network error while sending proposal to {}: {:?}",
+                            "❌ Attempt {}/20: Network error while sending proposal to {}: {:?}",
                             attempt, node_url, e
                         );
                     }
                     Err(_) => {
                         error!(
-                            "⏰ Attempt {}/10: Timeout after 200ms trying to send proposal to {}",
+                            "⏰ Attempt {}/20: Timeout after 200ms trying to send proposal to {}",
                             attempt, node_url
                         );
                     }
@@ -121,7 +121,7 @@ pub async fn send_proposals(
             }
     
             Err(anyhow!(
-                "❌ Node {}: Failed to send proposal to {} after 10 attempts.",
+                "❌ Node {}: Failed to send proposal to {} after 20 attempts.",
                 node_id,
                 node_url
             ))

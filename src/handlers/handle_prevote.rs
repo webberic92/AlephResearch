@@ -208,9 +208,9 @@ pub async fn handle_prevote(
         let message_count = message_count.clone();
     
         async move {
-            for attempt in 1..=10 {
+            for attempt in 1..=20 {
                 message_count.fetch_add(1, Ordering::Relaxed);
-                info!("📤 Attempt {}/10: Sending commit to {}", attempt, target_url);
+                info!("📤 Attempt {}/20: Sending commit to {}", attempt, target_url);
     
                 match timeout(
                     Duration::from_millis(200),
@@ -226,19 +226,19 @@ pub async fn handle_prevote(
                         let status = response.status();
                         let text = response.text().await.unwrap_or_default();
                         error!(
-                            "❌ Attempt {}/10: Commit failed to {}. Status: {} | Response Body: {}",
+                            "❌ Attempt {}/20: Commit failed to {}. Status: {} | Response Body: {}",
                             attempt, target_url, status, text
                         );
                     }
                     Ok(Err(e)) => {
                         error!(
-                            "❌ Attempt {}/10: Network error while sending commit to {}: {:?}",
+                            "❌ Attempt {}/20: Network error while sending commit to {}: {:?}",
                             attempt, target_url, e
                         );
                     }
                     Err(_) => {
                         error!(
-                            "⏰ Attempt {}/10: Timeout after 200ms trying to send commit to {}",
+                            "⏰ Attempt {}/20: Timeout after 200ms trying to send commit to {}",
                             attempt, target_url
                         );
                     }

@@ -24,7 +24,7 @@ use crate::{
    - The function `check_size(&decoded_shards)` validates the shard sizes.
    - If the size is invalid, the function returns early.
 
-**Step 10:** Wait until `D_i` reaches round `r−1`
+**Step 20:** Wait until `D_i` reaches round `r−1`
    - The function `ensure_dag_round_sync(node.clone(), round_id).await?` ensures that the DAG is synchronized to `r-1` before proceeding.
 
 **Step 11:** Multicast `prevote(h, b_j, s_j)` to all nodes
@@ -167,9 +167,9 @@ pub async fn handle_propose(
                 let message_count = node.lock().await.message_count.clone();
         
                 tokio::spawn(async move {
-                    for attempt in 1..=10 {
+                    for attempt in 1..=20 {
                         message_count.fetch_add(1, Ordering::Relaxed);
-                        info!("📤 Attempt {}/10: Sending prevote to {}", attempt, target_url);
+                        info!("📤 Attempt {}/20: Sending prevote to {}", attempt, target_url);
         
                         match timeout(
                             Duration::from_millis(200),
@@ -188,19 +188,19 @@ pub async fn handle_propose(
                                 let status = response.status();
                                 let text = response.text().await.unwrap_or_default();
                                 error!(
-                                    "❌ Node {}: Attempt {}/10: Prevote failed to {}. Status: {} | Response Body: {}",
+                                    "❌ Node {}: Attempt {}/20: Prevote failed to {}. Status: {} | Response Body: {}",
                                     node_id, attempt, target_url, status, text
                                 );
                             }
                             Ok(Err(e)) => {
                                 error!(
-                                    "❌ Node {}: Attempt {}/10: Network error while sending prevote to {}: {:?}",
+                                    "❌ Node {}: Attempt {}/20: Network error while sending prevote to {}: {:?}",
                                     node_id, attempt, target_url, e
                                 );
                             }
                             Err(_) => {
                                 error!(
-                                    "⏰ Node {}: Attempt {}/10: Timeout after 200ms trying to send prevote to {}",
+                                    "⏰ Node {}: Attempt {}/20: Timeout after 200ms trying to send prevote to {}",
                                     node_id, attempt, target_url
                                 );
                             }
