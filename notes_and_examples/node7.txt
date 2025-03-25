@@ -1,0 +1,1405 @@
+sh-4.2$ cat /home/aleph-node/logs/node_status
+Starting cpu and memory logs
+PRIVATE_IP = 10.0.134.4
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.191.5"
+ip_address = "10.0.134.4"
+nodes = ["10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"]
+total_nodes = 12
+
+[consensus]
+number_of_transactions = 128
+transaction_size = 256 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+total_rounds = 128 # Number of rounds
+
+[logging]
+level = "info"
+transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+
+[node]
+id = 7
+Starting aleph_rbc execution
+aleph_rbc binary is found at /home/aleph-node/aleph_rbc
+Configuration file found at /home/aleph-node/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+aleph_rbc not ready, retrying...
+2025-03-25T00:05:50.272271Z  INFO aleph_rbc: Node: Entering execute_transaction_logic.
+2025-03-25T00:05:50.272288Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-03-25T00:05:50.272308Z  INFO aleph_research::utils::start_util: Node: Entering wait_for_all_nodes_health.
+2025-03-25T00:05:50.272322Z  INFO aleph_research::utils::start_util: Checking health of all nodes...attempt 1
+2025-03-25T00:05:50.698810Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:50.698879Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:50
+2025-03-25T00:05:50.698884Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 2 ==============
+2025-03-25T00:05:50.699012Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:50.699018Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:50.699022Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:50.699230Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:50.699906Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 1/9
+2025-03-25T00:05:50.699994Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 1 proposals (threshold: 9).
+2025-03-25T00:05:50.699998Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 2 ==============
+2025-03-25T00:05:51.066239Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:51.066709Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:51
+2025-03-25T00:05:51.066718Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 4 ==============
+2025-03-25T00:05:51.066997Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:51.067046Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:51.067051Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:51.067534Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:51.068524Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 2/9
+2025-03-25T00:05:51.069277Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 2 proposals (threshold: 9).
+2025-03-25T00:05:51.069292Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 4 ==============
+2025-03-25T00:05:51.183239Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:51.183281Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:51
+2025-03-25T00:05:51.183288Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 1 ==============
+2025-03-25T00:05:51.183480Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:51.183487Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:51.183492Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:51.183664Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:51.184996Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 3/9
+2025-03-25T00:05:51.185100Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 3 proposals (threshold: 9).
+2025-03-25T00:05:51.185104Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 1 ==============
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 7
+2025-03-25T00:05:51.415473Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:51.417042Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:51
+2025-03-25T00:05:51.417060Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 8 ==============
+2025-03-25T00:05:51.417385Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:51.417397Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:51.417793Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:51.418122Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:51.422655Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 4/9
+2025-03-25T00:05:51.422773Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 4 proposals (threshold: 9).
+2025-03-25T00:05:51.422835Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 8 ==============
+2025-03-25T00:05:51.582072Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:51.582111Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:51
+2025-03-25T00:05:51.582117Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 11 ==============
+2025-03-25T00:05:51.582342Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:51.582349Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:51.582354Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:51.582514Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:51.583773Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 5/9
+2025-03-25T00:05:51.583866Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 5 proposals (threshold: 9).
+2025-03-25T00:05:51.583870Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 11 ==============
+2025-03-25T00:05:51.630949Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:51.630990Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:51
+2025-03-25T00:05:51.630996Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 6 ==============
+2025-03-25T00:05:51.631144Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:51.631150Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:51.631155Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:51.631311Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:51.633465Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 6/9
+2025-03-25T00:05:51.633586Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 6 proposals (threshold: 9).
+2025-03-25T00:05:51.633593Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 6 ==============
+2025-03-25T00:05:52.078079Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:52.078131Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:52
+2025-03-25T00:05:52.078136Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 5 ==============
+2025-03-25T00:05:52.078275Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:52.078290Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:52.078294Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:52.078438Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:52.080216Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 7/9
+2025-03-25T00:05:52.080316Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 7 proposals (threshold: 9).
+2025-03-25T00:05:52.080320Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 5 ==============
+2025-03-25T00:05:52.129438Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:52.129473Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:52
+2025-03-25T00:05:52.129478Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 3 ==============
+2025-03-25T00:05:52.129629Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:52.129635Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:52.129639Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:52.129857Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:52.132340Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 8/9
+2025-03-25T00:05:52.132452Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 8 proposals (threshold: 9).
+2025-03-25T00:05:52.132457Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 3 ==============
+2025-03-25T00:05:52.305293Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:52.305333Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:52
+2025-03-25T00:05:52.305340Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 9 ==============
+2025-03-25T00:05:52.305561Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:52.305569Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:52.305574Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:52.305771Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:52.309366Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 9/9
+2025-03-25T00:05:52.309552Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 9 proposals (threshold: 9).
+2025-03-25T00:05:52.309567Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 9 proposals.
+2025-03-25T00:05:52.312302Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:52.312319Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:52.315041Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:52.318811Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:52.318839Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:52.323308Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:52.325847Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:52.328691Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:52.333492Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:52.338550Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:52.344545Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:52.357512Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:52.361461Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:52.368366Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:52.369455Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:52.372539Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:52.375762Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:52.376722Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:52.380104Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:52.380121Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.134.4 for round 1
+2025-03-25T00:05:52.380130Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:52.381355Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:52.386855Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:52.388576Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:52.395645Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:52.400706Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:52.402373Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:52.410857Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:52.420225Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:52.438964Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:52.454748Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:52.470569Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:52.501179Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:52.517278Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:52.522664Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 9 ==============
+2025-03-25T00:05:52.526152Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:52.526185Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.190.200 for round 1
+2025-03-25T00:05:52.526196Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:52.539969Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:52.553533Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:52.569572Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:52.582030Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:52.599009Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:52.613497Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:52.633750Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:52.649867Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:52.651162Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:52.654048Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:52.654443Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:52.654625Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:52.654691Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:52.654859Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:52.655018Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:52.655234Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:52.655379Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:52.657245Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:52.659149Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:52.664329Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:52.664470Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.189.187 for round 1
+2025-03-25T00:05:52.664483Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:52.680171Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:52.692035Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:52.718552Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:52.732031Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:52.737330Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:52.743212Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:52.758435Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:52.775313Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:52.784915Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:52.787099Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:52.787123Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.168.198 for round 1
+2025-03-25T00:05:52.787130Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:52.792412Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:52.812974Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:52.831041Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:52.842323Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:52.859586Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:52.873371Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:52.873511Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:52.878297Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:52.882294Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:52.883419Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:52.888613Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:52.891385Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:52.894147Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:52.900808Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:52.901734Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:52.905505Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:52.905595Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.191.91 for round 1
+2025-03-25T00:05:52.905607Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:52.906319Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:52.911713Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:52.914594Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:52.916803Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:52.923702Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:52.938042Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:52.955679Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:52.965107Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 2
+2025-03-25T00:05:52.966350Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:52.967725Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 2
+2025-03-25T00:05:52.974958Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:52.979743Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:52.984186Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:52.989199Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:52.992713Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:52.992746Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.152.147 for round 1
+2025-03-25T00:05:52.992758Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:53.012901Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:53.027013Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:53.028351Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 2
+2025-03-25T00:05:53.030869Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 2
+2025-03-25T00:05:53.033095Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 2
+2025-03-25T00:05:53.035156Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 2
+2025-03-25T00:05:53.036269Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:53.037262Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 2
+2025-03-25T00:05:53.047924Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:53.066556Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:53.078636Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:53.109642Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:53.134955Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:53.145314Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:53.150358Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:53.150439Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.152.130 for round 1
+2025-03-25T00:05:53.150453Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:53.162838Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:53.177986Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:53.189922Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:53.194417Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:53.195651Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 2
+2025-03-25T00:05:53.199914Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:53.209972Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:53.220456Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:53.232387Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:53.243990Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:53.260716Z  INFO aleph_research::handlers::handle_prevote: Node 7: Quorum reached for round 1. Proceeding to send commits.
+2025-03-25T00:05:53.260795Z  INFO aleph_research::handlers::handle_prevote: Node 7: Sending commit messages for round 1 to all nodes ["10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"].
+2025-03-25T00:05:53.335969Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.138.84:30333/commit
+2025-03-25T00:05:53.345690Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.152.130:30333/commit
+2025-03-25T00:05:53.348826Z  INFO aleph_research::utils::start_util: Checking health of all nodes...attempt 2
+2025-03-25T00:05:53.356187Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:53.366236Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.156.196:30333/commit
+2025-03-25T00:05:53.375986Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:05:53.386173Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:53.396105Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.168.198:30333/commit
+2025-03-25T00:05:53.402128Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:53.406305Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.184.205:30333/commit
+2025-03-25T00:05:53.406914Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:53.415727Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.189.187:30333/commit
+2025-03-25T00:05:53.425602Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:05:53.434984Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:53.520775Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.138.84:30333/commit on attempt 1
+2025-03-25T00:05:53.535603Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.189.187:30333/commit on attempt 1
+2025-03-25T00:05:53.537890Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.130:30333/commit on attempt 1
+2025-03-25T00:05:53.578306Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:53.578574Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.156.196:30333/commit
+2025-03-25T00:05:53.579009Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.168.198:30333/commit on attempt 1
+2025-03-25T00:05:53.580901Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.190.200:30333/commit on attempt 1
+2025-03-25T00:05:53.585007Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.164.201:30333/commit on attempt 1
+2025-03-25T00:05:53.597158Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:53.608650Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:53.613093Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:53.617543Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.184.205:30333/commit
+2025-03-25T00:05:53.667405Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:53.668392Z  INFO aleph_research::utils::start_util: All nodes are healthy.
+2025-03-25T00:05:53.668421Z  INFO aleph_research::utils::create_transaction_data: Node 7: Creating 128 transactions with 4 shards and a transaction size of 256
+2025-03-25T00:05:53.676126Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 128 transactions, Parent Units = [] for round 1
+2025-03-25T00:05:53.676161Z  INFO aleph_rbc: Node 7: Created proposal with 128 transactions for round 1.
+2025-03-25T00:05:53.676168Z  INFO aleph_rbc: Node 7: Sending proposal for round 1...
+2025-03-25T00:05:53.676178Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 7 preparing to send proposals to ["10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"] for round 1
+2025-03-25T00:05:53.683785Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.138.84:30333 for round 1
+2025-03-25T00:05:53.684598Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.152.130:30333 for round 1
+2025-03-25T00:05:53.685355Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.152.147:30333 for round 1
+2025-03-25T00:05:53.686050Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.156.196:30333 for round 1
+2025-03-25T00:05:53.686799Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.164.201:30333 for round 1
+2025-03-25T00:05:53.687613Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.168.11:30333 for round 1
+2025-03-25T00:05:53.688321Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.168.198:30333 for round 1
+2025-03-25T00:05:53.689015Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.184.205:30333 for round 1
+2025-03-25T00:05:53.689728Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.189.187:30333 for round 1
+2025-03-25T00:05:53.690399Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.190.200:30333 for round 1
+2025-03-25T00:05:53.691073Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.191.91:30333 for round 1
+2025-03-25T00:05:53.693955Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.190.200:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.731123Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.138.84:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.731465Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.168.198:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.731729Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.168.11:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.732166Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.164.201:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.748051Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.152.130:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.748393Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.152.147:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.748805Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.156.196:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.780704Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:53.789543Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.156.196:30333/commit
+2025-03-25T00:05:53.800996Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:53.801278Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.191.91:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.802592Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.184.205:30333 (round 1) on attempt 1.
+2025-03-25T00:05:53.810337Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:53.813668Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:53.818693Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.184.205:30333/commit
+2025-03-25T00:05:53.902197Z ERROR aleph_research::requests::send_proposals: ⏰ Attempt 1/20: Timeout after 200ms trying to send proposal to 10.0.189.187:30333
+2025-03-25T00:05:53.903214Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.147:30333/commit on attempt 2
+2025-03-25T00:05:53.904858Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.156.196:30333/commit on attempt 2
+2025-03-25T00:05:53.906435Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.168.11:30333/commit on attempt 2
+2025-03-25T00:05:53.907667Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:53.929802Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 4
+2025-03-25T00:05:53.989235Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.191.91:30333/prevote on attempt 2
+2025-03-25T00:05:53.991288Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.184.205:30333/commit on attempt 2
+2025-03-25T00:05:54.127435Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:54.128443Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 2/20: Node 7 sending proposal to 10.0.189.187:30333 for round 1
+2025-03-25T00:05:54.218057Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.189.187:30333 (round 1) on attempt 2.
+2025-03-25T00:05:54.218430Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-03-25T00:05:54.219180Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 7 enqueuing proposal for round 1 into RBCProcessor queue
+2025-03-25T00:05:54.219468Z  INFO aleph_rbc: Node 7: Proposal for round 1 sent successfully.
+2025-03-25T00:05:54.219476Z  INFO aleph_rbc: Node: Exiting transaction logic from beggining.
+2025-03-25T00:05:54.328471Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:54.537929Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:54.739363Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:54.950402Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:55.150949Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:55.261106Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.191.91:30333/commit on attempt 5
+2025-03-25T00:05:55.264021Z  INFO aleph_research::handlers::handle_prevote: Node 7: Adding commit to queue for round 1
+2025-03-25T00:05:55.264042Z  INFO aleph_research::handlers::handle_prevote: ✅ Node 7: Successfully processed PREVOTE for round 1.
+2025-03-25T00:05:55.266841Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.266859Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.184.205 for round 1
+2025-03-25T00:05:55.266867Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.271913Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.277286Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.282869Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.288379Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.295421Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.300660Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.306411Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.312338Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.317229Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.321003Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.321036Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.168.11 for round 1
+2025-03-25T00:05:55.321044Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.328876Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.335221Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.341356Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.346952Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.353095Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.358748Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.363712Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.369701Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.374516Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.377333Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.377386Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.191.91 for round 1
+2025-03-25T00:05:55.377395Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.382776Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.387918Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.394233Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.403843Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.418016Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.425472Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.430461Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.434897Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.439418Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.441812Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.441833Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.164.201 for round 1
+2025-03-25T00:05:55.441840Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.446823Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.451499Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.456291Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.461221Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.465881Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.470584Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.475214Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.480332Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.484933Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.487687Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.487700Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.138.84 for round 1
+2025-03-25T00:05:55.487708Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.492674Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.497689Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.502440Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.507261Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.512192Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.516822Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.521616Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.526300Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.530912Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.533513Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.533532Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.156.196 for round 1
+2025-03-25T00:05:55.533540Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.538345Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.543429Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.548127Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.553302Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.558040Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.562642Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.567366Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.572032Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.577588Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.581261Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.581283Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.152.130 for round 1
+2025-03-25T00:05:55.581292Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.586652Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.591672Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.597000Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.602188Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.606794Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.611643Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.616468Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.621316Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.626247Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.629443Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.629460Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.152.147 for round 1
+2025-03-25T00:05:55.629467Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.634658Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.639571Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.644542Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.649608Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.654869Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.659689Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.664415Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.671129Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.677491Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.681043Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:55.681066Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.184.205 for round 1
+2025-03-25T00:05:55.681075Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.687723Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.693424Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.699113Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.704907Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.710284Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.716760Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.724337Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.732136Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.738326Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.741771Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.741795Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 1 for round 1 ==============
+2025-03-25T00:05:55.744811Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 1/7.
+2025-03-25T00:05:55.744836Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.747383Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.747400Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 8 for round 1 ==============
+2025-03-25T00:05:55.749648Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 2/7.
+2025-03-25T00:05:55.749673Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.751293Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.751307Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 3 for round 1 ==============
+2025-03-25T00:05:55.754103Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 3/7.
+2025-03-25T00:05:55.754126Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.756310Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.756324Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 11 for round 1 ==============
+2025-03-25T00:05:55.759034Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 4/7.
+2025-03-25T00:05:55.759056Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.760286Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.760297Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 10 for round 1 ==============
+2025-03-25T00:05:55.761782Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 5/7.
+2025-03-25T00:05:55.761793Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.762891Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.762901Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 1 for round 1 ==============
+2025-03-25T00:05:55.762906Z  INFO aleph_research::handlers::handle_commit: Node 7: Duplicate commit from 1 for round 1. Ignoring.
+2025-03-25T00:05:55.764737Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:55.764796Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 6 for round 1 ==============
+2025-03-25T00:05:55.766166Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 6/7.
+2025-03-25T00:05:55.766178Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:55.767292Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:55.767323Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:55
+2025-03-25T00:05:55.767327Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 10 ==============
+2025-03-25T00:05:55.767683Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:55.767692Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 0, Target round: 1
+2025-03-25T00:05:55.767697Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:55.768105Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:55.771405Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 10/9
+2025-03-25T00:05:55.771678Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 10 proposals (threshold: 9).
+2025-03-25T00:05:55.771693Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 10 proposals.
+2025-03-25T00:05:55.775294Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:55.775323Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:55.780906Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:55.785849Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:55.785939Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:55.790141Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:55.794489Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:55.795953Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:55.799978Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:55.801288Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:55.804822Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:55.808495Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:55.809677Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:55.813903Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:55.815626Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:55.818547Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:55.822270Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:55.823260Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:55.827792Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:55.827820Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.134.4 for round 1
+2025-03-25T00:05:55.827830Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 1
+2025-03-25T00:05:55.829954Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:55.838444Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:55.838491Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 1
+2025-03-25T00:05:55.845663Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:55.847414Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 8 for round 1
+2025-03-25T00:05:55.852920Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:55.856841Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 1
+2025-03-25T00:05:55.860968Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 1
+2025-03-25T00:05:55.867692Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 1
+2025-03-25T00:05:55.885308Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 1
+2025-03-25T00:05:55.901970Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 1
+2025-03-25T00:05:55.912239Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 1
+2025-03-25T00:05:55.914933Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 5 for round 1
+2025-03-25T00:05:55.942745Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 1
+2025-03-25T00:05:55.965134Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 1
+2025-03-25T00:05:55.994721Z  INFO aleph_research::handlers::handle_prevote: Node 7: Ignoring prevote for round 1. Quorum already met.
+2025-03-25T00:05:55.995869Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:55.996770Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 1
+2025-03-25T00:05:55.999466Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 10 ==============
+2025-03-25T00:05:56.000008Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 1
+2025-03-25T00:05:56.001953Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.001977Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 12 for round 1 ==============
+2025-03-25T00:05:56.003203Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 1
+2025-03-25T00:05:56.008037Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:56.008184Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit count for round 1 is 7/7.
+2025-03-25T00:05:56.008204Z  INFO aleph_research::handlers::handle_commit: Node 7: Finalizing round 1 with 7/7 commits.
+2025-03-25T00:05:56.011192Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 1
+2025-03-25T00:05:56.103831Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.111608Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:56.113684Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.173712Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.212520Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 1 to file: /home/aleph-node/finalized_dag/round1.json
+2025-03-25T00:05:56.225523Z  INFO aleph_research::handlers::handle_commit: Node 7: Finalized round 1 USE THIS FOR COMMUNICATION OVERHEAD 137
+2025-03-25T00:05:56.225556Z  INFO aleph_research::handlers::handle_commit: Node 7: Finalized round 1 with 7/7 commits. USE THIS FOR TPS METRIC
+2025-03-25T00:05:56.225562Z  INFO aleph_research::handlers::handle_commit: Node 7: Local round advanced to 2
+2025-03-25T00:05:56.225567Z  INFO aleph_research::handlers::handle_commit: Node 7: Enqueuing RoundFinalized event for round 1
+2025-03-25T00:05:56.262221Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Exiting commit handler.==============
+2025-03-25T00:05:56.264076Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.264098Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 8 for round 1 ==============
+2025-03-25T00:05:56.264106Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.267022Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.267053Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 11 for round 1 ==============
+2025-03-25T00:05:56.267060Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.269704Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.269734Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.168.11 for round 1
+2025-03-25T00:05:56.269749Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.271897Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.271914Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.164.201 for round 1
+2025-03-25T00:05:56.271923Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.272888Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.275367Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.275381Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 9 for round 1 ==============
+2025-03-25T00:05:56.275387Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.278080Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.278155Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.278251Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 3 for round 1 ==============
+2025-03-25T00:05:56.278257Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.281437Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.281458Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 4 for round 1 ==============
+2025-03-25T00:05:56.281463Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.283571Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.283583Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 10 for round 1 ==============
+2025-03-25T00:05:56.283659Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.286636Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.191.91:30333/prevote on attempt 1
+2025-03-25T00:05:56.287095Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.287115Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 12 for round 1 ==============
+2025-03-25T00:05:56.287121Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.289759Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.289783Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 6 for round 1 ==============
+2025-03-25T00:05:56.289789Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.292129Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.292142Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 2 for round 1 ==============
+2025-03-25T00:05:56.292148Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.295618Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.295639Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.184.205 for round 1
+2025-03-25T00:05:56.295662Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.298793Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:56.298932Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:56
+2025-03-25T00:05:56.298943Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 12 ==============
+2025-03-25T00:05:56.353219Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.372709Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.376238Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:56.376259Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 1
+2025-03-25T00:05:56.376265Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:56.376816Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:56.387774Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 11/9
+2025-03-25T00:05:56.388146Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 11 proposals (threshold: 9).
+2025-03-25T00:05:56.388158Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 11 proposals.
+2025-03-25T00:05:56.398653Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:56.398690Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.404305Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.408882Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.412444Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.413633Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:56.417902Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:56.424058Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:56.425529Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.428736Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:56.433122Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.434027Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:56.439250Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:56.440805Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.444859Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.448726Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:56.449959Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:56.454592Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:56.454620Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 11 proposals from 10.0.134.4 for round 1
+2025-03-25T00:05:56.454628Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.455871Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:56.456815Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 12 ==============
+2025-03-25T00:05:56.459957Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.459973Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 4 for round 1 ==============
+2025-03-25T00:05:56.459980Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.461458Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.461478Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 5 for round 1 ==============
+2025-03-25T00:05:56.461484Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.463173Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.463186Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 9 for round 1 ==============
+2025-03-25T00:05:56.463192Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.463822Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:56.465935Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.465960Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.189.187 for round 1
+2025-03-25T00:05:56.465970Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.468307Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1
+2025-03-25T00:05:56.468331Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:56
+2025-03-25T00:05:56.468337Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 1 from Node 7 ==============
+2025-03-25T00:05:56.468403Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:56.471364Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.475922Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 1...
+2025-03-25T00:05:56.475951Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 1
+2025-03-25T00:05:56.475956Z  INFO aleph_research::utils::dag_utils: Node 7: First round detected (round 1). Skipping DAG sync check.
+2025-03-25T00:05:56.476642Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 1...
+2025-03-25T00:05:56.478993Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:56.481528Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 1. Count: 12/9
+2025-03-25T00:05:56.481846Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 1 has 12 proposals (threshold: 9).
+2025-03-25T00:05:56.481855Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 12 proposals.
+2025-03-25T00:05:56.485555Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:56.486520Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:56.486534Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.489947Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.493492Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:56.495142Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.507754Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:56.509318Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.513900Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 1
+2025-03-25T00:05:56.516132Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:56.516134Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.524087Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:56.525493Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.530954Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:56.540040Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:56.553516Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:56.571413Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.587302Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:56.605853Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:56.605891Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 12 proposals from 10.0.134.4 for round 1
+2025-03-25T00:05:56.605905Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.612767Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 1 from sender 7 ==============
+2025-03-25T00:05:56.616272Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.616303Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 2 for round 1 ==============
+2025-03-25T00:05:56.616309Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.619305Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.619339Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 11 proposals from 10.0.189.187 for round 1
+2025-03-25T00:05:56.619361Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.623208Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 1
+2025-03-25T00:05:56.626451Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 1
+2025-03-25T00:05:56.627230Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.631710Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.191.91:30333/prevote on attempt 1
+2025-03-25T00:05:56.635727Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.637028Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.642892Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:56.643838Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 1
+2025-03-25T00:05:56.648380Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 1
+2025-03-25T00:05:56.657707Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 1
+2025-03-25T00:05:56.658690Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:56.668163Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:56.675791Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.679684Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:56.679934Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:56.684051Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.691226Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:56.699005Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 1
+2025-03-25T00:05:56.705905Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:56.718219Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.728737Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.732526Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:56.732576Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:56
+2025-03-25T00:05:56.732791Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:56.743467Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.743593Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 1 ==============
+2025-03-25T00:05:56.746725Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 1
+2025-03-25T00:05:56.751409Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 1
+2025-03-25T00:05:56.753981Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.755607Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:56.759485Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 1
+2025-03-25T00:05:56.765734Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 1
+2025-03-25T00:05:56.771108Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 1
+2025-03-25T00:05:56.777255Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.785078Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:56.785854Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:56.785869Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:56.785876Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:56.787811Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:56.791255Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 1/9
+2025-03-25T00:05:56.791950Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 1 proposals (threshold: 9).
+2025-03-25T00:05:56.791961Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 1 ==============
+2025-03-25T00:05:56.793195Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.793215Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 12 proposals from 10.0.189.187 for round 1
+2025-03-25T00:05:56.793231Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.799006Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.799038Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 5 for round 1 ==============
+2025-03-25T00:05:56.799045Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.802085Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.802116Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.168.11 for round 1
+2025-03-25T00:05:56.802132Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.804697Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1
+2025-03-25T00:05:56.804728Z  INFO aleph_research::handlers::handle_commit: ============== Node 7: Handling commit request from 7 for round 1 ==============
+2025-03-25T00:05:56.804734Z  INFO aleph_research::handlers::handle_commit: Node 7: Commit for round 1 already finalized. Ignoring duplicate commit request.
+2025-03-25T00:05:56.808310Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:56.808431Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:56
+2025-03-25T00:05:56.808439Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 10 ==============
+2025-03-25T00:05:56.809874Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:56.809901Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:56.809906Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:56.810622Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:56.813554Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 2/9
+2025-03-25T00:05:56.813903Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 2 proposals (threshold: 9).
+2025-03-25T00:05:56.813915Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 10 ==============
+2025-03-25T00:05:56.815439Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.815451Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 11 proposals from 10.0.168.198 for round 1
+2025-03-25T00:05:56.815462Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.819632Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:56.819671Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:56
+2025-03-25T00:05:56.819678Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 3 ==============
+2025-03-25T00:05:56.819924Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.191.91:30333/prevote on attempt 1
+2025-03-25T00:05:56.819926Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:56.819942Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:56.819947Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:56.820791Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:56.824484Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 3
+2025-03-25T00:05:56.825424Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 3/9
+2025-03-25T00:05:56.826046Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 3 proposals (threshold: 9).
+2025-03-25T00:05:56.826060Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 3 ==============
+2025-03-25T00:05:56.828800Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1
+2025-03-25T00:05:56.828824Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.156.196 for round 1
+2025-03-25T00:05:56.828835Z  INFO aleph_research::handlers::handle_prevote: Node 7: Round 1 already finalized, ignoring prevote.
+2025-03-25T00:05:56.833480Z  INFO aleph_research::processors::rbc_processor: 🔄 RBCProcessor: RoundFinalized received for round 1
+2025-03-25T00:05:56.833551Z  INFO aleph_research::processors::rbc_processor: 🧹 RBCProcessor: Removed stale messages. Deleted: 0 commits, 0 prevotes, 0 proposals.
+2025-03-25T00:05:56.833558Z  INFO aleph_research::processors::rbc_processor: 🔄 RBCProcessor: Creating and proposing next round 2
+2025-03-25T00:05:56.833564Z  INFO aleph_research::utils::create_transaction_data: Node 7: Creating 128 transactions with 4 shards and a transaction size of 256
+2025-03-25T00:05:56.865430Z  INFO aleph_research::utils::create_transaction_data: Creating proposal: 128 transactions, Parent Units = ["U1-11", "U1-3", "U1-6", "U1-8", "U1-4", "U1-9", "U1-5", "U1-2", "U1-1"] for round 2
+2025-03-25T00:05:56.865470Z  INFO aleph_research::processors::rbc_processor: ✅ RBCProcessor: Successfully created transaction data for round 2.
+2025-03-25T00:05:56.868009Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 7 preparing to send proposals to ["10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"] for round 2
+2025-03-25T00:05:56.881196Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.138.84:30333 for round 2
+2025-03-25T00:05:56.882243Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.152.130:30333 for round 2
+2025-03-25T00:05:56.883246Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.152.147:30333 for round 2
+2025-03-25T00:05:56.884392Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.156.196:30333 for round 2
+2025-03-25T00:05:56.885344Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.164.201:30333 for round 2
+2025-03-25T00:05:56.886430Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.168.11:30333 for round 2
+2025-03-25T00:05:56.888019Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.168.198:30333 for round 2
+2025-03-25T00:05:56.889515Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.184.205:30333 for round 2
+2025-03-25T00:05:56.890361Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:56.890546Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.189.187:30333 for round 2
+2025-03-25T00:05:56.891356Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.190.200:30333 for round 2
+2025-03-25T00:05:56.892185Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/20: Node 7 sending proposal to 10.0.191.91:30333 for round 2
+2025-03-25T00:05:56.894016Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.899913Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 1
+2025-03-25T00:05:56.904307Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 1
+2025-03-25T00:05:56.909141Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.909503Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:56.916938Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:56.930232Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.168.198:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.931484Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.189.187:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.932313Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.138.84:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.933450Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.184.205:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.934150Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.164.201:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.936182Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.168.11:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.938976Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.156.196:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.939545Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.191.91:30333 (round 2) on attempt 1.
+2025-03-25T00:05:56.945818Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:56.953479Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.020861Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.028116Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.190.200:30333 (round 2) on attempt 1.
+2025-03-25T00:05:57.079376Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.093872Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.159060Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.162851Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.166367Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:57.174235Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.152.130:30333 (round 2) on attempt 1.
+2025-03-25T00:05:57.175070Z  INFO aleph_research::requests::send_proposals: ✅ Proposal successfully delivered to Node 10.0.152.147:30333 (round 2) on attempt 1.
+2025-03-25T00:05:57.175418Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 2.
+2025-03-25T00:05:57.176289Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 7 enqueuing proposal for round 2 into RBCProcessor queue
+2025-03-25T00:05:57.176743Z  INFO aleph_research::processors::rbc_processor: ✅ RBCProcessor: Proposal for round 2 sent successfully.
+2025-03-25T00:05:57.176765Z  INFO aleph_research::processors::rbc_processor: 📥 RBCProcessor: Proposal for round 2 added to queue.
+2025-03-25T00:05:57.176861Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.176887Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.176895Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 4 ==============
+2025-03-25T00:05:57.177409Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.177496Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.178409Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.182356Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 2
+2025-03-25T00:05:57.184212Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:57.185816Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.185845Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.185856Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.186429Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.190696Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 4/9
+2025-03-25T00:05:57.191126Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 4 proposals (threshold: 9).
+2025-03-25T00:05:57.191139Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 4 ==============
+2025-03-25T00:05:57.193815Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.193851Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.193858Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 11 ==============
+2025-03-25T00:05:57.196747Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.196824Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.196832Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.197834Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.203502Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 5/9
+2025-03-25T00:05:57.204353Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 5 proposals (threshold: 9).
+2025-03-25T00:05:57.204370Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 11 ==============
+2025-03-25T00:05:57.206550Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.206585Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.206591Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 6 ==============
+2025-03-25T00:05:57.232922Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.250261Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.255377Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.255406Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.255411Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.256607Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.266655Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 6/9
+2025-03-25T00:05:57.267387Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 6 proposals (threshold: 9).
+2025-03-25T00:05:57.267408Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 6 ==============
+2025-03-25T00:05:57.276719Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.276772Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.276779Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 2 ==============
+2025-03-25T00:05:57.277488Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.277500Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.277505Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.278671Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.290028Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 7/9
+2025-03-25T00:05:57.290496Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 7 proposals (threshold: 9).
+2025-03-25T00:05:57.290513Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 2 ==============
+2025-03-25T00:05:57.294053Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.294111Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.294123Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 12 ==============
+2025-03-25T00:05:57.295383Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.295406Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.295411Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.296407Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.304873Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 8/9
+2025-03-25T00:05:57.305238Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 8 proposals (threshold: 9).
+2025-03-25T00:05:57.305248Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 12 ==============
+2025-03-25T00:05:57.307187Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2
+2025-03-25T00:05:57.307200Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.168.198 for round 2
+2025-03-25T00:05:57.307211Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:57.321158Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:57.343657Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:57.362650Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:57.366408Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.371404Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.374449Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:57.388937Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:57.412891Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:57.435070Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:57.443943Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.448228Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:57.471934Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:57.485450Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.485494Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.485502Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 11 ==============
+2025-03-25T00:05:57.485509Z  INFO aleph_research::handlers::handle_propose: Node 7: Already received propose for round 2 from Node 11. Terminating.
+2025-03-25T00:05:57.485805Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.485818Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.485823Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 4 ==============
+2025-03-25T00:05:57.485828Z  INFO aleph_research::handlers::handle_propose: Node 7: Already received propose for round 2 from Node 4. Terminating.
+2025-03-25T00:05:57.486528Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.486550Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.486555Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 2 ==============
+2025-03-25T00:05:57.486563Z  INFO aleph_research::handlers::handle_propose: Node 7: Already received propose for round 2 from Node 2. Terminating.
+2025-03-25T00:05:57.487201Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2
+2025-03-25T00:05:57.487212Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.189.187 for round 2
+2025-03-25T00:05:57.487233Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:57.503411Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:57.504962Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.515001Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:57.561976Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:57.590841Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:57.614482Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:57.637038Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:57.657587Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:57.676816Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:57.686318Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.693527Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:57.706178Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:57.706224Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:57
+2025-03-25T00:05:57.706231Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 7 ==============
+2025-03-25T00:05:57.706882Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:57.706894Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:57.706899Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:57.708127Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:57.722436Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 9/9
+2025-03-25T00:05:57.723224Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 9 proposals (threshold: 9).
+2025-03-25T00:05:57.723239Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 9 proposals.
+2025-03-25T00:05:57.732747Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:57.732781Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:57.738566Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:57.743232Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.744677Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.747680Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:57.752615Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:57.758782Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:57.766250Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:57.773771Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:57.785724Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:57.797059Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:57.809422Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:57.819190Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:57.819226Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.134.4 for round 2
+2025-03-25T00:05:57.819237Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:57.829769Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:57.836627Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.837373Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.838023Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:57.839675Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:57.847398Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 3
+2025-03-25T00:05:57.849826Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:57.850890Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:57.862464Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:57.892493Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:57.915555Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:57.934430Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:57.956006Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:57.972684Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:57.997223Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:58.005720Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 7 ==============
+2025-03-25T00:05:58.011062Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:58.011118Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:58
+2025-03-25T00:05:58.011125Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 7 ==============
+2025-03-25T00:05:58.011135Z  INFO aleph_research::handlers::handle_propose: Node 7: Already received propose for round 2 from Node 7. Terminating.
+2025-03-25T00:05:58.011683Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2
+2025-03-25T00:05:58.011695Z  INFO aleph_research::handlers::handle_propose: LATENCY START: 2025-03-25 00:05:58
+2025-03-25T00:05:58.011699Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Handling PROPOSE request for round 2 from Node 9 ==============
+2025-03-25T00:05:58.011797Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:58.017640Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.018127Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:58.023093Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.025678Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 3
+2025-03-25T00:05:58.029690Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:58.039059Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.040856Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:58.047039Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.049966Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.053879Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:58.061312Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:58.067824Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:58.073986Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:58.080690Z  INFO aleph_research::utils::dag_utils: Node 7: Ensuring DAG synchronization for round 2...
+2025-03-25T00:05:58.080720Z  INFO aleph_research::utils::dag_utils: Node 7: DAG latest round: 1, Target round: 2
+2025-03-25T00:05:58.080725Z  INFO aleph_research::utils::dag_utils: Node 7: DAG is synchronized for round 1 or beyond.
+2025-03-25T00:05:58.081394Z  INFO aleph_research::structs::node: Node 7: Updating proposal tracker for round 2...
+2025-03-25T00:05:58.090351Z  INFO aleph_research::structs::node: Node 7: Added proposal for round 2. Count: 10/9
+2025-03-25T00:05:58.090694Z  INFO aleph_research::handlers::handle_propose: Node 7: Current Proposal Tracker for round 2 has 10 proposals (threshold: 9).
+2025-03-25T00:05:58.090709Z  INFO aleph_research::handlers::handle_propose: Node 7: Proposal quorum met. Aggregating and multicasting prevote for 10 proposals.
+2025-03-25T00:05:58.099902Z  INFO aleph_research::handlers::handle_propose: Node 7: Multicasting prevote to all nodes...
+2025-03-25T00:05:58.099934Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:58.106564Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.115294Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.124974Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:58.135141Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.136133Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:58.145083Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.145107Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:58.147143Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 1
+2025-03-25T00:05:58.149948Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:58.154169Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 1
+2025-03-25T00:05:58.155315Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:58.159479Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:58.161493Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 1
+2025-03-25T00:05:58.164235Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:58.173072Z  INFO aleph_research::handlers::handle_propose: Node 7: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:58.182375Z  INFO aleph_research::handlers::handle_propose: Node 7: Handling prevote locally.
+2025-03-25T00:05:58.182410Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.134.4 for round 2
+2025-03-25T00:05:58.182422Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:58.199346Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:58.219677Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:58.240207Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:58.252353Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:58.293286Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.296881Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 1
+2025-03-25T00:05:58.297547Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:58.300187Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.300289Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.300554Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.300754Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 1
+2025-03-25T00:05:58.302623Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 1
+2025-03-25T00:05:58.304528Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 5/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.310225Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:58.323476Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:58.342025Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:58.355382Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.164.201:30333/prevote
+2025-03-25T00:05:58.356858Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 2
+2025-03-25T00:05:58.362210Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:58.367667Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:58.368082Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.138.84:30333/prevote
+2025-03-25T00:05:58.373827Z  INFO aleph_research::handlers::handle_propose: ============== Node 7: Proposal successfully handled for round 2 from sender 9 ==============
+2025-03-25T00:05:58.374855Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.378502Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2
+2025-03-25T00:05:58.378527Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.168.198 for round 2
+2025-03-25T00:05:58.378538Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:58.381540Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.388369Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.156.196:30333/prevote
+2025-03-25T00:05:58.389751Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:58.394275Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.184.205:30333/prevote
+2025-03-25T00:05:58.401597Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.401629Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:58.407494Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.168.198:30333/prevote
+2025-03-25T00:05:58.411896Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:58.414001Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.189.187:30333/prevote
+2025-03-25T00:05:58.429841Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.190.200:30333/prevote
+2025-03-25T00:05:58.431541Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 2
+2025-03-25T00:05:58.438406Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.447876Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:58.454139Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.138.84:30333/prevote on attempt 1
+2025-03-25T00:05:58.467735Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.156.196:30333/prevote on attempt 1
+2025-03-25T00:05:58.479230Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:58.483412Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.198:30333/prevote on attempt 1
+2025-03-25T00:05:58.487047Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.184.205:30333/prevote on attempt 1
+2025-03-25T00:05:58.490942Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.164.201:30333/prevote on attempt 1
+2025-03-25T00:05:58.493130Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:58.498273Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.505741Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:58.509925Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.189.187:30333/prevote on attempt 1
+2025-03-25T00:05:58.517332Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 6/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.520611Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:58.527550Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.534526Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.535172Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:58.541650Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.543865Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2
+2025-03-25T00:05:58.543888Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 10 proposals from 10.0.189.187 for round 2
+2025-03-25T00:05:58.543905Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:58.560668Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:58.585324Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 9 for round 2
+2025-03-25T00:05:58.605472Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:58.611966Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:58.622827Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:58.642900Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:58.660599Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:58.676677Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:58.694623Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:58.699260Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:58.704279Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.708063Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:58.709744Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:58.709966Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 1
+2025-03-25T00:05:58.711740Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.712038Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 1
+2025-03-25T00:05:58.716404Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.190.200:30333/prevote on attempt 1
+2025-03-25T00:05:58.721987Z  INFO aleph_research::handlers::handle_prevote: Node 7: Not enough prevote messages received. Waiting for quorum before proceeding to commit.
+2025-03-25T00:05:58.722883Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.732367Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2
+2025-03-25T00:05:58.732399Z  INFO aleph_research::handlers::handle_prevote: handle_prevote: Processing 9 proposals from 10.0.184.205 for round 2
+2025-03-25T00:05:58.732427Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 12 for round 2
+2025-03-25T00:05:58.734925Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:58.738174Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 6/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.742596Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:58.745752Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:58.746370Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 1 for round 2
+2025-03-25T00:05:58.752501Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:58.760174Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 7 for round 2
+2025-03-25T00:05:58.782023Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 4 for round 2
+2025-03-25T00:05:58.800224Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 6 for round 2
+2025-03-25T00:05:58.817317Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 3 for round 2
+2025-03-25T00:05:58.834746Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 10 for round 2
+2025-03-25T00:05:58.854227Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 2 for round 2
+2025-03-25T00:05:58.876320Z  INFO aleph_research::handlers::handle_prevote: Processing proposal from Node 11 for round 2
+2025-03-25T00:05:58.895913Z  INFO aleph_research::handlers::handle_prevote: Node 7: Quorum reached for round 2. Proceeding to send commits.
+2025-03-25T00:05:58.895943Z  INFO aleph_research::handlers::handle_prevote: Node 7: Sending commit messages for round 2 to all nodes ["10.0.138.84:30333", "10.0.152.130:30333", "10.0.152.147:30333", "10.0.156.196:30333", "10.0.164.201:30333", "10.0.168.11:30333", "10.0.168.198:30333", "10.0.184.205:30333", "10.0.189.187:30333", "10.0.190.200:30333", "10.0.191.91:30333"].
+2025-03-25T00:05:59.006503Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.138.84:30333/commit
+2025-03-25T00:05:59.009535Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.014299Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.168.11:30333/prevote
+2025-03-25T00:05:59.019650Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.152.130:30333/commit
+2025-03-25T00:05:59.030825Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.038500Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:59.039132Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.048746Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.054205Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.156.196:30333/commit
+2025-03-25T00:05:59.055815Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.064844Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:59.068290Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:05:59.074755Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 7/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.081774Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.082579Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:59.088332Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 1/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.093643Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.168.198:30333/commit
+2025-03-25T00:05:59.107349Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.184.205:30333/commit
+2025-03-25T00:05:59.110726Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.168.11:30333/prevote on attempt 3
+2025-03-25T00:05:59.124351Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.189.187:30333/commit
+2025-03-25T00:05:59.138470Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:05:59.151772Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:59.291039Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.311676Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.314697Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.340016Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.347374Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.348024Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.138.84:30333/commit on attempt 1
+2025-03-25T00:05:59.355732Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.130:30333/commit on attempt 1
+2025-03-25T00:05:59.366805Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:59.367080Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.156.196:30333/commit on attempt 1
+2025-03-25T00:05:59.372136Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:05:59.372921Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:59.373131Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.168.198:30333/commit
+2025-03-25T00:05:59.373300Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.184.205:30333/commit on attempt 1
+2025-03-25T00:05:59.375962Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.189.187:30333/commit on attempt 1
+2025-03-25T00:05:59.378555Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 5/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.378951Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.379040Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.379209Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 5/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.379870Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:59.380372Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 7/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.385133Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:05:59.385320Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 1/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:59.385892Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.487647Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.544706Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.553763Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.566240Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 2/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.567897Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:59.592357Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 8/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.605436Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:05:59.619319Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:59.633073Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.168.198:30333/commit
+2025-03-25T00:05:59.646091Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:05:59.661317Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.661468Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 2/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:59.665318Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.130:30333/prevote
+2025-03-25T00:05:59.674182Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 6/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.684889Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.691146Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.698771Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 6/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.784456Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.788902Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.795771Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.130:30333/prevote on attempt 4
+2025-03-25T00:05:59.798302Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:05:59.798622Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.168.198:30333/commit on attempt 2
+2025-03-25T00:05:59.800895Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 4
+2025-03-25T00:05:59.842275Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:05:59.842332Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:05:59.845739Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 8/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.883362Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:05:59.883402Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 2/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:05:59.943284Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:05:59.947999Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 6/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.952181Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 6/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:05:59.952297Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:05:59.952379Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.001521Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:00.010205Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.015515Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 3/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.072177Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 9/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.113023Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.133237Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.136289Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:00.146731Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:00.201789Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.236395Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.295112Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.309168Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.330848Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.337594Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 9/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.339518Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:00.339586Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:00.349381Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 3/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:00.360170Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 7/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.364836Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 7/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.370538Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:00.370583Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:00.371692Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.379859Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 4/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.575011Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.606125Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.647420Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.671112Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.676712Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.687500Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.687592Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 10/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.693328Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:00.698945Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.704642Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:00.714148Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 7/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.714535Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 4/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.714811Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 7/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.717570Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:00.730013Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:00.730282Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 3/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:00.792723Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.801084Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.858858Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:00.952949Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 8/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:00.979150Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.993312Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:00.997112Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.000139Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 10/20: Timeout after 200ms trying to send prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:01.000225Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:01.000668Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:01.000708Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:01.000718Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:01.008643Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 8/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:01.014877Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 4/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:01.017356Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 5/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:01.112827Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.164260Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 8
+2025-03-25T00:06:01.258453Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.270691Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:01.287675Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:01.304747Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:01.321319Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:01.321356Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 4/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:01.323633Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 8
+2025-03-25T00:06:01.328701Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 5
+2025-03-25T00:06:01.333682Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 5/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.334058Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 5/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.334211Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 11/20: Sending prevote to http://10.0.152.147:30333/prevote
+2025-03-25T00:06:01.424868Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.438107Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.476039Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.493824Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.499951Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 5/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:01.501230Z  INFO aleph_research::handlers::handle_propose: ✅ Node 7: Successfully sent prevote to http://10.0.152.147:30333/prevote on attempt 11
+2025-03-25T00:06:01.511356Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 5/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:01.520466Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.529053Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 5/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:01.529088Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:01.541390Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 5/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:01.568558Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 6/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.579512Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 6/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.645342Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.772558Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.785795Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 6/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.789653Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 6/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:01.800396Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 6/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:01.807293Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.810841Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 6/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:01.812853Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 6/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:01.826046Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 5/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:01.826096Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 5/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:01.938890Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.952780Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:01.991731Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.055734Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.060170Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 6/20: Timeout after 200ms trying to send commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:02.060468Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 6/20: Timeout after 200ms trying to send commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:02.061027Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 6/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:02.061041Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 6/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:02.070331Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.073255Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 6/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:02.091971Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 7/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.099057Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 7/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.232442Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.292346Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 7/20: Sending commit to http://10.0.152.147:30333/commit
+2025-03-25T00:06:02.303090Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 7/20: Sending commit to http://10.0.164.201:30333/commit
+2025-03-25T00:06:02.306803Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.309581Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 7/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.311572Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 7/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.315548Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 7/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:02.326438Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 6/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:02.326484Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 6/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:02.375228Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.443382Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.453570Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.147:30333/commit on attempt 7
+2025-03-25T00:06:02.458828Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.164.201:30333/commit on attempt 7
+2025-03-25T00:06:02.486796Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.510438Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.535980Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.551587Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 7/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:02.551621Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 7/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:02.563211Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 7/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:02.576369Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 8/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.582708Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 8/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.649915Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.721078Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.738667Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.761011Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 8/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:02.771607Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 7/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:02.831839Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.877102Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.878817Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 8/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.881282Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 7/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:02.881472Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 8/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:02.995795Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:02.998298Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 8/20: Timeout after 200ms trying to send commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:02.998329Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 8/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:03.019140Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.070908Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.115617Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.119425Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 9/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.128259Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 9/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.135331Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 8/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:03.141268Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.282588Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 9/20: Sending commit to http://10.0.168.11:30333/commit
+2025-03-25T00:06:03.293199Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 8/20: Timeout after 200ms trying to send commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:03.346059Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 9/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.347892Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 9/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.350349Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 8/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:03.380574Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.492087Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.503864Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.559352Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 10/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.566533Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.168.11:30333/commit on attempt 9
+2025-03-25T00:06:03.568379Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 9/20: Sending commit to http://10.0.190.200:30333/commit
+2025-03-25T00:06:03.579723Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 9/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:03.588962Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 10/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.774985Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.776959Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 10/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.863288Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 10/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:03.871781Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.190.200:30333/commit on attempt 9
+2025-03-25T00:06:03.879344Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 9/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:03.915911Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:03.965299Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.015475Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 11/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.089924Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 10/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:04.107455Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 11/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.108185Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.184527Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.223222Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 11/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.237027Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.272934Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.341264Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.389742Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.437007Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 11/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.438049Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 12/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.445173Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 10/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:04.484931Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.650374Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 11/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:04.662267Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 12/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.668215Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 12/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.705792Z  INFO aleph_research::controllers::api_routes: 🛑  Node 7: Round 1 is already finalized in DAG. Denying request.
+2025-03-25T00:06:04.863531Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 11/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:04.869002Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 13/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:04.869172Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 12/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.064621Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 12/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:05.080726Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 13/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.088169Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 13/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.281991Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 12/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:05.288290Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 13/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.289455Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 14/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.482725Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 13/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:05.489443Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 14/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.497525Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 14/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.690319Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 13/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:05.697807Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 15/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.698034Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 14/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.891794Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 14/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:05.911517Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 15/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:05.911517Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 15/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.112936Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 14/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:06.113026Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 16/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.127271Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 15/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.314412Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 15/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:06.328517Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 16/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.329409Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 16/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.527451Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 15/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:06.532070Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 17/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.539090Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 16/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.728609Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 16/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:06.742474Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 17/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.742704Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 17/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.937939Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 16/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:06.943736Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 18/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:06.948048Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 17/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.138978Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 17/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:07.148771Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 18/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.149190Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 18/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.347826Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 17/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:07.350040Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 19/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.355599Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 18/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.549066Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 18/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:07.557651Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 19/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.557888Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 19/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.758142Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 18/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:07.759312Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 20/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.763528Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 19/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.959317Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 19/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:07.966311Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 20/20: Sending prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:07.966879Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 20/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:08.166930Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 19/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:08.175651Z ERROR aleph_research::handlers::handle_propose: ⏰ Node 7: Attempt 20/20: Timeout after 200ms trying to send prevote to http://10.0.191.91:30333/prevote
+2025-03-25T00:06:08.368466Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 20/20: Sending commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:08.578820Z ERROR aleph_research::handlers::handle_prevote: ⏰ Attempt 20/20: Timeout after 200ms trying to send commit to http://10.0.191.91:30333/commit
+2025-03-25T00:06:08.795983Z  INFO aleph_research::handlers::handle_prevote: Node 7: Adding commit to queue for round 2
+sh-4.2$
