@@ -9,7 +9,7 @@ total_cpu=0
 total_mem=0
 node_count=0
 
-for node_path in node-*/; do
+for node_path in logs/node-*/; do
     cpu_file="${node_path}/cpu_usage"
     mem_file="${node_path}/mem_usage"
 

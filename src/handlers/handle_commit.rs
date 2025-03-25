@@ -263,9 +263,9 @@ pub async fn handle_commit(
     }
 
     
-    info!(
-        "============== Node {}: Exiting commit handler.==============",
-        node_id
-    );
+    // info!(
+    //     "============== Node {}: Exiting commit handler.==============",
+    //     node_id
+    // );
     Ok(())
 }

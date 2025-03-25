@@ -156,60 +156,32 @@ pub async fn handle_propose(
 
 
         info!("Node {}: Multicasting prevote to all nodes...", node_id);
-        
+
         for target_node in node_list {
             if target_node != node_ip {
                 let target_url = format!("http://{}/prevote", target_node);
                 info!("Node {}: Sending prevote to {}", node_id, target_url);
         
-                let client_clone = client.clone();
-                let prevote_request_clone = prevote_request.clone();
-                let message_count = node.lock().await.message_count.clone();
+                let response = client
+                    .post(&target_url)
+                    .json(&prevote_request)
+                    .timeout(Duration::from_millis(500))
+                    .send()
+                    .await;
         
-                tokio::spawn(async move {
-                    for attempt in 1..=20 {
-                        message_count.fetch_add(1, Ordering::Relaxed);
-                        info!("📤 Attempt {}/20: Sending prevote to {}", attempt, target_url);
-        
-                        match timeout(
-                            Duration::from_millis(200),
-                            client_clone.post(&target_url).json(&prevote_request_clone).send(),
-                        )
-                        .await
-                        {
-                            Ok(Ok(response)) if response.status().is_success() => {
-                                info!(
-                                    "✅ Node {}: Successfully sent prevote to {} on attempt {}",
-                                    node_id, target_url, attempt
-                                );
-                                break;
-                            }
-                            Ok(Ok(response)) => {
-                                let status = response.status();
-                                let text = response.text().await.unwrap_or_default();
-                                error!(
-                                    "❌ Node {}: Attempt {}/20: Prevote failed to {}. Status: {} | Response Body: {}",
-                                    node_id, attempt, target_url, status, text
-                                );
-                            }
-                            Ok(Err(e)) => {
-                                error!(
-                                    "❌ Node {}: Attempt {}/20: Network error while sending prevote to {}: {:?}",
-                                    node_id, attempt, target_url, e
-                                );
-                            }
-                            Err(_) => {
-                                error!(
-                                    "⏰ Node {}: Attempt {}/20: Timeout after 200ms trying to send prevote to {}",
-                                    node_id, attempt, target_url
-                                );
-                            }
-                        }
-        
-                        // Delay between retries
-                        sleep(Duration::from_millis(200)).await;
+                match response {
+                    Ok(resp) if resp.status().is_success() => {
+                        info!("Node {}: ✅ Prevote success to {}", node_id, target_url);
                     }
-                });
+                    Ok(resp) => {
+                        error!("Node {}: ❌ Prevote failed to {}. Status: {}", node_id, target_url, resp.status());
+                    }
+                    Err(e) => {
+                        error!("Node {}: ❌ Network error to {}: {:?}", node_id, target_url, e);
+                    }
+                }
+        
+                node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
         
@@ -225,11 +197,11 @@ pub async fn handle_propose(
         })?;
     }
 
-    // Step 8: Log successful handling
-    info!(
-        "============== Node {}: Proposal successfully handled for round {} from sender {} ==============",
-        node_id, round_id, propose_request.base.proposing_node_id
-    );
+    // // Step 8: Log successful handling
+    // info!(
+    //     "============== Node {}: Proposal successfully handled for round {} from sender {} ==============",
+    //     node_id, round_id, propose_request.base.proposing_node_id
+    // );
 
     Ok(())
 }

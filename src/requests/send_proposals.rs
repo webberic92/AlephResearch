@@ -1,4 +1,3 @@
-use futures::future::join_all;
 use reqwest::Client;
 use tracing::{error, info};
 use std::{sync::{atomic::Ordering, Arc}, time::Duration};
@@ -61,76 +60,55 @@ pub async fn send_proposals(
 
 
     let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
+    let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
 
-
-    let futures: Vec<_> = nodes.iter().map(|node_url| {
+    for node_url in nodes {
         let client = client.clone();
-        let node_url = node_url.clone();
         let proposal_clone = propose_request.clone();
-        let message_count = message_count.clone();
     
-        async move {
-            for attempt in 1..=20 {
+        info!(
+            "📤 Node {} sending proposal to {} for round {}",
+            node_id, node_url, proposal_clone.base.round_id
+        );
+    
+        message_count.fetch_add(1, Ordering::Relaxed);
+    
+        let res = client
+            .post(format!("http://{}/propose", node_url))
+            .json(&proposal_clone)
+            .timeout(Duration::from_millis(500))
+            .send()
+            .await;
+    
+        match res {
+            Ok(res) if res.status().is_success() => {
                 info!(
-                    "📤 Attempt {}/20: Node {} sending proposal to {} for round {}",
-                    attempt, node_id, node_url, proposal_clone.base.round_id
+                    "✅ Proposal successfully delivered to Node {} (round {}).",
+                    node_url, proposal_clone.base.round_id
                 );
-    
-                message_count.fetch_add(1, Ordering::Relaxed);
-    
-                let result = timeout(
-                    Duration::from_millis(200),
-                    client
-                        .post(format!("http://{}/propose", node_url))
-                        .json(&proposal_clone)
-                        .send(),
-                )
-                .await;
-    
-                match result {
-                    Ok(Ok(res)) if res.status().is_success() => {
-                        info!(
-                            "✅ Proposal successfully delivered to Node {} (round {}) on attempt {}.",
-                            node_url, proposal_clone.base.round_id, attempt
-                        );
-                        return Ok(());
-                    }
-                    Ok(Ok(res)) => {
-                        let status = res.status();
-                        let text = res.text().await.unwrap_or_else(|_| "No response body".to_string());
-                        error!(
-                            "❌ Attempt {}/20: Proposal failed for {}. Status: {}. Response: {}",
-                            attempt, node_url, status, text
-                        );
-                    }
-                    Ok(Err(e)) => {
-                        error!(
-                            "❌ Attempt {}/20: Network error while sending proposal to {}: {:?}",
-                            attempt, node_url, e
-                        );
-                    }
-                    Err(_) => {
-                        error!(
-                            "⏰ Attempt {}/20: Timeout after 200ms trying to send proposal to {}",
-                            attempt, node_url
-                        );
-                    }
-                }
-    
-                sleep(Duration::from_millis(200)).await;
+                results.push(Ok(()));
             }
-    
-            Err(anyhow!(
-                "❌ Node {}: Failed to send proposal to {} after 20 attempts.",
-                node_id,
-                node_url
-            ))
+            Ok(res) => {
+                let err_msg = format!(
+                    "❌ Proposal failed for {}. Status: {}. Response: {}",
+                    node_url,
+                    res.status(),
+                    res.text().await.unwrap_or_else(|_| "No response body".to_string())
+                );
+                error!("{}", err_msg);
+                results.push(Err(anyhow!(err_msg)));
+            }
+            Err(e) => {
+                let err_msg = format!(
+                    "❌ Network error while sending proposal to {}: {:?}",
+                    node_url, e
+                );
+                error!("{}", err_msg);
+                results.push(Err(anyhow!(err_msg)));
+            }
         }
-    }).collect();
-    
-
-
-    let results: Vec<Result<(), anyhow::Error>> = join_all(futures).await;
+    }
+   
 
     if results.iter().all(|res| res.is_ok()) {
         info!("✅ Successfully sent all proposals for round {}.", round_id);

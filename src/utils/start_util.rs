@@ -23,7 +23,7 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> 
         let message_count = node.lock().await.message_count.clone();
         message_count.fetch_add(1, Ordering::Relaxed);
         let url = format!("http://{}/health", peer);
-        match client.get(&url).send().await {
+        match client.get(&url).timeout(Duration::from_millis(500)).send().await {
             Ok(response) if response.status().is_success() => {
                 info!("Node {} is healthy.", peer);
             }
@@ -85,7 +85,7 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
         }
 
         attempts += 1;
-        sleep(Duration::from_secs(3)).await;
+        sleep(Duration::from_millis(500)).await;
     }
 
     Err(Error::msg("Timeout waiting for all nodes to become healthy"))
