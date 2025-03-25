@@ -15,14 +15,14 @@ use crate::{
 };
 
 /// ✅ **Helper Method to Validate Incoming Requests**
-async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64) -> bool {
+async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, proposing_node_id: usize) -> bool {
     let node_guard = node.lock().await;
     let dag_guard = node_guard.dag.lock().await;
 
     if dag_guard.contains_key(&request_round) {
         info!(
-            "🛑  Node {}: Round {} is already finalized in DAG. Denying request.",
-            node_guard.id, request_round
+            "🛑  Node {}: Round {} is already finalized in DAG. Denying request from node {}.",
+            node_guard.id, request_round, proposing_node_id
         );
         return false;
     }
@@ -43,7 +43,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(), parsed_payload.base.round_id).await {
+                            if !should_process_request(node.clone(), parsed_payload.base.round_id, parsed_payload.base.proposing_node_id as usize).await {
                                 return (
                                     StatusCode::OK,
                                     Json(Response { status: "🛑 Propose Request dropped: Node has reached that round.".to_string() }),
@@ -78,7 +78,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                 async move {
                     match serde_json::from_value::<PrevoteRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(),parsed_payload.proposals[0].base.round_id).await {
+                            if !should_process_request(node.clone(),parsed_payload.proposals[0].base.round_id, parsed_payload.proposals[0].base.proposing_node_id as usize).await {
                                 return (
                                     StatusCode::OK,
                                     Json(Response { status: "🛑 Prevote Request dropped: Node has reached that round.".to_string() }),
@@ -113,7 +113,7 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
                 async move {
                     match serde_json::from_value::<CommitRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(), parsed_payload.round_id).await {
+                            if !should_process_request(node.clone(), parsed_payload.round_id, parsed_payload.proposing_node_id).await {
                                 return (
                                     StatusCode::OK,
                                     Json(Response { status: "🛑 Commit Request dropped: Node has reached that round.".to_string() }),

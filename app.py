@@ -65,11 +65,12 @@ class TestAleph(Stack):
 
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
-                                        instance_type=ec2.InstanceType("t3.large"),
-                                        machine_image=ec2.MachineImage.latest_amazon_linux2(),
-                                        vpc=vpc,
-                                        security_group=security_group,
-                                        role=instance_role
+                instance_type=ec2.InstanceType("t3.medium"),
+                machine_image=ec2.MachineImage.latest_amazon_linux2(),
+                vpc=vpc,
+                security_group=security_group,
+                role=instance_role,
+                credit_specification=ec2.CpuCredits.UNLIMITED,
             )
 
             # Part 1: Initial Setup Commands

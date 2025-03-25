@@ -7,7 +7,7 @@ start_times=()
 end_times=()
 
 # Loop through all node_status files
-for node_path in node-*/; do
+for node_path in logs/node-*/; do
     file_path="${node_path}/node_status"
     [[ ! -f "$file_path" ]] && file_path="${node_path}/node_status.txt"
     

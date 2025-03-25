@@ -195,62 +195,34 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    let message_count = node.lock().await.message_count.clone();
-    info!(
-        "Node {}: Sending commit messages for round {} to all nodes {:?}.",
-        node_id, round_id, node_list
-    );
+    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
 
-    let commit_futures: Vec<_> = node_list.iter().map(|target_node| {
+    for target_node in node_list {
         let target_url = format!("http://{}/commit", target_node);
-        let client = client.clone();
         let commit_payload = commit_request.clone();
-        let message_count = message_count.clone();
     
-        async move {
-            for attempt in 1..=20 {
-                message_count.fetch_add(1, Ordering::Relaxed);
-                info!("📤 Attempt {}/20: Sending commit to {}", attempt, target_url);
+        message_count.fetch_add(1, Ordering::Relaxed);
     
-                match timeout(
-                    Duration::from_millis(200),
-                    client.post(&target_url).json(&commit_payload).send(),
-                )
-                .await
-                {
-                    Ok(Ok(response)) if response.status().is_success() => {
-                        info!("✅ Successfully sent commit to {} on attempt {}", target_url, attempt);
-                        break;
-                    }
-                    Ok(Ok(response)) => {
-                        let status = response.status();
-                        let text = response.text().await.unwrap_or_default();
-                        error!(
-                            "❌ Attempt {}/20: Commit failed to {}. Status: {} | Response Body: {}",
-                            attempt, target_url, status, text
-                        );
-                    }
-                    Ok(Err(e)) => {
-                        error!(
-                            "❌ Attempt {}/20: Network error while sending commit to {}: {:?}",
-                            attempt, target_url, e
-                        );
-                    }
-                    Err(_) => {
-                        error!(
-                            "⏰ Attempt {}/20: Timeout after 200ms trying to send commit to {}",
-                            attempt, target_url
-                        );
-                    }
-                }
-    
-                // Optional delay before retrying
-                sleep(Duration::from_millis(200)).await;
+        match client
+            .post(&target_url)
+            .json(&commit_payload)
+            .timeout(Duration::from_millis(500))
+            .send()
+            .await
+        {
+            Ok(response) if response.status().is_success() => {
+                info!("✅ Successfully sent commit to {}", target_url);
+            }
+            Ok(response) => {
+                error!("❌ Commit failed to {}. Status: {:?}", target_url, response);
+            }
+            Err(e) => {
+                error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
             }
         }
-    }).collect();
+    }
     
-    join_all(commit_futures).await;
+    
     
 
     if let Some(rbc_processor) = &rbc_processor {
@@ -260,7 +232,7 @@ pub async fn handle_prevote(
         error!("Node {}: RBCProcessor not initialized when trying to enqueue commit!", node_id);
     }
 
-    info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
+    // info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
     Ok(())
 }
 

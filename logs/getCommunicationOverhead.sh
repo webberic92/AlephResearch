@@ -7,7 +7,7 @@ echo "------------------------------------------------------"
 total_overhead=0
 node_count=0
 
-for node_path in node-*/; do
+for node_path in logs/node-*/; do
     file_path="${node_path}/node_status"
     if [[ ! -f "$file_path" ]]; then
         file_path="${node_path}/node_status.txt"
