@@ -1,8 +1,8 @@
 #!/bin/bash
 
 LOG_DIR="./"  # Assuming you're in the logs directory
-TX_PER_ROUND=5
-ROUNDS=5
+TX_PER_ROUND=128
+ROUNDS=64
 TOTAL_TX=$((TX_PER_ROUND * ROUNDS))
 
 echo "📊 Transaction Throughput per Node"
