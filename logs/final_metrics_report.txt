@@ -5,37 +5,38 @@
 ----------------------------------------------
 📊 Transaction Throughput per Node
 ----------------------------------
-logs/node-1/                             TPS: 0.03
-logs/node-10/                            TPS: 0.03
-logs/node-11/                            TPS: 0.03
-logs/node-12/                            TPS: 0.03
-logs/node-2/                             TPS: 0.03
-logs/node-3/                             TPS: 0.03
-logs/node-4/                             TPS: 0.03
-logs/node-5/                             TPS: 0.03
-logs/node-6/                             TPS: 0.03
-logs/node-7/                             TPS: 0.03
-logs/node-8/                             TPS: 0.03
+node-1/                                  TPS: 0.20
+node-10/                                 TPS: 0.20
+node-11/                                 TPS: 0.20
+node-12/                                 TPS: 0.20
+node-2/                                  TPS: 0.20
+node-3/                                  TPS: 0.20
+node-4/                                  TPS: 0.20
+node-5/                                  TPS: 0.20
+node-6/                                  TPS: 0.20
+node-7/                                  TPS: 0.20
+node-8/                                  TPS: 0.20
+node-9/                                  TPS: 0.20
 ----------------------------------
-📈 Average TPS across 11 nodes (Tx/Round: 5, Rounds: 5): 0.03
+📈 Average TPS across 12 nodes (Tx/Round: 5, Rounds: 5): 0.20
 
 📡 Communication Overhead
 ----------------------------------------------
 📡 Communication Overhead per Node (Final Round Only)
 ------------------------------------------------------
-logs/node-1/                             Overhead: 657 messages
-logs/node-10/                            Overhead: 662 messages
-logs/node-11/                            Overhead: 607 messages
-logs/node-12/                            Overhead: 652 messages
-logs/node-2/                             Overhead: 700 messages
-logs/node-3/                             Overhead: 673 messages
-logs/node-4/                             Overhead: 692 messages
-logs/node-5/                             Overhead: 713 messages
-logs/node-6/                             Overhead: 687 messages
-logs/node-7/                             Overhead: 719 messages
-logs/node-8/                             Overhead: 618 messages
-------------------------------------------------------
-📈 Average Communication Overhead across 11 nodes: 670.90 messages
+node-1/                                  ⚠️ Could not parse overhead
+node-10/                                 ⚠️ Could not parse overhead
+node-11/                                 ⚠️ Could not parse overhead
+node-12/                                 ⚠️ Could not parse overhead
+node-2/                                  ⚠️ Could not parse overhead
+node-3/                                  ⚠️ Could not parse overhead
+node-4/                                  ⚠️ Could not parse overhead
+node-5/                                  ⚠️ Could not parse overhead
+node-6/                                  ⚠️ Could not parse overhead
+node-7/                                  ⚠️ Could not parse overhead
+node-8/                                  ⚠️ Could not parse overhead
+node-9/                                  ⚠️ Could not parse overhead
+❌ No valid data found.
 
 🖥️  Resource Utilization (CPU & Memory)
 ----------------------------------------------
@@ -43,27 +44,25 @@ logs/node-8/                             Overhead: 618 messages
 ---------------------------------------------------------
 Node                                     CPU Util (%)    Mem Util (%)   
 ---------------------------------------------------------
-logs/node-1/                             23.09           37.56          
-logs/node-10/                            21.56           37.48          
-logs/node-11/                            22.62           37.55          
-logs/node-12/                            24.34           38.37          
-logs/node-2/                             23.80           37.59          
-logs/node-3/                             25.22           37.70          
-logs/node-4/                             22.72           37.57          
-logs/node-5/                             25.22           37.78          
-logs/node-6/                             24.03           37.52          
-logs/node-7/                             26.72           37.63          
-logs/node-8/                             21.56           38.28          
+node-1/                                  34.76           32.18          
+node-10/                                 30.12           31.65          
+node-11/                                 31.37           31.81          
+node-12/                                 37.51           32.65          
+node-2/                                  30.73           31.75          
+node-3/                                  35.02           32.00          
+node-4/                                  28.27           31.75          
+node-5/                                  21.67           31.53          
+node-6/                                  28.44           31.75          
+node-7/                                  35.22           32.49          
+node-8/                                  34.94           31.91          
+node-9/                                  33.78           32.37          
 ---------------------------------------------------------
-📊 Average CPU Utilization across 11 nodes: 23.71%
-📊 Average Memory Utilization across 11 nodes: 37.73%
+📊 Average CPU Utilization across 12 nodes: 31.81%
+📊 Average Memory Utilization across 12 nodes: 31.98%
 
 ⏱️  Consensus Latency
 ----------------------------------------------
 ⏱️  Measuring Latency Across Nodes
 --------------------------------------------
-📍 Earliest Start: 2025-03-25T22:13:22.495945
-📍 Latest End:     2025-03-25T22:27:30.953568
---------------------------------------------
-📈 Total Latency: 848.458 seconds
+❌ No LATENCY START/END timestamps found.
 
