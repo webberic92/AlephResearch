@@ -71,8 +71,11 @@ pub async fn send_proposals(
             node_id, node_url, proposal_clone.base.round_id
         );
     
-        message_count.fetch_add(1, Ordering::Relaxed);
-    
+            // ✅ Start latency if this is the first message
+            let count = message_count.fetch_add(1, Ordering::Relaxed);
+            if count == 0 {
+                info!("LATENCY START");
+            }
         let res = client
             .post(format!("http://{}/propose", node_url))
             .json(&proposal_clone)

@@ -53,14 +53,12 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
             node_guard.nodes.clone()
         };
 
-        let message_count = node.lock().await.message_count.clone();
 
         let mut unhealthy_nodes = Vec::new();
 
         let mut health_checks = vec![];
         for node_url in nodes {
             let client = client.clone();
-            let message_count = message_count.clone();
             let url = node_url.clone();
 
             let check = async move {
@@ -69,8 +67,6 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
                     Ok(response) => response.status().is_success(),
                     Err(_) => false,
                 };
-
-                message_count.fetch_add(1, Ordering::Relaxed);
 
                 if !success {
                     Some(url)
