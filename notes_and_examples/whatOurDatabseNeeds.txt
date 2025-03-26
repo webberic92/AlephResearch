@@ -5,3 +5,6 @@
 (DONE) Communication Overhead: Total number of messages exchanged during the consensus process.
 
 (DONE) Resource Utilization: CPU and memory usage across nodes during the RBC process.
+
+
+Batch Sizes: 256 to 131,072 transactions per batch
