@@ -4,7 +4,7 @@ use tokio::sync::Mutex;
 use std::sync::{atomic::Ordering, Arc};
 use std::time::Duration;
 use tokio::time::sleep;
-use tracing::info;
+use tracing::{info, warn};
 use crate::structs::node::Node;
 
 /// **🔄 Updated: Use `Arc<Mutex<Node>>`**  
@@ -45,50 +45,56 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> 
 /// **🛠️ Wait until all nodes report healthy**  
 /// - Retries up to 10 times, checking every 3 seconds.
 pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
-    let max_retries = 10;
-    let mut attempts = 1;
-    info!("Node: Entering wait_for_all_nodes_health.");
-
-    while attempts < max_retries {
-        info!("Checking health of all nodes...attempt {}", attempts);
+    loop {
+        info!("🔍 Checking health of all nodes...");
 
         let nodes = {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for start utils");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for start utils");
+            let node_guard = node.lock().await;
             node_guard.nodes.clone()
         };
 
-        let message_count = node.lock().await.message_count.clone(); // ✅ Clone before the async block
+        let message_count = node.lock().await.message_count.clone();
 
-        let health_checks = nodes.into_iter().map(|node_url| {
+        let mut unhealthy_nodes = Vec::new();
+
+        let mut health_checks = vec![];
+        for node_url in nodes {
             let client = client.clone();
-            let message_count = message_count.clone(); // ✅ Clone again for each async task
-        
-            async move {
-                let health_url = format!("http://{}/health", node_url);
+            let message_count = message_count.clone();
+            let url = node_url.clone();
+
+            let check = async move {
+                let health_url = format!("http://{}/health", url);
                 let success = match client.get(&health_url).send().await {
                     Ok(response) => response.status().is_success(),
                     Err(_) => false,
                 };
-        
-                message_count.fetch_add(1, Ordering::Relaxed); // ✅ Always increment after request
-        
-                success
-            }
-        });
 
-        let results: Vec<bool> = futures::future::join_all(health_checks).await;
-        if results.iter().all(|&r| r) {
-            info!("All nodes are healthy.");
-            return Ok(());
+                message_count.fetch_add(1, Ordering::Relaxed);
+
+                if !success {
+                    Some(url)
+                } else {
+                    None
+                }
+            };
+
+            health_checks.push(check);
         }
 
-        attempts += 1;
-        sleep(Duration::from_millis(500)).await;
-    }
+        let results: Vec<Option<String>> = futures::future::join_all(health_checks).await;
+        for result in results.into_iter().flatten() {
+            unhealthy_nodes.push(result);
+        }
 
-    Err(Error::msg("Timeout waiting for all nodes to become healthy"))
+        if unhealthy_nodes.is_empty() {
+            info!("✅ All nodes are healthy.");
+            return Ok(());
+        } else {
+            warn!("⛔ Unhealthy nodes detected: {:?}: Trying again....", unhealthy_nodes);
+            sleep(Duration::from_secs(1)).await;
+        }
+    }
 }
 
 

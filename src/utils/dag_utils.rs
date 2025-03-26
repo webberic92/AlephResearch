@@ -36,10 +36,10 @@ let node_guard = node.lock().await;
 
     // 🚀 **Optimization: Handle First Round**
     if current_round == 1 {
-        info!(
-            "Node {}: First round detected (round 1). Skipping DAG sync check.",
-            node_id
-        );
+        // info!(
+        //     "Node {}: First round detected (round 1). Skipping DAG sync check.",
+        //     node_id
+        // );
         return Ok(());
     }
 
