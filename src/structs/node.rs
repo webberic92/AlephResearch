@@ -152,7 +152,7 @@ let node_guard = node.lock().await;
         let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
 
-        tracing::info!("Node {}: Updating proposal tracker for round {}...", node_id, round_id);
+        // tracing::info!("Node {}: Updating proposal tracker for round {}...", node_id, round_id);
 
         let proposal_count;
         let stored_proposals;
@@ -167,8 +167,8 @@ let node_guard = node.lock().await;
 
         let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
         tracing::info!(
-            "Node {}: Added proposal for round {}. Count: {}/{}",
-            node_id, round_id, proposal_count, required_proposals
+            "Node {}: Added proposal for round {} from node {}. Count: {}/{}",
+            node_id, round_id,propose_request.base.proposing_node_id, proposal_count, required_proposals
         );
 
         Ok((proposal_count, required_proposals, stored_proposals))

@@ -64,17 +64,14 @@ async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
     client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
-    info!("Node: Entering execute_transaction_logic.");
-    wait_for_all_nodes_health(&client, node.clone()).await?;  // ✅ FIXED
+    wait_for_all_nodes_health(&client, node.clone()).await?;  
 
     // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {
             let node_id = {
-                //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
             let node_guard = node.lock().await;
-            //info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
-                node_guard.id
+            node_guard.id
             };
             let round = propose_request.base.round_id;
 
@@ -83,7 +80,6 @@ async fn execute_transaction_logic(
             );
 
             // ✅ Step 2: Send proposal
-            info!("Node {}: Sending proposal for round {}...", node_id, round);
             if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
                 error!(
                     "Node {}: Failed to send proposal for round {}. Error: {:?}",
@@ -109,6 +105,5 @@ async fn execute_transaction_logic(
             );
         }
     }
-    info!("Node: Exiting transaction logic from beggining.");
     Ok(())
 }

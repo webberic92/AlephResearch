@@ -3,7 +3,9 @@ use chrono::Local;
 use tokio::sync::Mutex;
 use tracing::{info, error};
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{node::Node, requests::CommitRequest}, utils::config_util::write_finalized_dag_to_file
+    processors::priority_queue::RBCMessage,
+    structs::{node::Node, requests::CommitRequest},
+    utils::config_util::write_finalized_dag_to_file,
 };
 
 pub async fn handle_commit(
@@ -11,79 +13,47 @@ pub async fn handle_commit(
     commit_request: CommitRequest,
 ) -> Result<(), String> {
     let (node_id, round_id) = {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for Entering handle commit");
         let node_guard = node.lock().await;
-        // ✅ Access message_count through the already locked `node_guard`
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
-//info!("🔓 [DEBUG] Acquired node lock for Entering handle commit");
         (node_guard.id, commit_request.round_id)
     };
 
-    info!(
-        "============== Node {}: Handling commit request from {} for round {} ==============",
-        node_id, commit_request.proposing_node_id, round_id
-    );
-
-
-    // ✅ Exit early if the round is already finalized
     {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for handle commit 1");
         let node_guard = node.lock().await;
-//info!("🔓 [DEBUG] Acquired node lock for for handle commit 1");
         let dag_guard = node_guard.dag.lock().await;
-
         if dag_guard.contains_key(&round_id) {
-            info!(
-                "Node {}: Commit for round {} already finalized. Ignoring duplicate commit request.",
-                node_id, round_id
-            );
-            return Ok(());  
+            info!("Node {}: Commit for round {} already finalized. Ignoring duplicate.", node_id, round_id);
+            return Ok(());
         }
-    } 
+    }
 
     let commit_count;
     let quorum_threshold;
-
     {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
         let mut commit_tracker = node_guard.commit_tracker.lock().await;
 
-        // ✅ Ensure each proposer commits only once per round
         let round_commits = commit_tracker.entry(round_id).or_insert_with(Vec::new);
         if round_commits.iter().any(|c| c.proposing_node_id == commit_request.proposing_node_id) {
-            info!(
-                "Node {}: Duplicate commit from {} for round {}. Ignoring.",
-                node_id, commit_request.proposing_node_id, round_id
-            );
+            info!("Node {}: Duplicate commit from {} for round {}.", node_id, commit_request.proposing_node_id, round_id);
             return Ok(());
         }
 
         round_commits.push(commit_request.clone());
         commit_count = round_commits.len();
         quorum_threshold = node_guard.get_quorum_threshold();
-    } 
+    }
 
-    info!(
-        "Node {}: Commit count for round {} is {}/{}.",
-        node_id, round_id, commit_count, quorum_threshold
-    );
+    info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
     if commit_count == quorum_threshold {
-        info!(
-            "Node {}: Finalizing round {} with {}/{} commits.",
-            node_id, round_id, commit_count, quorum_threshold
-        );
+        info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 
-        let all_commits;
-        {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
+        let all_commits = {
+            let node_guard = node.lock().await;
             let mut commit_tracker = node_guard.commit_tracker.lock().await;
-            all_commits = commit_tracker.remove(&round_id).unwrap_or_default();
-        }
+            commit_tracker.remove(&round_id).unwrap_or_default()
+        };
 
         let mut all_units = Vec::new();
         for commit in &all_commits {
@@ -91,28 +61,33 @@ pub async fn handle_commit(
         }
 
         {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
+            let node_guard = node.lock().await;
             let mut dag = node_guard.dag.lock().await;
             let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
-
             for unit in all_units {
-                let unit_merkle_root = &unit.merkle_root;
-
-                if !dag_units.iter().any(|u| u.merkle_root == *unit_merkle_root) {
+                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
                     dag_units.push(unit.clone());
                 }
             }
         }
 
+        // ✅ Immediately emit RoundFinalized event before doing anything else
+        {
+            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
+            let round_finalized = RBCMessage::RoundFinalized(round_id);
+            let node_guard = node.lock().await;
+            if let Some(rbc_processor) = &node_guard.rbc_processor {
+                rbc_processor.enqueue_message(round_finalized).await;
+            } else {
+                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
+            }
+        }
+
         let finalized_dag = {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
+            let node_guard = node.lock().await;
             let dag_guard = node_guard.dag.lock().await;
-            dag_guard.clone()  
-        }; 
+            dag_guard.clone()
+        };
 
         if let Err(e) = write_finalized_dag_to_file(
             "/home/aleph-node/finalized_dag",
@@ -121,39 +96,36 @@ pub async fn handle_commit(
         )
         .await
         {
-            error!(
-                "Node {}: Failed to write finalized DAG: {:?}",
-                node_id, e
-            );
-            return Err(format!("Failed to write finalized DAG: {:?}", e));
+            error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
+            return Err(format!("DAG write failed: {:?}", e));
         }
+
         let message_count = node.lock().await.message_count.clone();
-
-        info!(
-            "Node {}: Finalized round {} USE THIS FOR COMMUNICATION OVERHEAD {:?}",
-            node_id, round_id, message_count
-        );
-
+        info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
         info!(
             "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
             node_id, round_id, commit_count, quorum_threshold
         );
-
-        let total_rounds: u64;
-        let round_id: u64;
+        // ✅ Update round locally
         {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for Entering handle commit");
             let node_guard = node.lock().await;
-            //info!("🔓 [DEBUG] Acquired node lock for Entering handle commit");
-            round_id = commit_request.round_id;
-            total_rounds = node_guard.total_rounds as u64;
+            let mut current_round = node_guard.current_round.lock().await;
+            if *current_round == round_id {
+                *current_round += 1;
+                info!("Node {}: Local round advanced to {}", node_id, *current_round);
+            }
         }
 
-        if round_id >= total_rounds {
-            info!("Node {}: Total Round {} finalized. Exiting commit handler Application DONE.", node_id,total_rounds);
-                // Start Latency Logger
-                let current_time = Local::now().format("%Y-%m-%d %H:%M:%S").to_string();
-                info!("LATENCY END: {}", current_time);
+        // ✅ Final round: log, upload, terminate
+        {
+            let total_rounds = {
+                let node_guard = node.lock().await;
+                node_guard.total_rounds as u64
+            };
+
+            if round_id >= total_rounds {
+                info!("Node {}: Round {} was final. Shutting down.", node_id, round_id);
+                info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
                 let (instances, txs, rounds, node_id) = {
                     let node_guard = node.lock().await;
@@ -164,108 +136,29 @@ pub async fn handle_commit(
                         node_guard.id,
                     )
                 };
-                
+
                 let s3_upload_cmd = format!(
                     r#"(S3_FOLDER="logs/nodes_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
-                    instances = instances,
-                    txs = txs,
-                    rounds = rounds,
-                    node_id = node_id,
                 );
-                
-                // 🔁 Spawn the background process to upload logs to S3
+
                 tokio::spawn(async move {
-                    match Command::new("sh")
-                        .arg("-c")
-                        .arg(&s3_upload_cmd)
-                        .spawn()
-                    {
-                        Ok(_) => info!("✅ S3 upload command executed: {}", s3_upload_cmd),
-                        Err(e) => error!("❌ Failed to execute S3 upload command: {:?}", e),
+                    match Command::new("sh").arg("-c").arg(&s3_upload_cmd).spawn() {
+                        Ok(_) => info!("✅ S3 upload triggered."),
+                        Err(e) => error!("❌ S3 upload command failed: {:?}", e),
                     }
                 });
-            
-            
-            
-            
-            {
-                let mut node_guard = node.lock().await;
-            
-                if node_guard.rbc_processor.is_some() {
-                    info!("🛑 Terminating RBCProcessor...");
-            
-                    // ✅ Take the processor out of Node safely
-                    let processor = node_guard.rbc_processor.take();
-            
-                    // ✅ Drop the lock before performing termination
-                    drop(node_guard);
-            
-                    if let Some(processor) = processor {
-                        info!("🗑️ Dropping RBCProcessor instance...");
-                        drop(processor); // ✅ This actually kills it
+
+                {
+                    let mut node_guard = node.lock().await;
+                    if let Some(processor) = node_guard.rbc_processor.take() {
+                        drop(processor);
+                        info!("🛑 RBCProcessor terminated.");
                     }
-            
-                    info!("✅ RBCProcessor successfully terminated.");
                 }
             }
-
-
-            {
-                //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-            let node_guard = node.lock().await;
-            //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
-                let mut current_round = node_guard.current_round.lock().await;
-                if *current_round == round_id {
-                    *current_round += 1;
-                    info!(
-                        "Node {}: Local round advanced to {}",
-                        node_id, *current_round
-                    );
-                }
-            }
-
-
-            
-
-
-            return Ok(());
-        }
-
-        // ✅ **Step 26:** Increment the round if applicable
-        {
-            //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
-            let mut current_round = node_guard.current_round.lock().await;
-            if *current_round == round_id {
-                *current_round += 1;
-                info!(
-                    "Node {}: Local round advanced to {}",
-                    node_id, *current_round
-                );
-            }
-        }
-
-        // ✅ Emit RoundFinalized Event when the round is finalized
-        info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
-        let round_finalized_message = RBCMessage::RoundFinalized(round_id);
-
-        // ✅ Acquire lock on `node` to access `rbc_processor`
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for round handle commit");
-        let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for round handle commit");
-        if let Some(rbc_processor) = &node_guard.rbc_processor {
-            rbc_processor.enqueue_message(round_finalized_message).await; // ✅ Call from `node`
-        } else {
-            error!("❌ Node {}: RBCProcessor not initialized when trying to enqueue RoundFinalized event!", node_id);
         }
     }
 
-    
-    // info!(
-    //     "============== Node {}: Exiting commit handler.==============",
-    //     node_id
-    // );
     Ok(())
 }

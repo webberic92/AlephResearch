@@ -50,19 +50,10 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
-    info!(
-        "handle_prevote: Processing {} proposals from {} for round {}",
-        prevote_request.proposals.len(),
-        prevote_request.sender_url,
-        prevote_request.proposals[0].base.round_id
-    );
 
-    // Extract values **without holding the lock long**
+
     let (node_id, round_id, quorum_threshold, total_nodes, node_list, rbc_processor) = {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for handle prevote");
-                // ✅ Access message_count through the already locked `node_guard`
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
             node_guard.id,
@@ -73,7 +64,26 @@ pub async fn handle_prevote(
             node_guard.rbc_processor.clone(),
             
         )
-    }; // ✅ Release lock immediately
+    }; 
+
+    // ✅ Early return if quorum has already been reached for this round
+    {
+        let node_guard = node.lock().await;
+        let quorum_votes = node_guard.quorum_votes.lock().await;
+        let round_key = round_id.to_be_bytes().to_vec();
+
+        if let Some(voter_set) = quorum_votes.get(&round_key) {
+            if voter_set.len() >= quorum_threshold {
+                info!(
+                    "Node {}: Quorum already reached for round {} ({} votes). Dropping incoming prevote.",
+                    node_guard.id, round_id, voter_set.len()
+                );
+                return Ok(());
+            }
+        }
+    }
+
+
 
     {
         let node_guard = node.lock().await;
@@ -191,7 +201,7 @@ pub async fn handle_prevote(
         return Ok(());
     }
 
-    info!("Node {}: Quorum reached for round {}. Proceeding to send commits.", node_id, round_id);
+    info!("Node {}: Prevote Quorum reached for round {}. Proceeding to send commits.", node_id, round_id);
 
     let commit_request = CommitRequest {
         units: reconstructed_units,
@@ -201,12 +211,22 @@ pub async fn handle_prevote(
 
     let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
 
+    // ✅ Enqueue own commit before broadcasting
+    if let Some(rbc_processor) = &rbc_processor {
+        info!("Node {}: Adding *local* commit to queue for round {}", node_id, round_id);
+        rbc_processor.enqueue_message(RBCMessage::Commit(commit_request.clone())).await;
+    } else {
+        error!("Node {}: RBCProcessor not initialized when trying to enqueue *local* commit!", node_id);
+    }
+
+
     for target_node in node_list {
         let target_url = format!("http://{}/commit", target_node);
         let commit_payload = commit_request.clone();
     
         message_count.fetch_add(1, Ordering::Relaxed);
-    
+        info!("📤 Node {}: Sending commit to {} for round {}", node_id, round_id, target_node);
+
         match client
             .post(&target_url)
             .json(&commit_payload)
@@ -226,13 +246,6 @@ pub async fn handle_prevote(
         }
     }
     
-    if let Some(rbc_processor) = &rbc_processor {
-        info!("Node {}: Adding commit to queue for round {}", node_id, round_id);
-        rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
-    } else {
-        error!("Node {}: RBCProcessor not initialized when trying to enqueue commit!", node_id);
-    }
-
     Ok(())
 }
 
