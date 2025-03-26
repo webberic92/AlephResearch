@@ -2,8 +2,8 @@ use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
-use std::{sync::{atomic::Ordering, Arc}, time::Duration};
-use tracing::{error, info};
+use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
+use tracing::{error, info, warn};
 use reqwest::Client;
 use crate::{
     processors::priority_queue::RBCMessage, structs::{
@@ -75,24 +75,25 @@ pub async fn handle_prevote(
         )
     }; // ✅ Release lock immediately
 
-    // ✅ **Immediately exit if the round is already committed**
     {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for handle prevote");
-        let dag_guard = node_guard.dag.lock().await;
-
-        if dag_guard.contains_key(&round_id) {
-            info!("Node {}: Round {} already finalized, ignoring prevote.", node_id, round_id);
+        let mut quorum_votes = node_guard.quorum_votes.lock().await;
+        let voter_set = quorum_votes.entry(round_id.to_be_bytes().to_vec()).or_insert_with(HashSet::new);
+        // Check if this node already voted
+        if voter_set.contains(&prevote_request.sender_url) {
+            info!(
+                "Node {}: Already received prevote from Node {} for round {}. Ignoring.",
+                node_id, prevote_request.sender_url, round_id
+            );
             return Ok(());
         }
-    } // ✅ Release lock before processing proposals
+    } 
 
     let mut reconstructed_units = Vec::new();
 
     // ✅ **Process each proposal separately**
     for proposal in &prevote_request.proposals {
-        info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
+        // info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
         let mut reconstructed_transactions = Vec::new();
 
         for transaction in &proposal.transactions {
@@ -164,26 +165,29 @@ pub async fn handle_prevote(
         reconstructed_units.push(reconstructed_unit);
     }
 
-    let epoch_key = round_id.to_be_bytes().to_vec();
+
+    // 👇 Ensure that `prevote_request` contains the sender's node ID
+    let sender_id = prevote_request.sender_url;
+    let round_key = round_id.to_be_bytes().to_vec();
     let vote_count;
+
     {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for handle prevote");
         let node_guard = node.lock().await;
-        //info!("🔓 [DEBUG] Acquired node lock for handle prevote");
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let count = quorum_votes.entry(epoch_key.clone()).or_insert(0);
 
-        if *count >= quorum_threshold {
-            info!("Node {}: Ignoring prevote for round {}. Quorum already met.", node_id, round_id);
-            return Ok(());  
-        }
+        // Get or insert a new HashSet for this round
+        let voter_set = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
 
-        *count += 1;
-        vote_count = *count;
-    } 
+        // Insert the new vote
+        voter_set.insert(sender_id);
+        vote_count = voter_set.len();
+    }
 
     if vote_count < quorum_threshold {
-        info!("Node {}: Not enough prevote messages received. Waiting for quorum before proceeding to commit.", node_id);
+        info!(
+            "Node {}: Not enough prevote messages received ({}/{}). Waiting for quorum before proceeding to commit.",
+            node_id, vote_count, quorum_threshold
+        );
         return Ok(());
     }
 
@@ -222,9 +226,6 @@ pub async fn handle_prevote(
         }
     }
     
-    
-    
-
     if let Some(rbc_processor) = &rbc_processor {
         info!("Node {}: Adding commit to queue for round {}", node_id, round_id);
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
@@ -232,7 +233,6 @@ pub async fn handle_prevote(
         error!("Node {}: RBCProcessor not initialized when trying to enqueue commit!", node_id);
     }
 
-    // info!("✅ Node {}: Successfully processed PREVOTE for round {}.", node_id, round_id);
     Ok(())
 }
 

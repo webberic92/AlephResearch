@@ -1,5 +1,5 @@
 use std::{
-    collections::HashMap,
+    collections::{HashMap, HashSet},
     sync::{atomic::AtomicU64, Arc},
 };
 use reqwest::Client;
@@ -16,7 +16,7 @@ use crate::utils::events::Event;
 pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
-    pub quorum_votes: Arc<Mutex<HashMap<Vec<u8>, usize>>>,
+    pub quorum_votes: Arc<Mutex<HashMap<Vec<u8>, HashSet<String>>>>,
     pub current_round: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
     pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,
     pub dag: Arc<Mutex<HashMap<u64, Vec<DagUnit>>>>,
@@ -122,15 +122,24 @@ impl Node {
     /// **Check if Quorum is Reached**
     pub async fn is_quorum_reached(&self, round_id: u64) -> bool {
         let quorum_threshold = self.get_quorum_threshold();
-        let vote_count = self.quorum_votes.lock().await.get(&round_id.to_be_bytes().to_vec()).cloned().unwrap_or(0);
+        let epoch_key = round_id.to_be_bytes().to_vec();
 
-        info!(
-            "Node {}: Checking quorum for round {}. Votes: {}, Threshold: {}",
-            self.id, round_id, vote_count, quorum_threshold
-        );
+        let vote_count = {
+            let quorum_votes = self.quorum_votes.lock().await;
+            quorum_votes
+                .get(&epoch_key)
+                .map(|voters| voters.len())
+                .unwrap_or(0)
+        };
+
+        // info!(
+        //     "Node {}: Checking quorum for round {}. Unique votes: {}, Threshold: {}",
+        //     self.id, round_id, vote_count, quorum_threshold
+        // );
 
         vote_count >= quorum_threshold
     }
+
 
     /// **🔄 Update Proposal Tracker**
     pub async fn update_proposal_tracker(

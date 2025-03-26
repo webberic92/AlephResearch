@@ -3,7 +3,7 @@ use base64::{ engine::general_purpose, Engine };
 use chrono::Local;
 use reqwest::Client;
 use tokio::{sync::Mutex, time::{sleep, timeout}};
-use tracing::{ error, info };
+use tracing::{ error, info, warn };
 use crate::{
     handlers::handle_prevote::handle_prevote, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
 };
@@ -70,8 +70,6 @@ pub async fn handle_propose(
         );
         // ✅ Access message_count through the already locked `node_guard`
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
-        // Step 2: Check if we already received a proposal from this node
-        // Step 2: Check if we already received a proposal from this node
         let duplicate = {
             let proposal_tracker = node_guard.proposal_tracker.lock().await;
             proposal_tracker.get(&round_id) // Ensure `round_id` remains `u64`
@@ -81,8 +79,8 @@ pub async fn handle_propose(
 
 
         if duplicate {
-            info!(
-                "Node {}: Already received propose for round {} from Node {}. Terminating.",
+            warn!(
+                "Node {}: Already received proposal for round {} from Node {}. Dropping.",
                 node_id, round_id, propose_request.base.proposing_node_id
             );
             return Ok(());
