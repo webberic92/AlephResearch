@@ -2,7 +2,7 @@ use axum::{extract::DefaultBodyLimit, routing::post, Json, Router};
 use reqwest::StatusCode;
 use serde_json::Value;
 use tokio::sync::Mutex;
-use tracing::{error, info};
+use tracing::error;
 use std::sync::{atomic::Ordering, Arc};
 
 use crate::{
@@ -14,42 +14,17 @@ use crate::{
     },
 };
 
-/// ✅ **Helper Method to Validate Incoming Requests**
-async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, proposing_node_id: usize) -> bool {
-    let node_guard = node.lock().await;
-    let dag_guard = node_guard.dag.lock().await;
-
-    if dag_guard.contains_key(&request_round) {
-        info!(
-            "🛑  Node {}: Round {} is already finalized in DAG. Denying request from node {}.",
-            node_guard.id, request_round, proposing_node_id
-        );
-        return false;
-    }
-
-    true
-}
-
 
 /// **🔗 Initialize API Routes with `Arc<Mutex<Node>>`, `Client`, and `RBCProcessor`**
 pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) -> Router {
     Router::new()
         .route("/propose", post({
-            let node = node.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
-                let node = node.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<ProposeRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(), parsed_payload.base.round_id, parsed_payload.base.proposing_node_id as usize).await {
-                                return (
-                                    StatusCode::OK,
-                                    Json(Response { status: "🛑 Propose Request dropped: Node has reached that round.".to_string() }),
-                                );
-                            }
-
                             let propose_message = RBCMessage::Proposal(parsed_payload);
                             rbc_processor.enqueue_message(propose_message).await;
                             (
@@ -70,20 +45,12 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
             }
         }))
         .route("/prevote", post({
-            let node = node.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
-                let node = node.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<PrevoteRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(),parsed_payload.proposals[0].base.round_id, parsed_payload.proposals[0].base.proposing_node_id as usize).await {
-                                return (
-                                    StatusCode::OK,
-                                    Json(Response { status: "🛑 Prevote Request dropped: Node has reached that round.".to_string() }),
-                                );
-                            }
 
                             let prevote_message = RBCMessage::Prevote(parsed_payload);
                             rbc_processor.enqueue_message(prevote_message).await;
@@ -105,20 +72,12 @@ pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) 
             }
         }))
         .route("/commit", post({
-            let node = node.clone();
             let rbc_processor = rbc_processor.clone();
             move |Json(payload): Json<Value>| {
-                let node = node.clone();
                 let rbc_processor = rbc_processor.clone();
                 async move {
                     match serde_json::from_value::<CommitRequest>(payload) {
                         Ok(parsed_payload) => {
-                            if !should_process_request(node.clone(), parsed_payload.round_id, parsed_payload.proposing_node_id).await {
-                                return (
-                                    StatusCode::OK,
-                                    Json(Response { status: "🛑 Commit Request dropped: Node has reached that round.".to_string() }),
-                                );
-                            }
 
                             let commit_message = RBCMessage::Commit(parsed_payload);
                             rbc_processor.enqueue_message(commit_message).await;

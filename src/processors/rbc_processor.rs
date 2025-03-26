@@ -174,22 +174,6 @@ impl RBCProcessor {
         }
     }
 
-    pub fn clear_queues(&self) {
-        info!("🧹 RBCProcessor: Clearing internal queues...");
-
-        // No need for locks, as this is only called when the processor is dropped
-        let mut priority_queue: BinaryHeap<RBCMessage> = BinaryHeap::new();
-        let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
-
-        priority_queue.clear();
-        for queue in fifo_queues.iter_mut() {
-            queue.clear();
-        }
-
-        info!("✅ RBCProcessor: Queues cleared successfully.");
-    }
-
-
 
 }
 
@@ -202,6 +186,9 @@ async fn process_proposal(
     client: Arc<Client>, 
     propose_request: ProposeRequest
 ) -> Result<(), String> {
+    if !should_process_request(node.clone(), propose_request.base.round_id, propose_request.base.proposing_node_id as usize, "Propose".to_owned()).await {
+        return Ok(());
+    }
     handle_propose(node, client, propose_request).await
 }
 
@@ -210,6 +197,9 @@ async fn process_prevote(
     client: Arc<Client>, 
     prevote_request: PrevoteRequest
 ) -> Result<(), String> {
+    if !should_process_request(node.clone(),prevote_request.proposals[0].base.round_id, prevote_request.proposals[0].base.proposing_node_id as usize, "Prevote".to_owned()).await {
+        return Ok(());
+    }
     handle_prevote(node, client, prevote_request).await
 }
 
@@ -217,5 +207,24 @@ async fn process_commit(
     node: Arc<Mutex<Node>>, 
     commit_request: CommitRequest
 ) -> Result<(), String> {
+    if !should_process_request(node.clone(),commit_request.round_id, commit_request.proposing_node_id as usize, "Prevote".to_owned()).await {
+        return Ok(());
+    }
     handle_commit(node, commit_request).await
+}
+
+/// ✅ **Helper Method to Validate Incoming Requests**
+async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, proposing_node_id: usize, request_type: String) -> bool {
+    let node_guard = node.lock().await;
+    let dag_guard = node_guard.dag.lock().await;
+
+    if dag_guard.contains_key(&request_round) {
+        info!(
+            "🛑  Node {}: Round {} is already finalized in DAG. Denying {} request from node {}.",
+            node_guard.id, request_round, request_type, proposing_node_id
+        );
+        return false;
+    }
+
+    true
 }
