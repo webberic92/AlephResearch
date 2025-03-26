@@ -1,5 +1,5 @@
 #!/bin/bash
-#  Communication Overhead: Total number of messages exchanged during the consensus process.
+# 📡 Communication Overhead: Total number of messages exchanged during the consensus process.
 
 echo "📡 Communication Overhead per Node (Final Round Only)"
 echo "------------------------------------------------------"
@@ -7,16 +7,18 @@ echo "------------------------------------------------------"
 total_overhead=0
 node_count=0
 
-for node_path in logs/node-*/; do
+for node_path in node-*/; do
     file_path="${node_path}/node_status"
     if [[ ! -f "$file_path" ]]; then
         file_path="${node_path}/node_status.txt"
     fi
 
     if [[ -f "$file_path" ]]; then
-        # Get the overhead number from the round 5 log line
-        line=$(grep "Finalized round 5 USE THIS FOR COMMUNICATION OVERHEAD" "$file_path")
-        overhead=$(echo "$line" | awk '{print $NF}') # last field = overhead value
+        # Use the last line that contains "COMMUNICATION OVERHEAD"
+        line=$(grep "COMMUNICATION OVERHEAD" "$file_path" | tail -n 1)
+
+        # Extract just the number
+        overhead=$(echo "$line" | grep -oE "COMMUNICATION OVERHEAD [0-9]+" | awk '{print $3}')
 
         if [[ "$overhead" =~ ^[0-9]+$ ]]; then
             printf "%-40s Overhead: %d messages\n" "$node_path" "$overhead"
@@ -25,6 +27,8 @@ for node_path in logs/node-*/; do
         else
             printf "%-40s ⚠️ Could not parse overhead\n" "$node_path"
         fi
+    else
+        printf "%-40s ⚠️ No status file found\n" "$node_path"
     fi
 done
 
