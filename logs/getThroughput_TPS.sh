@@ -1,7 +1,7 @@
 #!/bin/bash
 
 LOG_DIR="./"  # Assuming you're in the logs directory
-TX_PER_ROUND=256
+TX_PER_ROUND=128
 ROUNDS=128
 TOTAL_TX=$((TX_PER_ROUND * ROUNDS))
 
