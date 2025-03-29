@@ -5,20 +5,20 @@
 ----------------------------------------------
 📊 Transaction Throughput per Node
 ----------------------------------
-node-1/                                  TPS: 17.44
-node-10/                                 TPS: 17.44
-node-11/                                 TPS: 17.43
-node-12/                                 TPS: 17.40
-node-2/                                  TPS: 17.40
-node-3/                                  TPS: 17.44
-node-4/                                  TPS: 17.45
-node-5/                                  TPS: 17.39
-node-6/                                  TPS: 17.46
-node-7/                                  TPS: 17.42
-node-8/                                  TPS: 17.46
-node-9/                                  TPS: 17.45
+node-1/                                  TPS: 69.77
+node-10/                                 TPS: 69.74
+node-11/                                 TPS: 69.72
+node-12/                                 TPS: 69.60
+node-2/                                  TPS: 69.60
+node-3/                                  TPS: 69.75
+node-4/                                  TPS: 69.79
+node-5/                                  TPS: 69.57
+node-6/                                  TPS: 69.83
+node-7/                                  TPS: 69.70
+node-8/                                  TPS: 69.82
+node-9/                                  TPS: 69.79
 ----------------------------------
-📈 Average TPS across 12 nodes (Tx/Round: 128, Rounds: 64): 17.43
+📈 Average TPS across 12 nodes (Tx/Round: 256, Rounds: 128): 69.72
 
 📡 Communication Overhead
 ----------------------------------------------
