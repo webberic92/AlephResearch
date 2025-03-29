@@ -4,7 +4,7 @@ use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{ error, info, warn };
 use crate::{
-    handlers::handle_prevote::handle_prevote, processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
 };
 
 
@@ -60,12 +60,6 @@ pub async fn handle_propose(
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
-
-        // ✅ Start latency if this is the first message
-        let count = node_guard.message_count.fetch_add(1, Ordering::Relaxed);
-        if count == 0 {
-            info!("LATENCY START");
-        }
 
         // ✅ Drop early if proposal quorum already met
         let proposal_tracker = node_guard.proposal_tracker.lock().await;

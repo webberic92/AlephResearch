@@ -47,6 +47,7 @@ async fn main() -> Result<()> {
     // ✅ **Spawn Transaction Execution Logic**
     let node_clone = node.clone();
     let client_clone = client.clone();
+    info!("LATENCY START");
     tokio::spawn(async move {
         if let Err(e) = execute_transaction_logic(node_clone, client_clone).await {
             error!("Transaction execution failed: {:?}", e);
