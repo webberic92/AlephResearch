@@ -59,7 +59,7 @@ pub async fn send_proposals(
     );
 
 
-    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
+
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
 
     for node_url in nodes {
@@ -71,11 +71,6 @@ pub async fn send_proposals(
             node_id, node_url, proposal_clone.base.round_id
         );
     
-            // ✅ Start latency if this is the first message
-            let count = message_count.fetch_add(1, Ordering::Relaxed);
-            if count == 0 {
-                info!("LATENCY START");
-            }
         let res = client
             .post(format!("http://{}/propose", node_url))
             .json(&proposal_clone)
