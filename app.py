@@ -14,10 +14,10 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 12 # Define the number of instances
-        NUMBER_OF_TRANSACTIONS = 512  # Define the number of transactions per round per that node
+        NUMBER_OF_TRANSACTIONS = 64  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
-        TOTAL_ROUNDS = 128
+        TOTAL_ROUNDS = 64
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
