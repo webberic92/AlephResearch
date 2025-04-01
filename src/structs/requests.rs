@@ -8,9 +8,9 @@ pub struct BaseRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub root: Vec<u8>,
-    pub proofs: Vec<Vec<String>>, // Each transaction has its own set of proofs
-    pub shards: Vec<String>, // Encoded shards for this transaction
+    pub accumulator: String, // Base64-encoded accumulator (instead of Merkle root)
+    pub proofs: Vec<Vec<String>>, // RSA inclusion proofs (per shard)
+    pub shards: Vec<String>,      // Shards as base64 strings
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -48,7 +48,7 @@ pub struct DagUnit {
     pub round: u64,
     pub transactions: Vec<Transaction>, // ✅ Store multiple transactions
     pub parent_units: Vec<String>,
-    pub merkle_root: Vec<u8>, // ✅ Store Merkle root as bytes
+    pub accumulator_root: Vec<u8>, // ✅ Store Merkle root as bytes
     pub finalization_timestamp: u64,
 }
 

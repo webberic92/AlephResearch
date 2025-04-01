@@ -1,0 +1,7 @@
+
+✅ 1. Understand the Core Difference
+Feature	Merkle Tree	RSA Accumulator
+Proof type	Merkle branch (logarithmic)	Inclusion proof (single exponentiation)
+Structure	Binary tree	Single value accumulator (modulo RSA key)
+Proof size	O(log N)	Constant size
+Verification	Hash-based recursive validation	Modulo exponentiation check

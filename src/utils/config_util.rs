@@ -1,10 +1,10 @@
+use base64::Engine;
 use serde_json::json;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tracing::info;
 use std::collections::HashMap;
 use std::path::Path;
-use base64::{engine::general_purpose, Engine};
 use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
 
@@ -50,18 +50,19 @@ pub async fn write_finalized_dag_to_file(
             "creator": unit.proposer_node,
             "round": unit.round,
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "merkle_root": String::from_utf8(tx.root.clone()).unwrap_or_else(|_| format!("{:?}", tx.root)),  // ✅ FULLY DECODED
-                "proofs": tx.proofs.clone(),  // Keep proofs as-is
-                "shards": tx.shards.iter().map(|shard| {
-                    let decoded_bytes = general_purpose::STANDARD.decode(shard)
-                        .unwrap_or_else(|_| vec![]); // Handle decoding errors
-                    if !decoded_bytes.is_empty() {
-                        let cloned_bytes = decoded_bytes.clone();
-                        String::from_utf8(cloned_bytes).unwrap_or_else(|_| format!("{:?}", decoded_bytes)) // ✅ Store valid UTF-8 or raw bytes
-                    } else {
-                        shard.clone() // ✅ If decoding fails, use the original Base64 string
+                "shards": tx.shards.iter().map(|s| {
+                    match base64::engine::general_purpose::STANDARD.decode(s) {
+                            Ok(decoded_bytes) => {
+                                let trimmed = String::from_utf8_lossy(&decoded_bytes)
+                                    .trim_end_matches('\0')  // remove padding if any
+                                    .to_string();
+                                trimmed
+                            }
+                            Err(_) => "<decode error>".to_string()
                     }
-                }).collect::<Vec<String>>(),
+                }).collect::<Vec<_>>(),  // ✅ FULLY DECODED
+                "proofs": tx.proofs.clone(),  // Keep proofs as-is
+                "accumulator": tx.accumulator.clone(),  // Keep accumulator as-is
             })).collect::<Vec<_>>(),
             "parents": unit.parent_units,
             "finalization_timestamp": unit.finalization_timestamp,

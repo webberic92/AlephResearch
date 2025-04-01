@@ -1,5 +1,5 @@
 pub mod utils{
-    pub mod merkle_utils; // Expose the structs module
+    pub mod shard_util; // Expose the structs module
     pub mod config_util;
     pub mod start_util; // Expose the structs module
     pub mod dag_utils; // Expose the structs module
@@ -7,6 +7,7 @@ pub mod utils{
     pub mod create_transaction_data;
     pub mod round_manager;
     pub mod events;
+    pub mod rsa_accumulator_util;
 }
 
 pub mod processors{

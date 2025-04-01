@@ -65,7 +65,7 @@ pub async fn handle_commit(
             let mut dag = node_guard.dag.lock().await;
             let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
             for unit in all_units {
-                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
+                if !dag_units.iter().any(|u| u.accumulator_root == unit.accumulator_root) {
                     dag_units.push(unit.clone());
                 }
             }
@@ -106,7 +106,7 @@ pub async fn handle_commit(
             "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
             node_id, round_id, commit_count, quorum_threshold
         );
-        // ✅ Update round locally
+
         {
             let node_guard = node.lock().await;
             let mut current_round = node_guard.current_round.lock().await;
@@ -116,7 +116,6 @@ pub async fn handle_commit(
             }
         }
 
-        // ✅ Final round: log, upload, terminate
         {
             let total_rounds = {
                 let node_guard = node.lock().await;
@@ -138,7 +137,7 @@ pub async fn handle_commit(
                 };
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/nodes_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER="logs/RSA_nodes_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 

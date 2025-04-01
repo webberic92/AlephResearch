@@ -5,53 +5,20 @@ use tokio::{sync::Mutex, time::{sleep, timeout}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
 use reqwest::Client;
+use num_bigint::BigInt;
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{
+    processors::priority_queue::RBCMessage, 
+    structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest, Transaction},
-    }, utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch}
+    }, utils::{rsa_accumulator_util::verify_proof, shard_util::{interpolate_shares, reconstruct_unit}},
 };
 
-/*
-**ch-RBC Proof Validation for `handle_prevote`**
---------------------------------------------------
-
-**Step 14:** Upon receiving `2f + 1` valid `prevote(h, ·, ·)`
-   - Count received `prevote` messages and check if the quorum threshold (`2f + 1`) is met.
-
-**Step 15:** Reconstruct `U` from the received `s_j`
-   - Use the received shards to reconstruct the proposed unit.
-
-**Step 16:** Validate reconstructed `U`
-   - If the reconstructed unit is invalid (e.g., invalid Merkle root or missing parents), terminate processing.
-
-**Step 17:** Wait until all of `U`'s parents are locally available
-   - Ensure that all parent units have been received and committed before proceeding.
-
-**Step 18:** Interpolate `s_j` from `f + 1` shares
-   - Perform interpolation on the shards if necessary to recover the original data.
-
-**Step 19:** Compute Merkle root `h'` from interpolated shares
-   - Generate a Merkle root from the interpolated shares to compare against the original.
-
-**Step 20:** If `h = h'` and `commit(P_s, r, ·)` has not been sent, multicast commit
-   - If the computed root matches the expected root, send `commit` messages to all nodes.
-
-**Step 21:** Cleanup quorum votes after successful commit
-   - Remove the quorum vote entry from the tracking map after a successful commit.
-*/
-
-
-// **Handles an incoming PREVOTE request with multiple proposals**
-
-// **Handles an incoming PREVOTE request with multiple proposals**
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
     prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
-
-
     let (node_id, round_id, quorum_threshold, total_nodes, node_list, rbc_processor) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
@@ -62,11 +29,9 @@ pub async fn handle_prevote(
             node_guard.total_nodes,
             node_guard.nodes.clone(),
             node_guard.rbc_processor.clone(),
-            
         )
     }; 
 
-    // ✅ Early return if quorum has already been reached for this round
     {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
@@ -83,13 +48,10 @@ pub async fn handle_prevote(
         }
     }
 
-
-
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         let voter_set = quorum_votes.entry(round_id.to_be_bytes().to_vec()).or_insert_with(HashSet::new);
-        // Check if this node already voted
         if voter_set.contains(&prevote_request.sender_url) {
             info!(
                 "Node {}: Already received prevote from Node {} for round {}. Ignoring.",
@@ -97,13 +59,11 @@ pub async fn handle_prevote(
             );
             return Ok(());
         }
-    } 
+    }
 
     let mut reconstructed_units = Vec::new();
 
-    // ✅ **Process each proposal separately**
     for proposal in &prevote_request.proposals {
-        // info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
         let mut reconstructed_transactions = Vec::new();
 
         for transaction in &proposal.transactions {
@@ -117,17 +77,23 @@ pub async fn handle_prevote(
                 .map(|shard| Sha256::digest(shard).to_vec())
                 .collect();
 
-            for (shard_index, _) in decoded_shards.iter().enumerate() {
-                let decoded_proof: Vec<Vec<u8>> = transaction.proofs[shard_index]
-                    .iter()
-                    .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-                    .collect::<Result<Vec<Vec<u8>>, _>>()
+            let accumulator_bytes = general_purpose::STANDARD
+                .decode(transaction.accumulator.as_bytes())
+                .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
+
+            let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
+
+            for (i, shard_hash) in shard_hashes.iter().enumerate() {
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(transaction.proofs[0][i].as_bytes())
                     .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
 
-                if !validate_merkle_branch(&shard_hashes[shard_index], &decoded_proof, shard_index, &transaction.root) {
+                let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
+
+                if !verify_proof(shard_hash, &proof, &accumulator) {
                     return Err(format!(
-                        "Node {}: Merkle root mismatch for shard {}",
-                        node_id, shard_index
+                        "Node {}: RSA Accumulator proof verification failed for shard {}",
+                        node_id, i
                     ));
                 }
             }
@@ -139,23 +105,10 @@ pub async fn handle_prevote(
                 decoded_shards.clone()
             };
 
-            let interpolated_shard_hashes: Vec<Vec<u8>> = interpolated_shards.iter()
-                .map(|shard| Sha256::digest(shard).to_vec())
-                .collect();
-
-            let new_merkle_root = compute_merkle_root(&interpolated_shard_hashes);
-
-            if new_merkle_root != transaction.root {
-                return Err(format!(
-                    "Node {}: Merkle root mismatch after interpolation. Expected {:?} but got {:?}",
-                    node_id, transaction.root, new_merkle_root
-                ));
-            }
-
             let reconstructed_tx = Transaction {
-                root: transaction.root.clone(),
+                accumulator: transaction.accumulator.clone(),
                 proofs: transaction.proofs.clone(),
-                shards: interpolated_shards.iter().map(|s| String::from_utf8_lossy(s).to_string()).collect(), 
+                shards: interpolated_shards.iter().map(|s| base64::engine::general_purpose::STANDARD.encode(s)).collect(),
             };
 
             reconstructed_transactions.push(reconstructed_tx);
@@ -175,8 +128,6 @@ pub async fn handle_prevote(
         reconstructed_units.push(reconstructed_unit);
     }
 
-
-    // 👇 Ensure that `prevote_request` contains the sender's node ID
     let sender_id = prevote_request.sender_url;
     let round_key = round_id.to_be_bytes().to_vec();
     let vote_count;
@@ -184,11 +135,7 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-
-        // Get or insert a new HashSet for this round
         let voter_set = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
-
-        // Insert the new vote
         voter_set.insert(sender_id);
         vote_count = voter_set.len();
     }
@@ -209,9 +156,8 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    let message_count = node.lock().await.message_count.clone(); // ✅ Clone the Arc<AtomicU64>
+    let message_count = node.lock().await.message_count.clone();
 
-    // ✅ Enqueue own commit before broadcasting
     if let Some(rbc_processor) = &rbc_processor {
         info!("Node {}: Adding *local* commit to queue for round {}", node_id, round_id);
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request.clone())).await;
@@ -219,11 +165,10 @@ pub async fn handle_prevote(
         error!("Node {}: RBCProcessor not initialized when trying to enqueue *local* commit!", node_id);
     }
 
-
     for target_node in node_list {
         let target_url = format!("http://{}/commit", target_node);
         let commit_payload = commit_request.clone();
-    
+
         message_count.fetch_add(1, Ordering::Relaxed);
         info!("📤 Node {}: Sending commit to {} for round {}", node_id, round_id, target_node);
 
@@ -245,7 +190,6 @@ pub async fn handle_prevote(
             }
         }
     }
-    
+
     Ok(())
 }
-

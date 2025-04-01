@@ -4,10 +4,8 @@ use tokio::sync::Mutex;
 use sha2::{Digest, Sha256};
 use tracing::info;
 use anyhow::Error;
-use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
-    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, split_into_shards, validate_shard_sizes}
-};
+use num_bigint::BigInt;
+use crate::{structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, utils::{rsa_accumulator_util::{compute_accumulator, generate_proof}, shard_util::{split_into_shards, validate_shard_sizes}}};
 
 /// 🧰 Pads or truncates a vector to match the given size
 fn pad_to_size(mut data: Vec<u8>, size: usize) -> Vec<u8> {
@@ -39,39 +37,35 @@ pub async fn create_transaction_data(
     let mut transactions = Vec::new();
 
     for tx_index in 0..node_number_of_transactions {
-        // 🧠 Option 1: UTF-8 string-based padded data
         let content = format!("node{}_tx{}", node_id, tx_index);
         let transaction_data = pad_to_size(content.into_bytes(), transaction_size);
         
         let shards = split_into_shards(&transaction_data, data_shards);
+        validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
 
         let shard_hashes: Vec<Vec<u8>> = shards.iter()
             .map(|shard| Sha256::digest(shard).to_vec())
             .collect();
-        
-        let merkle_root = compute_merkle_root(&shard_hashes);
 
-        let proofs: Vec<Vec<Vec<u8>>> = shard_hashes
-            .iter()
-            .enumerate()
-            .map(|(i, _)| compute_merkle_branch(&shard_hashes, i))
+        let accumulator: BigInt = compute_accumulator(&shard_hashes);
+        let encoded_accumulator = base64::engine::general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
+
+        // For each shard, generate an RSA inclusion proof
+        let proofs: Vec<String> = (0..shard_hashes.len())
+            .map(|i| {
+                let proof = generate_proof(&shard_hashes, i, &accumulator);
+                let encoded = base64::engine::general_purpose::STANDARD.encode(proof.to_bytes_be().1);
+                encoded
+            })
             .collect();
-
-        validate_shard_sizes(&shards, transaction_size).map_err(Error::msg)?;
 
         let encoded_shards: Vec<String> = shards.iter()
             .map(|s| base64::engine::general_purpose::STANDARD.encode(s))
             .collect();
 
-        let encoded_proofs: Vec<Vec<String>> = proofs.iter()
-            .map(|proof| proof.iter()
-                .map(|p| base64::engine::general_purpose::STANDARD.encode(p))
-                .collect()
-            ).collect();
-
         transactions.push(Transaction {
-            root: merkle_root,
-            proofs: encoded_proofs,
+            accumulator: encoded_accumulator,
+            proofs: vec![proofs], // use `Vec<Vec<String>>` for compatibility
             shards: encoded_shards,
         });
     }

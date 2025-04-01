@@ -1,3 +1,4 @@
+use base64::{engine::general_purpose, Engine};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tracing::error;
@@ -120,6 +121,7 @@ pub fn validate_merkle_branch(
  * - Computes a separate Merkle root per transaction.
  * - Generates a unique unit ID for DAG tracking.
  */
+
 pub fn reconstruct_unit(
     transactions: &[Transaction],
     round_id: u64,
@@ -130,42 +132,36 @@ pub fn reconstruct_unit(
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    // Compute separate Merkle roots for each transaction
-    let merkle_roots: Vec<Vec<u8>> = transactions.iter()
-        .map(|tx| {
-            let shard_hashes: Vec<Vec<u8>> = tx.shards.iter()
-                .map(|shard| Sha256::digest(shard.as_bytes()).to_vec()) // ✅ Ensure correct hashing
-                .collect();
-            compute_merkle_root(&shard_hashes)
+    // ✅ Decode base64 accumulator strings into raw bytes and flatten
+    let accumulator_roots: Vec<u8> = transactions.iter()
+        .flat_map(|tx| {
+            general_purpose::STANDARD
+                .decode(tx.accumulator.as_bytes())
+                .unwrap_or_default()
         })
         .collect();
 
-    // ✅ **Fix: Store Shards Properly**
     let reconstructed_transactions: Vec<Transaction> = transactions.iter()
         .map(|tx| Transaction {
-            root: tx.root.clone(),
+            accumulator: tx.accumulator.clone(),
             proofs: tx.proofs.clone(),
-            shards: tx.shards.clone(), // ✅ **Ensure original shards are kept**
+            shards: tx.shards.clone(),
         })
         .collect();
 
-    // ✅ Log computed Merkle roots
-    // info!("Reconstructed transactions: {:?}", reconstructed_transactions);
-
-    // Generate a unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    // Create the DagUnit object
     Ok(DagUnit {
         unit_id,
         proposer_node,
         round: round_id,
-        transactions: reconstructed_transactions,  // ✅ **Ensure transactions keep correct shards**
+        transactions: reconstructed_transactions,
         parent_units,
-        merkle_root: merkle_roots.concat(), // ✅ **Flatten all transaction Merkle roots**
+        accumulator_root: accumulator_roots, // 🟡 Rename this field if desired (e.g., accumulator_root)
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }
+
 
 
 
