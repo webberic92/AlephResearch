@@ -137,7 +137,7 @@ pub async fn handle_commit(
                 };
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/RSA_nodes_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
