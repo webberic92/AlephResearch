@@ -230,7 +230,7 @@ pub async fn handle_prevote(
         match client
             .post(&target_url)
             .json(&commit_payload)
-            .timeout(Duration::from_millis(500))
+            // .timeout(Duration::from_millis(500))
             .send()
             .await
         {
