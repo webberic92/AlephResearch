@@ -78,8 +78,9 @@ pub async fn send_proposals(
                     break;
                 }
                 Ok(res) => {
+                    let status = res.status();
                     let msg = res.text().await.unwrap_or_else(|_| "No response".to_string());
-                    error!("❌ Proposal failed to {} with status {}: {}", node_url, res.status(), msg);
+                    error!("❌ Proposal failed to {} with status {}: {}", node_url, status, msg);
                 }
                 Err(e) => {
                     error!("❌ Network error to {}: {:?}", node_url, e);
