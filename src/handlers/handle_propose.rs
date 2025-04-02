@@ -1,4 +1,4 @@
-use std::{sync::{atomic::Ordering, Arc}, time::Duration};
+use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
 use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
 use tokio::sync::Mutex;
@@ -127,22 +127,49 @@ pub async fn handle_propose(
         for target_node in node_list {
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
-                info!("📤 Node {}: Sending prevote to {} for round {}", node_id, url, round_id);
-
-                match client.post(&url)
-                    .json(&prevote_request)
-                    .timeout(Duration::from_millis(500))
-                    .send()
-                    .await
-                {
-                    Ok(resp) if resp.status().is_success() =>
-                        info!("Node {}: ✅ Prevote success to {}", node_id, url),
-                    Ok(resp) =>
-                        error!("Node {}: ❌ Prevote failed to {}. Status: {}", node_id, url, resp.status()),
-                    Err(e) =>
-                        error!("Node {}: ❌ Network error to {}: {:?}", node_id, url, e),
+                let mut attempt = 0;
+                let max_attempts = 3;
+                let mut success = false;
+        
+                while attempt < max_attempts {
+                    attempt += 1;
+        
+                    info!(
+                        "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
+                        attempt, max_attempts, node_id, url, round_id
+                    );
+        
+                    let res = client
+                        .post(&url)
+                        .json(&prevote_request)
+                        // .timeout(Duration::from_millis(500))  // optional
+                        .send()
+                        .await;
+        
+                    match res {
+                        Ok(resp) if resp.status().is_success() => {
+                            info!("✅ Node {}: Prevote success to {}", node_id, url);
+                            success = true;
+                            break;
+                        }
+                        Ok(resp) => {
+                            let status = resp.status();
+                            let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
+                            error!("❌ Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
+                        }
+                        Err(e) => {
+                            error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
+                        }
+                    }
+        
+                    let delay = 100 * 2u64.pow((attempt - 1) as u32);
+                    sleep(Duration::from_millis(delay));
                 }
-
+        
+                if !success {
+                    error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
+                }
+        
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
