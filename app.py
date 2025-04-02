@@ -13,7 +13,7 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 3 # Define the number of instances
+        INSTANCES_NUMBER = 5 # Define the number of instances
         NUMBER_OF_TRANSACTIONS = 5  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
