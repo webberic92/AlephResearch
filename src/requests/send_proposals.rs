@@ -64,46 +64,48 @@ pub async fn send_proposals(
 
     for node_url in nodes {
         let client = client.clone();
-        let proposal_clone = propose_request.clone();
-    
-        info!(
-            "📤 Node {} sending proposal to {} for round {}",
-            node_id, node_url, proposal_clone.base.round_id
-        );
-    
-        let res = client
-            .post(format!("http://{}/propose", node_url))
-            .json(&proposal_clone)
-            .timeout(Duration::from_millis(500))
-            .send()
-            .await;
-    
-        match res {
-            Ok(res) if res.status().is_success() => {
-                info!(
-                    "✅ Proposal successfully delivered to Node {} (round {}).",
-                    node_url, proposal_clone.base.round_id
-                );
-                results.push(Ok(()));
+        let proposal = propose_request.clone();
+        let mut attempt = 0;
+        let max_attempts = 3;
+        let mut success = false;
+
+        while attempt < max_attempts {
+            attempt += 1;
+
+            info!("📤 Attempt {}/{}: Sending proposal to {} (round {})", attempt, max_attempts, node_url, round_id);
+
+            let res = client
+                .post(format!("http://{}/propose", node_url))
+                .json(&proposal)
+                // .timeout(Duration::from_millis(500))
+                .send()
+                .await;
+
+            match res {
+                Ok(res) if res.status().is_success() => {
+                    info!("✅ Proposal delivered to {} (round {})", node_url, round_id);
+                    success = true;
+                    break;
+                }
+                Ok(res) => {
+                    let status = res.status();
+                    let msg = res.text().await.unwrap_or_else(|_| "No response".to_string());
+                    error!("❌ Proposal failed to {} with status {}: {}", node_url, status, msg);
+                }
+                Err(e) => {
+                    error!("❌ Network error to {}: {:?}", node_url, e);
+                }
             }
-            Ok(res) => {
-                let err_msg = format!(
-                    "❌ Proposal failed for {}. Status: {}. Response: {}",
-                    node_url,
-                    res.status(),
-                    res.text().await.unwrap_or_else(|_| "No response body".to_string())
-                );
-                error!("{}", err_msg);
-                results.push(Err(anyhow!(err_msg)));
-            }
-            Err(e) => {
-                let err_msg = format!(
-                    "❌ Network error while sending proposal to {}: {:?}",
-                    node_url, e
-                );
-                error!("{}", err_msg);
-                results.push(Err(anyhow!(err_msg)));
-            }
+
+            // 🔁 Wait before retrying (backoff)
+            let delay = 100 * 2u64.pow((attempt - 1) as u32); // 100ms, 200ms, 400ms
+            sleep(Duration::from_millis(delay)).await;
+        }
+
+        if success {
+            results.push(Ok(()));
+        } else {
+            results.push(Err(anyhow!("Failed to send to {}", node_url)));
         }
     }
    
