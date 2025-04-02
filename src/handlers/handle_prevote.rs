@@ -224,25 +224,51 @@ pub async fn handle_prevote(
         let target_url = format!("http://{}/commit", target_node);
         let commit_payload = commit_request.clone();
     
-        message_count.fetch_add(1, Ordering::Relaxed);
-        info!("📤 Node {}: Sending commit to {} for round {}", node_id, round_id, target_node);
-
-        match client
-            .post(&target_url)
-            .json(&commit_payload)
-            // .timeout(Duration::from_millis(500))
-            .send()
-            .await
-        {
-            Ok(response) if response.status().is_success() => {
-                info!("✅ Successfully sent commit to {}", target_url);
+        let mut attempt = 0;
+        let max_attempts = 3;
+        let mut success = false;
+    
+        while attempt < max_attempts {
+            attempt += 1;
+    
+            message_count.fetch_add(1, Ordering::Relaxed);
+            info!(
+                "📤 Attempt {}/{}: Node {} sending commit to {} for round {}",
+                attempt, max_attempts, node_id, target_url, round_id
+            );
+    
+            let res = client
+                .post(&target_url)
+                .json(&commit_payload)
+                // .timeout(Duration::from_millis(500))  // Optional
+                .send()
+                .await;
+    
+            match res {
+                Ok(response) if response.status().is_success() => {
+                    info!("✅ Successfully sent commit to {}", target_url);
+                    success = true;
+                    break;
+                }
+                Ok(response) => {
+                    let status = response.status();
+                    let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
+                    error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
+                }
+                Err(e) => {
+                    error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                }
             }
-            Ok(response) => {
-                error!("❌ Commit failed to {}. Status: {:?}", target_url, response);
-            }
-            Err(e) => {
-                error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
-            }
+    
+            let delay = 100 * 2u64.pow((attempt - 1) as u32); // backoff
+            sleep(Duration::from_millis(delay)).await;
+        }
+    
+        if !success {
+            error!(
+                "❌ Node {}: Final failure to send commit to {} after {} attempts",
+                node_id, target_url, max_attempts
+            );
         }
     }
     
