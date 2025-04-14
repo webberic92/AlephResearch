@@ -17,7 +17,8 @@ class TestAleph(Stack):
         NUMBER_OF_TRANSACTIONS = 25  # Define the number of transactions per round per that node
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = 4 # Number of data shards for erasure coding
-        TOTAL_ROUNDS = 25
+        # Tr = Batch size / Number of nodes.
+        TOTAL_ROUNDS = (NUMBER_OF_TRANSACTIONS / INSTANCES_NUMBER )
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack

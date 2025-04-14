@@ -1,0 +1,47 @@
+Great question — the answer depends on the trade-off between batching efficiency and cryptographic overhead introduced by RSA accumulators.
+🧠 TL;DR
+
+    ✅ Yes, batching transactions in a round makes RSA more efficient relative to Merkle trees as the number of transactions increases — especially for large networks.
+
+    ⚠️ If there's only 1 transaction per round, the RSA accumulator offers little to no advantage, and Merkle trees might be more efficient.
+
+    ✅ RSA scales better with node count, especially when you have fewer rounds and more batchable data.
+
+🔍 Detailed Breakdown:
+🔹 1. Why RSA Benefits from Batching
+
+    RSA accumulators produce constant-size proofs, so adding more transactions to a batch doesn’t increase proof size.
+
+    Merkle trees generate logarithmic-sized proofs per transaction, so as batch size grows, proof complexity increases.
+
+    Batching many transactions lets RSA amortize the cost of the accumulator setup (i.e., computing the witness set) across many items.
+
+🔹 2. When Not to Use RSA
+
+    If you're only processing 1 transaction per round, there's no meaningful reduction in communication for RSA over Merkle:
+
+        Merkle proof = log(N) (small if N=1)
+
+        RSA proof = constant, but requires expensive modular exponentiation
+
+    RSA still involves heavier cryptographic computation per proof, so small batches may not offset that cost.
+
+🔹 3. More Nodes = More Communication Overhead
+
+    As node count increases:
+
+        Merkle: Each node sends a proposal with Merkle root and multiple proofs → total data grows with batch size and node count
+
+        RSA: Each node sends a single accumulator and constant-size witness → less overall data per message
+
+    RSA scales better for large N, small-to-medium batch sizes, reducing communication complexity from O(N² log N) to O(N²) in your model.
+
+🧪 Experimental Suggestions
+
+You should test and compare:
+Node Count	Transactions per Round	Best Performer (Hypothesized)
+8	1	Merkle
+8	256	Merkle
+64	1	RSA marginal
+64	8192	RSA
+104	131072	RSA (clear win)
