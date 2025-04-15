@@ -111,28 +111,22 @@ pub fn reconstruct_unit(
     round_id: u64,
     parent_units: Vec<Vec<u8>>,
     proposer_node: usize,
+    batch_merkle_root: Vec<u8>,
 ) -> Result<DagUnit, String> {
     if transactions.is_empty() {
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    // In batch mode, the Merkle root is already in `proposal.batch_root`
-    // We'll just verify it earlier (done in handle_prevote) and store here
-
-    // Just clone the transactions; no need to recompute roots or shards
     let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
-
-    // Generate unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    // Reconstruct the unit
     Ok(DagUnit {
         unit_id,
         proposer_node,
         round: round_id,
         transactions: reconstructed_transactions,
         parent_units,
-        merkle_root: vec![], // ✅ Optional: set this externally from proposal.batch_root
+        merkle_root: batch_merkle_root, // ✅ Store actual root here
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }

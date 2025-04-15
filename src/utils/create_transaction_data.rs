@@ -39,7 +39,7 @@ pub async fn create_transaction_data(
     let mut transactions = Vec::new();
 
     for tx_index in 0..node_number_of_transactions {
-        let content = format!("node{}_tx{}", node_id, tx_index);
+        let content = format!("node{}_tx{}", node_id, tx_index + 1);
         let padded = pad_to_250(content.clone().into_bytes());
         let tx_hash = Sha256::digest(&padded).to_vec();
         let encoded = general_purpose::STANDARD.encode(&padded);

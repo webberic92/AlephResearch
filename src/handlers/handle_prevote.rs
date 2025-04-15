@@ -150,8 +150,11 @@ pub async fn handle_prevote(
 
             reconstructed_transactions.push(Transaction {
                 root: transaction.root.clone(),
-                proofs: vec![], // not needed
-                shards: vec![], // optional
+                proofs: vec![batch_proofs[i]
+                    .iter()
+                    .map(|b| hex::encode(b))  // convert bytes → hex string
+                    .collect()],
+                shards: transaction.shards.clone(), // retain original base64 string
             });
         }
 
@@ -160,7 +163,8 @@ pub async fn handle_prevote(
             round_id,
             proposal.parents.clone(),
             proposal.base.proposing_node_id as usize,
-        ).map_err(|e| format!("Node {}: Reconstruction failed: {:?}", node_id, e))?;
+            batch_root.clone(), // ✅ pass in the batch root
+        )?;
 
         if reconstructed_unit.transactions.is_empty() {
             return Err(format!("Node {}: Reconstructed unit is invalid or empty", node_id));
