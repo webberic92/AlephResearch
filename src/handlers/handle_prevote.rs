@@ -9,7 +9,7 @@ use crate::{
     processors::priority_queue::RBCMessage, structs::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest, Transaction},
-    }, utils::merkle_utils::{compute_merkle_root, interpolate_shares, reconstruct_unit, validate_merkle_branch}
+    }, utils::merkle_utils::{reconstruct_unit, validate_merkle_branch}
 };
 
 /*
@@ -106,59 +106,53 @@ pub async fn handle_prevote(
         // info!("Processing proposal from Node {} for round {}", proposal.base.proposing_node_id, round_id);
         let mut reconstructed_transactions = Vec::new();
 
-        for transaction in &proposal.transactions {
-            let decoded_shards: Vec<Vec<u8>> = transaction.shards
-                .iter()
-                .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-                .collect::<Result<Vec<Vec<u8>>, _>>()
-                .map_err(|e| format!("Node {}: Failed to decode shards: {:?}", node_id, e))?;
+        // Assumes transaction.root is SHA256(padded_tx) from proposal phase
+        let batch_root = &proposal.batch_root;
+        let batch_proofs = &proposal.batch_proofs;
 
-            let shard_hashes: Vec<Vec<u8>> = decoded_shards.iter()
-                .map(|shard| Sha256::digest(shard).to_vec())
-                .collect();
+        for (i, transaction) in proposal.transactions.iter().enumerate() {
+            // Reconstruct raw tx padded to 250 bytes
+            let padded_tx_bytes = match transaction.shards.first() {
+                Some(shard_str) => {
+                    let decoded = general_purpose::STANDARD
+                        .decode(shard_str.as_bytes())
+                        .map_err(|e| format!("Node {}: Failed to decode tx shard: {:?}", node_id, e))?;
 
-            for (shard_index, _) in decoded_shards.iter().enumerate() {
-                let decoded_proof: Vec<Vec<u8>> = transaction.proofs[shard_index]
-                    .iter()
-                    .map(|p| general_purpose::STANDARD.decode(p.as_bytes()))
-                    .collect::<Result<Vec<Vec<u8>>, _>>()
-                    .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+                    if decoded.len() != 250 {
+                        return Err(format!("Node {}: Transaction {} is not 250 bytes after decoding", node_id, i));
+                    }
 
-                if !validate_merkle_branch(&shard_hashes[shard_index], &decoded_proof, shard_index, &transaction.root) {
-                    return Err(format!(
-                        "Node {}: Merkle root mismatch for shard {}",
-                        node_id, shard_index
-                    ));
-                }
-            }
-
-            let interpolated_shards = if decoded_shards.len() < total_nodes {
-                interpolate_shares(&decoded_shards, round_id)
-                    .map_err(|e| format!("Node {}: Failed to interpolate shares: {:?}", node_id, e))?
-            } else {
-                decoded_shards.clone()
+                    decoded
+                },
+                None => return Err(format!("Node {}: No transaction data provided in shards", node_id)),
             };
 
-            let interpolated_shard_hashes: Vec<Vec<u8>> = interpolated_shards.iter()
-                .map(|shard| Sha256::digest(shard).to_vec())
-                .collect();
+            let hash = Sha256::digest(&padded_tx_bytes).to_vec();
 
-            let new_merkle_root = compute_merkle_root(&interpolated_shard_hashes);
-
-            if new_merkle_root != transaction.root {
+            if hash != transaction.root {
                 return Err(format!(
-                    "Node {}: Merkle root mismatch after interpolation. Expected {:?} but got {:?}",
-                    node_id, transaction.root, new_merkle_root
+                    "Node {}: Hash mismatch for transaction {}. Expected {:?}, got {:?}",
+                    node_id,
+                    i,
+                    hex::encode(&transaction.root),
+                    hex::encode(&hash)
                 ));
             }
 
-            let reconstructed_tx = Transaction {
-                root: transaction.root.clone(),
-                proofs: transaction.proofs.clone(),
-                shards: interpolated_shards.iter().map(|s| String::from_utf8_lossy(s).to_string()).collect(), 
-            };
+            let proof = &batch_proofs[i];
 
-            reconstructed_transactions.push(reconstructed_tx);
+            if !validate_merkle_branch(&transaction.root, proof, i, batch_root) {
+                return Err(format!(
+                    "Node {}: Invalid Merkle proof for transaction {} in batch",
+                    node_id, i
+                ));
+            }
+
+            reconstructed_transactions.push(Transaction {
+                root: transaction.root.clone(),
+                proofs: vec![], // not needed
+                shards: vec![], // optional
+            });
         }
 
         let reconstructed_unit = reconstruct_unit(

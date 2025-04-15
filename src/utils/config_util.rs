@@ -49,23 +49,25 @@ pub async fn write_finalized_dag_to_file(
             "unit_id": unit.unit_id,
             "creator": unit.proposer_node,
             "round": unit.round,
+            "batch_merkle_root": hex::encode(&unit.merkle_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "merkle_root": String::from_utf8(tx.root.clone()).unwrap_or_else(|_| format!("{:?}", tx.root)),  // ✅ FULLY DECODED
-                "proofs": tx.proofs.clone(),  // Keep proofs as-is
+                "hash": hex::encode(&tx.root),  // renamed for clarity
+                "proofs": tx.proofs.clone(),
                 "shards": tx.shards.iter().map(|shard| {
                     let decoded_bytes = general_purpose::STANDARD.decode(shard)
-                        .unwrap_or_else(|_| vec![]); // Handle decoding errors
+                        .unwrap_or_else(|_| vec![]);
                     if !decoded_bytes.is_empty() {
-                        let cloned_bytes = decoded_bytes.clone();
-                        String::from_utf8(cloned_bytes).unwrap_or_else(|_| format!("{:?}", decoded_bytes)) // ✅ Store valid UTF-8 or raw bytes
+                        String::from_utf8(decoded_bytes.clone())
+                            .unwrap_or_else(|_| format!("{:?}", decoded_bytes))
                     } else {
-                        shard.clone() // ✅ If decoding fails, use the original Base64 string
+                        shard.clone()
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),
-            "parents": unit.parent_units,
+            "parent_hashes": unit.parent_units.iter().map(|p| hex::encode(p)).collect::<Vec<_>>(),
             "finalization_timestamp": unit.finalization_timestamp,
         })).collect();
+        
 
         let mut file = OpenOptions::new()
             .write(true)

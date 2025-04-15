@@ -59,7 +59,7 @@ pub async fn send_proposals(
     );
 
 
-
+    info!("📦 [DEBUG] ProposeRequest: {:?}", propose_request);
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
 
     for node_url in nodes {
@@ -68,6 +68,7 @@ pub async fn send_proposals(
         let mut attempt = 0;
         let max_attempts = 3;
         let mut success = false;
+        info!("📤 [DEBUG] Final ProposeRequest being sent to {}: {:?}", node_url, proposal);
 
         while attempt < max_attempts {
             attempt += 1;
