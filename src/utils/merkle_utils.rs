@@ -37,50 +37,36 @@ pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
 
 
 
-pub fn compute_merkle_branch(hashes: &[Vec<u8>], index: usize) -> Vec<Vec<u8>> {
+pub fn compute_merkle_branch(hashes: &[Vec<u8>], mut index: usize) -> Vec<Vec<u8>> {
     let mut branch = vec![];
-    let mut current_index = index;
     let mut current_level = hashes.to_vec();
 
     while current_level.len() > 1 {
-        let sibling_index = if current_index % 2 == 0 {
-            current_index + 1
-        } else {
-            current_index - 1
-        };
+        let is_right_node = index % 2 == 1;
+        let sibling_index = if is_right_node { index - 1 } else { index + 1 };
 
         if sibling_index < current_level.len() {
             branch.push(current_level[sibling_index].clone());
         } else {
-            branch.push(vec![0; 32]); // Padding for missing sibling
+            // 🔁 For odd-sized levels, include duplicate of current hash (not sibling)
+            branch.push(current_level[index].clone());
         }
 
-        // debug!(
-        //     "Branch Level {}: Current Index = {}, Sibling Index = {}, Combined Hash = {:?}",
-        //     current_level.len(),
-        //     current_index,
-        //     sibling_index,
-        //     branch.last().unwrap()
-        // );
-
-        current_index /= 2;
+        index /= 2;
         current_level = current_level
             .chunks(2)
             .map(|pair| {
-                let mut combined = pair[0].clone();
-                if pair.len() > 1 {
-                    combined.extend(&pair[1]);
-                } else {
-                    combined.extend(vec![0; 32]); // Padding for odd-sized levels
-                }
-                Sha256::digest(&combined).to_vec()
+                let left = &pair[0];
+                let right = if pair.len() == 2 { &pair[1] } else { &pair[0] };
+                Sha256::digest([left.clone(), right.clone()].concat()).to_vec()
             })
             .collect();
     }
 
-    // debug!("Computed Merkle branch for index {}: {:?}", index, branch);
     branch
 }
+
+
 
 
 
@@ -123,46 +109,30 @@ pub fn validate_merkle_branch(
 pub fn reconstruct_unit(
     transactions: &[Transaction],
     round_id: u64,
-    parent_units: Vec<String>,
+    parent_units: Vec<Vec<u8>>,
     proposer_node: usize,
 ) -> Result<DagUnit, String> {
     if transactions.is_empty() {
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    // Compute separate Merkle roots for each transaction
-    let merkle_roots: Vec<Vec<u8>> = transactions.iter()
-        .map(|tx| {
-            let shard_hashes: Vec<Vec<u8>> = tx.shards.iter()
-                .map(|shard| Sha256::digest(shard.as_bytes()).to_vec()) // ✅ Ensure correct hashing
-                .collect();
-            compute_merkle_root(&shard_hashes)
-        })
-        .collect();
+    // In batch mode, the Merkle root is already in `proposal.batch_root`
+    // We'll just verify it earlier (done in handle_prevote) and store here
 
-    // ✅ **Fix: Store Shards Properly**
-    let reconstructed_transactions: Vec<Transaction> = transactions.iter()
-        .map(|tx| Transaction {
-            root: tx.root.clone(),
-            proofs: tx.proofs.clone(),
-            shards: tx.shards.clone(), // ✅ **Ensure original shards are kept**
-        })
-        .collect();
+    // Just clone the transactions; no need to recompute roots or shards
+    let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
 
-    // ✅ Log computed Merkle roots
-    // info!("Reconstructed transactions: {:?}", reconstructed_transactions);
-
-    // Generate a unique unit ID
+    // Generate unique unit ID
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    // Create the DagUnit object
+    // Reconstruct the unit
     Ok(DagUnit {
         unit_id,
         proposer_node,
         round: round_id,
-        transactions: reconstructed_transactions,  // ✅ **Ensure transactions keep correct shards**
+        transactions: reconstructed_transactions,
         parent_units,
-        merkle_root: merkle_roots.concat(), // ✅ **Flatten all transaction Merkle roots**
+        merkle_root: vec![], // ✅ Optional: set this externally from proposal.batch_root
         finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
     })
 }
@@ -170,16 +140,7 @@ pub fn reconstruct_unit(
 
 
 
-pub fn split_into_shards(transaction_data: &[u8], data_shards: usize) -> Vec<Vec<u8>> {
-    let shard_size = transaction_data.len() / data_shards;
-    let shards: Vec<Vec<u8>> = transaction_data
-        .chunks(shard_size)
-        .map(|chunk| chunk.to_vec())
-        .collect();
 
-    // info!("Shards split into {} parts: {:?}", data_shards, shards);
-    shards
-}
 
 
 /// Validate shard sizes
@@ -202,51 +163,40 @@ pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Resu
 }
 
 
-pub fn interpolate_shares(decoded_shards: &[Vec<u8>], round_id: u64) -> Result<Vec<Vec<u8>>, String> {
-    // ✅ Handle round 1: No interpolation required
-    if round_id == 1 {
-        // info!("Round 1 detected: Skipping interpolation, returning provided shards.");
-        return Ok(decoded_shards.to_vec());
+/// Verifies a Merkle proof for a given leaf, its branch, and the expected root.
+///
+/// # Arguments
+/// * `leaf_hash` - The hash of the leaf node (i.e., tx.root)
+/// * `proof` - A vector of sibling hashes from the leaf to the root
+/// * `expected_root` - The root hash of the Merkle tree
+/// * `index` - The index of the leaf in the original tree (used to determine left/right sibling order)
+///
+/// # Returns
+/// `true` if the proof is valid, `false` otherwise
+pub fn verify_merkle_proof(
+    leaf_hash: &[u8],
+    proof: &Vec<Vec<u8>>,
+    expected_root: &[u8],
+    mut index: usize,
+) -> bool {
+    let mut computed_hash = leaf_hash.to_vec();
+
+    for sibling_hash in proof {
+        let mut hasher = Sha256::new();
+
+        if index % 2 == 0 {
+            // Current node is on the left
+            hasher.update(&computed_hash);
+            hasher.update(sibling_hash);
+        } else {
+            // Current node is on the right
+            hasher.update(sibling_hash);
+            hasher.update(&computed_hash);
+        }
+
+        computed_hash = hasher.finalize().to_vec();
+        index /= 2;
     }
 
-    // Check if we have enough shards
-    if decoded_shards.is_empty() {
-        return Err("Interpolation failed: No available shards".to_string());
-    }
-
-    let total_shards = decoded_shards.len();
-    let data_shards = (total_shards + 1) / 2; // Assumes f+1 shards for reconstruction
-    let parity_shards = total_shards - data_shards;
-
-    if data_shards < 1 {
-        return Err(format!(
-            "Interpolation failed: Not enough data shards ({}). Requires at least 1.",
-            data_shards
-        ));
-    }
-
-    // Initialize Reed-Solomon erasure coding
-    let r = ReedSolomon::new(data_shards, parity_shards)
-        .map_err(|e| format!("Failed to create Reed-Solomon codec: {:?}", e))?;
-
-    // Prepare shard buffer with None for missing shares
-    let mut shard_buffer: Vec<Option<Vec<u8>>> = decoded_shards.iter().map(|s| Some(s.clone())).collect();
-    shard_buffer.resize(data_shards + parity_shards, None);
-
-    // Attempt to recover missing shares
-    r.reconstruct(&mut shard_buffer)
-        .map_err(|e| format!("Failed to interpolate shares: {:?}", e))?;
-
-    // Convert buffer to final result, filtering out any None values
-    let recovered_shards: Vec<Vec<u8>> = shard_buffer
-        .into_iter()
-        .filter_map(|s| s)
-        .collect();
-
-    if recovered_shards.len() < data_shards + parity_shards {
-        return Err("Interpolation failed: Not all shares were recovered".to_string());
-    }
-
-    // info!("Interpolated missing shares successfully.");
-    Ok(recovered_shards)
+    computed_hash == expected_root
 }

@@ -9,6 +9,10 @@ pub mod utils{
     pub mod events;
 }
 
+pub mod tests{
+    pub mod test;
+}
+
 pub mod processors{
     pub mod priority_queue;
     pub mod rbc_processor;

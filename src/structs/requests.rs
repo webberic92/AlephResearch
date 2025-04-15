@@ -8,17 +8,23 @@ pub struct BaseRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub root: Vec<u8>,
-    pub proofs: Vec<Vec<String>>, // Each transaction has its own set of proofs
-    pub shards: Vec<String>, // Encoded shards for this transaction
+    pub root: Vec<u8>,    // SHA256(tx)
+    pub proofs: Vec<Vec<String>>, // unused
+    pub shards: Vec<String>,      // contains base64-encoded 250-byte tx
 }
+
+
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProposeRequest {
     pub base: BaseRequest,
-    pub transactions: Vec<Transaction>, // Array of transactions in a single proposal
-    pub parents: Vec<String>,
+    pub transactions: Vec<Transaction>,
+    pub parents: Vec<Vec<u8>>,
+    pub batch_root: Vec<u8>,
+    pub batch_proofs: Vec<Vec<Vec<u8>>>,
 }
+
+
 
 #[derive(Serialize, Deserialize, Debug,Clone)]
 pub struct PrevoteRequest {
@@ -46,9 +52,9 @@ pub struct DagUnit {
     pub unit_id: String,
     pub proposer_node: usize,
     pub round: u64,
-    pub transactions: Vec<Transaction>, // ✅ Store multiple transactions
-    pub parent_units: Vec<String>,
-    pub merkle_root: Vec<u8>, // ✅ Store Merkle root as bytes
+    pub transactions: Vec<Transaction>,
+    pub parent_units: Vec<Vec<u8>>, // ✅ Raw hash bytes
+    pub merkle_root: Vec<u8>,       // ✅ Single batch root
     pub finalization_timestamp: u64,
 }
 

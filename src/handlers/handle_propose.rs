@@ -4,9 +4,9 @@ use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{ error, info, warn };
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::dag_utils::{ check_size, ensure_dag_round_sync }
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
 };
-
+use sha2::Digest;
 
 /*
 **ch-RBC Proof Validation for `handle_propose`**
@@ -56,6 +56,7 @@ pub async fn handle_propose(
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
+    info!("📥 [DEBUG] Received full ProposeRequest: {:?}", propose_request);
 
     {
         let node_guard = node.lock().await;
@@ -75,26 +76,75 @@ pub async fn handle_propose(
         }
     }
 
+    info!("Node {}: Received proposal for round {} from node {}. PROPOSAL = {:?}", node_id, round_id, propose_request.base.proposing_node_id, propose_request);
     // ✅ Validate shard size
-    for transaction in &propose_request.transactions {
-        let decoded_shards: Vec<Vec<u8>> = transaction.shards
-            .iter()
-            .map(|shard| general_purpose::STANDARD.decode(shard.as_bytes()))
-            .collect::<Result<Vec<_>, _>>()
-            .map_err(|e| format!("Failed to decode shards: {:?}", e))?;
+    // ✅ Validate fixed-size transactions in batched model
 
-        let (n_tx, tx_size) = {
-            let node_guard = node.lock().await;
-            (node_guard.number_of_transactions, node_guard.transaction_size)
-        };
+// Ensure batch proofs are aligned with transactions
+if propose_request.batch_proofs.len() != propose_request.transactions.len() {
+    return Err(format!(
+        "Node {}: batch_proofs length ({}) does not match transactions length ({})",
+        node_id,
+        propose_request.batch_proofs.len(),
+        propose_request.transactions.len()
+    ));
+}
 
-        if !check_size(&decoded_shards, n_tx, tx_size) {
-            return Err(format!(
-                "Node {}: Received oversized unit. Rejecting proposal.",
-                node_id
-            ));
-        }
+for (i, tx) in propose_request.transactions.iter().enumerate() {
+    let proof = &propose_request.batch_proofs[i];
+    let root = &propose_request.batch_root;
+
+    // Sanity check for root length
+    if tx.root.len() != 32 {
+        return Err(format!(
+            "Node {}: Invalid tx root length at index {}: expected 32, got {}",
+            node_id, i, tx.root.len()
+        ));
     }
+
+    // Decode base64 shard
+    let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
+    // FIXED: Recompute the actual leaf hash from the shard content
+    let decoded_shard = general_purpose::STANDARD
+    .decode(encoded_shard.as_bytes())
+    .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
+
+    if decoded_shard.len() != 250 {
+    return Err(format!(
+        "Node {}: Transaction {} decoded shard is not 250 bytes. Got {} bytes.",
+        node_id, i, decoded_shard.len()
+    ));
+    }
+
+    // ✅ THIS IS THE CORRECT LEAF HASH
+    let leaf_hash = sha2::Sha256::digest(&decoded_shard).to_vec();
+
+    if tx.root != leaf_hash {
+        return Err(format!(
+            "Node {}: Mismatch between claimed tx.root and hash(decoded_shard). tx {}",
+            node_id, i
+        ));
+    }
+        info!("🔍 Node {}: tx[{}] decoded shard (first 16 bytes): {:?}", node_id, i, &decoded_shard[..16]);
+    info!("🧪 tx[{}] decoded SHA256 = {:?}", i, leaf_hash);
+    info!("🔄 Expected root from tx.root: {:?}", tx.root);
+    info!("📎 Proof for tx[{}]: {:?}", i, proof);
+
+    // Verify Merkle proof
+    let valid = verify_merkle_proof(&tx.root, proof, root, i);
+    if !valid {
+        return Err(format!(
+            "Node {}: Invalid Merkle proof for tx {}. Computed leaf hash = {:x?}, Proof = {:?}, Expected root = {:x?}",
+            node_id, i, leaf_hash, proof, root
+        ));
+    }
+  
+    
+    info!("Node {}: Merkle proof for tx {} is ✅ valid", node_id, i);
+}
+
+
+
 
     // ✅ Ensure DAG is synchronized to r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;

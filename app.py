@@ -14,11 +14,13 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 5 # Define the number of instances
-        NUMBER_OF_TRANSACTIONS = 25  # Define the number of transactions per round per that node
+        BATCH_SIZE = 3  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
-        SHARD_SIZE = 4 # Number of data shards for erasure coding
+        SHARD_SIZE = 4 # Number of data shards for erasure coding # no longer needed for now
         # Tr = Batch size / Number of nodes.
-        TOTAL_ROUNDS = (NUMBER_OF_TRANSACTIONS / INSTANCES_NUMBER )
+        # TOTAL_ROUNDS = ( BATCH_SIZE / INSTANCES_NUMBER )
+        TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
+
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -142,7 +144,7 @@ class TestAleph(Stack):
                 f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '' >> /home/aleph-node/aleph-node-config.toml",
                 "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'number_of_transactions = {NUMBER_OF_TRANSACTIONS}' >> /home/aleph-node/aleph-node-config.toml",
+                f"echo 'number_of_transactions = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
                 f"echo 'total_rounds = {TOTAL_ROUNDS} # Number of rounds' >> /home/aleph-node/aleph-node-config.toml",
