@@ -53,8 +53,8 @@ pub async fn create_transaction_data(
             shards: vec![encoded],
         });
 
-        info!("🔐 tx[{}] hash = {:x?}", tx_index, Sha256::digest(&padded));
-        info!("📦 tx[{}] padded (first 8): {:?}", tx_index, &padded[..8]);
+        // info!("🔐 tx[{}] hash = {:x?}", tx_index, Sha256::digest(&padded));
+        // info!("📦 tx[{}] padded (first 8): {:?}", tx_index, &padded[..8]);
     }
 
     let batch_root = compute_merkle_root(&tx_hashes);

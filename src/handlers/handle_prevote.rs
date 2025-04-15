@@ -1,5 +1,6 @@
 use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
+use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
@@ -112,26 +113,60 @@ pub async fn handle_prevote(
 
         for (i, transaction) in proposal.transactions.iter().enumerate() {
             // Reconstruct raw tx padded to 250 bytes
-            let padded_tx_bytes = match transaction.shards.first() {
-                Some(shard_str) => {
-                    let decoded = general_purpose::STANDARD
-                        .decode(shard_str.as_bytes())
-                        .map_err(|e| format!("Node {}: Failed to decode tx shard: {:?}", node_id, e))?;
-
-                    if decoded.len() != 250 {
-                        return Err(format!("Node {}: Transaction {} is not 250 bytes after decoding", node_id, i));
+            let padded_tx_bytes = {
+                // ⛏ Decode all base64 shards first
+                let mut shard_bytes = Vec::new();
+            
+                for (j, shard_str) in transaction.shards.iter().enumerate() {
+                    match general_purpose::STANDARD.decode(shard_str) {
+                        Ok(decoded) if decoded.len() == 250 => {
+                            shard_bytes.push(Some(decoded));
+                        }
+                        Ok(decoded) => {
+                            return Err(format!(
+                                "Node {}: Shard {} for tx {} is not 250 bytes ({} bytes)",
+                                node_id, j, i, decoded.len()
+                            ));
+                        }
+                        Err(e) => {
+                            shard_bytes.push(None); // treat as missing
+                            warn!("Node {}: Failed to decode shard {} for tx {}: {:?}", node_id, j, i, e);
+                        }
                     }
-
-                    decoded
-                },
-                None => return Err(format!("Node {}: No transaction data provided in shards", node_id)),
+                }
+            
+                // ✅ f + 1 = data_shards required to decode
+                let node_guard = node.lock().await;
+                let data_shards = node_guard.data_shards;
+                let total_nodes = node_guard.total_nodes;
+                drop(node_guard);
+            
+                let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
+                    .map_err(|e| format!("Node {}: ReedSolomon init failed: {:?}", node_id, e))?;
+            
+                // Pad with None to total_nodes if necessary
+                shard_bytes.resize(total_nodes, None);
+            
+                let mut shards = shard_bytes;
+            
+                // Try decoding
+                rs.reconstruct(&mut shards)
+                    .map_err(|e| format!("Node {}: Erasure decoding failed for tx {}: {:?}", node_id, i, e))?;
+            
+                // Combine data shards into 250-byte result
+                let reconstructed_data: Vec<u8> = shards[..data_shards]
+                    .iter()
+                    .flat_map(|opt| opt.clone().unwrap_or_else(|| vec![0u8; 250])) // safe unwrap after reconstruct
+                    .collect();
+            
+                reconstructed_data[..250].to_vec() // only take the first 250 bytes
             };
-
+            
             let hash = Sha256::digest(&padded_tx_bytes).to_vec();
 
             if hash != transaction.root {
                 return Err(format!(
-                    "Node {}: Hash mismatch for transaction {}. Expected {:?}, got {:?}",
+                    "Node {}: Hash mismatch for tx {}. Expected {}, got {}",
                     node_id,
                     i,
                     hex::encode(&transaction.root),
@@ -171,6 +206,27 @@ pub async fn handle_prevote(
         }
 
         reconstructed_units.push(reconstructed_unit);
+    }
+
+    {
+        let node_guard = node.lock().await;
+    
+        for unit in &reconstructed_units {
+            for parent_hash in &unit.parent_units {
+                let parent_id = hex::encode(parent_hash);
+    
+                if !node_guard.is_unit_committed(&parent_id).await {
+                    let err_msg = format!(
+                        "Node {}: Missing parent unit {} in DAG. Cannot commit unit in round {}.",
+                        node_guard.id,
+                        parent_id,
+                        round_id
+                    );
+                    error!("{}", err_msg);
+                    return Err(err_msg);
+                }
+            }
+        }
     }
 
 

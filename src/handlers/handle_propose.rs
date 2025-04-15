@@ -56,7 +56,7 @@ pub async fn handle_propose(
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let node_id;
-    info!("📥 [DEBUG] Received full ProposeRequest: {:?}", propose_request);
+    // info!("📥 [DEBUG] Received full ProposeRequest: {:?}", propose_request);
 
     {
         let node_guard = node.lock().await;
@@ -125,10 +125,6 @@ for (i, tx) in propose_request.transactions.iter().enumerate() {
             node_id, i
         ));
     }
-        info!("🔍 Node {}: tx[{}] decoded shard (first 16 bytes): {:?}", node_id, i, &decoded_shard[..16]);
-    info!("🧪 tx[{}] decoded SHA256 = {:?}", i, leaf_hash);
-    info!("🔄 Expected root from tx.root: {:?}", tx.root);
-    info!("📎 Proof for tx[{}]: {:?}", i, proof);
 
     // Verify Merkle proof
     let valid = verify_merkle_proof(&tx.root, proof, root, i);
