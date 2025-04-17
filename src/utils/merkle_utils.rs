@@ -1,6 +1,6 @@
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use tracing::error;
+use tracing::{error, info};
 
 use crate::structs:: requests::{DagUnit, Transaction};
 
@@ -117,9 +117,16 @@ pub fn reconstruct_unit(
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
+    info!(
+        "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
+        round_id, transactions.len(), parent_units.len(), proposer_node
+    );
+
+
     let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
+    info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
     Ok(DagUnit {
         unit_id,
         proposer_node,

@@ -55,92 +55,74 @@ pub async fn handle_propose(
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
+    let proposer_id = propose_request.base.proposing_node_id as usize;
     let node_id;
-    // info!("📥 [DEBUG] Received full ProposeRequest: {:?}", propose_request);
 
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
 
-        // ✅ Drop early if proposal quorum already met
+        // ✅ Only drop if we've already received a proposal from THIS proposer for this round
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
-            let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
-            if round_proposals.len() >= required_proposals {
+            if round_proposals.contains_key(&proposer_id) {
                 info!(
-                    "Node {}: Proposal quorum already met for round {} ({} received, required_proposals: {}). Dropping.",
-                    node_guard.id, round_id, round_proposals.len(), required_proposals
+                    "Node {}: Already received proposal for round {} from proposer {}. Ignoring duplicate.",
+                    node_id, round_id, proposer_id
                 );
                 return Ok(());
             }
         }
     }
 
-    info!("Node {}: Received proposal for round {} from node {}. PROPOSAL = {:?}", node_id, round_id, propose_request.base.proposing_node_id, propose_request);
-    // ✅ Validate shard size
-    // ✅ Validate fixed-size transactions in batched model
-
-// Ensure batch proofs are aligned with transactions
-if propose_request.batch_proofs.len() != propose_request.transactions.len() {
-    return Err(format!(
-        "Node {}: batch_proofs length ({}) does not match transactions length ({})",
-        node_id,
-        propose_request.batch_proofs.len(),
-        propose_request.transactions.len()
-    ));
-}
-
-for (i, tx) in propose_request.transactions.iter().enumerate() {
-    let proof = &propose_request.batch_proofs[i];
-    let root = &propose_request.batch_root;
-
-    // Sanity check for root length
-    if tx.root.len() != 32 {
+    // ✅ Validate Merkle proof and shard sizes for each transaction
+    if propose_request.batch_proofs.len() != propose_request.transactions.len() {
         return Err(format!(
-            "Node {}: Invalid tx root length at index {}: expected 32, got {}",
-            node_id, i, tx.root.len()
+            "Node {}: batch_proofs length ({}) does not match transactions length ({})",
+            node_id,
+            propose_request.batch_proofs.len(),
+            propose_request.transactions.len()
         ));
     }
 
-    // Decode base64 shard
-    let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
-    // FIXED: Recompute the actual leaf hash from the shard content
-    let decoded_shard = general_purpose::STANDARD
-    .decode(encoded_shard.as_bytes())
-    .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
+    for (i, tx) in propose_request.transactions.iter().enumerate() {
+        let proof = &propose_request.batch_proofs[i];
+        let root = &propose_request.batch_root;
 
-    if decoded_shard.len() != 250 {
-    return Err(format!(
-        "Node {}: Transaction {} decoded shard is not 250 bytes. Got {} bytes.",
-        node_id, i, decoded_shard.len()
-    ));
+        if tx.root.len() != 32 {
+            return Err(format!(
+                "Node {}: Invalid tx root length at index {}: expected 32, got {}",
+                node_id, i, tx.root.len()
+            ));
+        }
+
+        let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
+        let decoded_shard = general_purpose::STANDARD
+            .decode(encoded_shard.as_bytes())
+            .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
+
+        let (transaction_size, data_shards) = {
+            let node_guard = node.lock().await;
+            (node_guard.transaction_size, node_guard.data_shards)
+        };
+
+        let expected_shard_size = transaction_size / data_shards;
+
+        if decoded_shard.len() != expected_shard_size {
+            return Err(format!(
+                "Node {}: Transaction {} decoded shard size mismatch. Expected {} bytes ({} / {}), got {} bytes.",
+                node_id, i, expected_shard_size, transaction_size, data_shards, decoded_shard.len()
+            ));
+        }
+
+        let valid = verify_merkle_proof(&tx.root, proof, root, i);
+        if !valid {
+            return Err(format!(
+                "Node {}: Invalid Merkle proof for tx {}. tx.root = {:x?}, Proof = {:?}, Expected root = {:x?}",
+                node_id, i, tx.root, proof, root
+            ));
+        }
     }
-
-    // ✅ THIS IS THE CORRECT LEAF HASH
-    let leaf_hash = sha2::Sha256::digest(&decoded_shard).to_vec();
-
-    if tx.root != leaf_hash {
-        return Err(format!(
-            "Node {}: Mismatch between claimed tx.root and hash(decoded_shard). tx {}",
-            node_id, i
-        ));
-    }
-
-    // Verify Merkle proof
-    let valid = verify_merkle_proof(&tx.root, proof, root, i);
-    if !valid {
-        return Err(format!(
-            "Node {}: Invalid Merkle proof for tx {}. Computed leaf hash = {:x?}, Proof = {:?}, Expected root = {:x?}",
-            node_id, i, leaf_hash, proof, root
-        ));
-    }
-  
-    
-    info!("Node {}: Merkle proof for tx {} is ✅ valid", node_id, i);
-}
-
-
-
 
     // ✅ Ensure DAG is synchronized to r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;
@@ -160,6 +142,7 @@ for (i, tx) in propose_request.transactions.iter().enumerate() {
             PrevoteRequest {
                 proposals: stored_proposals.clone(),
                 sender_url: node_guard.ip_address.clone(),
+                sender_id: node_guard.id, // NEW
             }
         };
 
@@ -176,22 +159,21 @@ for (i, tx) in propose_request.transactions.iter().enumerate() {
                 let mut attempt = 0;
                 let max_attempts = 3;
                 let mut success = false;
-        
+
                 while attempt < max_attempts {
                     attempt += 1;
-        
+
                     info!(
                         "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
                         attempt, max_attempts, node_id, url, round_id
                     );
-        
+
                     let res = client
                         .post(&url)
                         .json(&prevote_request)
-                        // .timeout(Duration::from_millis(500))  // optional
                         .send()
                         .await;
-        
+
                     match res {
                         Ok(resp) if resp.status().is_success() => {
                             info!("✅ Node {}: Prevote success to {}", node_id, url);
@@ -207,21 +189,20 @@ for (i, tx) in propose_request.transactions.iter().enumerate() {
                             error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
                         }
                     }
-        
+
                     let delay = 100 * 2u64.pow((attempt - 1) as u32);
                     sleep(Duration::from_millis(delay));
                 }
-        
+
                 if !success {
                     error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
                 }
-        
+
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
 
         // ✅ Handle prevote locally
-        // ✅ Queue local prevote instead of calling directly
         {
             let node_guard = node.lock().await;
             if let Some(rbc_processor) = &node_guard.rbc_processor {
@@ -237,6 +218,7 @@ for (i, tx) in propose_request.transactions.iter().enumerate() {
 
     Ok(())
 }
+
 
 
 

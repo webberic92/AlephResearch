@@ -64,9 +64,19 @@ pub async fn handle_commit(
             let node_guard = node.lock().await;
             let mut dag = node_guard.dag.lock().await;
             let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
+            info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
             for unit in all_units {
+                
                 if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
                     dag_units.push(unit.clone());
+                    info!(
+                        "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
+                        node_id,
+                        unit.unit_id,
+                        unit.proposer_node,
+                        unit.transactions.len(),
+                        round_id
+                    );
                 }
             }
         }

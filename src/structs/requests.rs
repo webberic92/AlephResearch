@@ -10,7 +10,7 @@ pub struct BaseRequest {
 pub struct Transaction {
     pub root: Vec<u8>,    // SHA256(tx)
     pub proofs: Vec<Vec<String>>, // unused
-    pub shards: Vec<String>,      // contains base64-encoded 250-byte tx
+    pub shards: Vec<String>,      // contains base64-encoded 256-byte tx
 }
 
 
@@ -26,10 +26,11 @@ pub struct ProposeRequest {
 
 
 
-#[derive(Serialize, Deserialize, Debug,Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct PrevoteRequest {
-    pub proposals: Vec<ProposeRequest>,  // ✅ Store multiple proposals in one struct
-    pub sender_url: String,  // ✅ Preserve sender info
+    pub proposals: Vec<ProposeRequest>,
+    pub sender_url: String,
+    pub sender_id: usize,  // NEW
 }
 
 
