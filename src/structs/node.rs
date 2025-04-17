@@ -6,7 +6,7 @@ use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing:: info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
-use super::requests::{CommitRequest, DagUnit, ProposeRequest};
+use super::{requests::{CommitRequest, DagUnit, ProposeRequest}, shard_aggregator::ShardAggregator};
 use crate::utils::events::Event;
 
 /// **Events to notify the Round Manager**
@@ -32,6 +32,7 @@ pub struct Node {
     pub event_sender: mpsc::Sender<Event>,
     pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
     pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
+    pub shard_aggregator: Arc<Mutex<ShardAggregator>>, // NEW
     }
 
 impl Node {
@@ -66,7 +67,8 @@ impl Node {
             client: client.clone(),
             event_sender,
             rbc_processor: None, // ✅ Initialize as None, will be set later
-            message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required        
+            message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
+            shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),       
             }));
 
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet

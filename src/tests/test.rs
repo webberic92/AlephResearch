@@ -1,14 +1,21 @@
 #[cfg(test)]
 mod tests {
-    use sha2::{Digest, Sha256};
+    use std::sync::Arc;
 
-    use crate::utils::{create_transaction_data::pad_to_250, merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof}};
+    use reqwest::Client;
+    use sha2::{Digest, Sha256};
+    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::PrevoteRequest}, utils::{
+        create_transaction_data::{create_transaction_data, pad_to_len},
+        merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof},
+    }};
+
+    const TX_SIZE: usize = 256; // ✅ Make this configurable if needed
 
     fn generate_mock_tx_hashes(n: usize) -> Vec<Vec<u8>> {
         (0..n)
             .map(|i| {
                 let content = format!("tx_content_{}", i);
-                let padded = pad_to_250(content.into_bytes());
+                let padded = pad_to_len(content.into_bytes(), TX_SIZE);
                 Sha256::digest(&padded).to_vec()
             })
             .collect()
@@ -70,4 +77,51 @@ mod tests {
             "Proof should fail if leaf is incorrect"
         );
     }
+
+
+
+    #[tokio::test]
+    async fn test_handle_prevote_end_to_end_integration() {
+
+    
+        // Step 1: Initialize test node
+        let node_id = 0;
+        let node = Node::new(
+            node_id,
+            5,                                // total_nodes ✅ FIXED
+            "127.0.0.1:30333".into(),
+            vec![],
+            "127.0.0.1:9999".into(),
+            3,                                // number_of_transactions
+            256,                              // transaction_size
+            3,                                // data_shards ✅ FIXED
+            1,
+            Arc::new(Client::new()),
+        );
+    
+        // Step 2: Create a full transaction proposal from this node
+        let propose_request = create_transaction_data(node.clone())
+            .await
+            .expect("Failed to create transaction data");
+    
+        // Step 3: Wrap into a PrevoteRequest with same node as sender
+        let prevote_request = PrevoteRequest {
+            proposals: vec![propose_request.clone()],
+            sender_url: "127.0.0.1:30333".into(),
+            sender_id: 1,
+        };
+    
+        // Step 4: Simulate the prevote handling
+        let client = Arc::new(Client::new());
+        let result = handle_prevote(node.clone(), client, prevote_request).await;
+    
+        // Step 5: Assert it succeeded (i.e., shard was reconstructed + hash and proof verified)
+        assert!(
+            result.is_ok(),
+            "Expected handle_prevote to succeed, but got error: {:?}",
+            result.err()
+        );
+    }
+    
+
 }

@@ -14,11 +14,9 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE = 3  # Define the number of transactions in a batch
+        BATCH_SIZE = 5  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
-        SHARD_SIZE = 4 # Number of data shards for erasure coding # no longer needed for now
-        # Tr = Batch size / Number of nodes.
-        # TOTAL_ROUNDS = ( BATCH_SIZE / INSTANCES_NUMBER )
+        SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
 
         unique_id = datetime.now().strftime("%Y%m%d%H%M")

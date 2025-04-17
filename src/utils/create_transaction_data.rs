@@ -3,18 +3,20 @@ use tokio::sync::Mutex;
 use sha2::{Digest, Sha256};
 use tracing::{info, error};
 use anyhow::Error;
+use base64::{engine::general_purpose, Engine};
+use reed_solomon_erasure::galois_8::ReedSolomon;
+
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
     utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof}
 };
-use base64::{engine::general_purpose, Engine};
 
-/// Pads or truncates a vector to exactly 250 bytes
-pub fn pad_to_250(mut data: Vec<u8>) -> Vec<u8> {
-    if data.len() >= 250 {
-        data.truncate(250);
+/// Pads or truncates a vector to a target size
+pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
+    if data.len() >= target_len {
+        data.truncate(target_len);
     } else {
-        data.resize(250, 0);
+        data.resize(target_len, 0);
     }
     data
 }
@@ -22,39 +24,88 @@ pub fn pad_to_250(mut data: Vec<u8>) -> Vec<u8> {
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>, 
 ) -> Result<ProposeRequest, Error> {  
-    let (node_id, node_number_of_transactions);
-    {
+    let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
-        node_id = node_guard.id;
-        node_number_of_transactions = node_guard.number_of_transactions;
-    }
+        let round_id = *node_guard.current_round.lock().await;
+        let parent_units = node_guard
+            .get_all_parents(round_id)
+            .await
+            .into_iter()
+            .map(|s| s.into_bytes())
+            .collect::<Vec<_>>();
+
+        (
+            node_guard.id,
+            node_guard.number_of_transactions,
+            node_guard.data_shards,
+            node_guard.total_nodes,
+            node_guard.transaction_size,
+            round_id,
+            parent_units,
+        )
+    };
+
+    let shard_size = transaction_size / data_shards;
 
     info!(
-        "Node {}: Creating {} transactions (each 250 bytes) with a single Merkle tree",
-        node_id, node_number_of_transactions
+        "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
+        node_id, num_txs, transaction_size, shard_size
     );
 
-    let mut padded_tx_data = Vec::new();      // ✅ Store actual padded content (for debugging if needed)
     let mut tx_hashes = Vec::new();
     let mut transactions = Vec::new();
 
-    for tx_index in 0..node_number_of_transactions {
-        let content = format!("node{}_tx{}", node_id, tx_index + 1);
-        let padded = pad_to_250(content.clone().into_bytes());
-        let tx_hash = Sha256::digest(&padded).to_vec();
-        let encoded = general_purpose::STANDARD.encode(&padded);
+    for tx_index in 0..num_txs {
+        // ✅ Use deterministic tx content across all nodes
+        let content = format!("tx{}_round{}", tx_index + 1, round_id);
+        let padded = pad_to_len(content.into_bytes(), transaction_size);
 
-        padded_tx_data.push(padded.clone());
+        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
+            .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
+
+        // Break into data chunks
+        let mut data_chunks: Vec<Vec<u8>> = padded
+            .chunks(shard_size)
+            .map(|chunk| {
+                let mut v = chunk.to_vec();
+                v.resize(shard_size, 0);
+                v
+            })
+            .collect();
+
+        while data_chunks.len() < data_shards {
+            data_chunks.push(vec![0u8; shard_size]);
+        }
+
+        // ✅ Compute tx hash from original padded data
+        let tx_hash = Sha256::digest(&padded).to_vec();
         tx_hashes.push(tx_hash.clone());
+
+        // Add parity shards
+        let mut shards = data_chunks.clone();
+        while shards.len() < total_nodes {
+            shards.push(vec![0u8; shard_size]);
+        }
+
+        let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
+        rs.encode(&mut shard_refs)
+            .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
+
+        let encoded_shards: Vec<String> = shards
+            .into_iter()
+            .map(|shard| general_purpose::STANDARD.encode(&shard))
+            .collect();
+
+        info!(
+            "Node {}: TX[{}] padded bytes = {:?}, hash = {}",
+            node_id, tx_index, padded, hex::encode(&tx_hash)
+        );
 
         transactions.push(Transaction {
             root: tx_hash,
-            proofs: vec![],           // ⛔ These are not used anymore, see batch_proofs below
-            shards: vec![encoded],
+            proofs: vec![],
+            shards: encoded_shards,
         });
-
-        // info!("🔐 tx[{}] hash = {:x?}", tx_index, Sha256::digest(&padded));
-        // info!("📦 tx[{}] padded (first 8): {:?}", tx_index, &padded[..8]);
     }
 
     let batch_root = compute_merkle_root(&tx_hashes);
@@ -64,36 +115,17 @@ pub async fn create_transaction_data(
         .map(|(i, _)| compute_merkle_branch(&tx_hashes, i))
         .collect();
 
-    // ✅ Internal proof check before sending
     for (i, hash) in tx_hashes.iter().enumerate() {
         let proof = &batch_proofs[i];
-        let valid = verify_merkle_proof(hash, proof, &batch_root, i);
-        if !valid {
+        if !verify_merkle_proof(hash, proof, &batch_root, i) {
             error!("❌ Merkle proof verification failed for tx[{}]", i);
-            error!("  leaf hash: {}", hex::encode(hash));
-            error!("  proof: {:?}", batch_proofs[i].iter().map(hex::encode).collect::<Vec<_>>());
-            error!("  expected root: {}", hex::encode(&batch_root));
-            let recomputed = crate::utils::merkle_utils::validate_merkle_branch(hash, &batch_proofs[i], i, &batch_root);
-            error!("  alt validate_merkle_branch result = {}", recomputed);
-            panic!("Merkle proof mismatch at tx[{}]", i);
+            return Err(Error::msg(format!("Merkle proof failed at tx[{}]", i)));
         }
-    }
-
-    let (round_id, parent_units);
-    {
-        let node_guard = node.lock().await;
-        round_id = *node_guard.current_round.lock().await;
-        parent_units = node_guard
-            .get_all_parents(round_id)
-            .await
-            .into_iter()
-            .map(|s| s.into_bytes())
-            .collect();
     }
 
     info!(
         "✅ Proposal ready: {} txs, Round {}, Batch Root: {}",
-        node_number_of_transactions,
+        num_txs,
         round_id,
         hex::encode(&batch_root)
     );
