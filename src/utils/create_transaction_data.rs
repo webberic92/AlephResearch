@@ -45,8 +45,8 @@ pub async fn create_transaction_data(
         )
     };
 
-    let shard_size = transaction_size / data_shards;
-
+    // let shard_size: usize = transaction_size / data_shards; # Wrong because of interger division.
+    let shard_size = (transaction_size + data_shards - 1) / data_shards;
     info!(
         "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
         node_id, num_txs, transaction_size, shard_size
