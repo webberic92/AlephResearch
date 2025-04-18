@@ -106,6 +106,7 @@ pub async fn handle_prevote(
             let maybe_reconstructed = {
                 let node_guard = node.lock().await;
                 let shard_aggregator = node_guard.shard_aggregator.lock().await;
+                
                 shard_aggregator.try_reconstruct(round_id, i, transaction_size)
             };
 

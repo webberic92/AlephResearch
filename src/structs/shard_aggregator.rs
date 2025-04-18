@@ -81,9 +81,16 @@ impl ShardAggregator {
             .iter()
             .flat_map(|opt| opt.clone().unwrap_or_default())
             .collect();
-    
-        let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
-    
+        if combined_data.len() < transaction_size {
+            error!(
+                "Aggregator: Reconstructed data too short: got {}, expected {}",
+                combined_data.len(),
+                transaction_size
+            );
+            return None;
+        }
+        let padded = combined_data[..transaction_size].to_vec();
+        // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
         let hash = Sha256::digest(&padded);
