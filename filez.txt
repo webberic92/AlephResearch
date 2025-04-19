@@ -14,7 +14,7 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE = 5  # Define the number of transactions in a batch
+        BATCH_SIZE = 10  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
@@ -509,6 +509,7 @@ pub async fn handle_prevote(
             let maybe_reconstructed = {
                 let node_guard = node.lock().await;
                 let shard_aggregator = node_guard.shard_aggregator.lock().await;
+                
                 shard_aggregator.try_reconstruct(round_id, i, transaction_size)
             };
 
@@ -1308,9 +1309,16 @@ impl ShardAggregator {
             .iter()
             .flat_map(|opt| opt.clone().unwrap_or_default())
             .collect();
-    
-        let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
-    
+        if combined_data.len() < transaction_size {
+            error!(
+                "Aggregator: Reconstructed data too short: got {}, expected {}",
+                combined_data.len(),
+                transaction_size
+            );
+            return None;
+        }
+        let padded = combined_data[..transaction_size].to_vec();
+        // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
         let hash = Sha256::digest(&padded);
@@ -1498,8 +1506,8 @@ pub async fn create_transaction_data(
         )
     };
 
-    let shard_size = transaction_size / data_shards;
-
+    // let shard_size: usize = transaction_size / data_shards; # Wrong because of interger division.
+    let shard_size = (transaction_size + data_shards - 1) / data_shards;
     info!(
         "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
         node_id, num_txs, transaction_size, shard_size
