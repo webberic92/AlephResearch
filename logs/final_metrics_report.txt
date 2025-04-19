@@ -5,25 +5,25 @@
 ----------------------------------------------
 📊 Transaction Throughput per Node
 ----------------------------------
-node-1/                                  TPS: 0.00
-node-2/                                  TPS: 0.00
-node-3/                                  TPS: 0.00
-node-4/                                  TPS: 0.00
-node-5/                                  TPS: 0.00
+node-1/                                  TPS: 176.42
+node-2/                                  TPS: 151.81
+node-3/                                  TPS: 170.86
+node-4/                                  TPS: 170.33
+node-5/                                  TPS: 155.83
 ----------------------------------
-📈 Average TPS across 5 nodes (Tx/Round: 25, Rounds: 25): 0.00
+📈 Average TPS across 5 nodes (Tx/Round: 10, Rounds: 2): 165.05
 
 📡 Communication Overhead
 ----------------------------------------------
 📡 Communication Overhead per Node (Final Round Only)
 ------------------------------------------------------
-node-1/                                  Overhead: 20 messages
-node-2/                                  Overhead: 29 messages
-node-3/                                  Overhead: 30 messages
-node-4/                                  Overhead: 27 messages
-node-5/                                  Overhead: 26 messages
+node-1/                                  Overhead: 40 messages
+node-2/                                  Overhead: 49 messages
+node-3/                                  Overhead: 40 messages
+node-4/                                  Overhead: 48 messages
+node-5/                                  Overhead: 47 messages
 ------------------------------------------------------
-📈 Average Communication Overhead across 5 nodes: 26.40 messages
+📈 Average Communication Overhead across 5 nodes: 44.80 messages
 
 🖥️  Resource Utilization (CPU & Memory)
 ----------------------------------------------
@@ -31,21 +31,21 @@ node-5/                                  Overhead: 26 messages
 ---------------------------------------------------------
 Node                                     CPU Util (%)    Mem Util (%)   
 ---------------------------------------------------------
-node-1/                                  27.10           37.04          
-node-2/                                  35.10           37.15          
-node-3/                                  65.10           37.42          
-node-4/                                  25.18           36.79          
-node-5/                                  38.33           37.15          
+node-1/                                  17.33           37.15          
+node-2/                                  63.53           36.11          
+node-3/                                  36.00           36.85          
+node-4/                                  50.02           37.44          
+node-5/                                  53.24           37.68          
 ---------------------------------------------------------
-📊 Average CPU Utilization across 5 nodes: 38.16%
-📊 Average Memory Utilization across 5 nodes: 37.11%
+📊 Average CPU Utilization across 5 nodes: 44.02%
+📊 Average Memory Utilization across 5 nodes: 37.04%
 
 ⏱️  Consensus Latency
 ----------------------------------------------
 ⏱️  Measuring Latency Across Nodes
 --------------------------------------------
-📍 Earliest Start: 2025-04-17T02:31:56.572841
-📍 Latest End:     2025-04-17T02:32:02.081579
+📍 Earliest Start: 2025-04-19T00:25:23.956408
+📍 Latest End:     2025-04-19T00:25:28.211805
 --------------------------------------------
-📈 Total Latency: 5.509 seconds
+📈 Total Latency: 4.255 seconds
 
