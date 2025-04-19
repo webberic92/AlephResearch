@@ -1,5 +1,4 @@
 pub mod utils{
-    pub mod merkle_utils; // Expose the structs module
     pub mod config_util;
     pub mod start_util; // Expose the structs module
     pub mod dag_utils; // Expose the structs module
