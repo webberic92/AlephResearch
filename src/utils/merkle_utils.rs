@@ -109,7 +109,7 @@ pub fn validate_merkle_branch(
 pub fn reconstruct_unit(
     transactions: &[Transaction],
     round_id: u64,
-    parent_units: Vec<Vec<u8>>,
+    parent_units: Vec<String>, // ✅ use unit_id strings like "U1-1"
     proposer_node: usize,
     batch_merkle_root: Vec<u8>,
 ) -> Result<DagUnit, String> {

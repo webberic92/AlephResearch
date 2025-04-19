@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use sha2::{Digest, Sha256};
 use tracing::{info, warn, error};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
