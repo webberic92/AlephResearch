@@ -100,7 +100,7 @@ pub async fn handle_commit(
         };
 
         if let Err(e) = write_finalized_dag_to_file(
-            "/home/aleph-node/finalized_dag",
+            "/aleph/finalized_dag",
             &finalized_dag,
             round_id,
         )
@@ -149,7 +149,7 @@ pub async fn handle_commit(
 
                 let s3_upload_cmd = format!(
                     r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
-                    aws s3 cp /home/aleph-node/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
+                    aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
                 tokio::spawn(async move {

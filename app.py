@@ -14,7 +14,7 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
 
         INSTANCES_NUMBER = 10 # Define the number of instances
-        BATCH_SIZE = 1028  # Define the number of transactions in a batch
+        BATCH_SIZE = 512  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
@@ -80,33 +80,42 @@ class TestAleph(Stack):
                 "sudo yum update -y",
                 "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
+                # Increase system limits
+                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
+                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
+                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                "sudo sysctl -p",
+
+                "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+                "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+
                 # Create necessary logs
-                "mkdir -p /home/aleph-node/logs/",
-                "touch /home/aleph-node/logs/node_status",
-                "touch /home/aleph-node/logs/cpu_usage",
-                "touch /home/aleph-node/logs/mem_usage",
-                "chmod -R 777 /home/aleph-node/logs/",
-                "echo 'Starting cpu and memory logs' >> /home/aleph-node/logs/node_status",
-                "nohup sar -u 1 >> /home/aleph-node/logs/cpu_usage 2>&1 &",
-                "nohup sar -r 1 >> /home/aleph-node/logs/mem_usage 2>&1 &",
+                "mkdir -p /aleph/logs/",
+                "touch /aleph/logs/node_status",
+                "touch /aleph/logs/cpu_usage",
+                "touch /aleph/logs/mem_usage",
+                "chmod -R 777 /aleph/logs/",
+                "echo 'Starting cpu and memory logs' >> /aleph/logs/node_status",
+                "nohup sar -u 1 >> /aleph/logs/cpu_usage 2>&1 &",
+                "nohup sar -r 1 >> /aleph/logs/mem_usage 2>&1 &",
                 # Continue setup for Aleph node
-                "aws s3 cp s3://aleph-research/aleph_rbc /home/aleph-node/ --quiet",
-                # "aws s3 cp s3://aleph-research/aleph_start /home/aleph-node/ --quiet",
-                "sudo chmod -R 777 /home/aleph-node/",
+                "aws s3 cp s3://aleph-research/aleph_rbc /aleph/ --quiet",
+                # "aws s3 cp s3://aleph-research/aleph_start /aleph/ --quiet",
+                "sudo chmod -R 777 /aleph/",
 
                 # Retrieve and log the private IP for ongoing reference
                 "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
-                "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /home/aleph-node/logs/node_status",
+                "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /aleph/logs/node_status",
 
                 # Register node as ready with the IP Manager using the expanded PRIVATE_IP
                 f"""
                 while true; do
                     RESPONSE=$(curl -s -o /dev/null -w "%{{http_code}}" -X POST -H 'Content-Type: application/json' -d '{{"node_ip": "'$PRIVATE_IP'"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready)
                     if [ "$RESPONSE" -eq 200 ]; then
-                        echo "Node registration success." >> /home/aleph-node/logs/node_status
+                        echo "Node registration success." >> /aleph/logs/node_status
                         break
                     else
-                        echo "Node registration failed with status $RESPONSE. Retrying..." >> /home/aleph-node/logs/node_status
+                        echo "Node registration failed with status $RESPONSE. Retrying..." >> /aleph/logs/node_status
                         sleep 5  # Wait before retrying
                     fi
                 done
@@ -115,10 +124,10 @@ class TestAleph(Stack):
                 # Loop to check IP Manager endpoint readiness
                 "while true; do",
                 f"  if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '\"all_ready\": true'; then",
-                "    echo 'IP Manager is reachable and all nodes are ready.' >> /home/aleph-node/logs/node_status;",
+                "    echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status;",
                 "    break;",  # Exit loop if IP Manager is reachable and all nodes are ready
                 "  else",
-                "    echo 'IP Manager not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status;",
                 "  fi",
                 "  sleep 5;",  # Wait before retrying
                 "done"
@@ -126,93 +135,94 @@ class TestAleph(Stack):
 
             ec2_instance.user_data.add_commands(
                 # Extract the private IP from logs
-                "PRIVATE_IP=$(grep 'PRIVATE_IP =' /home/aleph-node/logs/node_status | awk -F '= ' '{print $2}')",
+                "PRIVATE_IP=$(grep 'PRIVATE_IP =' /aleph/logs/node_status | awk -F '= ' '{print $2}')",
 
                 # Retrieve all node IPs, exclude the current node's IP, and format them properly for the TOML configuration
                 f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r --arg PRIVATE_IP \"$PRIVATE_IP\" '.node_ips | map(select(. != $PRIVATE_IP)) | map(\"\\\"\" + . + \":30333\\\"\") | join(\", \")')",
                 # Log the filtered node list for verification
-                "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /home/aleph-node/logs/node_status",
+                "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /aleph/logs/node_status",
 
                 # Write the config.toml file line by line
-                "echo '[network]' > /home/aleph-node/aleph-node-config.toml",
-                "echo 'listen_address = \"0.0.0.0:30333\"' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo \"ip_address = \\\"$PRIVATE_IP\\\"\" >> /home/aleph-node/aleph-node-config.toml", 
-                "echo \"nodes = [$NODES]\" >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[consensus]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'number_of_transactions = {BATCH_SIZE}' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'total_rounds = {TOTAL_ROUNDS} # Number of rounds' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[logging]' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'level = \"info\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo 'transaction_metrics_log = \"/home/aleph-node/logs/transaction_metrics\"' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '' >> /home/aleph-node/aleph-node-config.toml",
-                "echo '[node]' >> /home/aleph-node/aleph-node-config.toml",
-                f"echo 'id = {i + 1}' >> /home/aleph-node/aleph-node-config.toml",
-                "cat /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status"
+                "echo '[network]' > /aleph/aleph-node-config.toml",
+                "echo 'listen_address = \"0.0.0.0:30333\"' >> /aleph/aleph-node-config.toml",
+                f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /aleph/aleph-node-config.toml",
+                "echo \"ip_address = \\\"$PRIVATE_IP\\\"\" >> /aleph/aleph-node-config.toml", 
+                "echo \"nodes = [$NODES]\" >> /aleph/aleph-node-config.toml",
+                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[consensus]' >> /aleph/aleph-node-config.toml",
+                f"echo 'number_of_transactions = {BATCH_SIZE}' >> /aleph/aleph-node-config.toml",
+                f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /aleph/aleph-node-config.toml",
+                f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /aleph/aleph-node-config.toml",
+                f"echo 'total_rounds = {TOTAL_ROUNDS} # Number of rounds' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[logging]' >> /aleph/aleph-node-config.toml",
+                "echo 'level = \"info\"' >> /aleph/aleph-node-config.toml",
+                "echo 'transaction_metrics_log = \"/aleph/logs/transaction_metrics\"' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[node]' >> /aleph/aleph-node-config.toml",
+                f"echo 'id = {i + 1}' >> /aleph/aleph-node-config.toml",
+                "cat /aleph/aleph-node-config.toml >> /aleph/logs/node_status"
             )
 
 
             # Part 3: Start aleph_rbc
             ec2_instance.user_data.add_commands(
-                "echo 'Starting aleph_rbc execution' >> /home/aleph-node/logs/node_status",
+                "echo 'Starting aleph_rbc execution' >> /aleph/logs/node_status",
                 # Check if the aleph_rbc binary is reachable and log the result
-                "if [ -f /home/aleph-node/aleph_rbc ]; then",
-                "  echo 'aleph_rbc binary is found at /home/aleph-node/aleph_rbc' >> /home/aleph-node/logs/node_status;",
+                "if [ -f /aleph/aleph_rbc ]; then",
+                "  echo 'aleph_rbc binary is found at /aleph/aleph_rbc' >> /aleph/logs/node_status;",
                 "else",
-                "  echo 'ERROR: aleph_rbc binary not found at /home/aleph-node/aleph_rbc' >> /home/aleph-node/logs/node_status;",
+                "  echo 'ERROR: aleph_rbc binary not found at /aleph/aleph_rbc' >> /aleph/logs/node_status;",
                 "fi",
 
                 # Check if the configuration file is reachable and log the result
-                "if [ -f /home/aleph-node/aleph-node-config.toml ]; then",
-                "  echo 'Configuration file found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
+                "if [ -f /aleph/aleph-node-config.toml ]; then",
+                "  echo 'Configuration file found at /aleph/aleph-node-config.toml' >> /aleph/logs/node_status;",
                 "else",
-                "  echo 'ERROR: Configuration file not found at /home/aleph-node/aleph-node-config.toml' >> /home/aleph-node/logs/node_status;",
+                "  echo 'ERROR: Configuration file not found at /aleph/aleph-node-config.toml' >> /aleph/logs/node_status;",
                 "fi",
 
 
                 # Start the Aleph APIs
-                "echo 'Attempting to execute aleph_rbc with configuration' >> /home/aleph-node/logs/node_status;",
-                "/home/aleph-node/aleph_rbc --config /home/aleph-node/aleph-node-config.toml >> /home/aleph-node/logs/node_status 2>&1 &",
+                "echo 'Attempting to execute aleph_rbc with configuration' >> /aleph/logs/node_status;",
+                "ulimit -n 1048576",
+                "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
 
                 # Wait for the aleph_rbc server to be ready (simple retry logic)
-                "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /home/aleph-node/logs/node_status;",
+                "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /aleph/logs/node_status;",
                     # Wait for the aleph_rbc server to be ready (simple retry logic)
                 "for i in {1..30}; do",
                 "    if netstat -tuln | grep -q ':30333'; then",
-                "        echo 'aleph_rbc APIs are ready.' >> /home/aleph-node/logs/node_status;",
+                "        echo 'aleph_rbc APIs are ready.' >> /aleph/logs/node_status;",
                 "        break;",
                 "    fi",
-                "    echo 'aleph_rbc not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    echo 'aleph_rbc not ready, retrying...' >> /aleph/logs/node_status;",
                 "    sleep 1;",
                 "done",
                 
                 "if ! netstat -tuln | grep -q ':30333'; then",
-                "    echo 'ERROR: aleph_rbc failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    echo 'ERROR: aleph_rbc failed to start after 30 retries. Exiting.' >> /aleph/logs/node_status;",
                 "    exit 1;",
                 "fi",
 
                 # Wait for the aleph_rbc server to confirm readiness via its API"
-                "echo 'Waiting for aleph_rbc API readiness...' >> /home/aleph-node/logs/node_status;",
+                "echo 'Waiting for aleph_rbc API readiness...' >> /aleph/logs/node_status;",
                 "for i in {1..30}; do",
                 "    if curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
-                "        echo 'aleph_rbc API is ready.' >> /home/aleph-node/logs/node_status;",
+                "        echo 'aleph_rbc API is ready.' >> /aleph/logs/node_status;",
                 "        break;",
                 "    fi",
-                "    echo 'aleph_rbc API not ready, retrying...' >> /home/aleph-node/logs/node_status;",
+                "    echo 'aleph_rbc API not ready, retrying...' >> /aleph/logs/node_status;",
                 "    sleep 1;",
                 "done",
                 "",
                 "if ! curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
-                "    echo 'ERROR: aleph_rbc API failed to start after 30 retries. Exiting.' >> /home/aleph-node/logs/node_status;",
+                "    echo 'ERROR: aleph_rbc API failed to start after 30 retries. Exiting.' >> /aleph/logs/node_status;",
                 "    exit 1;",
                 "fi",
 
-                f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /home/aleph-node/logs/node_status;",
+                f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /aleph/logs/node_status;",
                 
             )
 
