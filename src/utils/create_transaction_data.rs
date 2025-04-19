@@ -45,8 +45,7 @@ pub async fn create_transaction_data(
         )
     };
 
-    // let shard_size: usize = transaction_size / data_shards; # Wrong because of interger division.
-    let shard_size = (transaction_size + data_shards - 1) / data_shards;
+    let shard_size = (transaction_size + data_shards - 1) / data_shards; // ceil division
     info!(
         "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
         node_id, num_txs, transaction_size, shard_size
@@ -56,32 +55,27 @@ pub async fn create_transaction_data(
     let mut transactions = Vec::new();
 
     for tx_index in 0..num_txs {
-        // ✅ Use deterministic tx content across all nodes
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
-        let padded = pad_to_len(content.into_bytes(), transaction_size);
+        let mut padded = content.into_bytes();
+        padded.resize(transaction_size, 0);
+
+        let tx_hash = Sha256::digest(&padded).to_vec();
+        tx_hashes.push(tx_hash.clone());
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
             .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
 
-        // Break into data chunks
-        let mut data_chunks: Vec<Vec<u8>> = padded
-            .chunks(shard_size)
-            .map(|chunk| {
-                let mut v = chunk.to_vec();
-                v.resize(shard_size, 0);
-                v
-            })
-            .collect();
-
-        while data_chunks.len() < data_shards {
-            data_chunks.push(vec![0u8; shard_size]);
+        // ✅ Manual split to ensure all shards are shard_size
+        let mut data_chunks: Vec<Vec<u8>> = Vec::with_capacity(data_shards);
+        for i in 0..data_shards {
+            let start = i * shard_size;
+            let end = std::cmp::min(start + shard_size, padded.len());
+            let mut chunk = padded[start..end].to_vec();
+            chunk.resize(shard_size, 0);
+            data_chunks.push(chunk);
         }
 
-        // ✅ Compute tx hash from original padded data
-        let tx_hash = Sha256::digest(&padded).to_vec();
-        tx_hashes.push(tx_hash.clone());
-
-        // Add parity shards
+        // Pad to total_nodes
         let mut shards = data_chunks.clone();
         while shards.len() < total_nodes {
             shards.push(vec![0u8; shard_size]);
@@ -141,3 +135,4 @@ pub async fn create_transaction_data(
         batch_proofs,
     })
 }
+
