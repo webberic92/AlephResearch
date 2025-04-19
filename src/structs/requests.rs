@@ -54,7 +54,7 @@ pub struct DagUnit {
     pub proposer_node: usize,
     pub round: u64,
     pub transactions: Vec<Transaction>,
-    pub parent_units: Vec<Vec<u8>>, // ✅ Raw hash bytes
+    pub parent_units: Vec<String>, // ["U1-1", "U1-2"]
     pub merkle_root: Vec<u8>,       // ✅ Single batch root
     pub finalization_timestamp: u64,
 }

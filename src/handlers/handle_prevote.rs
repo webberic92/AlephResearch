@@ -174,10 +174,9 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
-            for parent_hash in &unit.parent_units {
-                let parent_id = hex::encode(parent_hash);
-                if !node_guard.is_unit_committed(&parent_id).await {
-                    let err_msg = format!("Node {}: Missing parent unit {} in DAG. Cannot commit unit in round {}.", node_guard.id, parent_id, round_id);
+            for parent_unit_id in &unit.parent_units {
+                if !node_guard.is_unit_committed(&parent_unit_id).await {
+                    let err_msg = format!("Node {}: Missing parent unit {} in DAG. Cannot commit unit in round {}.", node_guard.id, parent_unit_id, round_id);
                     error!("{}", err_msg);
                     return Err(err_msg);
                 }
