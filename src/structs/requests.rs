@@ -8,9 +8,7 @@ pub struct BaseRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub root: Vec<u8>,    // SHA256(tx)
-    pub proofs: Vec<Vec<String>>, // unused
-    pub shards: Vec<String>,      // contains base64-encoded 256-byte tx
+    pub shards: Vec<String>, // base64-encoded shards of this transaction
 }
 
 
@@ -20,8 +18,8 @@ pub struct ProposeRequest {
     pub base: BaseRequest,
     pub transactions: Vec<Transaction>,
     pub parents: Vec<Vec<u8>>,
-    pub batch_root: Vec<u8>,
-    pub batch_proofs: Vec<Vec<Vec<u8>>>,
+    pub batch_accumulator: String,               // 🆕 base64-encoded RSA accumulator
+    pub batch_proofs: Vec<Vec<String>>,          // 🆕 proof per shard hash (base64)
 }
 
 

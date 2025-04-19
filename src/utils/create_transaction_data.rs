@@ -1,17 +1,18 @@
 use std::sync::Arc;
-use tokio::sync::Mutex;
+use base64::engine::general_purpose;
+use base64::Engine;
 use sha2::{Digest, Sha256};
+use tokio::sync::Mutex;
 use tracing::{info, error};
 use anyhow::Error;
-use base64::{engine::general_purpose, Engine};
+use num_bigint::BigInt;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
-    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof}
+    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
+    utils::{rsa_accumulator_util::{compute_accumulator, generate_proof}, shard_util::split_into_shards}
 };
 
-/// Pads or truncates a vector to a target size
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     if data.len() >= target_len {
         data.truncate(target_len);
@@ -22,8 +23,8 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
 }
 
 pub async fn create_transaction_data(
-    node: Arc<Mutex<Node>>, 
-) -> Result<ProposeRequest, Error> {  
+    node: Arc<Mutex<Node>>,
+) -> Result<ProposeRequest, Error> {
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
@@ -45,28 +46,19 @@ pub async fn create_transaction_data(
         )
     };
 
-    let shard_size = (transaction_size + data_shards - 1) / data_shards; // ceil division
-    info!(
-        "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
-        node_id, num_txs, transaction_size, shard_size
-    );
-
-    let mut tx_hashes = Vec::new();
+    let shard_size = (transaction_size + data_shards - 1) / data_shards;
+    let mut shard_hashes = Vec::new();
+    let mut all_encoded_shards = Vec::new();
     let mut transactions = Vec::new();
 
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
-        let mut padded = content.into_bytes();
-        padded.resize(transaction_size, 0);
-
-        let tx_hash = Sha256::digest(&padded).to_vec();
-        tx_hashes.push(tx_hash.clone());
+        let padded = pad_to_len(content.into_bytes(), transaction_size);
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
             .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
 
-        // ✅ Manual split to ensure all shards are shard_size
-        let mut data_chunks: Vec<Vec<u8>> = Vec::with_capacity(data_shards);
+        let mut data_chunks = vec![];
         for i in 0..data_shards {
             let start = i * shard_size;
             let end = std::cmp::min(start + shard_size, padded.len());
@@ -75,7 +67,6 @@ pub async fn create_transaction_data(
             data_chunks.push(chunk);
         }
 
-        // Pad to total_nodes
         let mut shards = data_chunks.clone();
         while shards.len() < total_nodes {
             shards.push(vec![0u8; shard_size]);
@@ -86,42 +77,41 @@ pub async fn create_transaction_data(
             .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
 
         let encoded_shards: Vec<String> = shards
-            .into_iter()
-            .map(|shard| general_purpose::STANDARD.encode(&shard))
+            .iter()
+            .map(|shard| {
+                let hash = Sha256::digest(shard).to_vec();
+                shard_hashes.push(hash.clone());
+                general_purpose::STANDARD.encode(shard)
+            })
             .collect();
 
-        info!(
-            "Node {}: TX[{}] padded bytes = {:?}, hash = {}",
-            node_id, tx_index, padded, hex::encode(&tx_hash)
-        );
+        all_encoded_shards.push(encoded_shards.clone());
 
         transactions.push(Transaction {
-            root: tx_hash,
-            proofs: vec![],
             shards: encoded_shards,
         });
     }
 
-    let batch_root = compute_merkle_root(&tx_hashes);
-    let batch_proofs: Vec<Vec<Vec<u8>>> = tx_hashes
+    // ✅ Compute accumulator over all shard hashes
+    let accumulator: BigInt = compute_accumulator(&shard_hashes);
+    let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
+
+    // ✅ Generate inclusion proofs per shard hash
+    let batch_proofs: Vec<Vec<String>> = shard_hashes
         .iter()
         .enumerate()
-        .map(|(i, _)| compute_merkle_branch(&tx_hashes, i))
+        .map(|(i, _)| {
+            let proof = generate_proof(&shard_hashes, i, &accumulator);
+            vec![general_purpose::STANDARD.encode(proof.to_bytes_be().1)]
+        })
         .collect();
 
-    for (i, hash) in tx_hashes.iter().enumerate() {
-        let proof = &batch_proofs[i];
-        if !verify_merkle_proof(hash, proof, &batch_root, i) {
-            error!("❌ Merkle proof verification failed for tx[{}]", i);
-            return Err(Error::msg(format!("Merkle proof failed at tx[{}]", i)));
-        }
-    }
-
     info!(
-        "✅ Proposal ready: {} txs, Round {}, Batch Root: {}",
+        "✅ RSA-based proposal ready: {} txs, {} total shards, Round {}, Accumulator: {}",
         num_txs,
+        shard_hashes.len(),
         round_id,
-        hex::encode(&batch_root)
+        &encoded_accumulator[..12] // shortened preview
     );
 
     Ok(ProposeRequest {
@@ -131,8 +121,7 @@ pub async fn create_transaction_data(
         },
         transactions,
         parents: parent_units,
-        batch_root,
+        batch_accumulator: encoded_accumulator,
         batch_proofs,
     })
 }
-
