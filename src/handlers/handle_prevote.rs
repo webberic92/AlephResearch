@@ -74,8 +74,7 @@ pub async fn handle_prevote(
                             let node_guard = node.lock().await;
                             (node_guard.transaction_size, node_guard.data_shards)
                         };
-                        let expected_len = transaction_size / data_shards;
-                        if decoded.len() != expected_len {
+                        let expected_len = (transaction_size + data_shards - 1) / data_shards;                        if decoded.len() != expected_len {
                             return Err(format!(
                                 "Node {}: Shard {} for tx {} is not {} bytes (got {})",
                                 node_id, j, i, expected_len, decoded.len()

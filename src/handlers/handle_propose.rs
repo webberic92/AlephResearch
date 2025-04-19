@@ -106,7 +106,7 @@ pub async fn handle_propose(
             (node_guard.transaction_size, node_guard.data_shards)
         };
 
-        let expected_shard_size = transaction_size / data_shards;
+        let expected_shard_size = (transaction_size + data_shards - 1) / data_shards;
 
         if decoded_shard.len() != expected_shard_size {
             return Err(format!(
