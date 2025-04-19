@@ -1,8 +1,6 @@
 // Copy this file as-is into your handle_prevote.rs
 
 use base64::{engine::general_purpose, Engine};
-use futures::future::join_all;
-use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
@@ -156,10 +154,35 @@ pub async fn handle_prevote(
             });
         }
 
+
+        let mut resolved_parents = Vec::new();
+        let node_guard = node.lock().await;
+        let dag_guard = node_guard.dag.lock().await;
+        
+        for hash in &proposal.parents {
+            let hash_hex = hex::encode(hash);
+            let maybe_match = dag_guard.values().flatten().find_map(|unit| {
+                if Sha256::digest(unit.unit_id.as_bytes()).to_vec() == *hash {
+                    Some(unit.unit_id.clone())
+                } else {
+                    None
+                }
+            });
+        
+            if let Some(unit_id) = maybe_match {
+                resolved_parents.push(unit_id);
+            } else {
+                warn!("Could not resolve parent hash {} to a known unit_id", hash_hex);
+            }
+        }
+
+
+
+
         let reconstructed_unit = reconstruct_unit(
             &reconstructed_transactions,
             round_id,
-            proposal.parents.clone(),
+            resolved_parents,
             proposer_id,
             batch_root.clone(),
         )?;
@@ -258,7 +281,7 @@ pub async fn handle_prevote(
     }
 
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut shard_aggregator = node_guard.shard_aggregator.lock().await;
         shard_aggregator.clear_round(round_id);
     }
