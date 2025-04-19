@@ -7,6 +7,7 @@ pub mod utils{
     pub mod create_transaction_data;
     pub mod round_manager;
     pub mod events;
+    pub mod rsa_accumulator_util;
 }
 
 pub mod tests{
