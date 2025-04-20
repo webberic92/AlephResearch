@@ -36,3 +36,7 @@ pub mod controllers{
 pub mod requests{
     pub mod send_proposals;
 }
+
+pub mod tests   {
+    pub mod test;
+}

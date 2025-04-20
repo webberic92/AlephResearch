@@ -64,22 +64,36 @@ pub fn get_modulus() -> BigInt {
         .expect("Failed to parse RSA-2048 modulus")
 }
 
-/// ✅ Accumulate all elements modulo N
+//// ✅ Accumulate all elements modulo N
 pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
     let n = get_modulus();
-    elements.iter()
-        .map(|e| hash_to_prime(e))
-        .fold(BigInt::one(), |acc, p| acc.modpow(&p, &n))
+    let g = BigInt::from(2u8);
+
+    let total_product = elements.iter()
+        .map(|e| {
+            let hash = Sha256::digest(e).to_vec();
+            hash_to_prime(&hash)
+        })
+        .fold(BigInt::one(), |acc, p| acc * p);
+
+    g.modpow(&total_product, &n)
 }
 
-/// ✅ Generate inclusion proof for element[i] (product of others)
 pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt) -> BigInt {
     let n = get_modulus();
-    elements.iter().enumerate()
+    let g = BigInt::from(2u8);
+
+    let product_of_others = elements.iter().enumerate()
         .filter(|(i, _)| *i != index)
-        .map(|(_, e)| hash_to_prime(e))
-        .fold(BigInt::one(), |acc, p| acc.modpow(&p, &n))
+        .map(|(_, e)| {
+            let hash = Sha256::digest(e).to_vec();
+            hash_to_prime(&hash)
+        })
+        .fold(BigInt::one(), |acc, p| acc * p);
+
+    g.modpow(&product_of_others, &n)
 }
+
 
 /// Verifies that a hashed element is in the RSA accumulator using its proof.
 /// 
@@ -90,19 +104,38 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
 /// 
 /// # Returns
 /// - `true` if `proof^hash(element) == accumulator mod accumulator`, else false.
+// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
+//     // 1. Hash the element (e.g., shard) using SHA256
+
+//     // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
+//     // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
+
+//     // let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    
+//     let hash = Sha256::digest(element).to_vec();
+//     let exponent = hash_to_prime(&hash);
+//     // 3. Compute proof^exponent mod accumulator
+//     let reconstructed = proof.modpow(&exponent, accumulator);
+
+//     // 4. Check that reconstructed == accumulator
+//     &reconstructed == accumulator
+// }
+
+
+// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
+//     let exponent = hash_to_prime(element);  // not hash_to_prime(Sha256::digest(...))
+//     let reconstructed = proof.modpow(&exponent, accumulator);
+//     &reconstructed == accumulator
+// }
+
 pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-    // 1. Hash the element (e.g., shard) using SHA256
-
-    // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
-    // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
-
-    // let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    
     let hash = Sha256::digest(element).to_vec();
     let exponent = hash_to_prime(&hash);
-    // 3. Compute proof^exponent mod accumulator
     let reconstructed = proof.modpow(&exponent, accumulator);
-
-    // 4. Check that reconstructed == accumulator
     &reconstructed == accumulator
 }
 
+pub fn verify_proof_from_hash(accumulator: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
+    let exponent = hash_to_prime(hash);
+    let reconstructed = proof.modpow(&exponent, accumulator);
+    &reconstructed == accumulator
+}
