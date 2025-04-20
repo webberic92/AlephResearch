@@ -67,7 +67,7 @@ pub async fn handle_commit(
             info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
             for unit in all_units {
                 
-                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
+                if !dag_units.iter().any(|u| u.accumulator_root == unit.accumulator_root) {
                     dag_units.push(unit.clone());
                     info!(
                         "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",

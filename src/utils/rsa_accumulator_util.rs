@@ -81,9 +81,26 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
         .fold(BigInt::one(), |acc, p| acc.modpow(&p, &n))
 }
 
-/// ✅ Verify an element against its proof and accumulator
-pub fn verify_proof(element: &[u8], proof: &BigInt, accumulator: &BigInt) -> bool {
-    let n = get_modulus();
-    let p = hash_to_prime(element);
-    proof.modpow(&p, &n) == *accumulator
+/// Verifies that a hashed element is in the RSA accumulator using its proof.
+/// 
+/// # Arguments
+/// - `accumulator`: The RSA accumulator value (product of hashed elements).
+/// - `element`: The data being proven (e.g., shard bytes).
+/// - `proof`: The RSA inclusion proof (product of all other primes).
+/// 
+/// # Returns
+/// - `true` if `proof^hash(element) == accumulator mod accumulator`, else false.
+pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
+    // 1. Hash the element (e.g., shard) using SHA256
+    let element_hash = Sha256::digest(element);
+
+    // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
+    let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
+
+    // 3. Compute proof^exponent mod accumulator
+    let reconstructed = proof.modpow(&exponent, accumulator);
+
+    // 4. Check that reconstructed == accumulator
+    &reconstructed == accumulator
 }
+

@@ -8,8 +8,11 @@ pub struct BaseRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub shards: Vec<String>, // base64-encoded shards of this transaction
+    pub root: Vec<u8>,            // Hash of the full padded transaction
+    pub shards: Vec<String>,      // base64-encoded shards
+    pub proofs: Vec<String>,      // base64-encoded RSA proof per shard
 }
+
 
 
 
@@ -53,7 +56,7 @@ pub struct DagUnit {
     pub round: u64,
     pub transactions: Vec<Transaction>,
     pub parent_units: Vec<String>, // ["U1-1", "U1-2"]
-    pub merkle_root: Vec<u8>,       // ✅ Single batch root
+    pub accumulator_root: Vec<u8>,       // ✅ Single batch root
     pub finalization_timestamp: u64,
 }
 

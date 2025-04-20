@@ -10,7 +10,7 @@ use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::{rsa_accumulator_util::{compute_accumulator, generate_proof}, shard_util::split_into_shards}
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proof}
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -47,26 +47,33 @@ pub async fn create_transaction_data(
     };
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let mut shard_hashes = Vec::new();
-    let mut all_encoded_shards = Vec::new();
+    let mut all_shard_hashes = Vec::new(); // for accumulator
+    let mut shard_hash_index_map = Vec::new(); // to track which hashes belong to which tx
+
     let mut transactions = Vec::new();
 
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
+        let tx_root = Sha256::digest(&padded).to_vec();
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
             .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
 
-        let mut data_chunks = vec![];
-        for i in 0..data_shards {
-            let start = i * shard_size;
-            let end = std::cmp::min(start + shard_size, padded.len());
-            let mut chunk = padded[start..end].to_vec();
-            chunk.resize(shard_size, 0);
-            data_chunks.push(chunk);
+        // Prepare data shards
+        let mut data_chunks: Vec<Vec<u8>> = padded
+            .chunks(shard_size)
+            .map(|chunk| {
+                let mut v = chunk.to_vec();
+                v.resize(shard_size, 0);
+                v
+            })
+            .collect();
+        while data_chunks.len() < data_shards {
+            data_chunks.push(vec![0u8; shard_size]);
         }
 
+        // Add parity shards
         let mut shards = data_chunks.clone();
         while shards.len() < total_nodes {
             shards.push(vec![0u8; shard_size]);
@@ -76,42 +83,53 @@ pub async fn create_transaction_data(
         rs.encode(&mut shard_refs)
             .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
 
+        // Encode and hash shards
+        let mut shard_hashes_this_tx = Vec::new();
         let encoded_shards: Vec<String> = shards
             .iter()
             .map(|shard| {
                 let hash = Sha256::digest(shard).to_vec();
-                shard_hashes.push(hash.clone());
+                all_shard_hashes.push(hash.clone());
+                shard_hashes_this_tx.push(hash);
                 general_purpose::STANDARD.encode(shard)
             })
             .collect();
 
-        all_encoded_shards.push(encoded_shards.clone());
+        shard_hash_index_map.push(shard_hashes_this_tx);
 
+        // We'll attach proofs later
         transactions.push(Transaction {
+            root: tx_root,
             shards: encoded_shards,
+            proofs: vec![], // temporarily empty
         });
     }
 
-    // ✅ Compute accumulator over all shard hashes
-    let accumulator: BigInt = compute_accumulator(&shard_hashes);
+    // Build the accumulator
+    let accumulator = compute_accumulator(&all_shard_hashes);
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    // ✅ Generate inclusion proofs per shard hash
-    let batch_proofs: Vec<Vec<String>> = shard_hashes
-        .iter()
-        .enumerate()
-        .map(|(i, _)| {
-            let proof = generate_proof(&shard_hashes, i, &accumulator);
-            vec![general_purpose::STANDARD.encode(proof.to_bytes_be().1)]
-        })
-        .collect();
+    // Now compute proofs per shard
+    let mut flat_proofs = Vec::new();
+    for (i, _) in all_shard_hashes.iter().enumerate() {
+        let proof = generate_proof(&all_shard_hashes, i, &accumulator);
+        flat_proofs.push(general_purpose::STANDARD.encode(proof.to_bytes_be().1));
+    }
+
+    // Assign per-tx proof slices to transactions
+    let mut cursor = 0;
+    for (tx, hashes_for_tx) in transactions.iter_mut().zip(shard_hash_index_map.iter()) {
+        let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + hashes_for_tx.len()].to_vec();
+        tx.proofs = proofs_for_tx;
+        cursor += hashes_for_tx.len();
+    }
 
     info!(
-        "✅ RSA-based proposal ready: {} txs, {} total shards, Round {}, Accumulator: {}",
+        "✅ RSA-based proposal ready: {} txs, {} total shards, Round {}, Accumulator: {}...",
         num_txs,
-        shard_hashes.len(),
+        all_shard_hashes.len(),
         round_id,
-        &encoded_accumulator[..12] // shortened preview
+        &encoded_accumulator[..12]
     );
 
     Ok(ProposeRequest {
@@ -122,6 +140,8 @@ pub async fn create_transaction_data(
         transactions,
         parents: parent_units,
         batch_accumulator: encoded_accumulator,
-        batch_proofs,
+        batch_proofs: vec![], // unused in this RSA version
     })
 }
+
+
