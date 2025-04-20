@@ -11,7 +11,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
     }, 
-    utils::rsa_accumulator_util::verify_proof,
+    utils::rsa_accumulator_util::{hash_to_prime, verify_proof},
 };
 
 pub async fn handle_prevote(
@@ -83,6 +83,20 @@ pub async fn handle_prevote(
                     ));
                 }
 
+                let hash = Sha256::digest(&decoded);
+                let prime = hash_to_prime(&decoded);
+                info!(
+                    "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
+                    node_id,
+                    i,
+                    j,
+                    decoded.len(),
+                    hex::encode(&hash),
+                    prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
+                );
+                
+
+
                 if j < data_shards {
                     let node_guard = node.lock().await;
                     let mut aggregator = node_guard.shard_aggregator.lock().await;
@@ -96,11 +110,12 @@ pub async fn handle_prevote(
                     .map_err(|e| format!("Node {}: Failed to decode proof for tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
                 let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
-                if !verify_proof(&accumulator, &decoded, &proof) {
+                if !verify_proof(&accumulator, &hash, &proof) {
                     return Err(format!("Node {}: Invalid RSA proof for tx[{}] shard[{}]", node_id, i, j));
                 }
             }
 
+            
             // ✅ Reconstruct padded tx
             let maybe_tx = {
                 let node_guard = node.lock().await;
