@@ -94,6 +94,15 @@ pub async fn handle_propose(
     
         let hash = Sha256::digest(&decoded_shard);
     
+
+        info!(
+            "Node {}: handle_propose() tx[{}] → decoded shard SHA256 = {}, proof base64 = {}...",
+            node_id,
+            i,
+            hex::encode(&Sha256::digest(&decoded_shard)),
+            &proof_b64[..8.min(proof_b64.len())],
+        );
+
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
         }

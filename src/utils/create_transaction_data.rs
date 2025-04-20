@@ -10,7 +10,7 @@ use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proof}
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, hash_to_prime}
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -84,16 +84,27 @@ pub async fn create_transaction_data(
             .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
 
         // Encode and hash shards
+       // Encode and hash shards
         let mut shard_hashes_this_tx = Vec::new();
         let encoded_shards: Vec<String> = shards
             .iter()
-            .map(|shard| {
+            .enumerate()
+            .map(|(shard_index, shard)| {
                 let hash = Sha256::digest(shard).to_vec();
+                let prime = hash_to_prime(shard);
+                info!(
+                    "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
+                    tx_index,
+                    shard_index,
+                    hex::encode(&hash),
+                    prime.to_str_radix(10).chars().take(12).collect::<String>()
+                );
                 all_shard_hashes.push(hash.clone());
                 shard_hashes_this_tx.push(hash);
                 general_purpose::STANDARD.encode(shard)
             })
             .collect();
+
 
         shard_hash_index_map.push(shard_hashes_this_tx);
 
@@ -115,13 +126,33 @@ pub async fn create_transaction_data(
         let proof = generate_proof(&all_shard_hashes, i, &accumulator);
         flat_proofs.push(general_purpose::STANDARD.encode(proof.to_bytes_be().1));
     }
+    
 
     // Assign per-tx proof slices to transactions
     let mut cursor = 0;
-    for (tx, hashes_for_tx) in transactions.iter_mut().zip(shard_hash_index_map.iter()) {
-        let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + hashes_for_tx.len()].to_vec();
+    for (tx_index, (tx, hashes_for_tx)) in transactions.iter_mut().zip(shard_hash_index_map.iter()).enumerate() {
+        let end = cursor + hashes_for_tx.len();
+        if end > flat_proofs.len() {
+            return Err(Error::msg(format!(
+                "Proof slice out of bounds for tx[{}]: cursor={} + {} > {}",
+                tx_index, cursor, hashes_for_tx.len(), flat_proofs.len()
+            )));
+        }
+    
+        // 🔍 Log correct transaction index and slice info
+        info!(
+            "Assigning proofs for tx[{}]: cursor={}, end={}, shards={}",
+            tx_index,
+            cursor,
+            end,
+            hashes_for_tx.len()
+        );
+    
+ 
+
+        let proofs_for_tx: Vec<String> = flat_proofs[cursor..end].to_vec();
         tx.proofs = proofs_for_tx;
-        cursor += hashes_for_tx.len();
+        cursor = end;
     }
 
     info!(
@@ -129,7 +160,7 @@ pub async fn create_transaction_data(
         num_txs,
         all_shard_hashes.len(),
         round_id,
-        &encoded_accumulator[..12]
+        encoded_accumulator.get(..12).unwrap_or(&encoded_accumulator)
     );
 
     Ok(ProposeRequest {

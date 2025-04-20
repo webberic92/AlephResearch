@@ -1,15 +1,16 @@
+sh-4.2$ cat /aleph/logs/node_status
 Starting cpu and memory logs
-PRIVATE_IP = 10.0.136.120
+PRIVATE_IP = 10.0.141.5
 Node registration success.
 IP Manager not ready, retrying...
 IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.143.201:30333", "10.0.154.200:30333", "10.0.158.147:30333", "10.0.190.6:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.155.254"
-ip_address = "10.0.136.120"
-nodes = ["10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"]
+ip_manager_address = "10.0.165.145"
+ip_address = "10.0.141.5"
+nodes = ["10.0.143.201:30333", "10.0.154.200:30333", "10.0.158.147:30333", "10.0.190.6:30333"]
 total_nodes = 5
 
 [consensus]
@@ -20,82 +21,88 @@ total_rounds = 1 # Number of rounds
 
 [logging]
 level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
+transaction_metrics_log = "/aleph/logs/transaction_metrics"
 
 [node]
 id = 5
 Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
+aleph_rbc binary is found at /aleph/aleph_rbc
+Configuration file found at /aleph/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
 aleph_rbc not ready, retrying...
-2025-04-16T02:09:27.784622Z  INFO aleph_rbc: LATENCY START
-2025-04-16T02:09:27.784744Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:27.784747Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-04-16T02:09:27.790532Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
+2025-04-20T02:35:26.057762Z  INFO aleph_rbc: LATENCY START
+2025-04-20T02:35:26.057811Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-04-20T02:35:26.057825Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
+2025-04-20T02:35:26.059332Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.143.201:30333", "10.0.154.200:30333", "10.0.190.6:30333"]: Trying again....
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
-2025-04-16T02:09:28.791566Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:28.792634Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
+2025-04-20T02:35:27.059599Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-04-20T02:35:27.060592Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.143.201:30333", "10.0.154.200:30333", "10.0.190.6:30333"]: Trying again....
 Done with aleph_rbc loop for node 5
-2025-04-16T02:09:29.793846Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:29.794541Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
-2025-04-16T02:09:30.683302Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
-2025-04-16T02:09:30.683359Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.683364Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.683397Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 3. Count: 1/4
-2025-04-16T02:09:30.741796Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
-2025-04-16T02:09:30.741901Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.741909Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.741944Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 2. Count: 2/4
-2025-04-16T02:09:30.796038Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:30.797124Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
-2025-04-16T02:09:30.797139Z  INFO aleph_research::utils::create_transaction_data: Node 5: Creating 5 transactions (256 bytes each) with RS shards (64 bytes/shard)
-2025-04-16T02:09:30.797268Z  INFO aleph_research::utils::create_transaction_data: ✅ Proposal ready: 5 txs, Round 1, Batch Root: dae1940bd6c35d9ec716e9fd5ca8e0dd1aaecb2dc5b9ac92075f30b1a241a714
-2025-04-16T02:09:30.797278Z  INFO aleph_rbc: Node 5: Created proposal with 5 transactions for round 1.
-2025-04-16T02:09:30.797284Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"] for round 1
-2025-04-16T02:09:30.797297Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.130.175:30333 (round 1)
-2025-04-16T02:09:30.798194Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.130.175:30333 (round 1)
-2025-04-16T02:09:30.798222Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.135.74:30333 (round 1)
-2025-04-16T02:09:30.798820Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.135.74:30333 (round 1)
-2025-04-16T02:09:30.798843Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.148.158:30333 (round 1)
-2025-04-16T02:09:30.799429Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.148.158:30333 (round 1)
-2025-04-16T02:09:30.799449Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.172.170:30333 (round 1)
-2025-04-16T02:09:30.801607Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.172.170:30333 (round 1)
-2025-04-16T02:09:30.801633Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
-2025-04-16T02:09:30.801642Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 1 into RBCProcessor queue
-2025-04-16T02:09:30.801661Z  INFO aleph_rbc: Node 5: Proposal for round 1 sent successfully.
-2025-04-16T02:09:30.801674Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
-2025-04-16T02:09:30.801718Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.801731Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.801765Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 5. Count: 3/4
-2025-04-16T02:09:30.976031Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
-2025-04-16T02:09:30.976090Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.976096Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.976141Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 1. Count: 4/4
-2025-04-16T02:09:30.976148Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
-2025-04-16T02:09:30.976170Z  INFO aleph_research::handlers::handle_propose: Node 5: Multicasting prevote to all nodes...
-2025-04-16T02:09:30.976174Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.130.175:30333/prevote for round 1
-2025-04-16T02:09:30.978069Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.130.175:30333/prevote
-2025-04-16T02:09:30.978116Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.135.74:30333/prevote for round 1
-2025-04-16T02:09:30.982214Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.135.74:30333/prevote
-2025-04-16T02:09:30.982245Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.148.158:30333/prevote for round 1
-2025-04-16T02:09:30.997754Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.148.158:30333/prevote
-2025-04-16T02:09:30.997789Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.172.170:30333/prevote for round 1
-2025-04-16T02:09:31.000868Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.172.170:30333/prevote
-2025-04-16T02:09:31.000893Z  INFO aleph_research::handlers::handle_propose: Node 5: Enqueuing local prevote into RBCProcessor for round 1
-2025-04-16T02:09:31.000922Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.130.175
-2025-04-16T02:09:31.000974Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.000980Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.135.74
-2025-04-16T02:09:31.001012Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001016Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.172.170
-2025-04-16T02:09:31.001046Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001050Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.148.158
-2025-04-16T02:09:31.001088Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001091Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.136.120
-2025-04-16T02:09:31.001148Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.389198Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
-2025-04-16T02:09:31.389230Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum already met for round 1 (4 received, required_proposals: 4). Dropping.
-sh-4.2$
+2025-04-20T02:35:28.062079Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-04-20T02:35:28.062862Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.143.201:30333", "10.0.154.200:30333", "10.0.190.6:30333"]: Trying again....
+2025-04-20T02:35:29.064313Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-04-20T02:35:29.065374Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.154.200:30333"]: Trying again....
+2025-04-20T02:35:30.067159Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-04-20T02:35:36.881612Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
+2025-04-20T02:35:36.881667Z  INFO aleph_research::handlers::handle_propose: Node 5: handle_propose() tx[0] → decoded shard SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, proof base64 = AQ==...
+2025-04-20T02:35:36.881690Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
+2025-04-20T02:35:36.906064Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "Node 5: RSA proof invalid for tx 0"
+2025-04-20T02:35:36.906138Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[0] shard[0]: SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, mapped_prime = 558394219503
+2025-04-20T02:35:36.916674Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[0] shard[1]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.925227Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[0] shard[2]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.934839Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[0] shard[3]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.936406Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[0] shard[4]: SHA256 = 58030a549625d47af6dd0f5ab4db8788c84bf3527da271358fc2c5d509679dc0, mapped_prime = 108059292537
+2025-04-20T02:35:36.940248Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[1] shard[0]: SHA256 = 4fc95975bfef4680001e2088f486c7807c33ea5abb31b6c9eee9ad31c33a31ff, mapped_prime = 102908233390
+2025-04-20T02:35:36.949630Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[1] shard[1]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.967606Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[1] shard[2]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.978902Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[1] shard[3]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:36.992164Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[1] shard[4]: SHA256 = 3590a172a44fcc6c65f0148489d676f71453f06ae7549e26c56b50531fbb61f3, mapped_prime = 298726903153
+2025-04-20T02:35:36.997693Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[2] shard[0]: SHA256 = 23743f9b46d28fa959a9e58eccf382797e28b42d6294e6fb324190bb078e475c, mapped_prime = 253282756796
+2025-04-20T02:35:37.006452Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[2] shard[1]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.015640Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[2] shard[2]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.024408Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[2] shard[3]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.027964Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[2] shard[4]: SHA256 = 0a6d52ad35c73c6b3a721b603e579a65123ebedec17a0c09e3b5fedbdccbc6b6, mapped_prime = 126058294379
+2025-04-20T02:35:37.030878Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[3] shard[0]: SHA256 = 8f4bd4173d796773f472a1b0371833b2c44b26c44779e49ba06060af039c99a3, mapped_prime = 828546596753
+2025-04-20T02:35:37.046058Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[3] shard[1]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.056419Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[3] shard[2]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.065843Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[3] shard[3]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.085888Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[3] shard[4]: SHA256 = 7aeaed6ecad42e951a995563aac119edd29711f89bc2d58f71df63425de62381, mapped_prime = 805891984522
+2025-04-20T02:35:37.089015Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[4] shard[0]: SHA256 = 06ff0a8834ad5bc2158dd101c3d925cb244ab2253aa516d6c5a8577bad21fc6f, mapped_prime = 100426061642
+2025-04-20T02:35:37.105834Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[4] shard[1]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.117769Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[4] shard[2]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.129104Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[4] shard[3]: SHA256 = f5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b, mapped_prime = 308628161166
+2025-04-20T02:35:37.130639Z  INFO aleph_research::utils::create_transaction_data: ProofGen: tx[4] shard[4]: SHA256 = 885bf96d371e2418e9c1bf2c14ef94560ee0326e8ccffc2dea57a3981833bfa7, mapped_prime = 682103110398
+2025-04-20T02:35:42.466118Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
+2025-04-20T02:35:42.466167Z  INFO aleph_research::handlers::handle_propose: Node 5: handle_propose() tx[0] → decoded shard SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, proof base64 = AQ==...
+2025-04-20T02:35:42.492902Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "Node 5: RSA proof invalid for tx 0"
+2025-04-20T02:35:42.576511Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
+2025-04-20T02:35:42.576551Z  INFO aleph_research::handlers::handle_propose: Node 5: handle_propose() tx[0] → decoded shard SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, proof base64 = AQ==...
+2025-04-20T02:35:42.606478Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "Node 5: RSA proof invalid for tx 0"
+2025-04-20T02:35:42.883156Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
+2025-04-20T02:35:42.883206Z  INFO aleph_research::handlers::handle_propose: Node 5: handle_propose() tx[0] → decoded shard SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, proof base64 = AQ==...
+2025-04-20T02:35:42.910231Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "Node 5: RSA proof invalid for tx 0"
+2025-04-20T02:35:43.986975Z  INFO aleph_research::utils::create_transaction_data: Assigning proofs for tx[0]: cursor=0, end=5, shards=5
+2025-04-20T02:35:43.987150Z  INFO aleph_research::utils::create_transaction_data: Assigning proofs for tx[1]: cursor=5, end=10, shards=5
+2025-04-20T02:35:43.987154Z  INFO aleph_research::utils::create_transaction_data: Assigning proofs for tx[2]: cursor=10, end=15, shards=5
+2025-04-20T02:35:43.987293Z  INFO aleph_research::utils::create_transaction_data: Assigning proofs for tx[3]: cursor=15, end=20, shards=5
+2025-04-20T02:35:43.987299Z  INFO aleph_research::utils::create_transaction_data: Assigning proofs for tx[4]: cursor=20, end=25, shards=5
+2025-04-20T02:35:43.987310Z  INFO aleph_research::utils::create_transaction_data: ✅ RSA-based proposal ready: 5 txs, 25 total shards, Round 1, Accumulator: AQ==...
+2025-04-20T02:35:43.987322Z  INFO aleph_rbc: Node 5: Created proposal with 5 transactions for round 1.
+2025-04-20T02:35:43.987330Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.143.201:30333", "10.0.154.200:30333", "10.0.158.147:30333", "10.0.190.6:30333"] for round 1
+2025-04-20T02:35:43.987772Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.143.201:30333 (round 1)
+2025-04-20T02:35:43.992270Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.143.201:30333 (round 1)
+2025-04-20T02:35:43.992336Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.154.200:30333 (round 1)
+2025-04-20T02:35:43.994076Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.154.200:30333 (round 1)
+2025-04-20T02:35:43.994901Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.158.147:30333 (round 1)
+2025-04-20T02:35:43.996517Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.158.147:30333 (round 1)
+2025-04-20T02:35:43.996561Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.190.6:30333 (round 1)
+2025-04-20T02:35:43.997155Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.190.6:30333 (round 1)
+2025-04-20T02:35:43.997179Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-04-20T02:35:43.997195Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 1 into RBCProcessor queue
+2025-04-20T02:35:43.997217Z  INFO aleph_rbc: Node 5: Proposal for round 1 sent successfully.
+2025-04-20T02:35:43.997232Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
+2025-04-20T02:35:43.997251Z  INFO aleph_research::handlers::handle_propose: Node 5: handle_propose() tx[0] → decoded shard SHA256 = 9651fc68d494a03127eeee61c3aee0494a384064e5b30aa902e908851d10b0c7, proof base64 = AQ==...
+2025-04-20T02:35:44.035951Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "Node 5: RSA proof invalid for tx 0"

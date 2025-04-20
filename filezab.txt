@@ -148,7 +148,7 @@ pub async fn handle_commit(
                 };
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
@@ -184,7 +184,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
     }, 
-    utils::rsa_accumulator_util::verify_proof,
+    utils::rsa_accumulator_util::{hash_to_prime, verify_proof},
 };
 
 pub async fn handle_prevote(
@@ -256,6 +256,20 @@ pub async fn handle_prevote(
                     ));
                 }
 
+                let hash = Sha256::digest(&decoded);
+                let prime = hash_to_prime(&decoded);
+                info!(
+                    "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
+                    node_id,
+                    i,
+                    j,
+                    decoded.len(),
+                    hex::encode(&hash),
+                    prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
+                );
+                
+
+
                 if j < data_shards {
                     let node_guard = node.lock().await;
                     let mut aggregator = node_guard.shard_aggregator.lock().await;
@@ -269,11 +283,12 @@ pub async fn handle_prevote(
                     .map_err(|e| format!("Node {}: Failed to decode proof for tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
                 let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
-                if !verify_proof(&accumulator, &decoded, &proof) {
+                if !verify_proof(&accumulator, &hash, &proof) {
                     return Err(format!("Node {}: Invalid RSA proof for tx[{}] shard[{}]", node_id, i, j));
                 }
             }
 
+            
             // ✅ Reconstruct padded tx
             let maybe_tx = {
                 let node_guard = node.lock().await;
@@ -487,6 +502,15 @@ pub async fn handle_propose(
     
         let hash = Sha256::digest(&decoded_shard);
     
+
+        info!(
+            "Node {}: handle_propose() tx[{}] → decoded shard SHA256 = {}, proof base64 = {}...",
+            node_id,
+            i,
+            hex::encode(&Sha256::digest(&decoded_shard)),
+            &proof_b64[..8.min(proof_b64.len())],
+        );
+
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
         }
@@ -790,7 +814,7 @@ use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proof}
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, hash_to_prime}
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -864,16 +888,27 @@ pub async fn create_transaction_data(
             .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
 
         // Encode and hash shards
+       // Encode and hash shards
         let mut shard_hashes_this_tx = Vec::new();
         let encoded_shards: Vec<String> = shards
             .iter()
-            .map(|shard| {
+            .enumerate()
+            .map(|(shard_index, shard)| {
                 let hash = Sha256::digest(shard).to_vec();
+                let prime = hash_to_prime(shard);
+                info!(
+                    "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
+                    tx_index,
+                    shard_index,
+                    hex::encode(&hash),
+                    prime.to_str_radix(10).chars().take(12).collect::<String>()
+                );
                 all_shard_hashes.push(hash.clone());
                 shard_hashes_this_tx.push(hash);
                 general_purpose::STANDARD.encode(shard)
             })
             .collect();
+
 
         shard_hash_index_map.push(shard_hashes_this_tx);
 
@@ -895,13 +930,33 @@ pub async fn create_transaction_data(
         let proof = generate_proof(&all_shard_hashes, i, &accumulator);
         flat_proofs.push(general_purpose::STANDARD.encode(proof.to_bytes_be().1));
     }
+    
 
     // Assign per-tx proof slices to transactions
     let mut cursor = 0;
-    for (tx, hashes_for_tx) in transactions.iter_mut().zip(shard_hash_index_map.iter()) {
-        let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + hashes_for_tx.len()].to_vec();
+    for (tx_index, (tx, hashes_for_tx)) in transactions.iter_mut().zip(shard_hash_index_map.iter()).enumerate() {
+        let end = cursor + hashes_for_tx.len();
+        if end > flat_proofs.len() {
+            return Err(Error::msg(format!(
+                "Proof slice out of bounds for tx[{}]: cursor={} + {} > {}",
+                tx_index, cursor, hashes_for_tx.len(), flat_proofs.len()
+            )));
+        }
+    
+        // 🔍 Log correct transaction index and slice info
+        info!(
+            "Assigning proofs for tx[{}]: cursor={}, end={}, shards={}",
+            tx_index,
+            cursor,
+            end,
+            hashes_for_tx.len()
+        );
+    
+ 
+
+        let proofs_for_tx: Vec<String> = flat_proofs[cursor..end].to_vec();
         tx.proofs = proofs_for_tx;
-        cursor += hashes_for_tx.len();
+        cursor = end;
     }
 
     info!(
@@ -909,7 +964,7 @@ pub async fn create_transaction_data(
         num_txs,
         all_shard_hashes.len(),
         round_id,
-        &encoded_accumulator[..12]
+        encoded_accumulator.get(..12).unwrap_or(&encoded_accumulator)
     );
 
     Ok(ProposeRequest {
@@ -1192,12 +1247,11 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
 /// - `true` if `proof^hash(element) == accumulator mod accumulator`, else false.
 pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
     // 1. Hash the element (e.g., shard) using SHA256
-    let element_hash = Sha256::digest(element);
 
     // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
-    let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
+    // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
 
-    // 3. Compute proof^exponent mod accumulator
+    let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    // 3. Compute proof^exponent mod accumulator
     let reconstructed = proof.modpow(&exponent, accumulator);
 
     // 4. Check that reconstructed == accumulator
