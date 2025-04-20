@@ -49,7 +49,7 @@ pub async fn write_finalized_dag_to_file(
             "unit_id": unit.unit_id,
             "creator": unit.proposer_node,
             "round": unit.round,
-            "batch_merkle_root": hex::encode(&unit.merkle_root),
+            "accumulator_root": hex::encode(&unit.accumulator_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
                 "hash": hex::encode(&tx.root),  // renamed for clarity
                 "proofs": tx.proofs.clone(),

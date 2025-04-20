@@ -7,11 +7,6 @@ pub mod utils{
     pub mod round_manager;
     pub mod events;
     pub mod rsa_accumulator_util;
-    pub mod shard_util;
-}
-
-pub mod tests{
-    pub mod test;
 }
 
 pub mod processors{

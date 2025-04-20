@@ -1,13 +1,14 @@
-use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
+use std::{sync::{atomic::Ordering, Arc}};
 use base64::{ engine::general_purpose, Engine };
+use num_bigint::BigInt;
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tracing::{ error, info, warn };
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, rsa_accumulator_util::verify_proof}
 };
-use sha2::Digest;
-
+use sha2::{Digest, Sha256};
+use tokio::time::{sleep, Duration};
 /*
 **ch-RBC Proof Validation for `handle_propose`**
 --------------------------------------------------
@@ -62,78 +63,52 @@ pub async fn handle_propose(
         let node_guard = node.lock().await;
         node_id = node_guard.id;
 
-        // ✅ Only drop if we've already received a proposal from THIS proposer for this round
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
-                info!(
-                    "Node {}: Already received proposal for round {} from proposer {}. Ignoring duplicate.",
-                    node_id, round_id, proposer_id
-                );
+                info!("Node {}: Duplicate proposal from proposer {} for round {}. Ignoring.", node_id, proposer_id, round_id);
                 return Ok(());
             }
         }
     }
 
-    // ✅ Validate Merkle proof and shard sizes for each transaction
-    if propose_request.batch_proofs.len() != propose_request.transactions.len() {
-        return Err(format!(
-            "Node {}: batch_proofs length ({}) does not match transactions length ({})",
-            node_id,
-            propose_request.batch_proofs.len(),
-            propose_request.transactions.len()
-        ));
-    }
+    let accumulator_bytes = general_purpose::STANDARD
+        .decode(&propose_request.batch_accumulator)
+        .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
+
+    let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
 
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let proof = &propose_request.batch_proofs[i];
-        let root = &propose_request.batch_root;
+        let proof_b64 = propose_request.batch_proofs.get(i)
+            .and_then(|p| p.get(0))
+            .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
 
-        if tx.root.len() != 32 {
-            return Err(format!(
-                "Node {}: Invalid tx root length at index {}: expected 32, got {}",
-                node_id, i, tx.root.len()
-            ));
-        }
+        let proof_bytes = general_purpose::STANDARD
+            .decode(proof_b64)
+            .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
 
-        let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
+        let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
+
+        let encoded_shard = tx.shards.first().ok_or_else(|| format!("Node {}: No shards in tx {}", node_id, i))?;
         let decoded_shard = general_purpose::STANDARD
-            .decode(encoded_shard.as_bytes())
-            .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
+            .decode(encoded_shard)
+            .map_err(|e| format!("Node {}: Failed to decode shard in tx {}: {:?}", node_id, i, e))?;
 
-        let (transaction_size, data_shards) = {
-            let node_guard = node.lock().await;
-            (node_guard.transaction_size, node_guard.data_shards)
-        };
+        let hash = Sha256::digest(&decoded_shard);
 
-        let expected_shard_size = (transaction_size + data_shards - 1) / data_shards;
-
-        if decoded_shard.len() != expected_shard_size {
-            return Err(format!(
-                "Node {}: Transaction {} decoded shard size mismatch. Expected {} bytes ({} / {}), got {} bytes.",
-                node_id, i, expected_shard_size, transaction_size, data_shards, decoded_shard.len()
-            ));
-        }
-
-        let valid = verify_merkle_proof(&tx.root, proof, root, i);
-        if !valid {
-            return Err(format!(
-                "Node {}: Invalid Merkle proof for tx {}. tx.root = {:x?}, Proof = {:?}, Expected root = {:x?}",
-                node_id, i, tx.root, proof, root
-            ));
+        if !verify_proof(&accumulator, &hash, &proof) {
+            return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
         }
     }
 
-    // ✅ Ensure DAG is synchronized to r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    // ✅ Add proposal to tracker
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
     if proposal_count >= quorum_threshold {
         info!(
-            "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
+            "Node {}: Proposal quorum met. Broadcasting prevote for {} proposals.",
             node_id, stored_proposals.len()
         );
 
@@ -142,7 +117,7 @@ pub async fn handle_propose(
             PrevoteRequest {
                 proposals: stored_proposals.clone(),
                 sender_url: node_guard.ip_address.clone(),
-                sender_id: node_guard.id, // NEW
+                sender_id: node_guard.id,
             }
         };
 
@@ -151,73 +126,45 @@ pub async fn handle_propose(
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
 
-        info!("Node {}: Multicasting prevote to all nodes...", node_id);
-
         for target_node in node_list {
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
-                let mut attempt = 0;
-                let max_attempts = 3;
-                let mut success = false;
-
-                while attempt < max_attempts {
-                    attempt += 1;
-
-                    info!(
-                        "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
-                        attempt, max_attempts, node_id, url, round_id
-                    );
-
-                    let res = client
-                        .post(&url)
-                        .json(&prevote_request)
-                        .send()
-                        .await;
+                for attempt in 1..=3 {
+                    info!("📤 Attempt {}/3: Node {} → {}", attempt, node_id, url);
+                    let res = client.post(&url).json(&prevote_request).send().await;
 
                     match res {
                         Ok(resp) if resp.status().is_success() => {
-                            info!("✅ Node {}: Prevote success to {}", node_id, url);
-                            success = true;
+                            info!("✅ Node {}: Prevote delivered to {}", node_id, url);
                             break;
                         }
                         Ok(resp) => {
                             let status = resp.status();
-                            let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
-                            error!("❌ Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
+                            let body = resp.text().await.unwrap_or_default();
+                            error!("❌ Node {}: Prevote failed to {}: {} - {}", node_id, url, status, body);
                         }
-                        Err(e) => {
-                            error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
-                        }
+                        Err(e) => error!("❌ Node {}: Network error to {}: {:?}", node_id, url, e),
                     }
 
-                    let delay = 100 * 2u64.pow((attempt - 1) as u32);
-                    sleep(Duration::from_millis(delay));
+                    sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
                 }
-
-                if !success {
-                    error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
-                }
-
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
 
-        // ✅ Handle prevote locally
-        {
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                info!("Node {}: Enqueuing local prevote into RBCProcessor for round {}", node_id, round_id);
-                rbc_processor
-                    .enqueue_message(RBCMessage::Prevote(prevote_request))
-                    .await;
-            } else {
-                error!("Node {}: RBCProcessor not initialized for local prevote enqueue!", node_id);
-            }
+        if let Some(rbc_processor) = &node.lock().await.rbc_processor {
+            info!("Node {}: Enqueuing local prevote", node_id);
+            rbc_processor
+                .enqueue_message(RBCMessage::Prevote(prevote_request))
+                .await;
+        } else {
+            error!("Node {}: No RBCProcessor to enqueue local prevote", node_id);
         }
     }
 
     Ok(())
 }
+
 
 
 
