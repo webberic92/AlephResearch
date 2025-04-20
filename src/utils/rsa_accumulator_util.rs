@@ -96,7 +96,10 @@ pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> boo
     // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
     // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
 
-    let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    // 3. Compute proof^exponent mod accumulator
+    // let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    
+    let hash = Sha256::digest(element).to_vec();
+    let exponent = hash_to_prime(&hash);
+    // 3. Compute proof^exponent mod accumulator
     let reconstructed = proof.modpow(&exponent, accumulator);
 
     // 4. Check that reconstructed == accumulator
