@@ -116,6 +116,7 @@ pub async fn create_transaction_data(
         });
     }
 
+    info!("Total shard hashes for accumulator: {}", all_shard_hashes.len());
     // Build the accumulator
     let accumulator = compute_accumulator(&all_shard_hashes);
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
