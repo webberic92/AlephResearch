@@ -140,7 +140,6 @@ pub async fn create_transaction_data(
         transactions,
         parents: parent_units,
         batch_accumulator: encoded_accumulator,
-        batch_proofs: vec![], // unused in this RSA version
     })
 }
 

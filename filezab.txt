@@ -67,7 +67,7 @@ pub async fn handle_commit(
             info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
             for unit in all_units {
                 
-                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
+                if !dag_units.iter().any(|u| u.accumulator_root == unit.accumulator_root) {
                     dag_units.push(unit.clone());
                     info!(
                         "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
@@ -309,7 +309,7 @@ pub async fn handle_prevote(
             round: round_id,
             transactions: reconstructed_transactions,
             parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            merkle_root: accumulator_bytes.clone(), // repurpose field for accumulator root if needed
+            accumulator_root: accumulator_bytes.clone(), // repurpose field for accumulator root if needed
             finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
         };
 
@@ -472,23 +472,21 @@ pub async fn handle_propose(
     let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
 
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let proof_b64 = propose_request.batch_proofs.get(i)
-            .and_then(|p| p.get(0))
+        let shard_b64 = tx.shards.get(0)
+            .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
+        let decoded_shard = general_purpose::STANDARD
+            .decode(shard_b64)
+            .map_err(|e| format!("Node {}: Failed to decode shard for tx {}: {:?}", node_id, i, e))?;
+    
+        let proof_b64 = tx.proofs.get(0)
             .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
-
         let proof_bytes = general_purpose::STANDARD
             .decode(proof_b64)
             .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
-
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
-
-        let encoded_shard = tx.shards.first().ok_or_else(|| format!("Node {}: No shards in tx {}", node_id, i))?;
-        let decoded_shard = general_purpose::STANDARD
-            .decode(encoded_shard)
-            .map_err(|e| format!("Node {}: Failed to decode shard in tx {}: {:?}", node_id, i, e))?;
-
+    
         let hash = Sha256::digest(&decoded_shard);
-
+    
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
         }
@@ -746,7 +744,7 @@ pub async fn write_finalized_dag_to_file(
             "unit_id": unit.unit_id,
             "creator": unit.proposer_node,
             "round": unit.round,
-            "batch_merkle_root": hex::encode(&unit.merkle_root),
+            "accumulator_root": hex::encode(&unit.accumulator_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
                 "hash": hex::encode(&tx.root),  // renamed for clarity
                 "proofs": tx.proofs.clone(),
@@ -922,7 +920,6 @@ pub async fn create_transaction_data(
         transactions,
         parents: parent_units,
         batch_accumulator: encoded_accumulator,
-        batch_proofs: vec![], // unused in this RSA version
     })
 }
 
@@ -1586,7 +1583,6 @@ pub struct ProposeRequest {
     pub transactions: Vec<Transaction>,
     pub parents: Vec<Vec<u8>>,
     pub batch_accumulator: String,               // 🆕 base64-encoded RSA accumulator
-    pub batch_proofs: Vec<Vec<String>>,          // 🆕 proof per shard hash (base64)
 }
 
 
@@ -1620,7 +1616,7 @@ pub struct DagUnit {
     pub round: u64,
     pub transactions: Vec<Transaction>,
     pub parent_units: Vec<String>, // ["U1-1", "U1-2"]
-    pub merkle_root: Vec<u8>,       // ✅ Single batch root
+    pub accumulator_root: Vec<u8>,       // ✅ Single batch root
     pub finalization_timestamp: u64,
 }
 

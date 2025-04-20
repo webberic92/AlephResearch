@@ -22,7 +22,6 @@ pub struct ProposeRequest {
     pub transactions: Vec<Transaction>,
     pub parents: Vec<Vec<u8>>,
     pub batch_accumulator: String,               // 🆕 base64-encoded RSA accumulator
-    pub batch_proofs: Vec<Vec<String>>,          // 🆕 proof per shard hash (base64)
 }
 
 

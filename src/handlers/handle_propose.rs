@@ -79,23 +79,21 @@ pub async fn handle_propose(
     let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
 
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let proof_b64 = propose_request.batch_proofs.get(i)
-            .and_then(|p| p.get(0))
+        let shard_b64 = tx.shards.get(0)
+            .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
+        let decoded_shard = general_purpose::STANDARD
+            .decode(shard_b64)
+            .map_err(|e| format!("Node {}: Failed to decode shard for tx {}: {:?}", node_id, i, e))?;
+    
+        let proof_b64 = tx.proofs.get(0)
             .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
-
         let proof_bytes = general_purpose::STANDARD
             .decode(proof_b64)
             .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
-
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
-
-        let encoded_shard = tx.shards.first().ok_or_else(|| format!("Node {}: No shards in tx {}", node_id, i))?;
-        let decoded_shard = general_purpose::STANDARD
-            .decode(encoded_shard)
-            .map_err(|e| format!("Node {}: Failed to decode shard in tx {}: {:?}", node_id, i, e))?;
-
+    
         let hash = Sha256::digest(&decoded_shard);
-
+    
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
         }
