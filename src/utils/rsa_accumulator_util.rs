@@ -70,10 +70,7 @@ pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
     let g = BigInt::from(2u8);
 
     let total_product = elements.iter()
-        .map(|e| {
-            let hash = Sha256::digest(e).to_vec();
-            hash_to_prime(&hash)
-        })
+        .map(|hash| hash_to_prime(hash)) // 🚫 DO NOT rehash
         .fold(BigInt::one(), |acc, p| acc * p);
 
     g.modpow(&total_product, &n)
@@ -84,12 +81,9 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
     let g = BigInt::from(2u8);
 
     let product_of_others = elements.iter().enumerate()
-        .filter(|(i, _)| *i != index)
-        .map(|(_, e)| {
-            let hash = Sha256::digest(e).to_vec();
-            hash_to_prime(&hash)
-        })
-        .fold(BigInt::one(), |acc, p| acc * p);
+    .filter(|(i, _)| *i != index)
+    .map(|(_, hash)| hash_to_prime(hash))  // Already hashed
+    .fold(BigInt::one(), |acc, p| acc * p);
 
     g.modpow(&product_of_others, &n)
 }
@@ -135,9 +129,21 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
 // }
 
 
-pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-    let hash = Sha256::digest(element).to_vec();
-    let exponent = hash_to_prime(&hash); // ✅ hash first, then map to prime
-    let reconstructed = proof.modpow(&exponent, accumulator);
-    &reconstructed == accumulator
+pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
+    let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
+    let prime = hash_to_prime(&hash);                   // ✅ Then map to prime
+    let reconstructed = proof.modpow(&prime, &get_modulus()); // ✅ Modulo N
+
+    let is_valid = &reconstructed == accumulator;
+    if !is_valid {
+        println!("❌ verify_proof failed: hash={}, prime={}, proof={}, reconstructed={}, acc={}",
+            hex::encode(&hash),
+            prime.to_str_radix(10).chars().take(12).collect::<String>(),
+            proof.to_str_radix(10).chars().take(12).collect::<String>(),
+            reconstructed.to_str_radix(10).chars().take(12).collect::<String>(),
+            accumulator.to_str_radix(10).chars().take(12).collect::<String>(),
+        );
+    }
+
+    is_valid
 }
