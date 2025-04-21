@@ -11,7 +11,7 @@ node-3/                                  TPS: 0.00
 node-4/                                  TPS: 0.00
 node-5/                                  TPS: 0.00
 ----------------------------------
-📈 Average TPS across 5 nodes (Tx/Round: 25, Rounds: 25): 0.00
+📈 Average TPS across 5 nodes (Tx/Round: 5, Rounds: 1): 0.00
 
 📡 Communication Overhead
 ----------------------------------------------
