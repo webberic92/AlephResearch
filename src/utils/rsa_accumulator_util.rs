@@ -127,15 +127,17 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
 //     &reconstructed == accumulator
 // }
 
+// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
+//     let hash = Sha256::digest(element).to_vec();
+//     let exponent = hash_to_prime(&hash);
+//     let reconstructed = proof.modpow(&exponent, accumulator);
+//     &reconstructed == accumulator
+// }
+
+
 pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
     let hash = Sha256::digest(element).to_vec();
-    let exponent = hash_to_prime(&hash);
-    let reconstructed = proof.modpow(&exponent, accumulator);
-    &reconstructed == accumulator
-}
-
-pub fn verify_proof_from_hash(accumulator: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
-    let exponent = hash_to_prime(hash);
+    let exponent = hash_to_prime(&hash); // ✅ hash first, then map to prime
     let reconstructed = proof.modpow(&exponent, accumulator);
     &reconstructed == accumulator
 }
