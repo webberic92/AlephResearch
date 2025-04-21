@@ -1,8 +1,10 @@
 #!/bin/bash
 
-LOG_DIR="./"  # Assuming you're in the logs directory
-TX_PER_ROUND=25
-ROUNDS=25
+LOG_DIR="./"
+NODE1_STATUS="node-1/node_status"
+
+TX_PER_ROUND=$(grep "number_of_transactions" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
+ROUNDS=$(grep "total_rounds" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
 TOTAL_TX=$((TX_PER_ROUND * ROUNDS))
 
 echo "📊 Transaction Throughput per Node"
@@ -14,21 +16,21 @@ node_count=0
 for node_path in node-*/; do
     file_path="${node_path}/node_status"
 
-    # Some files might end in .txt
     if [[ ! -f "$file_path" ]]; then
         file_path="${node_path}/node_status.txt"
     fi
 
     if [[ -f "$file_path" ]]; then
-        # Extract timestamps, strip color codes, and sort
         timestamps=$(grep "Successfully wrote finalized DAG for round" "$file_path" | \
-                     sed 's/\x1b\[[0-9;]*m//g' | \
-                     awk '{print $1}' | sed 's/Z//' )
+                    sed -E 's/\x1b\[[0-9;]*m//g' | \
+                    grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9:.]+Z' | \
+                    sed 's/T/ /' | sed 's/Z//')
+
+
 
         start_time=$(echo "$timestamps" | head -n 1)
         end_time=$(echo "$timestamps" | tail -n 1)
 
-        # Convert timestamps to epoch (with nanoseconds)
         start_epoch=$(LC_ALL=C date -d "$start_time" +%s.%N 2>/dev/null)
         end_epoch=$(LC_ALL=C date -d "$end_time" +%s.%N 2>/dev/null)
 
@@ -50,5 +52,5 @@ done
 if [[ $node_count -gt 0 ]]; then
     avg_tps=$(echo "$total_tps / $node_count" | bc -l)
     echo "----------------------------------"
-printf "📈 Average TPS across %d nodes (Tx/Round: %d, Rounds: %d): %.2f\n" "$node_count" "$TX_PER_ROUND" "$ROUNDS" "$avg_tps"
+    printf "📈 Average TPS across %d nodes (Tx/Round: %d, Rounds: %d): %.2f\n" "$node_count" "$TX_PER_ROUND" "$ROUNDS" "$avg_tps"
 fi
