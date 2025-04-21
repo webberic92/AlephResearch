@@ -10,6 +10,14 @@ pub struct ShardAggregator {
     pub shard_store: HashMap<(u64, usize, usize), Vec<u8>>,
 }
 
+// 👇 Add this where your `ShardAggregator` is defined
+impl Default for ShardAggregator {
+    fn default() -> Self {
+        Self::new(1, 1)
+    }
+}
+
+
 impl ShardAggregator {
     pub fn new(data_shards: usize, total_shards: usize) -> Self {
         ShardAggregator {
