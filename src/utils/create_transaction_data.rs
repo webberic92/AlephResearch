@@ -137,6 +137,7 @@ pub async fn create_transaction_data(
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
     // === Proof generation
+    let now = std::time::Instant::now();
     let flat_proofs: Vec<String> = prime_input_bytes
         .iter()
         .enumerate()
@@ -156,7 +157,7 @@ pub async fn create_transaction_data(
             encoded_proof
         })
         .collect();
-
+    info!("⏱️ Proof generation done in {:?}", now.elapsed());
     // === Assign proofs per transaction
     let mut cursor = 0;
     for (tx_index, (tx, primes_for_tx)) in transactions.iter_mut().zip(shard_prime_index_map.iter()).enumerate() {
