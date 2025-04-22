@@ -101,14 +101,14 @@ mod tests {
         // === Dummy Node for Test ===
         let dummy_node = Node::new(
             0,                         // id
-            5,                         // total_nodes
+            10,                         // total_nodes
             "127.0.0.1:3030".to_string(), // IP
             vec![],                    // nodes list
             "".to_string(),            // ip manager
-            1,                         // number_of_transactions
+            5,                         // number_of_transactions
             256,                       // transaction_size
             4,                         // data_shards
-            1,                         // total_rounds
+            2,                         // total_rounds
             Arc::new(Client::new()),
         );
     
