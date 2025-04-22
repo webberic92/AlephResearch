@@ -1,11 +1,11 @@
-use std::{sync::{atomic::Ordering, Arc}};
+use std::sync::{atomic::Ordering, Arc};
 use base64::{ engine::general_purpose, Engine };
 use num_bigint::BigInt;
 use reqwest::Client;
 use tokio::sync::Mutex;
-use tracing::{ error, info, warn };
+use tracing::{ error, info };
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, rsa_accumulator_util::verify_proof}
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::ensure_dag_round_sync, rsa_accumulator_util::verify_proof}
 };
 use sha2::{Digest, Sha256};
 use tokio::time::{sleep, Duration};
@@ -95,13 +95,13 @@ pub async fn handle_propose(
         let hash = Sha256::digest(&decoded_shard);
     
 
-        info!(
-            "Node {}: handle_propose() tx[{}] → decoded shard SHA256 = {}, proof base64 = {}...",
-            node_id,
-            i,
-            hex::encode(&Sha256::digest(&decoded_shard)),
-            &proof_b64[..8.min(proof_b64.len())],
-        );
+        // info!(
+        //     "Node {}: handle_propose() tx[{}] → decoded shard SHA256 = {}, proof base64 = {}...",
+        //     node_id,
+        //     i,
+        //     hex::encode(&Sha256::digest(&decoded_shard)),
+        //     &proof_b64[..8.min(proof_b64.len())],
+        // );
 
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));

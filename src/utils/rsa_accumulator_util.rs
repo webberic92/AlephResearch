@@ -1,5 +1,5 @@
 use num_bigint::{BigInt, RandBigInt, Sign};
-use num_traits::{One, Zero};
+use num_traits::One;
 use num_integer::Integer; // ✅ <== This is the fix!
 use sha2::{Sha256, Digest};
 use rand::thread_rng;

@@ -3,14 +3,14 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
-use tracing::{info, error};
+use tracing::info;
 use anyhow::Error;
 use num_bigint::BigInt;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, get_modulus, hash_to_prime}
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, hash_to_prime}
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -96,13 +96,13 @@ pub async fn create_transaction_data(
                 encoded_shards.push(general_purpose::STANDARD.encode(shard));
             }
 
-            info!(
-                "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
-                tx_index,
-                shard_index,
-                hex::encode(&hash),
-                prime.to_str_radix(10).chars().take(12).collect::<String>()
-            );
+            // info!(
+            //     "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
+            //     tx_index,
+            //     shard_index,
+            //     hex::encode(&hash),
+            //     prime.to_str_radix(10).chars().take(12).collect::<String>()
+            // );
         }
 
         shard_prime_index_map.push(tx_prime_list);
@@ -127,14 +127,14 @@ pub async fn create_transaction_data(
             let proof = generate_proof(&prime_input_bytes, i, &accumulator);
             let encoded_proof = general_purpose::STANDARD.encode(proof.to_bytes_be().1);
 
-            let prime_bigint = BigInt::from_bytes_be(num_bigint::Sign::Plus, prime_bytes_i);
+            // let prime_bigint = BigInt::from_bytes_be(num_bigint::Sign::Plus, prime_bytes_i);
 
-            info!(
-                "🧪 ProofGen: index[{}], prime = {}, proof = {}",
-                i,
-                prime_bigint.to_str_radix(10).chars().take(20).collect::<String>(),
-                proof.to_str_radix(10).chars().take(20).collect::<String>(),
-            );
+            // info!(
+            //     "🧪 ProofGen: index[{}], prime = {}, proof = {}",
+            //     i,
+            //     prime_bigint.to_str_radix(10).chars().take(20).collect::<String>(),
+            //     proof.to_str_radix(10).chars().take(20).collect::<String>(),
+            // );
 
             encoded_proof
         })
