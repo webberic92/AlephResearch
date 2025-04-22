@@ -112,10 +112,7 @@ pub async fn handle_commit(
 
         let message_count = node.lock().await.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
-        info!(
-            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
-            node_id, round_id, commit_count, quorum_threshold
-        );
+
         // ✅ Update round locally
         {
             let node_guard = node.lock().await;
@@ -184,7 +181,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
     }, 
-    utils::rsa_accumulator_util::{hash_to_prime, verify_proof},
+    utils::rsa_accumulator_util::verify_proof,
 };
 
 pub async fn handle_prevote(
@@ -192,7 +189,7 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
-    let (node_id, round_id, quorum_threshold, total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
+    let (node_id, round_id, quorum_threshold, _total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
@@ -257,16 +254,16 @@ pub async fn handle_prevote(
                 }
 
                 let hash = Sha256::digest(&decoded);
-                let prime = hash_to_prime(&decoded);
-                info!(
-                    "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
-                    node_id,
-                    i,
-                    j,
-                    decoded.len(),
-                    hex::encode(&hash),
-                    prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
-                );
+                // let prime = hash_to_prime(&decoded);
+                // info!(
+                //     "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
+                //     node_id,
+                //     i,
+                //     j,
+                //     decoded.len(),
+                //     hex::encode(&hash),
+                //     prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
+                // );
                 
 
 
@@ -406,57 +403,23 @@ pub async fn handle_prevote(
     Ok(())
 }
 
-use std::{sync::{atomic::Ordering, Arc}};
-use base64::{ engine::general_purpose, Engine };
+use std::sync::{atomic::Ordering, Arc};
+use base64::{engine::general_purpose, Engine};
 use num_bigint::BigInt;
 use reqwest::Client;
-use tokio::sync::Mutex;
-use tracing::{ error, info, warn };
-use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, rsa_accumulator_util::verify_proof}
-};
 use sha2::{Digest, Sha256};
+use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
-/*
-**ch-RBC Proof Validation for `handle_propose`**
---------------------------------------------------
+use tracing::{error, info};
 
-**Step 7:** Upon receiving `propose(h, b_j, s_j)` from `P_s`
-   - This function (`handle_propose`) is invoked upon receiving a `ProposeRequest` from another node.
-
-**Step 8:** If `received_propose(P_i, r)` then terminate
-   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same round (`r`).
-   - If a duplicate exists, the function returns early.
-
-**Step 9:** If `check_size(s_j)` then
-   - The function `check_size(&decoded_shards)` validates the shard sizes.
-   - If the size is invalid, the function returns early.
-
-**Step 20:** Wait until `D_i` reaches round `r−1`
-   - The function `ensure_dag_round_sync(node.clone(), round_id).await?` ensures that the DAG is synchronized to `r-1` before proceeding.
-
-**Step 11:** Multicast `prevote(h, b_j, s_j)` to all nodes
-   - If enough proposals are received (`proposal_count >= required_proposals`), all `prevote` messages are aggregated into a single request and multicast to all nodes.
-
-**Step 12:** `received_propose(P_i, r) = True`
-   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring that the proposal is marked as received.
-
-**Step 13:** Confirm proposal handling
-   - Log that the proposal was successfully handled.
-*/
-
-// Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
-// - This function `handle_propose` is called when a proposal message is received.
-
-/*
-**ch-RBC Proof Validation for `handle_propose`**
---------------------------------------------------
-Handles proposals containing multiple transactions in a single request.
-Each transaction has:
-  - Merkle root
-  - Proofs
-  - Encoded shards
-*/
+use crate::{
+    processors::priority_queue::RBCMessage,
+    structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
+    utils::{
+        dag_utils::ensure_dag_round_sync,
+        rsa_accumulator_util::{hash_to_prime, verify_proof}
+    },
+};
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -474,53 +437,71 @@ pub async fn handle_propose(
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
-                info!("Node {}: Duplicate proposal from proposer {} for round {}. Ignoring.", node_id, proposer_id, round_id);
+                info!(
+                    "Node {}: Duplicate proposal from proposer {} for round {}. Ignoring.",
+                    node_id, proposer_id, round_id
+                );
                 return Ok(());
             }
         }
     }
 
+    // Decode accumulator
     let accumulator_bytes = general_purpose::STANDARD
         .decode(&propose_request.batch_accumulator)
         .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
-
     let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
 
+    // Validate each tx in the proposal
     for (i, tx) in propose_request.transactions.iter().enumerate() {
+        // Step 1: Decode first shard
         let shard_b64 = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
         let decoded_shard = general_purpose::STANDARD
             .decode(shard_b64)
             .map_err(|e| format!("Node {}: Failed to decode shard for tx {}: {:?}", node_id, i, e))?;
-    
+
+        // Step 2: Decode proof
         let proof_b64 = tx.proofs.get(0)
             .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
         let proof_bytes = general_purpose::STANDARD
             .decode(proof_b64)
             .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
-    
-        let hash = Sha256::digest(&decoded_shard);
-    
 
+        // Step 3: Hash the decoded shard
+        let hash = Sha256::digest(&decoded_shard);
+        let hash_hex = hex::encode(&hash);
+        let prime = hash_to_prime(&hash);
+
+        // Step 4: Log all triplet info
         info!(
-            "Node {}: handle_propose() tx[{}] → decoded shard SHA256 = {}, proof base64 = {}...",
-            node_id,
+            "🧪 handle_propose(): tx[{}] shard[0] hash={}, prime={}, proof_b64={}",
             i,
-            hex::encode(&Sha256::digest(&decoded_shard)),
-            &proof_b64[..8.min(proof_b64.len())],
+            &hash_hex[..8.min(hash_hex.len())],
+            prime.to_str_radix(10).chars().take(12).collect::<String>(),
+            &proof_b64[..10.min(proof_b64.len())]
         );
 
+        // Step 5: Verify RSA accumulator proof
         if !verify_proof(&accumulator, &hash, &proof) {
-            return Err(format!("Node {}: RSA proof invalid for tx {}", node_id, i));
+            return Err(format!(
+                "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
+                node_id, i
+            ));
+        } else {
+            info!("✅ Node {}: RSA proof verified for tx[{}] shard[0]", node_id, i);
         }
     }
 
+    // Wait for DAG to sync
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
+    // Update proposal tracker
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
+    // If quorum reached, broadcast prevote
     if proposal_count >= quorum_threshold {
         info!(
             "Node {}: Proposal quorum met. Broadcasting prevote for {} proposals.",
@@ -579,14 +560,9 @@ pub async fn handle_propose(
 
     Ok(())
 }
-
-
-
-
-
 use reqwest::Client;
 use tracing::{error, info};
-use std::{sync::{atomic::Ordering, Arc}, time::Duration};
+use std::{sync:: Arc, time::Duration};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use crate::{processors::priority_queue::RBCMessage, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
@@ -807,14 +783,14 @@ use base64::engine::general_purpose;
 use base64::Engine;
 use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
-use tracing::{info, error};
+use tracing::info;
 use anyhow::Error;
-use num_bigint::BigInt;
+// use num_bigint::BigInt;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
     structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, get_modulus, hash_to_prime}
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, hash_to_prime}
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -890,6 +866,8 @@ pub async fn create_transaction_data(
         let mut encoded_shards = Vec::new();
 
         for (shard_index, shard) in shards.iter().enumerate() {
+
+        
             let hash = Sha256::digest(shard).to_vec();
             let prime = hash_to_prime(&hash);
 
@@ -900,13 +878,28 @@ pub async fn create_transaction_data(
                 encoded_shards.push(general_purpose::STANDARD.encode(shard));
             }
 
+            use hex;
+
+            let hash_hex = hex::encode(&hash);
+            let prime_str = prime.to_str_radix(10);
             info!(
-                "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
+                "🧬 ProofGen: tx[{}] shard[{}]: hash={}, prime={}, global_index={}",
                 tx_index,
                 shard_index,
-                hex::encode(&hash),
-                prime.to_str_radix(10).chars().take(12).collect::<String>()
+                &hash_hex[..8.min(hash_hex.len())],
+                &prime_str[..12.min(prime_str.len())],
+                all_primes.len() // this is current global index
             );
+
+
+            
+            // info!(
+            //     "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
+            //     tx_index,
+            //     shard_index,
+            //     hex::encode(&hash),
+            //     prime.to_str_radix(10).chars().take(12).collect::<String>()
+            // );
         }
 
         shard_prime_index_map.push(tx_prime_list);
@@ -927,18 +920,18 @@ pub async fn create_transaction_data(
     let flat_proofs: Vec<String> = prime_input_bytes
         .iter()
         .enumerate()
-        .map(|(i, prime_bytes_i)| {
+        .map(|(i, _prime_bytes_i)| {
             let proof = generate_proof(&prime_input_bytes, i, &accumulator);
             let encoded_proof = general_purpose::STANDARD.encode(proof.to_bytes_be().1);
 
-            let prime_bigint = BigInt::from_bytes_be(num_bigint::Sign::Plus, prime_bytes_i);
+            // let prime_bigint = BigInt::from_bytes_be(num_bigint::Sign::Plus, prime_bytes_i);
 
-            info!(
-                "🧪 ProofGen: index[{}], prime = {}, proof = {}",
-                i,
-                prime_bigint.to_str_radix(10).chars().take(20).collect::<String>(),
-                proof.to_str_radix(10).chars().take(20).collect::<String>(),
-            );
+            // info!(
+            //     "🧪 ProofGen: index[{}], prime = {}, proof = {}",
+            //     i,
+            //     prime_bigint.to_str_radix(10).chars().take(20).collect::<String>(),
+            //     proof.to_str_radix(10).chars().take(20).collect::<String>(),
+            // );
 
             encoded_proof
         })
@@ -955,8 +948,19 @@ pub async fn create_transaction_data(
             )));
         }
 
+
         let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + data_shards].to_vec();
         tx.proofs = proofs_for_tx;
+        
+        info!(
+            "🧩 Proofs assigned to tx[{}]: {:?}",
+            tx_index,
+            tx.proofs.iter()
+                .map(|p| p.chars().take(10).collect::<String>())
+                .collect::<Vec<_>>()
+        );
+
+
         cursor += primes_for_tx.len();
     }
 
@@ -1153,7 +1157,7 @@ async fn execute_transaction_logic(
     Ok(())
 }
 use num_bigint::{BigInt, RandBigInt, Sign};
-use num_traits::{One, Zero};
+use num_traits::One;
 use num_integer::Integer; // ✅ <== This is the fix!
 use sha2::{Sha256, Digest};
 use rand::thread_rng;
@@ -1283,10 +1287,10 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
 // }
 
 
-pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-    let hash = Sha256::digest(element).to_vec();
-    let prime = hash_to_prime(&hash);
-    let reconstructed = proof.modpow(&prime, accumulator);
+pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
+    let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
+    let prime = hash_to_prime(&hash);                   // ✅ Then map to prime
+    let reconstructed = proof.modpow(&prime, &get_modulus()); // ✅ Modulo N
 
     let is_valid = &reconstructed == accumulator;
     if !is_valid {
@@ -1415,7 +1419,6 @@ use std::{
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
-use tracing:: info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
 use super::{requests::{CommitRequest, DagUnit, ProposeRequest}, shard_aggregator::ShardAggregator};
 use crate::utils::events::Event;
@@ -1619,7 +1622,7 @@ let node_guard = node.lock().await;
         let dag = self.dag.lock().await;
     
         // 🌐 Log the entire DAG before searching
-        tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
+        // tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
     
         let result = dag.values()
             .flatten()
@@ -1732,7 +1735,7 @@ use serde::Serialize;
 pub struct Response {
 pub status: String,
 }use std::collections::HashMap;
-use tracing::{info, warn, error};
+use tracing::{ warn, error};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 /// ShardAggregator holds partial shards for a transaction across prevotes.
@@ -1770,26 +1773,26 @@ impl ShardAggregator {
     
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
-                info!(
-                    "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
-                    tx_index, round_id, sender, shard.len()
-                );
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
     
         let received_count = shards.iter().filter(|s| s.is_some()).count();
-        let received_indices: Vec<_> = shards
-            .iter()
-            .enumerate()
-            .filter(|(_, s)| s.is_some())
-            .map(|(i, _)| i)
-            .collect();
+        // let received_indices: Vec<_> = shards
+        //     .iter()
+        //     .enumerate()
+        //     .filter(|(_, s)| s.is_some())
+        //     .map(|(i, _)| i)
+        //     .collect();
     
-        info!(
-            "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-            tx_index, round_id, received_count, self.total_shards, received_indices
-        );
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
     
         if received_count < self.data_shards {
             warn!(
@@ -1832,21 +1835,21 @@ impl ShardAggregator {
         let padded = combined_data[..transaction_size].to_vec();
         // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
-        use sha2::{Sha256, Digest};
-        let hash = Sha256::digest(&padded);
-        info!(
-            "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-            tx_index,
-            round_id,
-            padded.len(),
-            hex::encode(&hash)
-        );
+        // use sha2::{Sha256, Digest};
+        // let hash = Sha256::digest(&padded);
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
     
-        info!(
-            "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-            tx_index,
-            padded
-        );
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
     
         Some(padded)
     }
@@ -1886,186 +1889,4 @@ pub struct ConsensusConfig {
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct NodeConfig {
     pub id: usize,
-}#[cfg(test)]
-mod tests {
-    use crate::utils::rsa_accumulator_util::{get_modulus, hash_to_prime, verify_proof};
-    use crate::utils::create_transaction_data::pad_to_len;
-    use num_traits::One;
-    use sha2::{Sha256, Digest};
-    use num_bigint::BigInt;
-    use reed_solomon_erasure::galois_8::ReedSolomon;
-    #[cfg(test)]
-
-
-    #[test]
-    fn test_rsa_accumulator_end_to_end() {
-        // === Parameters ===
-        let transaction_size = 256;
-        let data_shards = 4;
-        let total_shards = 5;
-
-        // === Simulate transaction creation ===
-        let tx_content = b"unit-test-tx-001";
-        let padded_tx = pad_to_len(tx_content.to_vec(), transaction_size);
-        let shard_size = (transaction_size + data_shards - 1) / data_shards;
-
-        let mut data_chunks: Vec<Vec<u8>> = padded_tx
-            .chunks(shard_size)
-            .map(|chunk| {
-                let mut v = chunk.to_vec();
-                v.resize(shard_size, 0); // pad each shard
-                v
-            })
-            .collect();
-
-        while data_chunks.len() < data_shards {
-            data_chunks.push(vec![0u8; shard_size]);
-        }
-
-        let mut shards = data_chunks.clone();
-        while shards.len() < total_shards {
-            shards.push(vec![0u8; shard_size]); // add parity shards
-        }
-
-        let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
-        let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
-        rs.encode(&mut shard_refs).unwrap();
-
-        // === RSA accumulator logic ===
-        let g = BigInt::from(2u8);
-        let n = get_modulus();
-
-        // Map each shard to a hash → prime
-        let primes: Vec<BigInt> = shards.iter().map(|shard| {
-            let hash = Sha256::digest(shard).to_vec();
-            hash_to_prime(&hash)
-        }).collect();
-
-        // Create the accumulator by computing g^{product of all primes} mod n
-        let total_product = primes.iter().fold(BigInt::one(), |acc, p| acc * p);
-        let accumulator = g.modpow(&total_product, &n);
-
-        // === Proof generation and verification ===
-        for (i, shard) in shards.iter().enumerate() {
-            let hash = Sha256::digest(shard).to_vec();
-            let prime = hash_to_prime(&hash);
-
-            let product_of_others = primes.iter()
-                .enumerate()
-                .filter(|(j, _)| *j != i)
-                .map(|(_, p)| p.clone())
-                .fold(BigInt::one(), |acc, p| acc * p);
-
-            let proof = g.modpow(&product_of_others, &n);
-            let reconstructed = proof.modpow(&prime, &n);
-
-            assert_eq!(
-                reconstructed, accumulator,
-                "Proof verification failed for shard {}.\nHash: {}\nPrime: {}\nProof: {}\nReconstructed: {}\nAccumulator: {}",
-                i,
-                hex::encode(&hash),
-                prime.to_str_radix(10).chars().take(12).collect::<String>(),
-                proof.to_str_radix(16).chars().take(12).collect::<String>(),
-                reconstructed.to_str_radix(16).chars().take(12).collect::<String>(),
-                accumulator.to_str_radix(16).chars().take(12).collect::<String>(),
-            );
-        }
-    }
-
-
-
-    #[tokio::test]
-    async fn test_create_and_verify_transaction_batch() {
-        use crate::utils::create_transaction_data::create_transaction_data;
-        use crate::utils::rsa_accumulator_util::{verify_proof, hash_to_prime, get_modulus};
-        use crate::structs::node::Node;
-        use std::sync::Arc;
-        use tokio::sync::Mutex;
-        use reqwest::Client;
-        use base64::{engine::general_purpose, Engine};
-        use num_bigint::{BigInt, Sign};
-        use sha2::{Sha256, Digest};
-    
-        // === Dummy Node for Test ===
-        let dummy_node = Node::new(
-            0,                         // id
-            5,                         // total_nodes
-            "127.0.0.1:3030".to_string(), // IP
-            vec![],                    // nodes list
-            "".to_string(),            // ip manager
-            1,                         // number_of_transactions
-            256,                       // transaction_size
-            4,                         // data_shards
-            1,                         // total_rounds
-            Arc::new(Client::new()),
-        );
-    
-        // === Generate Transaction Batch ===
-        let proposal = create_transaction_data(dummy_node.clone())
-            .await
-            .expect("Failed to generate transaction data");
-    
-        let accumulator_bytes = general_purpose::STANDARD
-            .decode(&proposal.batch_accumulator)
-            .expect("Failed to decode accumulator");
-    
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &accumulator_bytes);
-        let n = get_modulus();
-    
-        // === Verify each shard against its proof ===
-        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            for (shard_index, shard_b64) in tx.shards.iter().enumerate() {
-                let shard_bytes = general_purpose::STANDARD
-                    .decode(shard_b64)
-                    .expect("Failed to decode shard");
-    
-                let proof_b64 = tx.proofs.get(shard_index)
-                    .expect("Missing proof for shard");
-    
-                let proof_bytes = general_purpose::STANDARD
-                    .decode(proof_b64)
-                    .expect("Failed to decode proof");
-    
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-    
-                // === Match production logic ===
-                let hash = Sha256::digest(&shard_bytes);
-                let prime = hash_to_prime(&hash);
-    
-                let reconstructed = proof.modpow(&prime, &n);
-    
-                // === Debug Logging ===
-                println!("🔎 tx[{}] shard[{}]", tx_index, shard_index);
-                println!("    hash:          {}", hex::encode(&hash));
-                println!("    prime:         {}", prime.to_str_radix(10).chars().take(20).collect::<String>());
-                println!("    proof:         {}", proof.to_str_radix(10).chars().take(20).collect::<String>());
-                println!("    accumulator:   {}", accumulator.to_str_radix(10).chars().take(20).collect::<String>());
-                println!("    reconstructed: {}", reconstructed.to_str_radix(10).chars().take(20).collect::<String>());
-    
-                // === Final Verification ===
-                let valid = reconstructed == accumulator;
-    
-                assert!(
-                    valid,
-                    "❌ Shard[{}] of tx[{}] failed RSA proof verification!",
-                    shard_index,
-                    tx_index
-                );
-            }
-        }
-    
-        println!("✅ All RSA proofs verified correctly from create_transaction_data()");
-    }
-    
-    
-
-
-
 }
-    
-    
-    
-
-
-
-

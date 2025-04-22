@@ -207,7 +207,7 @@ let node_guard = node.lock().await;
         let dag = self.dag.lock().await;
     
         // 🌐 Log the entire DAG before searching
-        tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
+        // tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
     
         let result = dag.values()
             .flatten()
