@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use tracing::{info, warn, error};
+use tracing::{ warn, error};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 /// ShardAggregator holds partial shards for a transaction across prevotes.
@@ -46,12 +46,12 @@ impl ShardAggregator {
         }
     
         let received_count = shards.iter().filter(|s| s.is_some()).count();
-        let received_indices: Vec<_> = shards
-            .iter()
-            .enumerate()
-            .filter(|(_, s)| s.is_some())
-            .map(|(i, _)| i)
-            .collect();
+        // let received_indices: Vec<_> = shards
+        //     .iter()
+        //     .enumerate()
+        //     .filter(|(_, s)| s.is_some())
+        //     .map(|(i, _)| i)
+        //     .collect();
     
         // info!(
         //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",

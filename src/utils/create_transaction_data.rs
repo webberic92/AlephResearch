@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
 use tracing::info;
 use anyhow::Error;
-use num_bigint::BigInt;
+// use num_bigint::BigInt;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
@@ -123,7 +123,7 @@ pub async fn create_transaction_data(
     let flat_proofs: Vec<String> = prime_input_bytes
         .iter()
         .enumerate()
-        .map(|(i, prime_bytes_i)| {
+        .map(|(i, _prime_bytes_i)| {
             let proof = generate_proof(&prime_input_bytes, i, &accumulator);
             let encoded_proof = general_purpose::STANDARD.encode(proof.to_bytes_be().1);
 
