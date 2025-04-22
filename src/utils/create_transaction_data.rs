@@ -86,6 +86,8 @@ pub async fn create_transaction_data(
         let mut encoded_shards = Vec::new();
 
         for (shard_index, shard) in shards.iter().enumerate() {
+
+        
             let hash = Sha256::digest(shard).to_vec();
             let prime = hash_to_prime(&hash);
 
@@ -96,6 +98,21 @@ pub async fn create_transaction_data(
                 encoded_shards.push(general_purpose::STANDARD.encode(shard));
             }
 
+            use hex;
+
+            let hash_hex = hex::encode(&hash);
+            let prime_str = prime.to_str_radix(10);
+            info!(
+                "🧬 ProofGen: tx[{}] shard[{}]: hash={}, prime={}, global_index={}",
+                tx_index,
+                shard_index,
+                &hash_hex[..8.min(hash_hex.len())],
+                &prime_str[..12.min(prime_str.len())],
+                all_primes.len() // this is current global index
+            );
+
+
+            
             // info!(
             //     "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
             //     tx_index,
@@ -151,8 +168,19 @@ pub async fn create_transaction_data(
             )));
         }
 
+
         let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + data_shards].to_vec();
         tx.proofs = proofs_for_tx;
+        
+        info!(
+            "🧩 Proofs assigned to tx[{}]: {:?}",
+            tx_index,
+            tx.proofs.iter()
+                .map(|p| p.chars().take(10).collect::<String>())
+                .collect::<Vec<_>>()
+        );
+
+
         cursor += primes_for_tx.len();
     }
 
