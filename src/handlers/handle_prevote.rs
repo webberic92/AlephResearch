@@ -11,7 +11,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, PrevoteRequest},
     }, 
-    utils::rsa_accumulator_util::{hash_to_prime, verify_proof},
+    utils::rsa_accumulator_util::verify_proof,
 };
 
 pub async fn handle_prevote(
