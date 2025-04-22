@@ -37,10 +37,10 @@ impl ShardAggregator {
     
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
-                info!(
-                    "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
-                    tx_index, round_id, sender, shard.len()
-                );
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
@@ -53,10 +53,10 @@ impl ShardAggregator {
             .map(|(i, _)| i)
             .collect();
     
-        info!(
-            "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-            tx_index, round_id, received_count, self.total_shards, received_indices
-        );
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
     
         if received_count < self.data_shards {
             warn!(
@@ -99,21 +99,21 @@ impl ShardAggregator {
         let padded = combined_data[..transaction_size].to_vec();
         // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
-        use sha2::{Sha256, Digest};
-        let hash = Sha256::digest(&padded);
-        info!(
-            "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-            tx_index,
-            round_id,
-            padded.len(),
-            hex::encode(&hash)
-        );
+        // use sha2::{Sha256, Digest};
+        // let hash = Sha256::digest(&padded);
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
     
-        info!(
-            "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-            tx_index,
-            padded
-        );
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
     
         Some(padded)
     }

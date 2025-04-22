@@ -19,7 +19,7 @@ pub async fn handle_prevote(
     client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
-    let (node_id, round_id, quorum_threshold, total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
+    let (node_id, round_id, quorum_threshold, _total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
@@ -84,16 +84,16 @@ pub async fn handle_prevote(
                 }
 
                 let hash = Sha256::digest(&decoded);
-                let prime = hash_to_prime(&decoded);
-                info!(
-                    "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
-                    node_id,
-                    i,
-                    j,
-                    decoded.len(),
-                    hex::encode(&hash),
-                    prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
-                );
+                // let prime = hash_to_prime(&decoded);
+                // info!(
+                //     "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
+                //     node_id,
+                //     i,
+                //     j,
+                //     decoded.len(),
+                //     hex::encode(&hash),
+                //     prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
+                // );
                 
 
 

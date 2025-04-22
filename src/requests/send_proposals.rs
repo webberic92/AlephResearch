@@ -1,6 +1,6 @@
 use reqwest::Client;
 use tracing::{error, info};
-use std::{sync::{atomic::Ordering, Arc}, time::Duration};
+use std::{sync:: Arc, time::Duration};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use crate::{processors::priority_queue::RBCMessage, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
