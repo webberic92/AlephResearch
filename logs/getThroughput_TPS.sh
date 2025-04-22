@@ -1,40 +1,70 @@
 #!/bin/bash
 
-echo "📊 Transaction Throughput per Node (Final Round Only)"
-echo "---------------------------------------------------------"
-printf "%-10s %-20s %-10s\n" "Node" "Epoch Time" "Human Time"
-echo "---------------------------------------------------------"
+NODE1_STATUS="node-1/node_status"
 
-total_epoch=0
-node_count=0
+TX_PER_ROUND=$(grep "number_of_transactions" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
+TOTAL_ROUNDS=$(grep "total_rounds" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
+
+if [[ -z "$TX_PER_ROUND" || -z "$TOTAL_ROUNDS" ]]; then
+  echo "❌ Error: Could not extract TX_PER_ROUND or TOTAL_ROUNDS from $NODE1_STATUS"
+  exit 1
+fi
+
+TOTAL_TX=$((TX_PER_ROUND * TOTAL_ROUNDS))
+
+echo ""
+echo "🚀 Transaction Throughput (TPS)"
+echo "----------------------------------------------"
+echo "📊 Transaction Throughput per Node"
+echo "----------------------------------"
+
+printf "%-40s %s\n" "Node" "TPS"
+
+sum_tps=0
+count=0
 
 for node_dir in node-*; do
   logfile="$node_dir/node_status"
-
   if [[ ! -f "$logfile" ]]; then
+    echo "⚠️  Log file missing in $node_dir/"
     continue
   fi
 
-  raw_line=$(grep "Successfully wrote finalized DAG for round 1" "$logfile" | tail -1)
-  clean_line=$(echo "$raw_line" | sed -r 's/\x1B\[[0-9;]*[mK]//g')
-  timestamp=$(echo "$clean_line" | awk '{print $1}' | sed 's/T/ /')
+  first_line=$(grep "Successfully wrote finalized DAG for round 1" "$logfile" | head -1)
+  last_line=$(grep "Successfully wrote finalized DAG for round $TOTAL_ROUNDS" "$logfile" | tail -1)
 
-  epoch_time=$(date -d "$timestamp" +"%s" 2>/dev/null)
-  human_time=$(date -d "$timestamp" +"%H:%M:%S" 2>/dev/null)
-
-  if [[ -n "$epoch_time" ]]; then
-    printf "%-10s %-20s %-10s\n" "$node_dir" "$epoch_time" "$human_time"
-    total_epoch=$((total_epoch + epoch_time))
-    node_count=$((node_count + 1))
+  if [[ -z "$first_line" || -z "$last_line" ]]; then
+    echo "⚠️  Missing round 1 or round $TOTAL_ROUNDS logs in $node_dir/"
+    continue
   fi
+
+  ts_start=$(echo "$first_line" | grep -oE '^[0-9T:\.\-]+Z' | sed 's/T/ /;s/Z//')
+  ts_end=$(echo "$last_line" | grep -oE '^[0-9T:\.\-]+Z' | sed 's/T/ /;s/Z//')
+
+  epoch_start=$(date -d "$ts_start" +%s.%N 2>/dev/null)
+  epoch_end=$(date -d "$ts_end" +%s.%N 2>/dev/null)
+
+  if [[ -z "$epoch_start" || -z "$epoch_end" ]]; then
+    echo "⚠️  Invalid timestamp in $node_dir/"
+    continue
+  fi
+
+  duration=$(echo "$epoch_end - $epoch_start" | bc -l)
+  cmp_zero=$(echo "$duration <= 0" | bc -l)
+  [[ $cmp_zero -eq 1 ]] && duration=0.001  # minimum 1ms
+
+  tps=$(echo "scale=2; $TOTAL_TX / $duration" | bc -l)
+  sum_tps=$(echo "$sum_tps + $tps" | bc -l)
+  ((count++))
+
+  printf "%-40s TPS: %.2f\n" "$node_dir/" "$tps"
 done
 
-echo "---------------------------------------------------------"
+echo "----------------------------------"
 
-if [[ $node_count -gt 0 ]]; then
-  avg_epoch=$(echo "scale=2; $total_epoch / $node_count" | bc)
-  avg_time=$(date -d "@${avg_epoch%.*}" +"%Y-%m-%d %H:%M:%S")
-  echo "📈 Average Finalization Time across $node_count nodes: $avg_time (Epoch: $avg_epoch)"
+if [[ $count -gt 0 ]]; then
+  avg_tps=$(echo "scale=2; $sum_tps / $count" | bc -l)
+  echo "📈 Average TPS across $count nodes (Tx/Round: $TX_PER_ROUND, Rounds: $TOTAL_ROUNDS): $avg_tps"
 else
-  echo "⚠️  No valid logs found to compute throughput."
+  echo "⚠️  No valid data found in any nodes."
 fi

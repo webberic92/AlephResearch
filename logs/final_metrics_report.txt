@@ -3,33 +3,12 @@
 
 🚀 Transaction Throughput (TPS)
 ----------------------------------------------
-📊 Transaction Throughput per Node
+
+🚀 Transaction Throughput (TPS)
+----------------------------------------------
+Node                                     TPS
 ----------------------------------
-
-🔍 Processing node-1/
-Raw line: [2m2025-04-21T01:19:32.785465Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
-Raw timestamp: 2025-04-21 01:19:32.785465Z
-✅ Epoch seconds: 1745198372
-
-🔍 Processing node-2/
-Raw line: [2m2025-04-21T01:19:31.391165Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
-Raw timestamp: 2025-04-21 01:19:31.391165Z
-✅ Epoch seconds: 1745198371
-
-🔍 Processing node-3/
-Raw line: [2m2025-04-21T01:19:31.918421Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
-Raw timestamp: 2025-04-21 01:19:31.918421Z
-✅ Epoch seconds: 1745198371
-
-🔍 Processing node-4/
-Raw line: [2m2025-04-21T01:19:31.384910Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
-Raw timestamp: 2025-04-21 01:19:31.384910Z
-✅ Epoch seconds: 1745198371
-
-🔍 Processing node-5/
-Raw line: [2m2025-04-21T01:19:31.390914Z[0m [32m INFO[0m [2maleph_research::utils::config_util[0m[2m:[0m Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
-Raw timestamp: 2025-04-21 01:19:31.390914Z
-✅ Epoch seconds: 1745198371
+⚠️  No data found for any node.
 
 📡 Communication Overhead
 ----------------------------------------------
