@@ -1,71 +1,68 @@
 #!/bin/bash
 
+LOG_DIR="./"
 NODE1_STATUS="node-1/node_status"
 
+# Extract config values from node-1
 TX_PER_ROUND=$(grep "number_of_transactions" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
-TOTAL_ROUNDS=$(grep "total_rounds" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
+ROUNDS=$(grep "total_rounds" "$NODE1_STATUS" | awk -F= '{gsub(/ /,"",$2); print $2}' | cut -d'#' -f1)
+TOTAL_TX=$((TX_PER_ROUND * ROUNDS))
 
-if [[ -z "$TX_PER_ROUND" || -z "$TOTAL_ROUNDS" ]]; then
-  echo "❌ Error: Could not extract TX_PER_ROUND or TOTAL_ROUNDS from $NODE1_STATUS"
-  exit 1
-fi
-
-TOTAL_TX=$((TX_PER_ROUND * TOTAL_ROUNDS))
-
-echo ""
-echo "🚀 Transaction Throughput (TPS)"
-echo "----------------------------------------------"
 echo "📊 Transaction Throughput per Node"
 echo "----------------------------------"
 printf "%-40s %s\n" "Node" "TPS"
 
-sum_tps=0
-count=0
+total_tps=0
+node_count=0
 
-# Function to strip ANSI and extract ISO8601 timestamp
-extract_clean_timestamp() {
-  echo "$1" | sed -r 's/\x1B\[[0-9;]*[mK]//g' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+'
-}
+for node_path in node-* node-ip-*; do
+    file_path="${node_path}/node_status"
+    [[ ! -f "$file_path" ]] && file_path="${node_path}/node_status.txt"
+    [[ ! -f "$file_path" ]] && continue
 
-for node_dir in node-*; do
-  logfile="$node_dir/node_status"
-  [[ ! -f "$logfile" ]] && { echo "⚠️  Log file missing in $node_dir/"; continue; }
+    cleaned_lines=$(sed -E 's/\x1B\[[0-9;]*[mK]//g' "$file_path" | tr -cd '\11\12\15\40-\176')
 
-  first_line=$(grep "Successfully wrote finalized DAG for round 1" "$logfile" | head -1)
-  last_line=$(grep "Successfully wrote finalized DAG for round $TOTAL_ROUNDS" "$logfile" | tail -1)
+    rounds_logged=$(echo "$cleaned_lines" | grep -o "Finalized round [0-9]\+" | awk '{print $3}' | sort -n | uniq)
+    highest_round=$(echo "$rounds_logged" | tail -n 1)
 
-  [[ -z "$first_line" || -z "$last_line" ]] && { echo "⚠️  Missing round 1 or round $TOTAL_ROUNDS logs in $node_dir/"; continue; }
+    if [[ "$highest_round" == "1" ]]; then
+        # Get start from first valid timestamp (anywhere early)
+        init_ts=$(echo "$cleaned_lines" | head -n 50 | grep -Eo '^[0-9]{4}-[^ ]+' | head -n 1 | sed 's/Z//' )
+        # Get commit time from Finalized round 1
+        commit_ts=$(echo "$cleaned_lines" | grep "Finalized round 1" | head -n 1 | awk '{print $1}' | sed 's/Z//')
+        [[ -z "$init_ts" || -z "$commit_ts" ]] && { printf "%-40s ⚠️ Missing init or commit ts\n" "$node_path"; continue; }
 
-  ts_start=$(extract_clean_timestamp "$first_line")
-  ts_end=$(extract_clean_timestamp "$last_line")
+        start_epoch=$(date -u -d "$init_ts" +"%s.%N" 2>/dev/null)
+        end_epoch=$(date -u -d "$commit_ts" +"%s.%N" 2>/dev/null)
+    else
+        start_ts=$(echo "$cleaned_lines" | grep "Finalized round 1" | head -n1 | awk '{print $1}' | sed 's/Z//')
+        end_ts=$(echo "$cleaned_lines" | grep "Finalized round $ROUNDS" | tail -n1 | awk '{print $1}' | sed 's/Z//')
+        [[ -z "$start_ts" || -z "$end_ts" ]] && { printf "%-40s ⚠️ Missing round 1 or $ROUNDS finalized ts\n" "$node_path"; continue; }
 
-  duration=$(python3 -c "
-from datetime import datetime
-try:
-    start = datetime.strptime('$ts_start', '%Y-%m-%dT%H:%M:%S.%f')
-    end = datetime.strptime('$ts_end', '%Y-%m-%dT%H:%M:%S.%f')
-    print((end - start).total_seconds())
-except:
-    print(-1)
-")
+        start_epoch=$(date -u -d "$start_ts" +"%s.%N" 2>/dev/null)
+        end_epoch=$(date -u -d "$end_ts" +"%s.%N" 2>/dev/null)
+    fi
 
-  if (( $(echo "$duration <= 0" | bc -l) )); then
-    echo "⚠️  Invalid timestamp in $node_dir/"
-    continue
-  fi
+    if [[ -n "$start_epoch" && -n "$end_epoch" ]]; then
+        duration=$(echo "$end_epoch - $start_epoch" | bc -l)
+        [[ $(echo "$duration <= 0" | bc -l) -eq 1 ]] && duration="0.001"
 
-  tps=$(echo "scale=2; $TOTAL_TX / $duration" | bc -l)
-  sum_tps=$(echo "$sum_tps + $tps" | bc -l)
-  ((count++))
+        tps=$(echo "$TOTAL_TX / $duration" | bc -l)
+        tps=$(printf "%.2f" "$tps")
 
-  printf "%-40s TPS: %.2f\n" "$node_dir/" "$tps"
+        printf "%-40s TPS: %s\n" "$node_path" "$tps"
+        total_tps=$(echo "$total_tps + $tps" | bc -l)
+        node_count=$((node_count + 1))
+    else
+        printf "%-40s ⚠️ Invalid timestamps, skipping\n" "$node_path"
+    fi
 done
 
-echo "----------------------------------"
-
-if [[ $count -gt 0 ]]; then
-  avg_tps=$(echo "scale=2; $sum_tps / $count" | bc -l)
-  echo "📈 Average TPS across $count nodes (Tx/Round: $TX_PER_ROUND, Rounds: $TOTAL_ROUNDS): $avg_tps"
+if [[ $node_count -gt 0 ]]; then
+    avg_tps=$(echo "$total_tps / $node_count" | bc -l)
+    echo "----------------------------------"
+    printf "📈 Average TPS across %d nodes (Tx/Round: %d, Rounds: %d): %.2f\n" \
+        "$node_count" "$TX_PER_ROUND" "$ROUNDS" "$avg_tps"
 else
-  echo "⚠️  No valid data found in any nodes."
+    echo "⚠️  No valid data found in any nodes."
 fi

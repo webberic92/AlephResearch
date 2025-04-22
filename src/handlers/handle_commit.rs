@@ -112,10 +112,7 @@ pub async fn handle_commit(
 
         let message_count = node.lock().await.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
-        info!(
-            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
-            node_id, round_id, commit_count, quorum_threshold
-        );
+
         // ✅ Update round locally
         {
             let node_guard = node.lock().await;
