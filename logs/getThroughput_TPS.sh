@@ -17,41 +17,42 @@ echo "🚀 Transaction Throughput (TPS)"
 echo "----------------------------------------------"
 echo "📊 Transaction Throughput per Node"
 echo "----------------------------------"
-
 printf "%-40s %s\n" "Node" "TPS"
 
 sum_tps=0
 count=0
 
+# Function to strip ANSI and extract ISO8601 timestamp
+extract_clean_timestamp() {
+  echo "$1" | sed -r 's/\x1B\[[0-9;]*[mK]//g' | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]+'
+}
+
 for node_dir in node-*; do
   logfile="$node_dir/node_status"
-  if [[ ! -f "$logfile" ]]; then
-    echo "⚠️  Log file missing in $node_dir/"
-    continue
-  fi
+  [[ ! -f "$logfile" ]] && { echo "⚠️  Log file missing in $node_dir/"; continue; }
 
   first_line=$(grep "Successfully wrote finalized DAG for round 1" "$logfile" | head -1)
   last_line=$(grep "Successfully wrote finalized DAG for round $TOTAL_ROUNDS" "$logfile" | tail -1)
 
-  if [[ -z "$first_line" || -z "$last_line" ]]; then
-    echo "⚠️  Missing round 1 or round $TOTAL_ROUNDS logs in $node_dir/"
-    continue
-  fi
+  [[ -z "$first_line" || -z "$last_line" ]] && { echo "⚠️  Missing round 1 or round $TOTAL_ROUNDS logs in $node_dir/"; continue; }
 
-  ts_start=$(echo "$first_line" | grep -oE '^[0-9T:\.\-]+Z' | sed 's/T/ /;s/Z//')
-  ts_end=$(echo "$last_line" | grep -oE '^[0-9T:\.\-]+Z' | sed 's/T/ /;s/Z//')
+  ts_start=$(extract_clean_timestamp "$first_line")
+  ts_end=$(extract_clean_timestamp "$last_line")
 
-  epoch_start=$(date -d "$ts_start" +%s.%N 2>/dev/null)
-  epoch_end=$(date -d "$ts_end" +%s.%N 2>/dev/null)
+  duration=$(python3 -c "
+from datetime import datetime
+try:
+    start = datetime.strptime('$ts_start', '%Y-%m-%dT%H:%M:%S.%f')
+    end = datetime.strptime('$ts_end', '%Y-%m-%dT%H:%M:%S.%f')
+    print((end - start).total_seconds())
+except:
+    print(-1)
+")
 
-  if [[ -z "$epoch_start" || -z "$epoch_end" ]]; then
+  if (( $(echo "$duration <= 0" | bc -l) )); then
     echo "⚠️  Invalid timestamp in $node_dir/"
     continue
   fi
-
-  duration=$(echo "$epoch_end - $epoch_start" | bc -l)
-  cmp_zero=$(echo "$duration <= 0" | bc -l)
-  [[ $cmp_zero -eq 1 ]] && duration=0.001  # minimum 1ms
 
   tps=$(echo "scale=2; $TOTAL_TX / $duration" | bc -l)
   sum_tps=$(echo "$sum_tps + $tps" | bc -l)
