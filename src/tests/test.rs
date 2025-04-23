@@ -249,7 +249,7 @@ mod tests {
             "127.0.0.1:8080".to_string(),
             vec![],    // peer list not needed for this test
             "".to_string(),
-            25,        // number_of_transactions
+            128,        // number_of_transactions
             256,       // transaction_size
             4,         // data_shards
             1,         // total_rounds
