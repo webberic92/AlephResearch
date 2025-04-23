@@ -88,6 +88,30 @@ pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt)
     g.modpow(&product_of_others, &n)
 }
 
+pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
+    let primes: Vec<BigInt> = prime_hashes.iter().map(|h| hash_to_prime(h)).collect();
+    let n = get_modulus();
+    let g = BigInt::from(2u8);
+
+    let mut prefix_products = vec![BigInt::one(); primes.len() + 1];
+    let mut suffix_products = vec![BigInt::one(); primes.len() + 1];
+
+    for i in 0..primes.len() {
+        prefix_products[i + 1] = &prefix_products[i] * &primes[i];
+    }
+    for i in (0..primes.len()).rev() {
+        suffix_products[i] = &suffix_products[i + 1] * &primes[i];
+    }
+
+    (0..primes.len())
+        .map(|i| {
+            let product = &prefix_products[i] * &suffix_products[i + 1];
+            g.modpow(&product, &n)
+        })
+        .collect()
+}
+
+
 
 /// Verifies that a hashed element is in the RSA accumulator using its proof.
 /// 

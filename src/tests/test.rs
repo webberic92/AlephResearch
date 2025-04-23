@@ -1,7 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use crate::utils::rsa_accumulator_util::{get_modulus, hash_to_prime, verify_proof};
+    use crate::structs::node::Node;
+    use crate::utils::rsa_accumulator_util::{compute_accumulator, generate_proofs, get_modulus, hash_to_prime, verify_proof};
     use crate::utils::create_transaction_data::pad_to_len;
+    use base64::engine::general_purpose;
+    use base64::Engine;
     use num_traits::One;
     use sha2::{Sha256, Digest};
     use num_bigint::BigInt;
@@ -168,8 +171,128 @@ mod tests {
     
         println!("✅ All RSA proofs verified correctly from create_transaction_data()");
     }
+
+
+
+    #[test]
+    fn test_rsa_accumulator_end_to_end_validation() {
+        let data_shards = 4;
+        let total_shards = 7;
+        let transaction_size = 250;
+        let shard_size = (transaction_size + data_shards - 1) / data_shards;
+
+        let mut all_hashes = Vec::new();
+        let mut shard_base64s = Vec::new();
+
+        for tx_index in 0..25 {
+            let content = format!("tx{}_round{}", tx_index + 1, 1);
+            let padded = {
+                let mut data = content.into_bytes();
+                data.resize(transaction_size, 0);
+                data
+            };
+
+            let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
+            let mut data_chunks: Vec<Vec<u8>> = padded
+                .chunks(shard_size)
+                .map(|c| {
+                    let mut v = c.to_vec();
+                    v.resize(shard_size, 0);
+                    v
+                })
+                .collect();
+            while data_chunks.len() < data_shards {
+                data_chunks.push(vec![0u8; shard_size]);
+            }
+
+            let mut shards = data_chunks.clone();
+            while shards.len() < total_shards {
+                shards.push(vec![0u8; shard_size]);
+            }
+
+            let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
+            rs.encode(&mut shard_refs).unwrap();
+
+            for (j, shard) in shards.iter().enumerate().take(data_shards) {
+                let hash = Sha256::digest(shard).to_vec();
+                all_hashes.push(hash.clone());
+                shard_base64s.push(general_purpose::STANDARD.encode(shard));
+            }
+        }
+
+        // Generate accumulator and proofs
+        let acc = compute_accumulator(&all_hashes);
+        let proofs = generate_proofs(&all_hashes);
+
+        assert_eq!(all_hashes.len(), proofs.len());
+
+        for (i, (hash, proof)) in all_hashes.iter().zip(proofs.iter()).enumerate() {
+            let valid = verify_proof(&acc, hash, proof);
+            assert!(valid, "Proof {} failed verification!", i);
+        }
+
+        println!("✅ All RSA accumulator proofs verified successfully for test shards.");
+    }
     
+    #[tokio::test]
+    async fn test_rsa_accumulator_proof_validation_post_encoding() {
+        use crate::utils::create_transaction_data::create_transaction_data;
+        use crate::utils::rsa_accumulator_util::{verify_proof};
+        use base64::{engine::general_purpose, Engine};
+        use std::sync::Arc;
+        use tokio::sync::Mutex;
     
+        // Mock node config with valid params
+        let node =  Node::new(
+            0,         // node_id
+            5,         // total_nodes
+            "127.0.0.1:8080".to_string(),
+            vec![],    // peer list not needed for this test
+            "".to_string(),
+            25,        // number_of_transactions
+            256,       // transaction_size
+            4,         // data_shards
+            1,         // total_rounds
+            Arc::new(reqwest::Client::new()),
+        );
+    
+        // Generate proposal
+        let proposal = create_transaction_data(node.clone())
+            .await
+            .expect("Failed to generate proposal");
+    
+        // Decode accumulator
+        let accumulator_bytes = general_purpose::STANDARD
+            .decode(&proposal.batch_accumulator)
+            .expect("Failed to decode accumulator");
+        let accumulator = num_bigint::BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
+    
+        // Loop through transactions, decode shards and verify each proof
+        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
+            for (shard_index, encoded_shard) in tx.shards.iter().enumerate() {
+                let shard_bytes = general_purpose::STANDARD
+                    .decode(encoded_shard)
+                    .expect(&format!("Failed to decode shard[{}] of tx[{}]", shard_index, tx_index));
+    
+                let proof_str = tx.proofs.get(shard_index).expect("Missing proof");
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(proof_str)
+                    .expect("Failed to decode proof");
+                let proof = num_bigint::BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
+    
+                // Recompute hash and validate proof
+                let is_valid = verify_proof(&accumulator, &shard_bytes, &proof);
+                assert!(
+                    is_valid,
+                    "Proof failed for tx[{}] shard[{}]",
+                    tx_index,
+                    shard_index
+                );
+            }
+        }
+    
+        println!("✅ All proofs verified post encoding/decoding for {} transactions.", proposal.transactions.len());
+    }
 
 
 
