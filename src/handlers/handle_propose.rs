@@ -69,6 +69,8 @@ pub async fn handle_propose(
         let hash_hex = hex::encode(&hash);
         let prime = hash_to_prime(&hash);
 
+
+        
         // Step 4: Log all triplet info
         info!(
             "🧪 handle_propose(): tx[{}] shard[0] hash={}, prime={}, proof_b64={}",
