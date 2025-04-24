@@ -27,7 +27,7 @@ num-traits = "0.2"
 rand = "0.8"
 num-integer = "0.1"
 hex = "0.4"
-
+rayon = "1.7.0"
 
 [dev-dependencies]
 # mockito = "1.6.1"

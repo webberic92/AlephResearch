@@ -1,6 +1,7 @@
 use num_bigint::{BigInt, RandBigInt, Sign};
 use num_traits::One;
-use num_integer::Integer; // ✅ <== This is the fix!
+use num_integer::Integer; use rayon::iter::{IntoParallelIterator, IntoParallelRefIterator, ParallelIterator};
+// ✅ <== This is the fix!
 use sha2::{Sha256, Digest};
 use rand::thread_rng;
 
@@ -76,34 +77,26 @@ pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
     g.modpow(&total_product, &n)
 }
 
-pub fn generate_proof(elements: &[Vec<u8>], index: usize, _accumulator: &BigInt) -> BigInt {
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
 
-    let product_of_others = elements.iter().enumerate()
-    .filter(|(i, _)| *i != index)
-    .map(|(_, hash)| hash_to_prime(hash))  // Already hashed
-    .fold(BigInt::one(), |acc, p| acc * p);
-
-    g.modpow(&product_of_others, &n)
-}
 
 pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = prime_hashes.iter().map(|h| hash_to_prime(h)).collect();
+    let primes: Vec<BigInt> = prime_hashes.par_iter().map(|h| hash_to_prime(h)).collect();
     let n = get_modulus();
     let g = BigInt::from(2u8);
+    let len = primes.len();
 
-    let mut prefix_products = vec![BigInt::one(); primes.len() + 1];
-    let mut suffix_products = vec![BigInt::one(); primes.len() + 1];
+    let mut prefix_products = vec![BigInt::one(); len + 1];
+    let mut suffix_products = vec![BigInt::one(); len + 1];
 
-    for i in 0..primes.len() {
+    for i in 0..len {
         prefix_products[i + 1] = &prefix_products[i] * &primes[i];
     }
-    for i in (0..primes.len()).rev() {
+    for i in (0..len).rev() {
         suffix_products[i] = &suffix_products[i + 1] * &primes[i];
     }
 
-    (0..primes.len())
+    (0..len)
+        .into_par_iter()
         .map(|i| {
             let product = &prefix_products[i] * &suffix_products[i + 1];
             g.modpow(&product, &n)
