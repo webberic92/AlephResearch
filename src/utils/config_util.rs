@@ -8,7 +8,6 @@ use base64::{engine::general_purpose, Engine};
 use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
 
-
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
     let config_path = path.unwrap_or("/aleph/aleph-node-config.toml");
@@ -51,16 +50,17 @@ pub async fn write_finalized_dag_to_file(
             "round": unit.round,
             "accumulator_root": hex::encode(&unit.accumulator_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "hash": hex::encode(&tx.root),  // renamed for clarity
-                "proofs": tx.proofs.clone(),
+                "hash": hex::encode(&tx.root),
+                "proofs": tx.shards.iter().map(|s| s.proofs.clone()).collect::<Vec<_>>(),
                 "shards": tx.shards.iter().map(|shard| {
-                    let decoded_bytes = general_purpose::STANDARD.decode(shard)
+                    let decoded_bytes = general_purpose::STANDARD
+                        .decode(&shard.shard_b64)
                         .unwrap_or_else(|_| vec![]);
                     if !decoded_bytes.is_empty() {
                         String::from_utf8(decoded_bytes.clone())
                             .unwrap_or_else(|_| format!("{:?}", decoded_bytes))
                     } else {
-                        shard.clone()
+                        shard.shard_b64.clone()
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),

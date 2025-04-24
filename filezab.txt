@@ -175,6 +175,7 @@ use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
 use tracing::{error, info, warn};
 use reqwest::Client;
 use num_bigint::BigInt;
+
 use crate::{
     processors::priority_queue::RBCMessage, 
     structs::{
@@ -240,9 +241,9 @@ pub async fn handle_prevote(
         let mut reconstructed_transactions = Vec::new();
 
         for (i, tx) in proposal.transactions.iter().enumerate() {
-            for (j, shard_str) in tx.shards.iter().enumerate() {
+            for (j, shard_struct) in tx.shards.iter().enumerate() {
                 let decoded = general_purpose::STANDARD
-                    .decode(shard_str)
+                    .decode(&shard_struct.shard_b64)
                     .map_err(|e| format!("Node {}: Failed to decode shard tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
 
                 let expected_len = (transaction_size + data_shards - 1) / data_shards;
@@ -254,27 +255,17 @@ pub async fn handle_prevote(
                 }
 
                 let hash = Sha256::digest(&decoded);
-                // let prime = hash_to_prime(&decoded);
-                // info!(
-                //     "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
-                //     node_id,
-                //     i,
-                //     j,
-                //     decoded.len(),
-                //     hex::encode(&hash),
-                //     prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
-                // );
-                
 
-
+                // Only store data shards
                 if j < data_shards {
                     let node_guard = node.lock().await;
                     let mut aggregator = node_guard.shard_aggregator.lock().await;
                     aggregator.insert_shard(round_id, i, j, decoded.clone());
                 }
 
-                // ✅ Verify RSA proof per shard
-                let proof_str = tx.proofs.get(j).ok_or_else(|| format!("Node {}: Missing proof for tx[{}] shard[{}]", node_id, i, j))?;
+                // Verify RSA proof
+                let proof_str = shard_struct.proofs.get(0)
+                    .ok_or_else(|| format!("Node {}: Missing proof for tx[{}] shard[{}]", node_id, i, j))?;
                 let proof_bytes = general_purpose::STANDARD
                     .decode(proof_str)
                     .map_err(|e| format!("Node {}: Failed to decode proof for tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
@@ -285,8 +276,7 @@ pub async fn handle_prevote(
                 }
             }
 
-            
-            // ✅ Reconstruct padded tx
+            // Reconstruct padded transaction
             let maybe_tx = {
                 let node_guard = node.lock().await;
                 let aggregator = node_guard.shard_aggregator.lock().await;
@@ -301,7 +291,7 @@ pub async fn handle_prevote(
                 }
             };
 
-            // ✅ Verify transaction hash
+            // Validate padded hash against tx.root
             let hash = Sha256::digest(&padded_tx_bytes);
             if hash.to_vec() != tx.root {
                 return Err(format!(
@@ -313,7 +303,6 @@ pub async fn handle_prevote(
             reconstructed_transactions.push(tx.clone());
         }
 
-        // ✅ Directly build unit — no Merkle
         let unit_id = format!("U{}-{}", round_id, proposer_id);
         let unit = crate::structs::requests::DagUnit {
             unit_id,
@@ -321,14 +310,13 @@ pub async fn handle_prevote(
             round: round_id,
             transactions: reconstructed_transactions,
             parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            accumulator_root: accumulator_bytes.clone(), // repurpose field for accumulator root if needed
+            accumulator_root: accumulator_bytes.clone(),
             finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
         };
 
         reconstructed_units.push(unit);
     }
 
-    // Validate parents
     {
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
@@ -340,7 +328,6 @@ pub async fn handle_prevote(
         }
     }
 
-    // Vote recording done earlier, now check quorum
     let vote_count = {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
@@ -360,7 +347,6 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    // Send commit to others
     let message_count = node.lock().await.message_count.clone();
     for peer in node_list {
         let url = format!("http://{}/commit", peer);
@@ -388,12 +374,10 @@ pub async fn handle_prevote(
         }
     }
 
-    // Enqueue local commit
     if let Some(rbc_processor) = &rbc_processor {
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
     }
 
-    // Clear aggregator state
     {
         let node_guard = node.lock().await;
         let mut aggregator = node_guard.shard_aggregator.lock().await;
@@ -402,7 +386,6 @@ pub async fn handle_prevote(
 
     Ok(())
 }
-
 use std::sync::{atomic::Ordering, Arc};
 use base64::{engine::general_purpose, Engine};
 use num_bigint::BigInt;
@@ -454,29 +437,26 @@ pub async fn handle_propose(
 
     // Validate each tx in the proposal
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        // Step 1: Decode first shard
-        let shard_b64 = tx.shards.get(0)
+        let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
-        let decoded_shard = general_purpose::STANDARD
-            .decode(shard_b64)
-            .map_err(|e| format!("Node {}: Failed to decode shard for tx {}: {:?}", node_id, i, e))?;
 
-        // Step 2: Decode proof
-        let proof_b64 = tx.proofs.get(0)
-            .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
+        let decoded_shard = general_purpose::STANDARD
+            .decode(&shard.shard_b64)
+            .map_err(|e| format!("Node {}: Failed to decode shard[0] of tx {}: {:?}", node_id, i, e))?;
+
+        let proof_b64 = shard.proofs.get(0)
+            .ok_or_else(|| format!("Node {}: Missing proof for shard[0] of tx {}", node_id, i))?;
+
         let proof_bytes = general_purpose::STANDARD
             .decode(proof_b64)
-            .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
+            .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
-        // Step 3: Hash the decoded shard
         let hash = Sha256::digest(&decoded_shard);
-        let hash_hex = hex::encode(&hash);
         let prime = hash_to_prime(&hash);
+        let hash_hex = hex::encode(&hash);
 
-
-        
-        // Step 4: Log all triplet info
         info!(
             "🧪 handle_propose(): tx[{}] shard[0] hash={}, prime={}, proof_b64={}",
             i,
@@ -485,7 +465,6 @@ pub async fn handle_propose(
             &proof_b64[..10.min(proof_b64.len())]
         );
 
-        // Step 5: Verify RSA accumulator proof
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!(
                 "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
@@ -705,7 +684,6 @@ use base64::{engine::general_purpose, Engine};
 use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
 
-
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
     let config_path = path.unwrap_or("/aleph/aleph-node-config.toml");
@@ -748,16 +726,17 @@ pub async fn write_finalized_dag_to_file(
             "round": unit.round,
             "accumulator_root": hex::encode(&unit.accumulator_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "hash": hex::encode(&tx.root),  // renamed for clarity
-                "proofs": tx.proofs.clone(),
+                "hash": hex::encode(&tx.root),
+                "proofs": tx.shards.iter().map(|s| s.proofs.clone()).collect::<Vec<_>>(),
                 "shards": tx.shards.iter().map(|shard| {
-                    let decoded_bytes = general_purpose::STANDARD.decode(shard)
+                    let decoded_bytes = general_purpose::STANDARD
+                        .decode(&shard.shard_b64)
                         .unwrap_or_else(|_| vec![]);
                     if !decoded_bytes.is_empty() {
                         String::from_utf8(decoded_bytes.clone())
                             .unwrap_or_else(|_| format!("{:?}", decoded_bytes))
                     } else {
-                        shard.clone()
+                        shard.shard_b64.clone()
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),
@@ -787,12 +766,14 @@ use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
 use tracing::info;
 use anyhow::Error;
-// use num_bigint::BigInt;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proof, generate_proofs, hash_to_prime}
+    structs::{
+        node::Node,
+        requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
+    },
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proofs},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -806,7 +787,7 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
 
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
-) -> Result<ProposeRequest, Error> {
+) -> Result<ProposeRequest, anyhow::Error> {
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
@@ -829,9 +810,7 @@ pub async fn create_transaction_data(
     };
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let mut all_primes = Vec::new();
-    let mut all_hashes = Vec::new(); // ✅ Needed for proof generation
-    let mut shard_prime_index_map = Vec::new();
+    let mut all_hashes = Vec::new();
     let mut transactions = Vec::new();
 
     for tx_index in 0..num_txs {
@@ -839,10 +818,7 @@ pub async fn create_transaction_data(
         let padded = pad_to_len(content.into_bytes(), transaction_size);
         let tx_root = Sha256::digest(&padded).to_vec();
 
-        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
-            .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
-
-        // Prepare shards
+        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut data_chunks: Vec<Vec<u8>> = padded
             .chunks(shard_size)
             .map(|chunk| {
@@ -851,6 +827,7 @@ pub async fn create_transaction_data(
                 v
             })
             .collect();
+
         while data_chunks.len() < data_shards {
             data_chunks.push(vec![0u8; shard_size]);
         }
@@ -861,142 +838,46 @@ pub async fn create_transaction_data(
         }
 
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
-        rs.encode(&mut shard_refs)
-            .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
+        rs.encode(&mut shard_refs)?;
 
-        let mut tx_prime_list = Vec::new();
-        let mut encoded_shards = Vec::new();
+        // ✅ Hash all shards (not just data_shards)
+        let tx_hashes: Vec<Vec<u8>> = shards.iter()
+            .map(|shard| Sha256::digest(shard).to_vec())
+            .collect();
 
-        for (shard_index, shard) in shards.iter().enumerate() {
+        // ✅ Use the full hash list for proof generation
+        let tx_proofs = generate_proofs(&tx_hashes);
 
-        
-            let hash = Sha256::digest(shard).to_vec();
-            let prime = hash_to_prime(&hash);
-
-            if shard_index < data_shards {
-                all_primes.push(prime.clone());
-                all_hashes.push(hash.clone()); // ✅ store original hashes
-                tx_prime_list.push(prime.clone());
-                encoded_shards.push(general_purpose::STANDARD.encode(shard));
-            }
-
-            use hex;
-
-            let hash_hex = hex::encode(&hash);
-            let prime_str = prime.to_str_radix(10);
-            info!(
-                "🧬 ProofGen: tx[{}] shard[{}]: hash={}, prime={}, global_index={}",
-                tx_index,
-                shard_index,
-                &hash_hex[..8.min(hash_hex.len())],
-                &prime_str[..12.min(prime_str.len())],
-                all_primes.len() // this is current global index
-            );
-
-
-            
-            // info!(
-            //     "ProofGen: tx[{}] shard[{}]: SHA256 = {}, mapped_prime = {}",
-            //     tx_index,
-            //     shard_index,
-            //     hex::encode(&hash),
-            //     prime.to_str_radix(10).chars().take(12).collect::<String>()
-            // );
+        let mut shard_structs = Vec::with_capacity(total_nodes);
+        for i in 0..total_nodes {
+            let shard_encoded = general_purpose::STANDARD.encode(&shards[i]);
+            let proof = general_purpose::STANDARD.encode(tx_proofs[i].to_bytes_be().1);
+            shard_structs.push(ShardWithProofs {
+                shard_b64: shard_encoded,
+                proofs: vec![proof],
+            });
         }
 
+        let acc_per_tx = compute_accumulator(&tx_hashes);
+        let encoded_acc = general_purpose::STANDARD.encode(acc_per_tx.to_bytes_be().1);
+        
         transactions.push(Transaction {
             root: tx_root,
-            shards: encoded_shards,
-            proofs: vec![], // Filled later below
+            shards: shard_structs,
+            shard_hashes: Some(tx_hashes.iter().map(|h| hex::encode(h)).collect()),
+            accumulator: Some(encoded_acc),
         });
-        
-        // 💡 Also push tx_prime_list into global hash list in order:
-        shard_prime_index_map.push(tx_prime_list);
+
+        // ✅ Append all shard hashes for the accumulator
+        all_hashes.extend(tx_hashes);
+
+        let acc_debug = compute_accumulator(&all_hashes);
+        let acc_short = acc_debug.to_str_radix(10).chars().take(12).collect::<String>();
+        info!("🔢 After tx[{}]: partial accumulator starts with {}", tx_index, acc_short);
     }
 
-    // === Accumulator & Proofs ===
-    let prime_input_bytes: Vec<Vec<u8>> = all_hashes.clone(); // ✅ match generation with verification
-    let accumulator = compute_accumulator(&prime_input_bytes);
+    let accumulator = compute_accumulator(&all_hashes);
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
-
-    // === Proof generation
-    let now = std::time::Instant::now();
-
-    let raw_proofs = generate_proofs(&prime_input_bytes);
-    let flat_proofs: Vec<String> = raw_proofs
-        .into_iter()
-        .map(|proof| general_purpose::STANDARD.encode(proof.to_bytes_be().1))
-        .collect();
-
-    // let flat_proofs: Vec<String> = prime_input_bytes
-    //     .iter()
-    //     .enumerate()
-    //     .map(|(i, _prime_bytes_i)| {
-    //         let proof = generate_proof(&prime_input_bytes, i, &accumulator);
-    //         let encoded_proof = general_purpose::STANDARD.encode(proof.to_bytes_be().1);
-
-    //         // let prime_bigint = BigInt::from_bytes_be(num_bigint::Sign::Plus, prime_bytes_i);
-
-    //         // info!(
-    //         //     "🧪 ProofGen: index[{}], prime = {}, proof = {}",
-    //         //     i,
-    //         //     prime_bigint.to_str_radix(10).chars().take(20).collect::<String>(),
-    //         //     proof.to_str_radix(10).chars().take(20).collect::<String>(),
-    //         // );
-
-    //         encoded_proof
-    //     })
-    //     .collect();
-    info!("⏱️ Proof generation done in {:?}", now.elapsed());
-    // === Assign proofs per transaction
-    let mut cursor = 0;
-    for (tx_index, (tx, primes_for_tx)) in transactions.iter_mut().zip(shard_prime_index_map.iter()).enumerate() {
-        let end = cursor + primes_for_tx.len();
-        if end > flat_proofs.len() {
-            return Err(Error::msg(format!(
-                "Proof slice OOB for tx[{}]: cursor={} + {} > {}",
-                tx_index, cursor, primes_for_tx.len(), flat_proofs.len()
-            )));
-        }
-
-
-        let proofs_for_tx: Vec<String> = flat_proofs[cursor..cursor + data_shards].to_vec();
-        tx.proofs = proofs_for_tx;
-        
-        info!(
-            "🧩 Proofs assigned to tx[{}]: {:?}",
-            tx_index,
-            tx.proofs.iter()
-                .map(|p| p.chars().take(10).collect::<String>())
-                .collect::<Vec<_>>()
-        );
-        for (shard_i, proof) in tx.proofs.iter().enumerate() {
-            info!(
-                "tx[{}] shard[{}]: assigned proof = {}",
-                tx_index,
-                shard_i,
-                proof.chars().take(10).collect::<String>()
-            );
-        }
-
-        cursor += primes_for_tx.len();
-        assert_eq!(primes_for_tx.len(), data_shards);
-        if cursor + primes_for_tx.len() > flat_proofs.len() {
-            return Err(Error::msg(format!(
-                "💥 Index OOB: cursor {} + {} > flat_proofs length {}",
-                cursor, primes_for_tx.len(), flat_proofs.len()
-            )));
-        }
-        
-    }
-
-    info!(
-        "✅ RSA-based proposal ready: {} txs, {} primes, Round {}, Acc: {}...",
-        num_txs,
-        all_primes.len(),
-        round_id,
-        encoded_accumulator.get(..12).unwrap_or(&encoded_accumulator)
-    );
 
     Ok(ProposeRequest {
         base: BaseRequest {
@@ -1297,51 +1178,11 @@ pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
 
 
 
-/// Verifies that a hashed element is in the RSA accumulator using its proof.
-/// 
-/// # Arguments
-/// - `accumulator`: The RSA accumulator value (product of hashed elements).
-/// - `element`: The data being proven (e.g., shard bytes).
-/// - `proof`: The RSA inclusion proof (product of all other primes).
-/// 
-/// # Returns
-/// - `true` if `proof^hash(element) == accumulator mod accumulator`, else false.
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     // 1. Hash the element (e.g., shard) using SHA256
-
-//     // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
-//     // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
-
-//     // let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    
-//     let hash = Sha256::digest(element).to_vec();
-//     let exponent = hash_to_prime(&hash);
-//     // 3. Compute proof^exponent mod accumulator
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-
-//     // 4. Check that reconstructed == accumulator
-//     &reconstructed == accumulator
-// }
-
-
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     let exponent = hash_to_prime(element);  // not hash_to_prime(Sha256::digest(...))
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-//     &reconstructed == accumulator
-// }
-
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     let hash = Sha256::digest(element).to_vec();
-//     let exponent = hash_to_prime(&hash);
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-//     &reconstructed == accumulator
-// }
-
-
 pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
     let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
     let prime = hash_to_prime(&hash);                   // ✅ Then map to prime
-    let reconstructed = proof.modpow(&prime, &get_modulus()); // ✅ Modulo N
-
+    let n = get_modulus();
+    let reconstructed = proof.modpow(&prime, &n);
     let is_valid = &reconstructed == accumulator;
     if !is_valid {
         println!("❌ verify_proof failed: hash={}, prime={}, proof={}, reconstructed={}, acc={}",
@@ -1718,12 +1559,18 @@ pub struct BaseRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Transaction {
-    pub root: Vec<u8>,            // Hash of the full padded transaction
-    pub shards: Vec<String>,      // base64-encoded shards
-    pub proofs: Vec<String>,      // base64-encoded RSA proof per shard
+pub struct ShardWithProofs {
+    pub shard_b64: String,
+    pub proofs: Vec<String>, // each entry is a round-specific proof
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transaction {
+    pub root: Vec<u8>,
+    pub shards: Vec<ShardWithProofs>,
+    pub shard_hashes: Option<Vec<String>>,
+    pub accumulator: Option<String>, // ✅ NEW
+}
 
 
 
@@ -1886,7 +1733,6 @@ impl ShardAggregator {
             );
             return None;
         }
-        let padded = combined_data[..transaction_size].to_vec();
         let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
@@ -1945,4 +1791,620 @@ pub struct ConsensusConfig {
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct NodeConfig {
     pub id: usize,
+}from aws_cdk import (
+    aws_ec2 as ec2,
+    aws_logs as logs,
+    aws_iam as iam,
+    Stack,
+    CfnOutput,
+    App,
+)
+from constructs import Construct
+from datetime import datetime
+
+class TestAleph(Stack):
+    def __init__(self, scope: Construct, id: str, **kwargs) -> None:
+        super().__init__(scope, id, **kwargs)
+
+        INSTANCES_NUMBER = 5 # Define the number of instances
+        BATCH_SIZE = 25  # Define the number of transactions in a batch
+        TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
+        SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
+        TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
+
+        unique_id = datetime.now().strftime("%Y%m%d%H%M")
+
+        # Create a VPC within the scope of this Stack
+        vpc = ec2.Vpc(self, "MyVpc", max_azs=2)
+
+        # Create a log group for CloudWatch logging
+        log_group = logs.LogGroup(self, "AlephNodeLogGroup", log_group_name=f"/aleph-research/nodes-{unique_id}")
+
+        # Create a security group for EC2 instances with intra-VPC communication
+        security_group = ec2.SecurityGroup(
+            self, "AlephNodeSG",
+            vpc=vpc,
+            allow_all_outbound=True
+        )
+        security_group.add_ingress_rule(ec2.Peer.ipv4(vpc.vpc_cidr_block), ec2.Port.all_traffic(), "Allow VPC-wide communication")
+
+        # IAM Role for EC2 Instances (for S3, CloudWatch, and SSM)
+        instance_role = iam.Role(
+            self, "InstanceRole",
+            assumed_by=iam.ServicePrincipal("ec2.amazonaws.com")
+        )
+        # Attach policies for S3, CloudWatch Logs, and SSM Session Manager
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("CloudWatchLogsFullAccess"))
+        # instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3ReadOnlyAccess"))
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonS3FullAccess"))
+        instance_role.add_managed_policy(iam.ManagedPolicy.from_aws_managed_policy_name("AmazonSSMManagedInstanceCore"))
+
+        # Define a lightweight t2.micro instance as the IP Manager
+        ip_manager_instance = ec2.Instance(self, "IPManager",
+                                           instance_type=ec2.InstanceType("t2.micro"),
+                                           machine_image=ec2.MachineImage.latest_amazon_linux2(),
+                                           vpc=vpc,
+                                           security_group=security_group,
+                                           role=instance_role
+        )
+        # Start the IP server for readiness tracking
+        ip_manager_instance.user_data.add_commands(
+            "sudo yum update -y",
+            "sudo yum install -y python3 jq",
+            "aws s3 cp s3://aleph-research/IpServer.py /home/ec2-user/ --quiet",
+            "sudo chmod -R 777 /home/ec2-user",
+            "cd /home/ec2-user", 
+            f"python3 IpServer.py {INSTANCES_NUMBER} &"
+        )
+
+        for i in range(INSTANCES_NUMBER):
+            ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
+                instance_type=ec2.InstanceType("t3.medium"),
+                machine_image=ec2.MachineImage.latest_amazon_linux2(),
+                vpc=vpc,
+                security_group=security_group,
+                role=instance_role,
+                credit_specification=ec2.CpuCredits.UNLIMITED,
+            )
+
+            # Part 1: Initial Setup Commands
+            ec2_instance.user_data.add_commands(
+                # Install dependencies and prepare environment
+                "sudo yum update -y",
+                "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
+
+                # Increase system limits
+                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
+                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
+                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                "sudo sysctl -p",
+
+                "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+                "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+
+                # Create necessary logs
+                "mkdir -p /aleph/logs/",
+                "touch /aleph/logs/node_status",
+                "touch /aleph/logs/cpu_usage",
+                "touch /aleph/logs/mem_usage",
+                "chmod -R 777 /aleph/logs/",
+                "echo 'Starting cpu and memory logs' >> /aleph/logs/node_status",
+                "nohup sar -u 1 >> /aleph/logs/cpu_usage 2>&1 &",
+                "nohup sar -r 1 >> /aleph/logs/mem_usage 2>&1 &",
+                # Continue setup for Aleph node
+                "aws s3 cp s3://aleph-research/aleph_rbc /aleph/ --quiet",
+                # "aws s3 cp s3://aleph-research/aleph_start /aleph/ --quiet",
+                "sudo chmod -R 777 /aleph/",
+
+                # Retrieve and log the private IP for ongoing reference
+                "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
+                "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /aleph/logs/node_status",
+
+                # Register node as ready with the IP Manager using the expanded PRIVATE_IP
+                f"""
+                while true; do
+                    RESPONSE=$(curl -s -o /dev/null -w "%{{http_code}}" -X POST -H 'Content-Type: application/json' -d '{{"node_ip": "'$PRIVATE_IP'"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready)
+                    if [ "$RESPONSE" -eq 200 ]; then
+                        echo "Node registration success." >> /aleph/logs/node_status
+                        break
+                    else
+                        echo "Node registration failed with status $RESPONSE. Retrying..." >> /aleph/logs/node_status
+                        sleep 5  # Wait before retrying
+                    fi
+                done
+                """,
+
+                # Loop to check IP Manager endpoint readiness
+                "while true; do",
+                f"  if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '\"all_ready\": true'; then",
+                "    echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status;",
+                "    break;",  # Exit loop if IP Manager is reachable and all nodes are ready
+                "  else",
+                "    echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status;",
+                "  fi",
+                "  sleep 5;",  # Wait before retrying
+                "done"
+            )
+
+            ec2_instance.user_data.add_commands(
+                # Extract the private IP from logs
+                "PRIVATE_IP=$(grep 'PRIVATE_IP =' /aleph/logs/node_status | awk -F '= ' '{print $2}')",
+
+                # Retrieve all node IPs, exclude the current node's IP, and format them properly for the TOML configuration
+                f"NODES=$(curl -s http://{ip_manager_instance.instance_private_ip}:8080/get_all_nodes | jq -r --arg PRIVATE_IP \"$PRIVATE_IP\" '.node_ips | map(select(. != $PRIVATE_IP)) | map(\"\\\"\" + . + \":30333\\\"\") | join(\", \")')",
+                # Log the filtered node list for verification
+                "echo \"Retrieved all nodes for nodes (excluding self): $NODES\" >> /aleph/logs/node_status",
+
+                # Write the config.toml file line by line
+                "echo '[network]' > /aleph/aleph-node-config.toml",
+                "echo 'listen_address = \"0.0.0.0:30333\"' >> /aleph/aleph-node-config.toml",
+                f"echo 'ip_manager_address = \"{ip_manager_instance.instance_private_ip}\"' >> /aleph/aleph-node-config.toml",
+                "echo \"ip_address = \\\"$PRIVATE_IP\\\"\" >> /aleph/aleph-node-config.toml", 
+                "echo \"nodes = [$NODES]\" >> /aleph/aleph-node-config.toml",
+                f"echo 'total_nodes = {INSTANCES_NUMBER}' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[consensus]' >> /aleph/aleph-node-config.toml",
+                f"echo 'number_of_transactions = {BATCH_SIZE}' >> /aleph/aleph-node-config.toml",
+                f"echo 'transaction_size = {TRANSACTION_SIZE} # bytes' >> /aleph/aleph-node-config.toml",
+                f"echo 'data_shards = {SHARD_SIZE} # Number of data shards for erasure coding' >> /aleph/aleph-node-config.toml",
+                f"echo 'total_rounds = {TOTAL_ROUNDS} # Number of rounds' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[logging]' >> /aleph/aleph-node-config.toml",
+                "echo 'level = \"info\"' >> /aleph/aleph-node-config.toml",
+                "echo 'transaction_metrics_log = \"/aleph/logs/transaction_metrics\"' >> /aleph/aleph-node-config.toml",
+                "echo '' >> /aleph/aleph-node-config.toml",
+                "echo '[node]' >> /aleph/aleph-node-config.toml",
+                f"echo 'id = {i + 1}' >> /aleph/aleph-node-config.toml",
+                "cat /aleph/aleph-node-config.toml >> /aleph/logs/node_status"
+            )
+
+
+            # Part 3: Start aleph_rbc
+            ec2_instance.user_data.add_commands(
+                "echo 'Starting aleph_rbc execution' >> /aleph/logs/node_status",
+                # Check if the aleph_rbc binary is reachable and log the result
+                "if [ -f /aleph/aleph_rbc ]; then",
+                "  echo 'aleph_rbc binary is found at /aleph/aleph_rbc' >> /aleph/logs/node_status;",
+                "else",
+                "  echo 'ERROR: aleph_rbc binary not found at /aleph/aleph_rbc' >> /aleph/logs/node_status;",
+                "fi",
+
+                # Check if the configuration file is reachable and log the result
+                "if [ -f /aleph/aleph-node-config.toml ]; then",
+                "  echo 'Configuration file found at /aleph/aleph-node-config.toml' >> /aleph/logs/node_status;",
+                "else",
+                "  echo 'ERROR: Configuration file not found at /aleph/aleph-node-config.toml' >> /aleph/logs/node_status;",
+                "fi",
+
+
+                # Start the Aleph APIs
+                "echo 'Attempting to execute aleph_rbc with configuration' >> /aleph/logs/node_status;",
+                "ulimit -n 1048576",
+                "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
+
+                # Wait for the aleph_rbc server to be ready (simple retry logic)
+                "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /aleph/logs/node_status;",
+                    # Wait for the aleph_rbc server to be ready (simple retry logic)
+                "for i in {1..30}; do",
+                "    if netstat -tuln | grep -q ':30333'; then",
+                "        echo 'aleph_rbc APIs are ready.' >> /aleph/logs/node_status;",
+                "        break;",
+                "    fi",
+                "    echo 'aleph_rbc not ready, retrying...' >> /aleph/logs/node_status;",
+                "    sleep 1;",
+                "done",
+                
+                "if ! netstat -tuln | grep -q ':30333'; then",
+                "    echo 'ERROR: aleph_rbc failed to start after 30 retries. Exiting.' >> /aleph/logs/node_status;",
+                "    exit 1;",
+                "fi",
+
+                # Wait for the aleph_rbc server to confirm readiness via its API"
+                "echo 'Waiting for aleph_rbc API readiness...' >> /aleph/logs/node_status;",
+                "for i in {1..30}; do",
+                "    if curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
+                "        echo 'aleph_rbc API is ready.' >> /aleph/logs/node_status;",
+                "        break;",
+                "    fi",
+                "    echo 'aleph_rbc API not ready, retrying...' >> /aleph/logs/node_status;",
+                "    sleep 1;",
+                "done",
+                "",
+                "if ! curl -s http://127.0.0.1:30333/health | grep -q 'healthy'; then",
+                "    echo 'ERROR: aleph_rbc API failed to start after 30 retries. Exiting.' >> /aleph/logs/node_status;",
+                "    exit 1;",
+                "fi",
+
+                f"echo 'Done with aleph_rbc loop for node {i + 1} ' >> /aleph/logs/node_status;",
+                
+            )
+
+
+            # Output the instance ID for debugging
+            CfnOutput(self, f"InstanceIdOutput{i+1}",
+                    value=ec2_instance.instance_id,
+                    description=f"Instance ID for MyInstance{i+1}")
+
+
+# App setup
+app = App()
+TestAleph(app, "TestAleph")  # Instantiate the TestAleph Stack within the app
+
+app.synth()
+use std::cmp::Ordering;
+use crate::structs::requests::{CommitRequest, PrevoteRequest, ProposeRequest};
+
+/// Assign priorities: **Lower value means higher priority**
+#[derive(Debug)]
+pub enum RBCMessage {
+    RoundFinalized(u64),    // ✅ Priority 0 (Highest)
+    Commit(CommitRequest),  // ✅ Priority 1
+    Prevote(PrevoteRequest), // ✅ Priority 2
+    Proposal(ProposeRequest), // ✅ Priority 3
+}
+
+// ✅ Manually Implement `Eq` Based on Priority (Ignore Inner Data)
+impl PartialEq for RBCMessage {
+    fn eq(&self, other: &Self) -> bool {
+        self.priority() == other.priority()
+    }
+}
+
+impl Eq for RBCMessage {}
+
+impl Ord for RBCMessage {
+    fn cmp(&self, other: &Self) -> Ordering {
+        other.priority().cmp(&self.priority()) // **Reverse ordering for priority queue**
+    }
+}
+
+impl PartialOrd for RBCMessage {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+/// ✅ Function to Assign Priority for Each Message Type
+impl RBCMessage {
+    pub fn priority(&self) -> u8 {
+        match self {
+            RBCMessage::RoundFinalized(_) => 0,  // ✅ **Highest priority**
+            RBCMessage::Commit(_) => 1,  // **Commit is next**
+            RBCMessage::Prevote(_) => 2, // **Prevote is after commit**
+            RBCMessage::Proposal(_) => 3, // **Proposal is lowest priority**
+        }
+    }
+}
+use chrono::Local;
+use tokio::sync::{Mutex, mpsc};
+use tracing::{info, warn, error};
+use std::sync::Arc;
+use std::collections::{BinaryHeap, VecDeque};
+use reqwest::Client;
+
+use crate::handlers::handle_commit::handle_commit;
+use crate::handlers::handle_prevote::handle_prevote;
+use crate::handlers::handle_propose::handle_propose;
+use crate::structs::{node::Node, requests::{CommitRequest, PrevoteRequest, ProposeRequest}};
+use crate::utils::create_transaction_data::create_transaction_data;
+use crate::requests::send_proposals::send_proposals;
+use super::priority_queue::RBCMessage;
+
+pub struct RBCProcessor {
+    queue_tx: mpsc::Sender<RBCMessage>,
+}
+
+impl RBCProcessor {
+    pub fn new(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Self {
+        let (tx, mut rx) = mpsc::channel::<RBCMessage>(100);
+        let tx_clone = tx.clone();
+        let node_clone = node.clone();
+        let client_clone = client.clone();
+
+        tokio::spawn(async move {
+            let mut priority_queue = BinaryHeap::new();
+            let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
+            let mut last_round = 0;
+
+            while let Some(msg) = rx.recv().await {
+                match &msg {
+                    RBCMessage::RoundFinalized(new_round) => {
+                        last_round = *new_round;
+                        Self::handle_round_finalized(
+                            *new_round,
+                            &node_clone,
+                            &client_clone,
+                            &tx,
+                            &mut priority_queue,
+                            &mut fifo_queues
+                        ).await;
+                        continue;
+                    }
+                    RBCMessage::Commit(req) if req.round_id < last_round => continue,
+                    RBCMessage::Prevote(req) if req.proposals[0].base.round_id < last_round => continue,
+                    RBCMessage::Proposal(req) if req.base.round_id < last_round => continue,
+                    _ => {}
+                }
+
+                priority_queue.push(msg);
+                Self::drain_priority_queue(&mut priority_queue, &node_clone, &client_clone).await;
+            }
+
+            info!("✅ RBCProcessor: Shutting down gracefully.");
+        });
+
+        Self { queue_tx: tx_clone }
+    }
+
+    /// ✅ Public method to enqueue new messages
+    pub async fn enqueue_message(&self, msg: RBCMessage) {
+        if let Err(e) = self.queue_tx.send(msg).await {
+            error!("Failed to enqueue message: {:?}", e);
+        }
+    }
+
+    /// ✅ Process all messages from the priority queue
+    async fn drain_priority_queue(
+        queue: &mut BinaryHeap<RBCMessage>,
+        node: &Arc<Mutex<Node>>,
+        client: &Arc<Client>,
+    ) {
+        while let Some(task) = queue.pop() {
+            match task {
+                RBCMessage::Commit(commit) => {
+                    info!("Processing commit for round {} from node {}", commit.round_id, commit.proposing_node_id);
+                    if let Err(e) = process_commit(node.clone(), commit).await {
+                        error!("Error processing commit: {:?}", e);
+                    }
+                }
+                RBCMessage::Prevote(prevote) => {
+                    info!("Processing prevote for round {} from node {}", prevote.proposals[0].base.round_id, prevote.sender_url);
+                    if let Err(e) = process_prevote(node.clone(), client.clone(), prevote).await {
+                        error!("Error processing prevote: {:?}", e);
+                    }
+                }
+                RBCMessage::Proposal(propose) => {
+                    info!("Processing proposal for round {} from node {}", propose.base.round_id, propose.base.proposing_node_id);
+                    if let Err(e) = process_proposal(node.clone(), client.clone(), propose).await {
+                        error!("Error processing proposal: {:?}", e);
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+
+    /// ✅ Handle round finalization and create the next proposal
+    async fn handle_round_finalized(
+        new_round: u64,
+        node: &Arc<Mutex<Node>>,
+        client: &Arc<Client>,
+        tx: &mpsc::Sender<RBCMessage>,
+        priority_queue: &mut BinaryHeap<RBCMessage>,
+        fifo_queues: &mut [VecDeque<RBCMessage>],
+    ) {
+        info!("🔄 RBCProcessor: RoundFinalized received for round {}", new_round);
+
+        let total_rounds = node.lock().await.total_rounds;
+        if new_round >= total_rounds.try_into().unwrap() {
+            info!("✅ All {} rounds completed. Stopping RBCProcessor.", total_rounds);
+            info!("📊 Ending Latency Logger: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
+            return;
+        }
+
+        let (commit_count, prevote_count, proposal_count) =
+            Self::remove_stale_messages(new_round, priority_queue, fifo_queues);
+
+        info!(
+            "🧹 RBCProcessor: Removed stale messages → commits: {}, prevotes: {}, proposals: {}",
+            commit_count, prevote_count, proposal_count
+        );
+
+        match create_transaction_data(node.clone()).await {
+            Ok(propose_request) => {
+                let round_id = propose_request.base.round_id;
+                if send_proposals(client.clone(), node.clone(), propose_request.clone()).await.is_ok() {
+                    info!("✅ Proposal for round {} sent successfully.", round_id);
+                    if let Err(e) = tx.send(RBCMessage::Proposal(propose_request)).await {
+                        error!("❌ Failed to enqueue proposal for round {}: {:?}", round_id, e);
+                    }
+                }
+            }
+            Err(e) => error!("❌ Failed to create transaction data for round {}: {:?}", new_round + 1, e),
+        }
+    }
+
+    /// ✅ Clean up stale messages from queues for old rounds
+    fn remove_stale_messages(
+        current_round: u64,
+        priority_queue: &mut BinaryHeap<RBCMessage>,
+        fifo_queues: &mut [VecDeque<RBCMessage>],
+    ) -> (usize, usize, usize) {
+        let mut commit_count = 0;
+        let mut prevote_count = 0;
+        let mut proposal_count = 0;
+
+        for queue in fifo_queues.iter_mut() {
+            queue.retain(|msg| match msg {
+                RBCMessage::Commit(req) if req.round_id < current_round => {
+                    commit_count += 1;
+                    false
+                }
+                RBCMessage::Prevote(req) if req.proposals[0].base.round_id < current_round => {
+                    prevote_count += 1;
+                    false
+                }
+                RBCMessage::Proposal(req) if req.base.round_id < current_round => {
+                    proposal_count += 1;
+                    false
+                }
+                _ => true,
+            });
+        }
+
+        priority_queue.retain(|msg| match msg {
+            RBCMessage::Commit(req) if req.round_id < current_round => {
+                commit_count += 1;
+                false
+            }
+            RBCMessage::Prevote(req) if req.proposals[0].base.round_id < current_round => {
+                prevote_count += 1;
+                false
+            }
+            RBCMessage::Proposal(req) if req.base.round_id < current_round => {
+                proposal_count += 1;
+                false
+            }
+            _ => true,
+        });
+
+        (commit_count, prevote_count, proposal_count)
+    }
+}
+
+// ✅ Wrapper functions to call handlers
+async fn process_proposal(node: Arc<Mutex<Node>>, client: Arc<Client>, propose_request: ProposeRequest) -> Result<(), String> {
+    if !should_process_request(node.clone(), propose_request.base.round_id, propose_request.base.proposing_node_id as usize, "Propose".into()).await {
+        return Ok(());
+    }
+    handle_propose(node, client, propose_request).await
+}
+
+async fn process_prevote(node: Arc<Mutex<Node>>, client: Arc<Client>, prevote_request: PrevoteRequest) -> Result<(), String> {
+    if !should_process_request(node.clone(), prevote_request.proposals[0].base.round_id, prevote_request.proposals[0].base.proposing_node_id as usize, "Prevote".into()).await {
+        return Ok(());
+    }
+    handle_prevote(node, client, prevote_request).await
+}
+
+async fn process_commit(node: Arc<Mutex<Node>>, commit_request: CommitRequest) -> Result<(), String> {
+    if !should_process_request(node.clone(), commit_request.round_id, commit_request.proposing_node_id as usize, "Commit".into()).await {
+        return Ok(());
+    }
+    handle_commit(node, commit_request).await
+}
+
+async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, proposer_id: usize, req_type: String) -> bool {
+    let node_guard = node.lock().await;
+    let dag_guard = node_guard.dag.lock().await;
+    if dag_guard.contains_key(&request_round) {
+        warn!(
+            "Node {}: Round {} is finalized. Ignoring {} request from node {}.",
+            node_guard.id, request_round, req_type, proposer_id
+        );
+        return false;
+    }
+    true
+}
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+    use crate::structs::node::Node;
+    use crate::utils::rsa_accumulator_util::{compute_accumulator, generate_proofs, verify_proof};
+    use crate::utils::create_transaction_data::create_transaction_data;
+    use base64::{engine::general_purpose, Engine};
+    use num_bigint::{BigInt, Sign};
+    use reqwest::Client;
+    use sha2::{Digest, Sha256};
+
+    #[tokio::test]
+    async fn test_create_and_verify_transaction_batch() {
+        let dummy_node = Node::new(
+            0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
+            2, 256, 4, 1, Arc::new(Client::new()),
+        );
+
+        let proposal = create_transaction_data(dummy_node)
+            .await
+            .expect("Failed to generate transaction data");
+
+        let acc_bytes = general_purpose::STANDARD
+            .decode(&proposal.batch_accumulator)
+            .expect("Failed to decode accumulator");
+        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
+        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
+            let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
+
+            for (shard_index, shard) in tx.shards.iter().enumerate() {
+                if shard.proofs.is_empty() {
+                    continue;
+                }
+
+                let shard_bytes = general_purpose::STANDARD
+                    .decode(&shard.shard_b64)
+                    .expect("Decode shard failed");
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(&shard.proofs[0])
+                    .expect("Decode proof failed");
+
+                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+                let shard_bytes = general_purpose::STANDARD
+                .decode(&shard.shard_b64)
+                .expect("Failed to decode shard");
+            
+            let actual_hash = Sha256::digest(&shard_bytes).to_vec();
+            
+            assert!(
+                verify_proof(&accumulator, &actual_hash, &proof),
+                "❌ Verification failed for tx[{}] shard[{}]\n  hash={}\n  proof={}",
+                tx_index,
+                shard_index,
+                hex::encode(&actual_hash),
+                proof.to_str_radix(10).chars().take(12).collect::<String>()
+            );
+            }
+        }
+
+        println!("✅ test_create_and_verify_transaction_batch passed!");
+    }
+
+    #[tokio::test]
+    async fn test_rsa_accumulator_proof_validation_post_encoding() {
+        let node = Node::new(
+            0, 5, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
+            2, 256, 4, 1, Arc::new(Client::new()),
+        );
+
+        let proposal = create_transaction_data(node)
+            .await
+            .expect("Failed to generate proposal");
+
+        let acc_bytes = general_purpose::STANDARD
+            .decode(&proposal.batch_accumulator)
+            .expect("Decode accumulator failed");
+        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
+        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
+            let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
+
+            for (shard_index, shard) in tx.shards.iter().enumerate() {
+                if shard.proofs.is_empty() {
+                    continue;
+                }
+
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(&shard.proofs[0])
+                    .expect("Failed to decode proof");
+                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                let shard_bytes = general_purpose::STANDARD
+                .decode(&shard.shard_b64)
+                .expect("Failed to decode shard");
+            
+            let actual_hash = Sha256::digest(&shard_bytes).to_vec();
+            
+            assert!(
+                verify_proof(&accumulator, &actual_hash, &proof),
+                "❌ Verification failed for tx[{}] shard[{}]\n  hash={}\n  proof={}",
+                tx_index,
+                shard_index,
+                hex::encode(&actual_hash),
+                proof.to_str_radix(10).chars().take(12).collect::<String>()
+            );
+            }
+        }
+
+        println!("✅ test_rsa_accumulator_proof_validation_post_encoding passed!");
+    }
 }

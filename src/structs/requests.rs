@@ -7,12 +7,18 @@ pub struct BaseRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Transaction {
-    pub root: Vec<u8>,            // Hash of the full padded transaction
-    pub shards: Vec<String>,      // base64-encoded shards
-    pub proofs: Vec<String>,      // base64-encoded RSA proof per shard
+pub struct ShardWithProofs {
+    pub shard_b64: String,
+    pub proofs: Vec<String>, // each entry is a round-specific proof
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transaction {
+    pub root: Vec<u8>,
+    pub shards: Vec<ShardWithProofs>,
+    pub shard_hashes: Option<Vec<String>>,
+    pub accumulator: Option<String>, // ✅ NEW
+}
 
 
 
