@@ -2,7 +2,7 @@ use std::sync::Arc;
 use base64::engine::general_purpose;
 use base64::Engine;
 use sha2::{Digest, Sha256};
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
 use anyhow::Error;
 use reed_solomon_erasure::galois_8::ReedSolomon;
@@ -27,6 +27,7 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
 ) -> Result<ProposeRequest, Error> {
+    let timer = Instant::now();
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
@@ -122,7 +123,13 @@ pub async fn create_transaction_data(
         tx.shards = shard_structs;
         tx.accumulator = Some(encoded_accumulator.clone()); // Set for consistency
     }
-
+    let elapsed = timer.elapsed();
+    tracing::info!(
+        "📦 create_transaction_data(): Completed {} txs in {:.2?} (avg: {:.2?} per tx)",
+        num_txs,
+        elapsed,
+        elapsed / num_txs as u32
+    );
     Ok(ProposeRequest {
         base: BaseRequest {
             proposing_node_id: node_id as u8,
