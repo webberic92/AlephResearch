@@ -113,51 +113,11 @@ pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
 
 
 
-/// Verifies that a hashed element is in the RSA accumulator using its proof.
-/// 
-/// # Arguments
-/// - `accumulator`: The RSA accumulator value (product of hashed elements).
-/// - `element`: The data being proven (e.g., shard bytes).
-/// - `proof`: The RSA inclusion proof (product of all other primes).
-/// 
-/// # Returns
-/// - `true` if `proof^hash(element) == accumulator mod accumulator`, else false.
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     // 1. Hash the element (e.g., shard) using SHA256
-
-//     // 2. Convert hash to BigInt (optional: map to a prime in real schemes)
-//     // let exponent = BigInt::from_bytes_be(num_bigint::Sign::Plus, &element_hash);
-
-//     // let exponent = crate::utils::rsa_accumulator_util::hash_to_prime(element);    
-//     let hash = Sha256::digest(element).to_vec();
-//     let exponent = hash_to_prime(&hash);
-//     // 3. Compute proof^exponent mod accumulator
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-
-//     // 4. Check that reconstructed == accumulator
-//     &reconstructed == accumulator
-// }
-
-
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     let exponent = hash_to_prime(element);  // not hash_to_prime(Sha256::digest(...))
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-//     &reconstructed == accumulator
-// }
-
-// pub fn verify_proof(accumulator: &BigInt, element: &[u8], proof: &BigInt) -> bool {
-//     let hash = Sha256::digest(element).to_vec();
-//     let exponent = hash_to_prime(&hash);
-//     let reconstructed = proof.modpow(&exponent, accumulator);
-//     &reconstructed == accumulator
-// }
-
-
 pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
     let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
     let prime = hash_to_prime(&hash);                   // ✅ Then map to prime
-    let reconstructed = proof.modpow(&prime, &get_modulus()); // ✅ Modulo N
-
+    let n = get_modulus();
+    let reconstructed = proof.modpow(&prime, &n);
     let is_valid = &reconstructed == accumulator;
     if !is_valid {
         println!("❌ verify_proof failed: hash={}, prime={}, proof={}, reconstructed={}, acc={}",

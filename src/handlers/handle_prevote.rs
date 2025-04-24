@@ -5,6 +5,7 @@ use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
 use tracing::{error, info, warn};
 use reqwest::Client;
 use num_bigint::BigInt;
+
 use crate::{
     processors::priority_queue::RBCMessage, 
     structs::{
@@ -70,9 +71,9 @@ pub async fn handle_prevote(
         let mut reconstructed_transactions = Vec::new();
 
         for (i, tx) in proposal.transactions.iter().enumerate() {
-            for (j, shard_str) in tx.shards.iter().enumerate() {
+            for (j, shard_struct) in tx.shards.iter().enumerate() {
                 let decoded = general_purpose::STANDARD
-                    .decode(shard_str)
+                    .decode(&shard_struct.shard_b64)
                     .map_err(|e| format!("Node {}: Failed to decode shard tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
 
                 let expected_len = (transaction_size + data_shards - 1) / data_shards;
@@ -84,27 +85,17 @@ pub async fn handle_prevote(
                 }
 
                 let hash = Sha256::digest(&decoded);
-                // let prime = hash_to_prime(&decoded);
-                // info!(
-                //     "Node {}: tx[{}] shard[{}]: decoded len={}, sha256={}, mapped_prime={}",
-                //     node_id,
-                //     i,
-                //     j,
-                //     decoded.len(),
-                //     hex::encode(&hash),
-                //     prime.to_str_radix(10).chars().take(12).collect::<String>() // just preview
-                // );
-                
 
-
+                // Only store data shards
                 if j < data_shards {
                     let node_guard = node.lock().await;
                     let mut aggregator = node_guard.shard_aggregator.lock().await;
                     aggregator.insert_shard(round_id, i, j, decoded.clone());
                 }
 
-                // ✅ Verify RSA proof per shard
-                let proof_str = tx.proofs.get(j).ok_or_else(|| format!("Node {}: Missing proof for tx[{}] shard[{}]", node_id, i, j))?;
+                // Verify RSA proof
+                let proof_str = shard_struct.proofs.get(0)
+                    .ok_or_else(|| format!("Node {}: Missing proof for tx[{}] shard[{}]", node_id, i, j))?;
                 let proof_bytes = general_purpose::STANDARD
                     .decode(proof_str)
                     .map_err(|e| format!("Node {}: Failed to decode proof for tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
@@ -115,8 +106,7 @@ pub async fn handle_prevote(
                 }
             }
 
-            
-            // ✅ Reconstruct padded tx
+            // Reconstruct padded transaction
             let maybe_tx = {
                 let node_guard = node.lock().await;
                 let aggregator = node_guard.shard_aggregator.lock().await;
@@ -131,7 +121,7 @@ pub async fn handle_prevote(
                 }
             };
 
-            // ✅ Verify transaction hash
+            // Validate padded hash against tx.root
             let hash = Sha256::digest(&padded_tx_bytes);
             if hash.to_vec() != tx.root {
                 return Err(format!(
@@ -143,7 +133,6 @@ pub async fn handle_prevote(
             reconstructed_transactions.push(tx.clone());
         }
 
-        // ✅ Directly build unit — no Merkle
         let unit_id = format!("U{}-{}", round_id, proposer_id);
         let unit = crate::structs::requests::DagUnit {
             unit_id,
@@ -151,14 +140,13 @@ pub async fn handle_prevote(
             round: round_id,
             transactions: reconstructed_transactions,
             parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            accumulator_root: accumulator_bytes.clone(), // repurpose field for accumulator root if needed
+            accumulator_root: accumulator_bytes.clone(),
             finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
         };
 
         reconstructed_units.push(unit);
     }
 
-    // Validate parents
     {
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
@@ -170,7 +158,6 @@ pub async fn handle_prevote(
         }
     }
 
-    // Vote recording done earlier, now check quorum
     let vote_count = {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
@@ -190,7 +177,6 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    // Send commit to others
     let message_count = node.lock().await.message_count.clone();
     for peer in node_list {
         let url = format!("http://{}/commit", peer);
@@ -218,12 +204,10 @@ pub async fn handle_prevote(
         }
     }
 
-    // Enqueue local commit
     if let Some(rbc_processor) = &rbc_processor {
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
     }
 
-    // Clear aggregator state
     {
         let node_guard = node.lock().await;
         let mut aggregator = node_guard.shard_aggregator.lock().await;
@@ -232,4 +216,3 @@ pub async fn handle_prevote(
 
     Ok(())
 }
-

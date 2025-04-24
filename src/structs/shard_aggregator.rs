@@ -100,7 +100,6 @@ impl ShardAggregator {
             );
             return None;
         }
-        let padded = combined_data[..transaction_size].to_vec();
         let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};

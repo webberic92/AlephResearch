@@ -49,29 +49,26 @@ pub async fn handle_propose(
 
     // Validate each tx in the proposal
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        // Step 1: Decode first shard
-        let shard_b64 = tx.shards.get(0)
+        let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
-        let decoded_shard = general_purpose::STANDARD
-            .decode(shard_b64)
-            .map_err(|e| format!("Node {}: Failed to decode shard for tx {}: {:?}", node_id, i, e))?;
 
-        // Step 2: Decode proof
-        let proof_b64 = tx.proofs.get(0)
-            .ok_or_else(|| format!("Node {}: Missing proof for tx {}", node_id, i))?;
+        let decoded_shard = general_purpose::STANDARD
+            .decode(&shard.shard_b64)
+            .map_err(|e| format!("Node {}: Failed to decode shard[0] of tx {}: {:?}", node_id, i, e))?;
+
+        let proof_b64 = shard.proofs.get(0)
+            .ok_or_else(|| format!("Node {}: Missing proof for shard[0] of tx {}", node_id, i))?;
+
         let proof_bytes = general_purpose::STANDARD
             .decode(proof_b64)
-            .map_err(|e| format!("Node {}: Failed to decode proof for tx {}: {:?}", node_id, i, e))?;
+            .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
+
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
-        // Step 3: Hash the decoded shard
         let hash = Sha256::digest(&decoded_shard);
-        let hash_hex = hex::encode(&hash);
         let prime = hash_to_prime(&hash);
+        let hash_hex = hex::encode(&hash);
 
-
-        
-        // Step 4: Log all triplet info
         info!(
             "🧪 handle_propose(): tx[{}] shard[0] hash={}, prime={}, proof_b64={}",
             i,
@@ -80,7 +77,6 @@ pub async fn handle_propose(
             &proof_b64[..10.min(proof_b64.len())]
         );
 
-        // Step 5: Verify RSA accumulator proof
         if !verify_proof(&accumulator, &hash, &proof) {
             return Err(format!(
                 "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",

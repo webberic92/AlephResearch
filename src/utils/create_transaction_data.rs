@@ -8,8 +8,11 @@ use anyhow::Error;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
-    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}},
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proofs, hash_to_prime}
+    structs::{
+        node::Node,
+        requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
+    },
+    utils::rsa_accumulator_util::{compute_accumulator, generate_proofs},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -46,17 +49,18 @@ pub async fn create_transaction_data(
     };
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let mut all_hashes = Vec::new();
-    let mut shard_prime_index_map = Vec::new();
+    let mut all_shard_hashes = Vec::new();
+    let mut tx_shard_ranges = Vec::new(); // (start_idx, end_idx)
     let mut transactions = Vec::new();
+    let mut all_shards_flat = Vec::new();
 
+    // Step 1: Generate all shards and collect hashes
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
         let tx_root = Sha256::digest(&padded).to_vec();
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
-
         let mut data_chunks: Vec<Vec<u8>> = padded
             .chunks(shard_size)
             .map(|chunk| {
@@ -78,65 +82,45 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs)?;
 
-        let mut tx_prime_list = Vec::new();
-        let mut encoded_shards = Vec::new();
+        let shard_hashes: Vec<Vec<u8>> = shards
+            .iter()
+            .map(|s| Sha256::digest(s).to_vec())
+            .collect();
 
-        for (shard_index, shard) in shards.iter().enumerate() {
-            let hash = Sha256::digest(shard).to_vec();
-            let prime = hash_to_prime(&hash);
-
-            if shard_index < data_shards {
-                all_hashes.push(hash.clone());
-                tx_prime_list.push(prime.clone());
-                encoded_shards.push(general_purpose::STANDARD.encode(shard));
-            }
-
-            info!(
-                "🧬 ProofGen: tx[{}] shard[{}]: hash={}, prime={}, global_index={}",
-                tx_index,
-                shard_index,
-                hex::encode(&hash)[..8.min(hash.len())].to_string(),
-                prime.to_str_radix(10).chars().take(12).collect::<String>(),
-                all_hashes.len()
-            );
-        }
-
+        let start = all_shard_hashes.len();
+        all_shard_hashes.extend(shard_hashes.clone());
+        let end = all_shard_hashes.len();
+        tx_shard_ranges.push((start, end));
+        all_shards_flat.extend(shards);
+        
         transactions.push(Transaction {
             root: tx_root,
-            shards: encoded_shards,
-            proofs: vec![],
+            shards: vec![], // Fill later
+            shard_hashes: Some(shard_hashes.iter().map(hex::encode).collect()),
+            accumulator: None, // Batch accumulator only
         });
-
-        shard_prime_index_map.push(tx_prime_list);
     }
 
-    let accumulator = compute_accumulator(&all_hashes);
+    // Step 2: Compute batch accumulator and batch proofs
+    let accumulator = compute_accumulator(&all_shard_hashes);
+    let proofs = generate_proofs(&all_shard_hashes);
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    let now = std::time::Instant::now();
-    let raw_proofs = generate_proofs(&all_hashes);
-    let mut flat_proofs: Vec<String> = raw_proofs
-        .into_iter()
-        .map(|proof| general_purpose::STANDARD.encode(proof.to_bytes_be().1))
-        .collect();
-    info!("⏱️ Proof generation done in {:?}", now.elapsed());
-
-    for (tx_index, (tx, primes_for_tx)) in transactions.iter_mut().zip(shard_prime_index_map.iter()).enumerate() {
-        if flat_proofs.len() < primes_for_tx.len() {
-            return Err(Error::msg(format!(
-                "💥 Not enough proofs: tx[{}] expects {} proofs, but only {} left",
-                tx_index, primes_for_tx.len(), flat_proofs.len()
-            )));
+    // Step 3: Assign shard/proof to each transaction
+    let mut proof_idx = 0;
+    for (tx_index, tx) in transactions.iter_mut().enumerate() {
+        let mut shard_structs = Vec::with_capacity(total_nodes);
+        for i in 0..total_nodes {
+            let shard_b64 = general_purpose::STANDARD.encode(&all_shards_flat[proof_idx]);
+            let proof_b64 = general_purpose::STANDARD.encode(proofs[proof_idx].to_bytes_be().1);
+            shard_structs.push(ShardWithProofs {
+                shard_b64,
+                proofs: vec![proof_b64],
+            });
+            proof_idx += 1;
         }
-
-        let proofs_for_tx: Vec<String> = flat_proofs.drain(..primes_for_tx.len()).collect();
-        tx.proofs = proofs_for_tx;
-
-        info!(
-            "🧩 Proofs assigned to tx[{}]: {:?}",
-            tx_index,
-            tx.proofs.iter().map(|p| p.chars().take(10).collect::<String>()).collect::<Vec<_>>()
-        );
+        tx.shards = shard_structs;
+        tx.accumulator = Some(encoded_accumulator.clone()); // Set for consistency
     }
 
     Ok(ProposeRequest {
