@@ -2,10 +2,11 @@ use std::sync::Arc;
 use base64::engine::general_purpose;
 use base64::Engine;
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, time::Instant};
+use tokio::{sync::Mutex, time::Instant, task::spawn_blocking};
 use tracing::info;
 use anyhow::Error;
 use reed_solomon_erasure::galois_8::ReedSolomon;
+use rayon::prelude::*;
 
 use crate::{
     structs::{
@@ -50,12 +51,13 @@ pub async fn create_transaction_data(
     };
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let mut all_shard_hashes = Vec::new();
-    let mut tx_shard_ranges = Vec::new(); // (start_idx, end_idx)
-    let mut transactions = Vec::new();
-    let mut all_shards_flat = Vec::new();
+    let estimated_total_shards = num_txs * total_nodes;
 
-    // Step 1: Generate all shards and collect hashes
+    let mut all_shard_hashes = Vec::with_capacity(estimated_total_shards);
+    let mut tx_shard_ranges = Vec::with_capacity(num_txs);
+    let mut transactions = Vec::with_capacity(num_txs);
+    let mut all_shards_flat = Vec::with_capacity(estimated_total_shards);
+
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
@@ -84,34 +86,39 @@ pub async fn create_transaction_data(
         rs.encode(&mut shard_refs)?;
 
         let shard_hashes: Vec<Vec<u8>> = shards
-            .iter()
+            .par_iter()
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
         let start = all_shard_hashes.len();
-        all_shard_hashes.extend(shard_hashes.clone());
+        all_shard_hashes.extend_from_slice(&shard_hashes);
         let end = all_shard_hashes.len();
         tx_shard_ranges.push((start, end));
         all_shards_flat.extend(shards);
-        
+
         transactions.push(Transaction {
             root: tx_root,
-            shards: vec![], // Fill later
+            shards: vec![],
             shard_hashes: Some(shard_hashes.iter().map(hex::encode).collect()),
-            accumulator: None, // Batch accumulator only
+            accumulator: None,
         });
     }
 
-    // Step 2: Compute batch accumulator and batch proofs
-    let accumulator = compute_accumulator(&all_shard_hashes);
-    let proofs = generate_proofs(&all_shard_hashes);
+    // Step 2: Compute accumulator and proofs in a separate thread
+    let (accumulator, proofs) = spawn_blocking(move || {
+        let acc = compute_accumulator(&all_shard_hashes);
+        let proofs = generate_proofs(&all_shard_hashes);
+        (acc, proofs)
+    })
+    .await?;
+
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    // Step 3: Assign shard/proof to each transaction
+    // Step 3: Attach shards + proofs back to each transaction
     let mut proof_idx = 0;
-    for (tx_index, tx) in transactions.iter_mut().enumerate() {
+    for tx in transactions.iter_mut() {
         let mut shard_structs = Vec::with_capacity(total_nodes);
-        for i in 0..total_nodes {
+        for _ in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&all_shards_flat[proof_idx]);
             let proof_b64 = general_purpose::STANDARD.encode(proofs[proof_idx].to_bytes_be().1);
             shard_structs.push(ShardWithProofs {
@@ -121,8 +128,9 @@ pub async fn create_transaction_data(
             proof_idx += 1;
         }
         tx.shards = shard_structs;
-        tx.accumulator = Some(encoded_accumulator.clone()); // Set for consistency
+        tx.accumulator = Some(encoded_accumulator.clone());
     }
+
     let elapsed = timer.elapsed();
     tracing::info!(
         "📦 create_transaction_data(): Completed {} txs in {:.2?} (avg: {:.2?} per tx)",
@@ -130,6 +138,7 @@ pub async fn create_transaction_data(
         elapsed,
         elapsed / num_txs as u32
     );
+
     Ok(ProposeRequest {
         base: BaseRequest {
             proposing_node_id: node_id as u8,
