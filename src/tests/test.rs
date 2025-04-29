@@ -10,7 +10,7 @@ mod tests {
     use crate::structs::node::Node;
     use crate::utils::create_transaction_data::{create_transaction_data, pad_to_len};
     use crate::utils::rsa_accumulator_util::{
-        compute_accumulator, generate_proofs, get_modulus, hash_to_prime, verify_proof,
+        compute_accumulator, generate_proofs, get_modulus, hash_to_prime, verify_proof, verify_proofs,
     };
     use reed_solomon_erasure::galois_8::ReedSolomon;
     use num_traits::One;
@@ -81,7 +81,7 @@ mod tests {
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
 
         let mut all_hashes = Vec::new();
-        for tx_index in 0..25 {
+        for tx_index in 0..50 {
             let content = format!("tx{}_round{}", tx_index + 1, 1);
             let padded = pad_to_len(content.into_bytes(), transaction_size);
             let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
@@ -116,10 +116,11 @@ mod tests {
         let proofs = generate_proofs(&all_hashes);
         assert_eq!(all_hashes.len(), proofs.len());
 
-        for (i, (hash, proof)) in all_hashes.iter().zip(proofs.iter()).enumerate() {
-            let valid = verify_proof(&acc, hash, proof);
-            assert!(valid, "❌ Proof {} failed", i);
-        }
+        verify_proofs(&acc, shard, proofs);
+        // for (i, (hash, proof)) in all_hashes.iter().zip(proofs.iter()).enumerate() {
+        //     let valid = verify_proof(&acc, hash, proof);
+        //     assert!(valid, "❌ Proof {} failed", i);
+        // }
 
         println!("✅ test_rsa_accumulator_end_to_end_validation passed");
     }

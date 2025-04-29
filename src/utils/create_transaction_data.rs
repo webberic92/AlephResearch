@@ -29,6 +29,7 @@ pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
 ) -> Result<ProposeRequest, Error> {
     let timer = Instant::now();
+
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
@@ -54,7 +55,6 @@ pub async fn create_transaction_data(
     let estimated_total_shards = num_txs * total_nodes;
 
     let mut all_shard_hashes = Vec::with_capacity(estimated_total_shards);
-    let mut tx_shard_ranges = Vec::with_capacity(num_txs);
     let mut transactions = Vec::with_capacity(num_txs);
     let mut all_shards_flat = Vec::with_capacity(estimated_total_shards);
 
@@ -90,10 +90,7 @@ pub async fn create_transaction_data(
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
-        let start = all_shard_hashes.len();
         all_shard_hashes.extend_from_slice(&shard_hashes);
-        let end = all_shard_hashes.len();
-        tx_shard_ranges.push((start, end));
         all_shards_flat.extend(shards);
 
         transactions.push(Transaction {
@@ -104,7 +101,7 @@ pub async fn create_transaction_data(
         });
     }
 
-    // Step 2: Compute accumulator and proofs in a separate thread
+    // Step 2: Compute accumulator and proofs in parallel
     let (accumulator, proofs) = spawn_blocking(move || {
         let acc = compute_accumulator(&all_shard_hashes);
         let proofs = generate_proofs(&all_shard_hashes);
@@ -114,7 +111,7 @@ pub async fn create_transaction_data(
 
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    // Step 3: Attach shards + proofs back to each transaction
+    // Step 3: Attach shard + proof back to each transaction
     let mut proof_idx = 0;
     for tx in transactions.iter_mut() {
         let mut shard_structs = Vec::with_capacity(total_nodes);
