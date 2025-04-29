@@ -105,6 +105,12 @@ pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
 }
 
 
+pub fn verify_proofs(accumulator: &BigInt, pairs: &[(Vec<u8>, BigInt)]) -> bool {
+        pairs.par_iter().all(|(hash, proof)| {
+        verify_proof(accumulator, hash, proof)
+    })
+}
+
 
 pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
     let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
