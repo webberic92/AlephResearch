@@ -16,7 +16,6 @@ pub struct ShardWithProofs {
 pub struct Transaction {
     pub root: Vec<u8>,
     pub shards: Vec<ShardWithProofs>,
-    pub shard_hashes: Option<Vec<String>>,
     pub accumulator: Option<String>, // ✅ NEW
 }
 
