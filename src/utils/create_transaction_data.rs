@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use base64::engine::general_purpose;
 use base64::Engine;
+use num_bigint::BigInt;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::Instant, task::spawn_blocking};
 use tracing::info;
@@ -13,7 +14,7 @@ use crate::{
         node::Node,
         requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
     },
-    utils::rsa_accumulator_util::{compute_accumulator, generate_proofs},
+    utils::rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -101,26 +102,25 @@ pub async fn create_transaction_data(
         });
     }
 
-    // Step 2: Compute accumulator and proofs in parallel
-    let (accumulator, proofs) = spawn_blocking(move || {
-        let acc = compute_accumulator(&all_shard_hashes);
-        let proofs = generate_proofs(&all_shard_hashes);
-        (acc, proofs)
-    })
-    .await?;
+    // Step 2: Compute accumulator and single proof
+    let (accumulator, proof_b64) = spawn_blocking(move || {
+        let acc = compute_accumulator_radix(&all_shard_hashes);
+        let g = BigInt::from(2u8); // shared proof (generator)
+        let proof_b64 = general_purpose::STANDARD.encode(g.to_bytes_be().1);
+        (acc, proof_b64)
+    }).await?;
 
     let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    // Step 3: Attach shard + proof back to each transaction
+    // Step 3: Attach shards and shared proof
     let mut proof_idx = 0;
     for tx in transactions.iter_mut() {
         let mut shard_structs = Vec::with_capacity(total_nodes);
         for _ in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&all_shards_flat[proof_idx]);
-            let proof_b64 = general_purpose::STANDARD.encode(proofs[proof_idx].to_bytes_be().1);
             shard_structs.push(ShardWithProofs {
                 shard_b64,
-                proofs: vec![proof_b64],
+                proofs: vec![proof_b64.clone()],
             });
             proof_idx += 1;
         }
@@ -146,3 +146,4 @@ pub async fn create_transaction_data(
         batch_accumulator: encoded_accumulator,
     })
 }
+

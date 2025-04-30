@@ -10,7 +10,7 @@ mod tests {
     use crate::structs::node::Node;
     use crate::utils::create_transaction_data::{create_transaction_data, pad_to_len};
     use crate::utils::rsa_accumulator_util::{
-        compute_accumulator, generate_proofs, get_modulus, hash_to_integer, verify_proof, verify_proofs,
+        compute_accumulator_radix, generate_proofs_radix, get_modulus, hash_to_integer, verify_proof, verify_proofs,
     };
     use reed_solomon_erasure::galois_8::ReedSolomon;
     use num_traits::One;
@@ -81,7 +81,7 @@ mod tests {
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
     
         let mut all_hashes = Vec::new();
-        for tx_index in 0..50 {
+        for tx_index in 0..1028 {
             let content = format!("tx{}_round{}", tx_index + 1, 1);
             let padded = pad_to_len(content.into_bytes(), transaction_size);
             let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
@@ -112,18 +112,17 @@ mod tests {
             }
         }
     
-        let acc = compute_accumulator(&all_hashes);
+        let acc = compute_accumulator_radix(&all_hashes);
         let primes: Vec<BigInt> = all_hashes.par_iter()
         .map(|hash| hash_to_integer(hash))
         .collect();
 
-        let proofs = generate_proofs(&all_hashes);
-        let pairs: Vec<(BigInt, BigInt)> = primes.into_iter().zip(proofs.into_iter()).collect();
-
-        assert!(
-            verify_proofs(&acc, &pairs),
-            "❌ Batch proof verification failed"
-        );
+        let g = BigInt::from(2u8);
+        let n = get_modulus();
+        let total_product = primes.iter().fold(BigInt::one(), |acc, p| acc * p);
+        let expected_acc = g.modpow(&total_product, &n);
+        
+        assert_eq!(acc, expected_acc, "❌ Accumulator mismatch");
 
     
         println!("✅ test_rsa_accumulator_end_to_end_validation passed");

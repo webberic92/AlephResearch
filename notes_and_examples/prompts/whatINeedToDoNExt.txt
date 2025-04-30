@@ -102,9 +102,9 @@ It'll be clean, optimized, ready to go.
 
 
 
-Switch to Hash-to-Integer Mapping
+Switch to Hash-to-Integer Mapping (DONE)
 
-Compute Radix Tree Accumulator
+Compute Radix Tree Accumulator (DONE)
 
 Generate Single Batch Proof
 
