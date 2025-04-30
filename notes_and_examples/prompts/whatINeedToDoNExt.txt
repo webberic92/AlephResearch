@@ -106,14 +106,14 @@ Switch to Hash-to-Integer Mapping (DONE)
 
 Compute Radix Tree Accumulator (DONE)
 
-Generate Single Batch Proof
+Generate Single Batch Proof (DONE)
 
-Attach Shard Hash Metadata
+Attach Shard Hash Metadata (Skipping adds 64 mb of datat)
 
-Refactor create_transaction_data()
+Refactor create_transaction_data() (DONE)
 
-Update Proof Verification in handle_propose and handle_prevote
+Update Proof Verification in handle_propose and handle_prevote (DONE)
 
-Optimize Encoding and Serialization
+Optimize Encoding and Serialization (TODO MAYBE)
 
-Benchmark Performance vs Merkle Tree
+Benchmark Performance vs Merkle Tree ()

@@ -14,7 +14,7 @@ use crate::{
         node::Node,
         requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
     },
-    utils::rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix},
+    utils::rsa_accumulator_util::compute_accumulator_radix,
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -97,7 +97,6 @@ pub async fn create_transaction_data(
         transactions.push(Transaction {
             root: tx_root,
             shards: vec![],
-            shard_hashes: Some(shard_hashes.iter().map(hex::encode).collect()),
             accumulator: None,
         });
     }
@@ -146,4 +145,3 @@ pub async fn create_transaction_data(
         batch_accumulator: encoded_accumulator,
     })
 }
-
