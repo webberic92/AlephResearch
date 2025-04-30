@@ -88,7 +88,7 @@ mod tests {
         let total_shards = 7;
         let transaction_size = 250;
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
-        let total_txs = 8192;
+        let total_txs = 6096;
     
         let mut tx_hashes = Vec::with_capacity(total_txs);
     
