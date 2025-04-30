@@ -78,7 +78,67 @@ mod tests {
         );
     }
 
-
+    #[test]
+    fn test_merkle_tree_end_to_end_validation() {
+        use crate::utils::create_transaction_data::pad_to_len;
+        use crate::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof};
+        use sha2::{Sha256, Digest};
+    
+        let data_shards = 4;
+        let total_shards = 7;
+        let transaction_size = 250;
+        let shard_size = (transaction_size + data_shards - 1) / data_shards;
+        let total_txs = 1028;
+    
+        let mut tx_hashes = Vec::with_capacity(total_txs);
+    
+        for tx_index in 0..total_txs {
+            let content = format!("tx{}_round{}", tx_index + 1, 1);
+            let padded = pad_to_len(content.into_bytes(), transaction_size);
+    
+            // Simulate erasure encoding (like RSA test)
+            let rs = reed_solomon_erasure::galois_8::ReedSolomon::new(data_shards, total_shards - data_shards)
+                .expect("RS init failed");
+    
+            let mut data_chunks: Vec<Vec<u8>> = padded
+                .chunks(shard_size)
+                .map(|chunk| {
+                    let mut v = chunk.to_vec();
+                    v.resize(shard_size, 0);
+                    v
+                })
+                .collect();
+    
+            while data_chunks.len() < data_shards {
+                data_chunks.push(vec![0u8; shard_size]);
+            }
+    
+            let mut shards = data_chunks.clone();
+            while shards.len() < total_shards {
+                shards.push(vec![0u8; shard_size]);
+            }
+    
+            let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
+            rs.encode(&mut shard_refs).expect("RS encoding failed");
+    
+            // Hash padded tx directly (Merkle tree works on full tx not shards)
+            let tx_hash = Sha256::digest(&padded).to_vec();
+            tx_hashes.push(tx_hash);
+        }
+    
+        let root = compute_merkle_root(&tx_hashes);
+        assert_eq!(root.len(), 32, "Merkle root must be 32 bytes");
+    
+        for (i, hash) in tx_hashes.iter().enumerate() {
+            let proof = compute_merkle_branch(&tx_hashes, i);
+            assert!(
+                verify_merkle_proof(hash, &proof, &root, i),
+                "❌ Merkle proof failed for tx[{}]", i
+            );
+        }
+    
+        println!("✅ test_merkle_tree_end_to_end_validation passed");
+    }
 
     #[tokio::test]
     async fn test_handle_prevote_end_to_end_integration_small() {
