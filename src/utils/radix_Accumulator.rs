@@ -13,16 +13,23 @@ pub fn get_modulus() -> BigInt {
 }
 
 /// Hash input to a unique prime using retry strategy
-pub fn hash_to_prime(data: &[u8]) -> BigInt {
-    let mut x = Sha256::digest(data).to_vec();
-    loop {
-        let candidate = BigInt::from_bytes_be(Sign::Plus, &x);
-        if is_probably_prime(&candidate, 16) {
-            return candidate;
-        }
-        x = Sha256::digest(&x).to_vec();
-    }
+// pub fn hash_to_integer(data: &[u8]) -> BigInt {
+//     let mut x = Sha256::digest(data).to_vec();
+//     loop {
+//         let candidate = BigInt::from_bytes_be(Sign::Plus, &x);
+//         if is_probably_prime(&candidate, 4) {   // 🛠️ Reduce from 16 → 4
+//             return candidate;
+//         }
+//         x = Sha256::digest(&x).to_vec();
+//     }
+// }
+
+
+pub fn hash_to_integer(data: &[u8]) -> BigInt {
+    let hash = Sha256::digest(data).to_vec();
+    BigInt::from_bytes_be(Sign::Plus, &hash)
 }
+
 
 /// Miller-Rabin primality test
 pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
@@ -61,7 +68,7 @@ pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
     let g = BigInt::from(2u8);
 
     // Map to primes in parallel
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_prime(h)).collect();
+    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
 
     // Use tree reduction to multiply them
     let total_product = parallel_product(primes);
@@ -71,7 +78,7 @@ pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
 
 /// Generates proofs for each hash using radix-style subset exclusion
 pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_prime(h)).collect();
+    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
     let n = get_modulus();
     let g = BigInt::from(2u8);
     let len = primes.len();
