@@ -57,7 +57,7 @@ pub fn get_modulus() -> BigInt {
 }
 
 //// ✅ Accumulate all elements modulo N
-pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
+pub fn compute_accumulator_radix(elements: &[Vec<u8>]) -> BigInt {
     let n = get_modulus();
     let g = BigInt::from(2u8);
 
@@ -70,7 +70,7 @@ pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
 
 
 
-pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
+pub fn generate_proofs_radix(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
     let primes: Vec<BigInt> = prime_hashes.par_iter().map(|h| hash_to_integer(h)).collect();
     let n = get_modulus();
     let g = BigInt::from(2u8);
@@ -114,20 +114,10 @@ pub fn hash_to_integer(data: &[u8]) -> BigInt {
 }
 
 pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
-    let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
-    let prime = hash_to_integer(&hash);                   // ✅ Then map to prime
+    let hash = Sha256::digest(shard).to_vec();
+    let prime = hash_to_integer(&hash);
     let n = get_modulus();
     let reconstructed = proof.modpow(&prime, &n);
-    let is_valid = &reconstructed == accumulator;
-    if !is_valid {
-        println!("❌ verify_proof failed: hash={}, prime={}, proof={}, reconstructed={}, acc={}",
-            hex::encode(&hash),
-            prime.to_str_radix(10).chars().take(12).collect::<String>(),
-            proof.to_str_radix(10).chars().take(12).collect::<String>(),
-            reconstructed.to_str_radix(10).chars().take(12).collect::<String>(),
-            accumulator.to_str_radix(10).chars().take(12).collect::<String>(),
-        );
-    }
-
-    is_valid
+    &reconstructed == accumulator
 }
+
