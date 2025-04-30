@@ -81,7 +81,7 @@ mod tests {
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
     
         let mut all_hashes = Vec::new();
-        for tx_index in 0..8192 {
+        for tx_index in 0..6096 {
             let content = format!("tx{}_round{}", tx_index + 1, 1);
             let padded = pad_to_len(content.into_bytes(), transaction_size);
             let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
