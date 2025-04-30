@@ -6,11 +6,11 @@ mod tests {
     use reqwest::Client;
     use sha2::{Digest, Sha256};
     use tokio::sync::Mutex;
-
+    use rayon::prelude::*;
     use crate::structs::node::Node;
     use crate::utils::create_transaction_data::{create_transaction_data, pad_to_len};
     use crate::utils::rsa_accumulator_util::{
-        compute_accumulator, generate_proofs, get_modulus, hash_to_prime, verify_proof, verify_proofs,
+        compute_accumulator, generate_proofs, get_modulus, hash_to_integer, verify_proof, verify_proofs,
     };
     use reed_solomon_erasure::galois_8::ReedSolomon;
     use num_traits::One;
@@ -49,7 +49,7 @@ mod tests {
 
         let primes: Vec<BigInt> = shards.iter().map(|shard| {
             let hash = Sha256::digest(shard).to_vec();
-            hash_to_prime(&hash)
+            hash_to_integer(&hash)
         }).collect();
 
         let g = BigInt::from(2u8);
@@ -59,7 +59,7 @@ mod tests {
 
         for (i, shard) in shards.iter().enumerate() {
             let hash = Sha256::digest(shard).to_vec();
-            let prime = hash_to_prime(&hash);
+            let prime = hash_to_integer(&hash);
             let product_of_others = primes.iter()
                 .enumerate()
                 .filter(|(j, _)| *j != i)
@@ -79,13 +79,13 @@ mod tests {
         let total_shards = 7;
         let transaction_size = 250;
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
-
+    
         let mut all_hashes = Vec::new();
         for tx_index in 0..50 {
             let content = format!("tx{}_round{}", tx_index + 1, 1);
             let padded = pad_to_len(content.into_bytes(), transaction_size);
             let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
-
+    
             let mut data_chunks: Vec<Vec<u8>> = padded
                 .chunks(shard_size)
                 .map(|c| {
@@ -97,33 +97,38 @@ mod tests {
             while data_chunks.len() < data_shards {
                 data_chunks.push(vec![0u8; shard_size]);
             }
-
+    
             let mut shards = data_chunks.clone();
             while shards.len() < total_shards {
                 shards.push(vec![0u8; shard_size]);
             }
-
+    
             let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
             rs.encode(&mut shard_refs).unwrap();
-
+    
             for shard in shards.iter().take(data_shards) {
                 let hash = Sha256::digest(shard).to_vec();
                 all_hashes.push(hash);
             }
         }
-
+    
         let acc = compute_accumulator(&all_hashes);
+        let primes: Vec<BigInt> = all_hashes.par_iter()
+        .map(|hash| hash_to_integer(hash))
+        .collect();
+
         let proofs = generate_proofs(&all_hashes);
-        assert_eq!(all_hashes.len(), proofs.len());
+        let pairs: Vec<(BigInt, BigInt)> = primes.into_iter().zip(proofs.into_iter()).collect();
 
-        verify_proofs(&acc, shard, proofs);
-        // for (i, (hash, proof)) in all_hashes.iter().zip(proofs.iter()).enumerate() {
-        //     let valid = verify_proof(&acc, hash, proof);
-        //     assert!(valid, "❌ Proof {} failed", i);
-        // }
+        assert!(
+            verify_proofs(&acc, &pairs),
+            "❌ Batch proof verification failed"
+        );
 
+    
         println!("✅ test_rsa_accumulator_end_to_end_validation passed");
     }
+    
 
     #[tokio::test]
     async fn test_create_and_verify_transaction_batch() {

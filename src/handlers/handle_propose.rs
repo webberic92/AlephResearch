@@ -12,7 +12,7 @@ use crate::{
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
     utils::{
         dag_utils::ensure_dag_round_sync,
-        rsa_accumulator_util::{hash_to_prime, verify_proof}
+        rsa_accumulator_util::{hash_to_integer, verify_proof}
     },
 };
 
@@ -66,7 +66,7 @@ pub async fn handle_propose(
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
         let hash = Sha256::digest(&decoded_shard);
-        let prime = hash_to_prime(&hash);
+        let prime = hash_to_integer(&hash);
         let hash_hex = hex::encode(&hash);
 
         info!(

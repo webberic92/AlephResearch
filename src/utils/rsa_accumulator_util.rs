@@ -7,16 +7,7 @@ use rand::thread_rng;
 
 
 /// ✅ Hash data to a probable prime using retry strategy
-pub fn hash_to_prime(data: &[u8]) -> BigInt {
-    let mut x = Sha256::digest(data).to_vec();
-    loop {
-        let candidate = BigInt::from_bytes_be(Sign::Plus, &x);
-        if is_probably_prime(&candidate, 16) { // 16 rounds of Miller-Rabin
-            return candidate;
-        }
-        x = Sha256::digest(&x).to_vec();
-    }
-}
+
 
 /// ✅ Miller-Rabin probabilistic primality test
 pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
@@ -71,7 +62,7 @@ pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
     let g = BigInt::from(2u8);
 
     let total_product = elements.iter()
-        .map(|hash| hash_to_prime(hash)) // 🚫 DO NOT rehash
+        .map(|hash| hash_to_integer(hash)) // 🚫 DO NOT rehash
         .fold(BigInt::one(), |acc, p| acc * p);
 
     g.modpow(&total_product, &n)
@@ -80,7 +71,7 @@ pub fn compute_accumulator(elements: &[Vec<u8>]) -> BigInt {
 
 
 pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = prime_hashes.par_iter().map(|h| hash_to_prime(h)).collect();
+    let primes: Vec<BigInt> = prime_hashes.par_iter().map(|h| hash_to_integer(h)).collect();
     let n = get_modulus();
     let g = BigInt::from(2u8);
     let len = primes.len();
@@ -104,17 +95,27 @@ pub fn generate_proofs(prime_hashes: &[Vec<u8>]) -> Vec<BigInt> {
         .collect()
 }
 
-
-pub fn verify_proofs(accumulator: &BigInt, pairs: &[(Vec<u8>, BigInt)]) -> bool {
-        pairs.par_iter().all(|(hash, proof)| {
-        verify_proof(accumulator, hash, proof)
+pub fn verify_proofs(accumulator: &BigInt, pairs: &[(BigInt, BigInt)]) -> bool {
+    pairs.par_iter().all(|(prime, proof)| {
+        verify_proof_with_prime(accumulator, prime, proof)
     })
 }
 
+pub fn verify_proof_with_prime(accumulator: &BigInt, prime: &BigInt, proof: &BigInt) -> bool {
+    let n = get_modulus();
+    let reconstructed = proof.modpow(prime, &n);
+    &reconstructed == accumulator
+}
+
+/// 🚀 Fast hash-to-integer mapping (no primality check)
+pub fn hash_to_integer(data: &[u8]) -> BigInt {
+    let hash = Sha256::digest(data);
+    BigInt::from_bytes_be(Sign::Plus, &hash)
+}
 
 pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
     let hash = Sha256::digest(shard).to_vec();          // ✅ Hash first
-    let prime = hash_to_prime(&hash);                   // ✅ Then map to prime
+    let prime = hash_to_integer(&hash);                   // ✅ Then map to prime
     let n = get_modulus();
     let reconstructed = proof.modpow(&prime, &n);
     let is_valid = &reconstructed == accumulator;
