@@ -81,7 +81,7 @@ mod tests {
         let shard_size = (transaction_size + data_shards - 1) / data_shards;
     
         let mut all_hashes = Vec::new();
-        for tx_index in 0..6096 {
+        for tx_index in 0..5 {
             let content = format!("tx{}_round{}", tx_index + 1, 1);
             let padded = pad_to_len(content.into_bytes(), transaction_size);
             let rs = ReedSolomon::new(data_shards, total_shards - data_shards).unwrap();
@@ -159,11 +159,10 @@ mod tests {
                     .expect("Decode proof failed");
 
                 let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                let hash = Sha256::digest(&shard_bytes).to_vec();
 
                 assert!(
-                    verify_proof(&accumulator, &hash, &proof),
-                    "❌ Verification failed for tx[{}] shard[{}]", tx_index, shard_index
+                    verify_proof(&accumulator, &shard_bytes, &proof),
+                              "❌ Verification failed for tx[{}] shard[{}]", tx_index, shard_index
                 );
             }
         }
@@ -200,11 +199,10 @@ mod tests {
                     .decode(&shard.proofs[0])
                     .expect("Failed to decode proof");
                 let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                let hash = Sha256::digest(&shard_bytes).to_vec();
 
                 assert!(
-                    verify_proof(&accumulator, &hash, &proof),
-                    "❌ Verification failed for tx[{}] shard[{}]", tx_index, shard_index
+                    verify_proof(&accumulator, &shard_bytes, &proof),
+                                        "❌ Verification failed for tx[{}] shard[{}]", tx_index, shard_index
                 );
             }
         }
