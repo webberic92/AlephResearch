@@ -16,7 +16,8 @@ pub struct ShardWithProofs {
 pub struct Transaction {
     pub root: Vec<u8>,
     pub shards: Vec<ShardWithProofs>,
-    pub accumulator: Option<String>, // ✅ NEW
+    pub accumulator: Option<String>,
+    pub shard_hashes: Option<Vec<String>>, 
 }
 
 
@@ -26,7 +27,8 @@ pub struct ProposeRequest {
     pub base: BaseRequest,
     pub transactions: Vec<Transaction>,
     pub parents: Vec<Vec<u8>>,
-    pub batch_accumulator: String,               // 🆕 base64-encoded RSA accumulator
+    pub batch_accumulator: String,  
+                 // 🆕 base64-encoded RSA accumulator
 }
 
 

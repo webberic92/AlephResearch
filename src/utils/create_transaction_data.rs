@@ -28,8 +28,8 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
 
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
-) -> Result<ProposeRequest, Error> {
-    let timer = Instant::now();
+) -> Result<ProposeRequest, anyhow::Error> {
+    let timer = std::time::Instant::now();
 
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
@@ -53,11 +53,11 @@ pub async fn create_transaction_data(
     };
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let estimated_total_shards = num_txs * total_nodes;
 
-    let mut all_shard_hashes = Vec::with_capacity(estimated_total_shards);
     let mut transactions = Vec::with_capacity(num_txs);
-    let mut all_shards_flat = Vec::with_capacity(estimated_total_shards);
+    let mut all_data_hashes = Vec::with_capacity(num_txs * data_shards);
+    let mut all_shards = Vec::new();
+    let mut all_hashes_per_tx = Vec::with_capacity(num_txs);
 
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
@@ -86,53 +86,71 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs)?;
 
-        let shard_hashes: Vec<Vec<u8>> = shards
-            .par_iter()
+        let shard_hashes: Vec<Vec<u8>> = shards.iter()
+            .take(data_shards)
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
-        all_shard_hashes.extend_from_slice(&shard_hashes);
-        all_shards_flat.extend(shards);
-
-        transactions.push(Transaction {
-            root: tx_root,
-            shards: vec![],
-            accumulator: None,
-        });
+        all_data_hashes.extend_from_slice(&shard_hashes);
+        all_shards.push(shards);
+        all_hashes_per_tx.push(shard_hashes);
     }
 
-    // Step 2: Compute accumulator and per-shard proofs
     let (accumulator, proofs) = spawn_blocking(move || {
-        let acc = compute_accumulator_radix(&all_shard_hashes);
-        let proofs = generate_proofs_radix(&all_shard_hashes);
+        let acc = compute_accumulator_radix(&all_data_hashes);
+        let proofs = generate_proofs_radix(&all_data_hashes);
         (acc, proofs)
     }).await?;
 
-    let encoded_accumulator = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
+    let encoded_acc = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
 
-    // Step 3: Attach shards and individual proofs
     let mut proof_idx = 0;
-    for tx in transactions.iter_mut() {
+    for (tx_index, shards) in all_shards.into_iter().enumerate() {
         let mut shard_structs = Vec::with_capacity(total_nodes);
-        for _ in 0..total_nodes {
-            let shard_b64 = general_purpose::STANDARD.encode(&all_shards_flat[proof_idx]);
-            let proof_b64 = general_purpose::STANDARD.encode(proofs[proof_idx].to_bytes_be().1);
+        for shard_i in 0..total_nodes {
+            let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
+
+            let proofs_vec = if shard_i < data_shards {
+                vec![general_purpose::STANDARD.encode(
+                    proofs[proof_idx].to_bytes_be().1,
+                )]
+            } else {
+                vec![]
+            };
+
+            if shard_i < data_shards {
+                proof_idx += 1;
+            }
+
             shard_structs.push(ShardWithProofs {
                 shard_b64,
-                proofs: vec![proof_b64],
+                proofs: proofs_vec,
             });
-            proof_idx += 1;
         }
-        tx.shards = shard_structs;
-        tx.accumulator = Some(encoded_accumulator.clone());
+
+        // ✅ NEW: encode the hashes used for proof verification
+        let encoded_hashes: Vec<String> = all_hashes_per_tx[tx_index]
+            .iter()
+            .map(|h| hex::encode(h))
+            .collect();
+
+        transactions.push(Transaction {
+            root: Sha256::digest(&pad_to_len(
+                format!("tx{}_round{}", tx_index + 1, round_id).into_bytes(),
+                transaction_size,
+            ))
+            .to_vec(),
+            shards: shard_structs,
+            accumulator: Some(encoded_acc.clone()),
+            shard_hashes: Some(encoded_hashes), // ✅ add this line
+        });
     }
 
-    let elapsed = timer.elapsed();
     tracing::info!(
         "📦 create_transaction_data(): Completed {} txs in {:.2?} (avg: {:.2?} per tx)",
         num_txs,
-        elapsed,
-        elapsed / num_txs as u32
+        timer.elapsed(),
+        timer.elapsed() / num_txs as u32
     );
 
     Ok(ProposeRequest {
@@ -142,6 +160,7 @@ pub async fn create_transaction_data(
         },
         transactions,
         parents: parent_units,
-        batch_accumulator: encoded_accumulator,
+        batch_accumulator: encoded_acc,
     })
 }
+

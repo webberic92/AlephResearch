@@ -16,6 +16,7 @@ use crate::{
     },
 };
 
+
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
     client: Arc<Client>,
@@ -41,13 +42,11 @@ pub async fn handle_propose(
         }
     }
 
-    // Decode accumulator
     let accumulator_bytes = general_purpose::STANDARD
         .decode(&propose_request.batch_accumulator)
         .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
     let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
 
-    // Validate each tx in the proposal
     for (i, tx) in propose_request.transactions.iter().enumerate() {
         let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
@@ -65,19 +64,21 @@ pub async fn handle_propose(
 
         let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
 
-        let hash = Sha256::digest(&decoded_shard);
-        let prime = hash_to_integer(&hash);
-        let hash_hex = hex::encode(&hash);
+        let expected_hash_hex = tx.shard_hashes.as_ref()
+            .and_then(|h| h.get(0))
+            .ok_or_else(|| format!("Node {}: Missing shard hash for tx[{}] shard[0]", node_id, i))?;
+
+        let hash_bytes = hex::decode(expected_hash_hex)
+            .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
         info!(
-            "🧪 handle_propose(): tx[{}] shard[0] hash={}, prime={}, proof_b64={}",
+            "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
             i,
-            &hash_hex[..8.min(hash_hex.len())],
-            prime.to_str_radix(10).chars().take(12).collect::<String>(),
+            &expected_hash_hex[..8.min(expected_hash_hex.len())],
             &proof_b64[..10.min(proof_b64.len())]
         );
 
-        if !verify_proof(&accumulator, &hash, &proof) {
+        if !verify_proof(&accumulator, &hash_bytes, &proof) {
             return Err(format!(
                 "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
                 node_id, i
@@ -87,14 +88,11 @@ pub async fn handle_propose(
         }
     }
 
-    // Wait for DAG to sync
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    // Update proposal tracker
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
-    // If quorum reached, broadcast prevote
     if proposal_count >= quorum_threshold {
         info!(
             "Node {}: Proposal quorum met. Broadcasting prevote for {} proposals.",
@@ -153,3 +151,4 @@ pub async fn handle_propose(
 
     Ok(())
 }
+

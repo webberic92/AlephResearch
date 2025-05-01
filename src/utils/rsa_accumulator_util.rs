@@ -113,11 +113,17 @@ pub fn hash_to_integer(data: &[u8]) -> BigInt {
     BigInt::from_bytes_be(Sign::Plus, &hash)
 }
 
-pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
-    let hash = Sha256::digest(shard).to_vec();
-    let prime = hash_to_integer(&hash);
+// pub fn verify_proof(accumulator: &BigInt, shard: &[u8], proof: &BigInt) -> bool {
+//     let hash = Sha256::digest(shard).to_vec();
+//     let prime = hash_to_integer(&hash);
+//     let n = get_modulus();
+//     let reconstructed = proof.modpow(&prime, &n);
+//     &reconstructed == accumulator
+// }
+
+pub fn verify_proof(accumulator: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
+    let prime = hash_to_integer(hash);
     let n = get_modulus();
     let reconstructed = proof.modpow(&prime, &n);
     &reconstructed == accumulator
 }
-
