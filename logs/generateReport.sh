@@ -3,7 +3,7 @@
 REPORT_FILE="final_metrics_report.txt"
 > "$REPORT_FILE"  # Clear existing report
 
-echo "📦 AlephResearch Final Metrics Report" | tee -a "$REPORT_FILE"
+echo "📦 AlephResearch Final Metrics Report (MERKLE)" | tee -a "$REPORT_FILE"
 echo "==============================================" | tee -a "$REPORT_FILE"
 echo "" | tee -a "$REPORT_FILE"
 
