@@ -28,10 +28,10 @@ impl ShardAggregator {
     }
 
     pub fn insert_shard(&mut self, round_id: u64, tx_index: usize, sender_id: usize, shard: Vec<u8>) {
-        info!(
-            "📥 ShardAggregator: round={}, tx[{}] ← shard from sender={} ({} bytes)",
-            round_id, tx_index, sender_id, shard.len()
-          );
+        // info!(
+        //     "📥 ShardAggregator: round={}, tx[{}] ← shard from sender={} ({} bytes)",
+        //     round_id, tx_index, sender_id, shard.len()
+        //   );
         self.shard_store.insert((round_id, tx_index, sender_id), shard);
     }
 
@@ -41,10 +41,10 @@ impl ShardAggregator {
     
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
-                info!(
-                    "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
-                    tx_index, round_id, sender, shard.len()
-                );
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
@@ -104,13 +104,13 @@ impl ShardAggregator {
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
         let hash = Sha256::digest(&padded);
-        info!(
-            "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-            tx_index,
-            round_id,
-            padded.len(),
-            hex::encode(&hash)
-        );
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
     
         info!(
             "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
