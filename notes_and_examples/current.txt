@@ -1,101 +1,85 @@
-Starting cpu and memory logs
-PRIVATE_IP = 10.0.136.120
-Node registration success.
-IP Manager not ready, retrying...
-IP Manager not ready, retrying...
-IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"
-[network]
-listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.155.254"
-ip_address = "10.0.136.120"
-nodes = ["10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"]
-total_nodes = 5
+this broke handle_propose
+994dfd24a6604f31a22e2ce2cd53481684ce1b)
+2025-05-09T02:16:32.379250Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit for round 1 from 1024 transactions, parent count = 0, proposer = 13
+2025-05-09T02:16:32.383986Z  INFO aleph_research::utils::merkle_utils: ✅ Reconstructed unit U1-13 with Merkle root 03f30a7e11aa4b189976dd5bb3117530cae4e06e3b09d7ca511550756c908b68
+2025-05-09T02:16:32.387077Z  INFO aleph_research::handlers::handle_prevote: Node 16: Prevote Quorum reached for round 1. Proceeding to send commits.
+2025-05-09T02:16:32.387086Z  INFO aleph_research::handlers::handle_prevote: Node 16: Adding *local* commit to queue for round 1
+2025-05-09T02:16:32.457310Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 16 sending commit to http://10.0.129.146:30333/commit for round 1
+^[[A^C
+sh-4.2$ ^C
+sh-4.2$ ^C
+sh-4.2$ tail -f /aleph/logs/node_status
+2025-05-09T02:16:32.379079Z  INFO aleph_research::handlers::handle_prevote: Node 16: Inserting shard j=10 for tx[1023] from proposer 13 into aggregator (round 1)
+2025-05-09T02:16:32.379138Z  INFO aleph_research::structs::shard_aggregator: Aggregator: tx[1023] round 1 has 11 out of 16 shards: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+2025-05-09T02:16:32.379188Z  INFO aleph_research::handlers::handle_prevote: Node 16: Reconstructed tx[1023] with 256 bytes for round 1
+2025-05-09T02:16:32.379192Z  INFO aleph_research::handlers::handle_prevote: Node 16: TX[1023] padded bytes = [116, 120, 49, 48, 50, 52, 95, 114, 111, 117, 110, 100, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+2025-05-09T02:16:32.379222Z  INFO aleph_research::handlers::handle_prevote: Node 16: TX[1023] hash = ee3b54714f2dcfaf79c16e968a994dfd24a6604f31a22e2ce2cd53481684ce1b (expected: ee3b54714f2dcfaf79c16e968a994dfd24a6604f31a22e2ce2cd53481684ce1b)
+2025-05-09T02:16:32.379250Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit for round 1 from 1024 transactions, parent count = 0, proposer = 13
+2025-05-09T02:16:32.383986Z  INFO aleph_research::utils::merkle_utils: ✅ Reconstructed unit U1-13 with Merkle root 03f30a7e11aa4b189976dd5bb3117530cae4e06e3b09d7ca511550756c908b68
+2025-05-09T02:16:32.387077Z  INFO aleph_research::handlers::handle_prevote: Node 16: Prevote Quorum reached for round 1. Proceeding to send commits.
+2025-05-09T02:16:32.387086Z  INFO aleph_research::handlers::handle_prevote: Node 16: Adding *local* commit to queue for round 1
+2025-05-09T02:16:32.457310Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 16 sending commit to http://10.0.129.146:30333/commit for round 1
 
-[consensus]
-number_of_transactions = 5
-transaction_size = 256 # bytes
-data_shards = 4 # Number of data shards for erasure coding
-total_rounds = 1 # Number of rounds
 
-[logging]
-level = "info"
-transaction_metrics_log = "/home/aleph-node/logs/transaction_metrics"
 
-[node]
-id = 5
-Starting aleph_rbc execution
-aleph_rbc binary is found at /home/aleph-node/aleph_rbc
-Configuration file found at /home/aleph-node/aleph-node-config.toml
-Attempting to execute aleph_rbc with configuration
-Waiting for aleph_rbc to be ready on port 30333
-aleph_rbc not ready, retrying...
-2025-04-16T02:09:27.784622Z  INFO aleph_rbc: LATENCY START
-2025-04-16T02:09:27.784744Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:27.784747Z  INFO aleph_rbc: API server running on 0.0.0.0:30333
-2025-04-16T02:09:27.790532Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
-aleph_rbc APIs are ready.
-Waiting for aleph_rbc API readiness...
-aleph_rbc API is ready.
-2025-04-16T02:09:28.791566Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:28.792634Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
-Done with aleph_rbc loop for node 5
-2025-04-16T02:09:29.793846Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:29.794541Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.130.175:30333"]: Trying again....
-2025-04-16T02:09:30.683302Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
-2025-04-16T02:09:30.683359Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.683364Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.683397Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 3. Count: 1/4
-2025-04-16T02:09:30.741796Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
-2025-04-16T02:09:30.741901Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.741909Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.741944Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 2. Count: 2/4
-2025-04-16T02:09:30.796038Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-04-16T02:09:30.797124Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
-2025-04-16T02:09:30.797139Z  INFO aleph_research::utils::create_transaction_data: Node 5: Creating 5 transactions (256 bytes each) with RS shards (64 bytes/shard)
-2025-04-16T02:09:30.797268Z  INFO aleph_research::utils::create_transaction_data: ✅ Proposal ready: 5 txs, Round 1, Batch Root: dae1940bd6c35d9ec716e9fd5ca8e0dd1aaecb2dc5b9ac92075f30b1a241a714
-2025-04-16T02:09:30.797278Z  INFO aleph_rbc: Node 5: Created proposal with 5 transactions for round 1.
-2025-04-16T02:09:30.797284Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.130.175:30333", "10.0.135.74:30333", "10.0.148.158:30333", "10.0.172.170:30333"] for round 1
-2025-04-16T02:09:30.797297Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.130.175:30333 (round 1)
-2025-04-16T02:09:30.798194Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.130.175:30333 (round 1)
-2025-04-16T02:09:30.798222Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.135.74:30333 (round 1)
-2025-04-16T02:09:30.798820Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.135.74:30333 (round 1)
-2025-04-16T02:09:30.798843Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.148.158:30333 (round 1)
-2025-04-16T02:09:30.799429Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.148.158:30333 (round 1)
-2025-04-16T02:09:30.799449Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.172.170:30333 (round 1)
-2025-04-16T02:09:30.801607Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.172.170:30333 (round 1)
-2025-04-16T02:09:30.801633Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
-2025-04-16T02:09:30.801642Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 1 into RBCProcessor queue
-2025-04-16T02:09:30.801661Z  INFO aleph_rbc: Node 5: Proposal for round 1 sent successfully.
-2025-04-16T02:09:30.801674Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
-2025-04-16T02:09:30.801718Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.801731Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.801765Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 5. Count: 3/4
-2025-04-16T02:09:30.976031Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
-2025-04-16T02:09:30.976090Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
-2025-04-16T02:09:30.976096Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
-2025-04-16T02:09:30.976141Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 1. Count: 4/4
-2025-04-16T02:09:30.976148Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
-2025-04-16T02:09:30.976170Z  INFO aleph_research::handlers::handle_propose: Node 5: Multicasting prevote to all nodes...
-2025-04-16T02:09:30.976174Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.130.175:30333/prevote for round 1
-2025-04-16T02:09:30.978069Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.130.175:30333/prevote
-2025-04-16T02:09:30.978116Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.135.74:30333/prevote for round 1
-2025-04-16T02:09:30.982214Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.135.74:30333/prevote
-2025-04-16T02:09:30.982245Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.148.158:30333/prevote for round 1
-2025-04-16T02:09:30.997754Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.148.158:30333/prevote
-2025-04-16T02:09:30.997789Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.172.170:30333/prevote for round 1
-2025-04-16T02:09:31.000868Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.172.170:30333/prevote
-2025-04-16T02:09:31.000893Z  INFO aleph_research::handlers::handle_propose: Node 5: Enqueuing local prevote into RBCProcessor for round 1
-2025-04-16T02:09:31.000922Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.130.175
-2025-04-16T02:09:31.000974Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.000980Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.135.74
-2025-04-16T02:09:31.001012Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001016Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.172.170
-2025-04-16T02:09:31.001046Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001050Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.148.158
-2025-04-16T02:09:31.001088Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.001091Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.136.120
-2025-04-16T02:09:31.001148Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 5: Hash mismatch for tx 0. Expected 4004f08af51adef224c34cd950bb225db7efd7ac2caf8046f2c12f7c3e8ff2ae, got 49c288428598286715e87628a465082dd756b2697aa06d43151e6558f9c89f47"
-2025-04-16T02:09:31.389198Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
-2025-04-16T02:09:31.389230Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum already met for round 1 (4 received, required_proposals: 4). Dropping.
-sh-4.2$
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+d this one broke here...
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+sh-4.2$ tail -f /aleph/logs/node_status
+2025-05-09T02:16:23.055573Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.179.202:30333/prevote
+2025-05-09T02:16:23.055613Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.181.188:30333/prevote for round 1
+2025-05-09T02:16:24.043691Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.181.188:30333/prevote
+2025-05-09T02:16:24.043731Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.186.239:30333/prevote for round 1
+2025-05-09T02:16:25.964062Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.186.239:30333/prevote
+2025-05-09T02:16:25.964102Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.188.252:30333/prevote for round 1
+2025-05-09T02:16:27.574511Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.188.252:30333/prevote
+2025-05-09T02:16:27.574552Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.191.230:30333/prevote for round 1
+2025-05-09T02:16:29.373883Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.191.230:30333/prevote
+2025-05-09T02:16:29.373921Z  INFO aleph_research::handlers::handle_propose: Node 3: Enqueuing local prevote into RBCProcessor for round 1
+
+
+
+
+
+
+
+
+
+
+
+
+
+an

@@ -90,10 +90,10 @@ pub async fn create_transaction_data(
             .map(|shard| general_purpose::STANDARD.encode(&shard))
             .collect();
 
-        info!(
-            "Node {}: TX[{}] padded bytes = {:?}, hash = {}",
-            node_id, tx_index, padded, hex::encode(&tx_hash)
-        );
+        // info!(
+        //     "Node {}: TX[{}] {:?}, hash = {}",
+        //     node_id, tx_index, padded, hex::encode(&tx_hash)
+        // );
 
         transactions.push(Transaction {
             root: tx_hash,

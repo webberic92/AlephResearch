@@ -87,10 +87,10 @@ pub async fn handle_prevote(
                             // shard_aggregator.insert_shard(round_id, i, proposer_id, decoded.clone());
                             // shard_aggregator.insert_shard(round_id, i, prevote_request.sender_id, decoded.clone());
                             shard_aggregator.insert_shard(round_id, i, j, decoded.clone());
-                            info!(
-                                "Node {}: Inserting shard j={} for tx[{}] from proposer {} into aggregator (round {})",
-                                node_id, j, i, proposer_id, round_id
-                            );
+                            // info!(
+                            //     "Node {}: Inserting shard j={} for tx[{}] from proposer {} into aggregator (round {})",
+                            //     node_id, j, i, proposer_id, round_id
+                            // );
                         }               
                                  // shard_aggregator.insert_shard(round_id, i, proposer_id, decoded.clone());
                     }
@@ -115,10 +115,10 @@ pub async fn handle_prevote(
                 }
             };
             info!("Node {}: Reconstructed tx[{}] with {} bytes for round {}", node_id, i, padded_tx_bytes.len(), round_id); 
-            info!(
-                "Node {}: TX[{}] padded bytes = {:?}",
-                node_id, i, padded_tx_bytes
-            );
+            // info!(
+            //     "Node {}: TX[{}] padded bytes = {:?}",
+            //     node_id, i, padded_tx_bytes
+            // );
             let hash = Sha256::digest(&padded_tx_bytes).to_vec();
             info!(
                 "Node {}: TX[{}] hash = {} (expected: {})",

@@ -45,10 +45,10 @@ impl ShardAggregator {
             .map(|(i, _)| i)
             .collect();
     
-        info!(
-            "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-            tx_index, round_id, received_count, self.total_shards, received_indices
-        );
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
     
         if received_count < self.data_shards {
             warn!(
