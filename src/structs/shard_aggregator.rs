@@ -29,10 +29,10 @@ impl ShardAggregator {
     
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
-                info!(
-                    "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
-                    tx_index, round_id, sender, shard.len()
-                );
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
@@ -93,19 +93,19 @@ impl ShardAggregator {
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
         let hash = Sha256::digest(&padded);
-        info!(
-            "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-            tx_index,
-            round_id,
-            padded.len(),
-            hex::encode(&hash)
-        );
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
     
-        info!(
-            "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-            tx_index,
-            padded
-        );
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
     
         Some(padded)
     }

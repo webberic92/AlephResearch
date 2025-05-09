@@ -13,8 +13,8 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 10 # Define the number of instances
-        BATCH_SIZE =  25# Define the number of transactions in a batch
+        INSTANCES_NUMBER = 16 # Define the number of instances
+        BATCH_SIZE =  5# Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
