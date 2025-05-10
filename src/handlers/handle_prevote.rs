@@ -114,19 +114,19 @@ pub async fn handle_prevote(
                     return Ok(());
                 }
             };
-            info!("Node {}: Reconstructed tx[{}] with {} bytes for round {}", node_id, i, padded_tx_bytes.len(), round_id); 
+            // info!("Node {}: Reconstructed tx[{}] with {} bytes for round {}", node_id, i, padded_tx_bytes.len(), round_id); 
             // info!(
             //     "Node {}: TX[{}] padded bytes = {:?}",
             //     node_id, i, padded_tx_bytes
             // );
             let hash = Sha256::digest(&padded_tx_bytes).to_vec();
-            info!(
-                "Node {}: TX[{}] hash = {} (expected: {})",
-                node_id,
-                i,
-                hex::encode(&hash),
-                hex::encode(&transaction.root)
-            );
+            // info!(
+            //     "Node {}: TX[{}] hash = {} (expected: {})",
+            //     node_id,
+            //     i,
+            //     hex::encode(&hash),
+            //     hex::encode(&transaction.root)
+            // );
             
             if hash != transaction.root {
                 return Err(format!(
