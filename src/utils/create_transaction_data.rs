@@ -62,7 +62,7 @@ pub async fn create_transaction_data(
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
-        let tx_root = Sha256::digest(&padded).to_vec();
+        // let tx_root = Sha256::digest(&padded).to_vec();
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut data_chunks: Vec<Vec<u8>> = padded

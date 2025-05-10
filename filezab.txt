@@ -451,12 +451,12 @@ pub async fn handle_propose(
         let hash_bytes = hex::decode(expected_hash_hex)
             .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
-        info!(
-            "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
-            i,
-            &expected_hash_hex[..8.min(expected_hash_hex.len())],
-            &proof_b64[..10.min(proof_b64.len())]
-        );
+        // info!(
+        //     "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
+        //     i,
+        //     &expected_hash_hex[..8.min(expected_hash_hex.len())],
+        //     &proof_b64[..10.min(proof_b64.len())]
+        // );
 
         if !verify_proof(&accumulator, &hash_bytes, &proof) {
             return Err(format!(
@@ -814,7 +814,7 @@ pub async fn create_transaction_data(
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
-        let tx_root = Sha256::digest(&padded).to_vec();
+        // let tx_root = Sha256::digest(&padded).to_vec();
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut data_chunks: Vec<Vec<u8>> = padded
@@ -1806,10 +1806,10 @@ impl ShardAggregator {
     }
 
     pub fn insert_shard(&mut self, round_id: u64, tx_index: usize, sender_id: usize, shard: Vec<u8>) {
-        info!(
-            "📥 ShardAggregator: round={}, tx[{}] ← shard from sender={} ({} bytes)",
-            round_id, tx_index, sender_id, shard.len()
-          );
+        // info!(
+        //     "📥 ShardAggregator: round={}, tx[{}] ← shard from sender={} ({} bytes)",
+        //     round_id, tx_index, sender_id, shard.len()
+        //   );
         self.shard_store.insert((round_id, tx_index, sender_id), shard);
     }
 
@@ -1819,10 +1819,10 @@ impl ShardAggregator {
     
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
-                info!(
-                    "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
-                    tx_index, round_id, sender, shard.len()
-                );
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
@@ -1835,10 +1835,10 @@ impl ShardAggregator {
             .map(|(i, _)| i)
             .collect();
     
-        info!(
-            "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-            tx_index, round_id, received_count, self.total_shards, received_indices
-        );
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
     
         if received_count < self.data_shards {
             warn!(
@@ -1882,19 +1882,19 @@ impl ShardAggregator {
         // 🚨 Debug hash from aggregator side
         use sha2::{Sha256, Digest};
         let hash = Sha256::digest(&padded);
-        info!(
-            "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-            tx_index,
-            round_id,
-            padded.len(),
-            hex::encode(&hash)
-        );
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
     
-        info!(
-            "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-            tx_index,
-            padded
-        );
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
         for ((r, tx_i, sender), _) in &self.shard_store {
             assert!(*r == round_id);
         }
@@ -1951,12 +1951,12 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 10 # Define the number of instances
-        BATCH_SIZE = 128  # Define the number of transactions in a batch
+        INSTANCES_NUMBER = 12 # Define the number of instances
+        BATCH_SIZE = 1024  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
-        TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-
+        # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
+        TOTAL_ROUNDS = 3 # Number of rounds for the consensus process
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -2004,12 +2004,12 @@ class TestAleph(Stack):
 
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
-                instance_type=ec2.InstanceType("t3.medium"),
+                instance_type=ec2.InstanceType("c5n.large"),
                 machine_image=ec2.MachineImage.latest_amazon_linux2(),
                 vpc=vpc,
                 security_group=security_group,
                 role=instance_role,
-                credit_specification=ec2.CpuCredits.UNLIMITED,
+                # credit_specification=ec2.CpuCredits.UNLIMITED,
             )
 
             # Part 1: Initial Setup Commands
