@@ -71,12 +71,12 @@ pub async fn handle_propose(
         let hash_bytes = hex::decode(expected_hash_hex)
             .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
-        info!(
-            "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
-            i,
-            &expected_hash_hex[..8.min(expected_hash_hex.len())],
-            &proof_b64[..10.min(proof_b64.len())]
-        );
+        // info!(
+        //     "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
+        //     i,
+        //     &expected_hash_hex[..8.min(expected_hash_hex.len())],
+        //     &proof_b64[..10.min(proof_b64.len())]
+        // );
 
         if !verify_proof(&accumulator, &hash_bytes, &proof) {
             return Err(format!(

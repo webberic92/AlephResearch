@@ -57,10 +57,10 @@ impl ShardAggregator {
             .map(|(i, _)| i)
             .collect();
     
-        info!(
-            "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-            tx_index, round_id, received_count, self.total_shards, received_indices
-        );
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
     
         if received_count < self.data_shards {
             warn!(
@@ -112,11 +112,11 @@ impl ShardAggregator {
         //     hex::encode(&hash)
         // );
     
-        info!(
-            "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-            tx_index,
-            padded
-        );
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
         for ((r, tx_i, sender), _) in &self.shard_store {
             assert!(*r == round_id);
         }
