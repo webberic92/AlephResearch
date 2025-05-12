@@ -48,7 +48,7 @@ class TestAleph(Stack):
 
         # Define a lightweight t2.micro instance as the IP Manager
         ip_manager_instance = ec2.Instance(self, "IPManager",
-                                           instance_type=ec2.InstanceType("t3.xlarge"),
+                                           instance_type=ec2.InstanceType("t2.micro"),
                                            machine_image=ec2.MachineImage.latest_amazon_linux2(),
                                            vpc=vpc,
                                            security_group=security_group,
