@@ -67,6 +67,7 @@ async fn execute_transaction_logic(
 ) -> Result<(), anyhow::Error> {  
     wait_for_all_nodes_health(&client, node.clone()).await?;  
 
+    info!("All Nodes are healthy starting transaction execution.");
     // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {

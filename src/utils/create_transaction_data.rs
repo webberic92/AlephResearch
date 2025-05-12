@@ -30,9 +30,17 @@ pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
 ) -> Result<ProposeRequest, anyhow::Error> {
     let timer = std::time::Instant::now();
-
+    info!("📦 create_transaction_data(): Starting transaction data creation...");
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
+        // info!(
+        //     "Node ID: {}, Number of Transactions: {}, Data Shards: {}, Total Nodes: {}, Transaction Size: {}",
+        //     node_guard.id,
+        //     node_guard.number_of_transactions,
+        //     node_guard.data_shards,
+        //     node_guard.total_nodes,
+        //     node_guard.transaction_size
+        // );
         let round_id = *node_guard.current_round.lock().await;
         let parent_units = node_guard
             .get_all_parents(round_id)
@@ -58,12 +66,13 @@ pub async fn create_transaction_data(
     let mut all_data_hashes = Vec::with_capacity(num_txs * data_shards);
     let mut all_shards = Vec::new();
     let mut all_hashes_per_tx = Vec::with_capacity(num_txs);
-
+    
+    info!("Shard size: {}", shard_size);
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
         // let tx_root = Sha256::digest(&padded).to_vec();
-
+        // info!("tx_index: {}, padded len: {}", tx_index, padded.len());
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut data_chunks: Vec<Vec<u8>> = padded
             .chunks(shard_size)

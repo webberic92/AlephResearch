@@ -13,6 +13,7 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
+        INSTANCE_TYPE = "c5n.xlarge"  # Define the instance type
         INSTANCES_NUMBER = 12 # Define the number of instances
         BATCH_SIZE = 1024  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
@@ -66,7 +67,7 @@ class TestAleph(Stack):
 
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
-                instance_type=ec2.InstanceType("c5n.large"),
+                instance_type=ec2.InstanceType(INSTANCE_TYPE),
                 machine_image=ec2.MachineImage.latest_amazon_linux2(),
                 vpc=vpc,
                 security_group=security_group,
