@@ -1,7 +1,7 @@
 use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
 use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
-use tokio::sync::Mutex;
+use tokio::{sync::Mutex, time::timeout};
 use tracing::{ error, info, warn };
 use crate::{
     processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
@@ -159,45 +159,48 @@ pub async fn handle_propose(
                 let mut attempt = 0;
                 let max_attempts = 3;
                 let mut success = false;
-
+                let send_timeout = Duration::from_secs(3); // adjust as needed
+        
                 while attempt < max_attempts {
                     attempt += 1;
-
+        
                     info!(
                         "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
                         attempt, max_attempts, node_id, url, round_id
                     );
-
-                    let res = client
+        
+                    let send_fut = client
                         .post(&url)
                         .json(&prevote_request)
-                        .send()
-                        .await;
-
-                    match res {
-                        Ok(resp) if resp.status().is_success() => {
+                        .send();
+        
+                    match timeout(send_timeout, send_fut).await {
+                        Ok(Ok(resp)) if resp.status().is_success() => {
                             info!("✅ Node {}: Prevote success to {}", node_id, url);
                             success = true;
                             break;
                         }
-                        Ok(resp) => {
+                        Ok(Ok(resp)) => {
                             let status = resp.status();
                             let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
                             error!("❌ Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
                         }
-                        Err(e) => {
+                        Ok(Err(e)) => {
                             error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
                         }
+                        Err(_) => {
+                            error!("⏱️ Node {}: Timeout sending prevote to {}", node_id, url);
+                        }
                     }
-
+        
                     let delay = 100 * 2u64.pow((attempt - 1) as u32);
                     sleep(Duration::from_millis(delay));
                 }
-
+        
                 if !success {
                     error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
                 }
-
+        
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }

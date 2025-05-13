@@ -126,7 +126,7 @@ pub fn reconstruct_unit(
     let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
+    // info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
     Ok(DagUnit {
         unit_id,
         proposer_node,

@@ -76,7 +76,7 @@ pub async fn send_proposals(
             let res = client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal)
-                // .timeout(Duration::from_millis(500))
+                .timeout(Duration::from_millis(500))
                 .send()
                 .await;
 
