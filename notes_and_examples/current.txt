@@ -1,85 +1,871 @@
-this broke handle_propose
-994dfd24a6604f31a22e2ce2cd53481684ce1b)
-2025-05-09T02:16:32.379250Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit for round 1 from 1024 transactions, parent count = 0, proposer = 13
-2025-05-09T02:16:32.383986Z  INFO aleph_research::utils::merkle_utils: ✅ Reconstructed unit U1-13 with Merkle root 03f30a7e11aa4b189976dd5bb3117530cae4e06e3b09d7ca511550756c908b68
-2025-05-09T02:16:32.387077Z  INFO aleph_research::handlers::handle_prevote: Node 16: Prevote Quorum reached for round 1. Proceeding to send commits.
-2025-05-09T02:16:32.387086Z  INFO aleph_research::handlers::handle_prevote: Node 16: Adding *local* commit to queue for round 1
-2025-05-09T02:16:32.457310Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 16 sending commit to http://10.0.129.146:30333/commit for round 1
-^[[A^C
-sh-4.2$ ^C
-sh-4.2$ ^C
-sh-4.2$ tail -f /aleph/logs/node_status
-2025-05-09T02:16:32.379079Z  INFO aleph_research::handlers::handle_prevote: Node 16: Inserting shard j=10 for tx[1023] from proposer 13 into aggregator (round 1)
-2025-05-09T02:16:32.379138Z  INFO aleph_research::structs::shard_aggregator: Aggregator: tx[1023] round 1 has 11 out of 16 shards: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
-2025-05-09T02:16:32.379188Z  INFO aleph_research::handlers::handle_prevote: Node 16: Reconstructed tx[1023] with 256 bytes for round 1
-2025-05-09T02:16:32.379192Z  INFO aleph_research::handlers::handle_prevote: Node 16: TX[1023] padded bytes = [116, 120, 49, 48, 50, 52, 95, 114, 111, 117, 110, 100, 49, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-2025-05-09T02:16:32.379222Z  INFO aleph_research::handlers::handle_prevote: Node 16: TX[1023] hash = ee3b54714f2dcfaf79c16e968a994dfd24a6604f31a22e2ce2cd53481684ce1b (expected: ee3b54714f2dcfaf79c16e968a994dfd24a6604f31a22e2ce2cd53481684ce1b)
-2025-05-09T02:16:32.379250Z  INFO aleph_research::utils::merkle_utils: Reconstructing unit for round 1 from 1024 transactions, parent count = 0, proposer = 13
-2025-05-09T02:16:32.383986Z  INFO aleph_research::utils::merkle_utils: ✅ Reconstructed unit U1-13 with Merkle root 03f30a7e11aa4b189976dd5bb3117530cae4e06e3b09d7ca511550756c908b68
-2025-05-09T02:16:32.387077Z  INFO aleph_research::handlers::handle_prevote: Node 16: Prevote Quorum reached for round 1. Proceeding to send commits.
-2025-05-09T02:16:32.387086Z  INFO aleph_research::handlers::handle_prevote: Node 16: Adding *local* commit to queue for round 1
-2025-05-09T02:16:32.457310Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 16 sending commit to http://10.0.129.146:30333/commit for round 1
+node 23
+
+:37:44.666055Z  INFO aleph_research::handlers::handle_propose: Node 23: Proposal quorum met. Aggregating and multicasting prevote for 22 proposals.
+2025-05-13T03:37:44.666423Z  INFO aleph_research::handlers::handle_propose: Node 23: Multicasting prevote to all nodes...
+2025-05-13T03:37:44.666427Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:44.671847Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:44.671862Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:44.676666Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:44.676682Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:44.681341Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:44.681355Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:44.687531Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:44.687545Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:44.695751Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:44.695812Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:44.700989Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:44.701012Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:44.711272Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:44.711299Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:44.717366Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:44.717393Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:44.722321Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:44.722340Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:44.727078Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:44.727094Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:44.731900Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:44.731928Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:44.737893Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:44.737908Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:44.742437Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:44.742452Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:37:44.746840Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.154.36:30333/prevote
+2025-05-13T03:37:44.746854Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:37:44.751443Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.156.103:30333/prevote
+2025-05-13T03:37:44.751457Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:37:44.755809Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.156.237:30333/prevote
+2025-05-13T03:37:44.755832Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:37:44.760454Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.157.103:30333/prevote
+2025-05-13T03:37:44.760468Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:37:44.770252Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.158.76:30333/prevote
+2025-05-13T03:37:44.770267Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:37:44.778437Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.162.187:30333/prevote
+2025-05-13T03:37:44.778453Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:37:44.785223Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.163.64:30333/prevote
+2025-05-13T03:37:44.785238Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:37:44.795600Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.164.112:30333/prevote
+2025-05-13T03:37:44.795615Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:37:44.800210Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.175.27:30333/prevote
+2025-05-13T03:37:44.800225Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:37:44.804670Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.182.97:30333/prevote
+2025-05-13T03:37:44.804685Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:37:44.809734Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.185.122:30333/prevote
+2025-05-13T03:37:44.809749Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:37:44.818093Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.186.223:30333/prevote
+2025-05-13T03:37:44.818120Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:37:44.838916Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.188.110:30333/prevote
+2025-05-13T03:37:44.838932Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.189.42:30333/prevote for round 1
+2025-05-13T03:37:44.859559Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.189.42:30333/prevote
+2025-05-13T03:37:44.859577Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:37:44.877981Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.190.109:30333/prevote
+2025-05-13T03:37:44.877997Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:37:44.889643Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.190.71:30333/prevote
+2025-05-13T03:37:44.889659Z  INFO aleph_research::handlers::handle_propose: Node 23: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-13T03:37:44.889814Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.129.92
+2025-05-13T03:37:44.894077Z  INFO aleph_research::handlers::handle_prevote: Node 23: Not enough prevote messages received (1/19). Waiting for quorum before proceeding to commit.
+2025-05-13T03:37:44.894354Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 15
+2025-05-13T03:37:44.894384Z  INFO aleph_research::utils::dag_utils: Node 23: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.894387Z  INFO aleph_research::utils::dag_utils: Node 23: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.894658Z  INFO aleph_research::structs::node: Node 23: Added proposal for round 1 from node 15. Count: 23/21
+2025-05-13T03:37:44.894668Z  INFO aleph_research::handlers::handle_propose: Node 23: Proposal quorum met. Aggregating and multicasting prevote for 23 proposals.
+2025-05-13T03:37:44.895003Z  INFO aleph_research::handlers::handle_propose: Node 23: Multicasting prevote to all nodes...
+2025-05-13T03:37:44.895007Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:44.901830Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:44.901845Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:44.906656Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:44.906670Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:44.911342Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:44.911357Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:44.919106Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:44.919121Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:44.925950Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:44.925964Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:44.941674Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:44.941690Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:44.946360Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:44.946375Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:44.955703Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:44.955718Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:44.971867Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:44.971881Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:44.981504Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:44.981519Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:44.991539Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:44.991555Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:45.001432Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:45.001446Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:45.008069Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:45.008136Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:37:45.014373Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.154.36:30333/prevote
+2025-05-13T03:37:45.014393Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:37:45.025719Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.156.103:30333/prevote
+2025-05-13T03:37:45.025767Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:37:45.030815Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.156.237:30333/prevote
+2025-05-13T03:37:45.030831Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:37:45.035782Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.157.103:30333/prevote
+2025-05-13T03:37:45.035799Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:37:45.040800Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.158.76:30333/prevote
+2025-05-13T03:37:45.040816Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:37:45.046090Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.162.187:30333/prevote
+2025-05-13T03:37:45.046105Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:37:45.051020Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.163.64:30333/prevote
+2025-05-13T03:37:45.051036Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:37:45.055739Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.164.112:30333/prevote
+2025-05-13T03:37:45.055756Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:37:45.060324Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.175.27:30333/prevote
+2025-05-13T03:37:45.060338Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:37:45.065037Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.182.97:30333/prevote
+2025-05-13T03:37:45.065052Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:37:45.071424Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.185.122:30333/prevote
+2025-05-13T03:37:45.071440Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:37:45.085356Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.186.223:30333/prevote
+2025-05-13T03:37:45.085373Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:37:45.095305Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.188.110:30333/prevote
+2025-05-13T03:37:45.095349Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.189.42:30333/prevote for round 1
+2025-05-13T03:37:45.104964Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.189.42:30333/prevote
+2025-05-13T03:37:45.104989Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:37:45.112193Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.190.109:30333/prevote
+2025-05-13T03:37:45.112211Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:37:45.117225Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.190.71:30333/prevote
+2025-05-13T03:37:45.117242Z  INFO aleph_research::handlers::handle_propose: Node 23: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-13T03:37:45.117391Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 14
+2025-05-13T03:37:45.117418Z  INFO aleph_research::utils::dag_utils: Node 23: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:45.117421Z  INFO aleph_research::utils::dag_utils: Node 23: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:45.117710Z  INFO aleph_research::structs::node: Node 23: Added proposal for round 1 from node 14. Count: 24/21
+2025-05-13T03:37:45.117720Z  INFO aleph_research::handlers::handle_propose: Node 23: Proposal quorum met. Aggregating and multicasting prevote for 24 proposals.
+2025-05-13T03:37:45.118088Z  INFO aleph_research::handlers::handle_propose: Node 23: Multicasting prevote to all nodes...
+2025-05-13T03:37:45.118093Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:45.125235Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:45.125260Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:45.131235Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:45.131258Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:45.136872Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:45.136888Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:45.142226Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:45.142243Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:45.148155Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:45.148172Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:45.154625Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:45.154641Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:45.161206Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:45.161223Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:45.169851Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:45.169869Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:45.176388Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:45.176405Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:45.182560Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:45.182602Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:45.188569Z  INFO aleph_research::handlers::handle_propose: ✅ Node 23: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:45.188613Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:48.191209Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:48.291300Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:51.294187Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:51.494271Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:54.497176Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:54.897272Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.153.71:30333/prevote after 3 attempts
+2025-05-13T03:37:54.897298Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:57.900369Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:58.000453Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:38:01.003302Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:38:01.203393Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:38:04.206035Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:38:04.606126Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.154.196:30333/prevote after 3 attempts
+2025-05-13T03:38:04.606150Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:38:07.608231Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:38:07.708315Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:38:10.711009Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:38:10.911092Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:38:13.912772Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:38:14.312861Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.154.36:30333/prevote after 3 attempts
+2025-05-13T03:38:14.312879Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:38:17.314516Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:38:17.414606Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:38:20.416785Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:38:20.616884Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:38:23.619186Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:38:24.019280Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.156.103:30333/prevote after 3 attempts
+2025-05-13T03:38:24.019302Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:38:27.021508Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:38:27.121594Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:38:30.124105Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:38:30.324191Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:38:33.325862Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:38:33.725962Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.156.237:30333/prevote after 3 attempts
+2025-05-13T03:38:33.725989Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:38:36.728259Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:38:36.828346Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:38:39.831079Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:38:40.031169Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:38:43.032907Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:38:43.433001Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.157.103:30333/prevote after 3 attempts
+2025-05-13T03:38:43.433022Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:38:46.435280Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:38:46.535373Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:38:49.538355Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:38:49.738455Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:38:52.740495Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:38:53.140590Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.158.76:30333/prevote after 3 attempts
+2025-05-13T03:38:53.140607Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:38:56.143603Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:38:56.243690Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:38:59.245865Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:38:59.445947Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:39:02.448347Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:39:02.848440Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.162.187:30333/prevote after 3 attempts
+2025-05-13T03:39:02.848470Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:39:05.850513Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:39:05.950604Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:39:08.952522Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:39:09.152605Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:39:12.154755Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:39:12.554852Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.163.64:30333/prevote after 3 attempts
+2025-05-13T03:39:12.554886Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:39:15.557197Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:39:15.657291Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:39:18.660075Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:39:18.860179Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:39:21.861996Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:39:22.262085Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.164.112:30333/prevote after 3 attempts
+2025-05-13T03:39:22.262103Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:39:25.264440Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:39:25.364529Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:39:28.367048Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:39:28.567139Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:39:31.569201Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:39:31.969292Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.175.27:30333/prevote after 3 attempts
+2025-05-13T03:39:31.969322Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:39:34.971726Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:39:35.071822Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:39:38.073425Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:39:38.273513Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:39:41.276150Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:39:41.676249Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.182.97:30333/prevote after 3 attempts
+2025-05-13T03:39:41.676282Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:39:44.678642Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:39:44.778733Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:39:47.780687Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:39:47.980782Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:39:50.982879Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:39:51.382974Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.185.122:30333/prevote after 3 attempts
+2025-05-13T03:39:51.383007Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:39:54.384867Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:39:54.484968Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:39:57.486902Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:39:57.687003Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:40:00.689028Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:40:01.089126Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.186.223:30333/prevote after 3 attempts
+2025-05-13T03:40:01.089161Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:40:04.090845Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:40:04.190953Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:40:07.192855Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:40:07.392950Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:40:10.394714Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:40:10.794820Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.188.110:30333/prevote after 3 attempts
+2025-05-13T03:40:10.794859Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.189.42:30333/prevote for round 1
+2025-05-13T03:40:13.797140Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.189.42:30333/prevote
+2025-05-13T03:40:13.897234Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.189.42:30333/prevote for round 1
+2025-05-13T03:40:16.900166Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.189.42:30333/prevote
+2025-05-13T03:40:17.100267Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.189.42:30333/prevote for round 1
+2025-05-13T03:40:20.102697Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.189.42:30333/prevote
+2025-05-13T03:40:20.502794Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.189.42:30333/prevote after 3 attempts
+2025-05-13T03:40:20.502827Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:40:23.505239Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:40:23.605338Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:40:26.607588Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:40:26.807687Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:40:29.809959Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:40:30.210048Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.190.109:30333/prevote after 3 attempts
+2025-05-13T03:40:30.210073Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 23 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:40:33.211721Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:40:33.311827Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 23 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:40:36.313423Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:40:36.513527Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 23 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:40:39.515891Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 23: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:40:39.915991Z ERROR aleph_research::handlers::handle_propose: ❌ Node 23: Final failure sending prevote to http://10.0.190.71:30333/prevote after 3 attempts
+2025-05-13T03:40:39.916026Z  INFO aleph_research::handlers::handle_propose: Node 23: Enqueuing local prevote into RBCProcessor for round 1
 
 
 
+node 26
 
 
 
+2025-05-13T03:37:43.684879Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.186.223:30333 (round 1)
+2025-05-13T03:37:43.685510Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.186.223:30333 (round 1)
+2025-05-13T03:37:43.685548Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.188.110:30333 (round 1)
+2025-05-13T03:37:43.686139Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.188.110:30333 (round 1)
+2025-05-13T03:37:43.686169Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.190.109:30333 (round 1)
+2025-05-13T03:37:43.686794Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.190.109:30333 (round 1)
+2025-05-13T03:37:43.686822Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.190.71:30333 (round 1)
+2025-05-13T03:37:43.687332Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.190.71:30333 (round 1)
+2025-05-13T03:37:43.687346Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-05-13T03:37:43.687359Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 26 enqueuing proposal for round 1 into RBCProcessor queue
+2025-05-13T03:37:43.687377Z  INFO aleph_rbc: Node 26: Proposal for round 1 sent successfully.
+2025-05-13T03:37:43.687386Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 26
+2025-05-13T03:37:43.687408Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.687411Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.687520Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 26. Count: 6/21
+2025-05-13T03:37:43.762757Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
+2025-05-13T03:37:43.762796Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.762800Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.762932Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 1. Count: 7/21
+2025-05-13T03:37:43.798952Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
+2025-05-13T03:37:43.798991Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.798995Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.799147Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 3. Count: 8/21
+2025-05-13T03:37:43.814618Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 16
+2025-05-13T03:37:43.814662Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.814666Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.814852Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 16. Count: 9/21
+2025-05-13T03:37:43.823028Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 28
+2025-05-13T03:37:43.823063Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.823067Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.823266Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 28. Count: 10/21
+2025-05-13T03:37:43.832762Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 13
+2025-05-13T03:37:43.832802Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.832806Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.833031Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 13. Count: 11/21
+2025-05-13T03:37:43.853894Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 18
+2025-05-13T03:37:43.853936Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.853940Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.854190Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 18. Count: 12/21
+2025-05-13T03:37:43.888051Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 9
+2025-05-13T03:37:43.888088Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.888092Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.888334Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 9. Count: 13/21
+2025-05-13T03:37:43.934299Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 12
+2025-05-13T03:37:43.934345Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.934350Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.934639Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 12. Count: 14/21
+2025-05-13T03:37:43.973006Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 7
+2025-05-13T03:37:43.973051Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:43.973055Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:43.973361Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 7. Count: 15/21
+2025-05-13T03:37:44.016797Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 29
+2025-05-13T03:37:44.016837Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.016841Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.017158Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 29. Count: 16/21
+2025-05-13T03:37:44.083946Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 22
+2025-05-13T03:37:44.083989Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.083993Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.084344Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 22. Count: 17/21
+2025-05-13T03:37:44.130483Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 20
+2025-05-13T03:37:44.130526Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.130530Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.130901Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 20. Count: 18/21
+2025-05-13T03:37:44.145886Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 11
+2025-05-13T03:37:44.145921Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.145925Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.146274Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 11. Count: 19/21
+2025-05-13T03:37:44.234247Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
+2025-05-13T03:37:44.234291Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.234295Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.234685Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 5. Count: 20/21
+2025-05-13T03:37:44.253767Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 30
+2025-05-13T03:37:44.253809Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.253813Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.254207Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 30. Count: 21/21
+2025-05-13T03:37:44.254218Z  INFO aleph_research::handlers::handle_propose: Node 26: Proposal quorum met. Aggregating and multicasting prevote for 21 proposals.
+2025-05-13T03:37:44.254605Z  INFO aleph_research::handlers::handle_propose: Node 26: Multicasting prevote to all nodes...
+2025-05-13T03:37:44.254610Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:44.352262Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:44.352293Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:44.366785Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:44.366812Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:44.377381Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:44.377404Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:44.425474Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:44.425500Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:44.450732Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:44.450758Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:44.465126Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:44.465149Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:44.481347Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:44.481374Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:44.497433Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:44.497482Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:44.504044Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:44.504073Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:44.513576Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:44.513600Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:44.525336Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:44.525367Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:44.532670Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:44.532696Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:44.548986Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:44.549010Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:37:44.557884Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.36:30333/prevote
+2025-05-13T03:37:44.557907Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:37:44.568969Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.103:30333/prevote
+2025-05-13T03:37:44.568988Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:37:44.577860Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.237:30333/prevote
+2025-05-13T03:37:44.577881Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:37:44.583047Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.157.103:30333/prevote
+2025-05-13T03:37:44.583064Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:37:44.588203Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.158.76:30333/prevote
+2025-05-13T03:37:44.588219Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:37:44.597337Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.162.187:30333/prevote
+2025-05-13T03:37:44.597359Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:37:44.602625Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.163.64:30333/prevote
+2025-05-13T03:37:44.602648Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:37:44.607701Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.164.112:30333/prevote
+2025-05-13T03:37:44.607718Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:37:44.614527Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.165.165:30333/prevote
+2025-05-13T03:37:44.614558Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:37:44.619907Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.175.27:30333/prevote
+2025-05-13T03:37:44.619923Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:37:44.627819Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.182.97:30333/prevote
+2025-05-13T03:37:44.627836Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:37:44.644901Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.185.122:30333/prevote
+2025-05-13T03:37:44.644926Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:37:44.667698Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.186.223:30333/prevote
+2025-05-13T03:37:44.667724Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:37:44.673323Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.188.110:30333/prevote
+2025-05-13T03:37:44.673355Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:37:44.678931Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.109:30333/prevote
+2025-05-13T03:37:44.678952Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:37:44.694813Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.71:30333/prevote
+2025-05-13T03:37:44.694875Z  INFO aleph_research::handlers::handle_propose: Node 26: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-13T03:37:44.695484Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 10
+2025-05-13T03:37:44.695545Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.695551Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.701192Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 10. Count: 22/21
+2025-05-13T03:37:44.701280Z  INFO aleph_research::handlers::handle_propose: Node 26: Proposal quorum met. Aggregating and multicasting prevote for 22 proposals.
+2025-05-13T03:37:44.705809Z  INFO aleph_research::handlers::handle_propose: Node 26: Multicasting prevote to all nodes...
+2025-05-13T03:37:44.705830Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:44.716983Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:44.717080Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:44.738399Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:44.738422Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:44.749575Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:44.749623Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:44.755288Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:44.755362Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:44.770984Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:44.771009Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:44.786333Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:44.786356Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:44.791349Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:44.791370Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:44.798146Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:44.798180Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:44.803634Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:44.803665Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:44.814037Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:44.814065Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:44.822410Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:44.822430Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:44.831464Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:44.831487Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:44.840032Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:44.840056Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:37:44.853733Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.36:30333/prevote
+2025-05-13T03:37:44.853778Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:37:44.859471Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.103:30333/prevote
+2025-05-13T03:37:44.859519Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:37:44.865729Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.237:30333/prevote
+2025-05-13T03:37:44.865763Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:37:44.872731Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.157.103:30333/prevote
+2025-05-13T03:37:44.872756Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:37:44.878624Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.158.76:30333/prevote
+2025-05-13T03:37:44.878647Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:37:44.883527Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.162.187:30333/prevote
+2025-05-13T03:37:44.883547Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:37:44.888483Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.163.64:30333/prevote
+2025-05-13T03:37:44.888502Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:37:44.893898Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.164.112:30333/prevote
+2025-05-13T03:37:44.893917Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:37:44.898673Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.165.165:30333/prevote
+2025-05-13T03:37:44.898694Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:37:44.904300Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.175.27:30333/prevote
+2025-05-13T03:37:44.904320Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:37:44.909583Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.182.97:30333/prevote
+2025-05-13T03:37:44.909602Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:37:44.914357Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.185.122:30333/prevote
+2025-05-13T03:37:44.914375Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:37:44.919310Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.186.223:30333/prevote
+2025-05-13T03:37:44.919329Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:37:44.924419Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.188.110:30333/prevote
+2025-05-13T03:37:44.924437Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:37:44.929425Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.109:30333/prevote
+2025-05-13T03:37:44.929443Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:37:44.934364Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.71:30333/prevote
+2025-05-13T03:37:44.934382Z  INFO aleph_research::handlers::handle_propose: Node 26: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-13T03:37:44.934564Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 15
+2025-05-13T03:37:44.934590Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:44.934594Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:44.934893Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 15. Count: 23/21
+2025-05-13T03:37:44.934905Z  INFO aleph_research::handlers::handle_propose: Node 26: Proposal quorum met. Aggregating and multicasting prevote for 23 proposals.
+2025-05-13T03:37:44.935321Z  INFO aleph_research::handlers::handle_propose: Node 26: Multicasting prevote to all nodes...
+2025-05-13T03:37:44.935327Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:44.952008Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:44.952033Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:44.966039Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:44.966063Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:44.978897Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:44.978923Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:44.983566Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:44.983585Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:44.988475Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:44.988494Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:37:44.998755Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.136.15:30333/prevote
+2025-05-13T03:37:44.998799Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:37:45.003747Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.237:30333/prevote
+2025-05-13T03:37:45.003766Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:37:45.012114Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.138.6:30333/prevote
+2025-05-13T03:37:45.012133Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:37:45.017188Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.120:30333/prevote
+2025-05-13T03:37:45.017207Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:37:45.022401Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.141.153:30333/prevote
+2025-05-13T03:37:45.022419Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:37:45.027281Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.105:30333/prevote
+2025-05-13T03:37:45.027296Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:37:45.034525Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.153.71:30333/prevote
+2025-05-13T03:37:45.034540Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:37:45.058727Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.196:30333/prevote
+2025-05-13T03:37:45.058751Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:37:45.077135Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.154.36:30333/prevote
+2025-05-13T03:37:45.077176Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:37:45.087440Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.103:30333/prevote
+2025-05-13T03:37:45.087464Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:37:45.092733Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.156.237:30333/prevote
+2025-05-13T03:37:45.092756Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:37:45.100521Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.157.103:30333/prevote
+2025-05-13T03:37:45.100544Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:37:45.106318Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.158.76:30333/prevote
+2025-05-13T03:37:45.106347Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:37:45.112996Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.162.187:30333/prevote
+2025-05-13T03:37:45.113016Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:37:45.120160Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.163.64:30333/prevote
+2025-05-13T03:37:45.120184Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:37:45.126478Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.164.112:30333/prevote
+2025-05-13T03:37:45.126497Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:37:45.132358Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.165.165:30333/prevote
+2025-05-13T03:37:45.132377Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:37:45.137519Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.175.27:30333/prevote
+2025-05-13T03:37:45.137575Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:37:45.146336Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.182.97:30333/prevote
+2025-05-13T03:37:45.146357Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:37:45.151441Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.185.122:30333/prevote
+2025-05-13T03:37:45.151460Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:37:45.169184Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.186.223:30333/prevote
+2025-05-13T03:37:45.169223Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:37:45.177149Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.188.110:30333/prevote
+2025-05-13T03:37:45.177174Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:37:45.201118Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.109:30333/prevote
+2025-05-13T03:37:45.201153Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:37:45.220231Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.190.71:30333/prevote
+2025-05-13T03:37:45.220261Z  INFO aleph_research::handlers::handle_propose: Node 26: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-13T03:37:45.220454Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 23
+2025-05-13T03:37:45.220481Z  INFO aleph_research::utils::dag_utils: Node 26: Ensuring DAG synchronization for round 1...
+2025-05-13T03:37:45.220485Z  INFO aleph_research::utils::dag_utils: Node 26: DAG latest round: 0, Target round: 1
+2025-05-13T03:37:45.220796Z  INFO aleph_research::structs::node: Node 26: Added proposal for round 1 from node 23. Count: 24/21
+2025-05-13T03:37:45.220811Z  INFO aleph_research::handlers::handle_propose: Node 26: Proposal quorum met. Aggregating and multicasting prevote for 24 proposals.
+2025-05-13T03:37:45.221242Z  INFO aleph_research::handlers::handle_propose: Node 26: Multicasting prevote to all nodes...
+2025-05-13T03:37:45.221247Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.14:30333/prevote for round 1
+2025-05-13T03:37:45.226402Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.14:30333/prevote
+2025-05-13T03:37:45.226423Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.129.92:30333/prevote for round 1
+2025-05-13T03:37:45.232777Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.129.92:30333/prevote
+2025-05-13T03:37:45.232798Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.119:30333/prevote for round 1
+2025-05-13T03:37:45.238504Z  INFO aleph_research::handlers::handle_propose: ✅ Node 26: Prevote success to http://10.0.132.119:30333/prevote
+2025-05-13T03:37:45.238523Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:48.240469Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:48.340555Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:51.342256Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:51.542345Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.132.17:30333/prevote for round 1
+2025-05-13T03:37:54.544003Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.132.17:30333/prevote
+2025-05-13T03:37:54.944100Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.132.17:30333/prevote after 3 attempts
+2025-05-13T03:37:54.944132Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:37:57.946441Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.134.29:30333/prevote
+2025-05-13T03:37:58.046536Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:38:01.048626Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.134.29:30333/prevote
+2025-05-13T03:38:01.248722Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.134.29:30333/prevote for round 1
+2025-05-13T03:38:04.251670Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.134.29:30333/prevote
+2025-05-13T03:38:04.651765Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.134.29:30333/prevote after 3 attempts
+2025-05-13T03:38:04.651791Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:38:07.655026Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.136.15:30333/prevote
+2025-05-13T03:38:07.755117Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:38:10.757041Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.136.15:30333/prevote
+2025-05-13T03:38:10.957142Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.136.15:30333/prevote for round 1
+2025-05-13T03:38:13.959054Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.136.15:30333/prevote
+2025-05-13T03:38:14.359139Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.136.15:30333/prevote after 3 attempts
+2025-05-13T03:38:14.359155Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:38:17.361214Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.237:30333/prevote
+2025-05-13T03:38:17.461295Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:38:20.463542Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.237:30333/prevote
+2025-05-13T03:38:20.663634Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.138.237:30333/prevote for round 1
+2025-05-13T03:38:23.665650Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.237:30333/prevote
+2025-05-13T03:38:24.065748Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.138.237:30333/prevote after 3 attempts
+2025-05-13T03:38:24.065779Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:38:27.068657Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.6:30333/prevote
+2025-05-13T03:38:27.168744Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:38:30.171772Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.6:30333/prevote
+2025-05-13T03:38:30.371851Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.138.6:30333/prevote for round 1
+2025-05-13T03:38:33.374818Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.138.6:30333/prevote
+2025-05-13T03:38:33.774899Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.138.6:30333/prevote after 3 attempts
+2025-05-13T03:38:33.774912Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:38:36.777200Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.120:30333/prevote
+2025-05-13T03:38:36.877297Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:38:39.879232Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.120:30333/prevote
+2025-05-13T03:38:40.079331Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.141.120:30333/prevote for round 1
+2025-05-13T03:38:43.081301Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.120:30333/prevote
+2025-05-13T03:38:43.481394Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.141.120:30333/prevote after 3 attempts
+2025-05-13T03:38:43.481421Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:38:46.483678Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.153:30333/prevote
+2025-05-13T03:38:46.583760Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:38:49.586565Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.153:30333/prevote
+2025-05-13T03:38:49.786647Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.141.153:30333/prevote for round 1
+2025-05-13T03:38:52.788730Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.141.153:30333/prevote
+2025-05-13T03:38:53.188820Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.141.153:30333/prevote after 3 attempts
+2025-05-13T03:38:53.188841Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:38:56.191008Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.105:30333/prevote
+2025-05-13T03:38:56.291094Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:38:59.292959Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.105:30333/prevote
+2025-05-13T03:38:59.493047Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.153.105:30333/prevote for round 1
+2025-05-13T03:39:02.495258Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.105:30333/prevote
+2025-05-13T03:39:02.895353Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.153.105:30333/prevote after 3 attempts
+2025-05-13T03:39:02.895369Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:39:05.897696Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:39:05.997787Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:39:09.000020Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:39:09.200107Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.153.71:30333/prevote for round 1
+2025-05-13T03:39:12.202227Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.153.71:30333/prevote
+2025-05-13T03:39:12.602312Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.153.71:30333/prevote after 3 attempts
+2025-05-13T03:39:12.602331Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:39:15.604259Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:39:15.704340Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:39:18.706606Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:39:18.906696Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.154.196:30333/prevote for round 1
+2025-05-13T03:39:21.908568Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.196:30333/prevote
+2025-05-13T03:39:22.308667Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.154.196:30333/prevote after 3 attempts
+2025-05-13T03:39:22.308698Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:39:25.310044Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:39:25.410120Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:39:28.412108Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:39:28.612188Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.154.36:30333/prevote for round 1
+2025-05-13T03:39:31.613998Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.154.36:30333/prevote
+2025-05-13T03:39:32.014083Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.154.36:30333/prevote after 3 attempts
+2025-05-13T03:39:32.014101Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:39:35.016614Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:39:35.116698Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:39:38.118741Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:39:38.318822Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.156.103:30333/prevote for round 1
+2025-05-13T03:39:41.321911Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.103:30333/prevote
+2025-05-13T03:39:41.722005Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.156.103:30333/prevote after 3 attempts
+2025-05-13T03:39:41.722028Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:39:44.724498Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:39:44.824589Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:39:47.825980Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:39:48.026080Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.156.237:30333/prevote for round 1
+2025-05-13T03:39:51.028764Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.156.237:30333/prevote
+2025-05-13T03:39:51.428860Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.156.237:30333/prevote after 3 attempts
+2025-05-13T03:39:51.428887Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:39:54.431292Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:39:54.531385Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:39:57.533390Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:39:57.733472Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.157.103:30333/prevote for round 1
+2025-05-13T03:40:00.735413Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.157.103:30333/prevote
+2025-05-13T03:40:01.135498Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.157.103:30333/prevote after 3 attempts
+2025-05-13T03:40:01.135516Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:40:04.137513Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:40:04.237619Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:40:07.239715Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:40:07.439809Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.158.76:30333/prevote for round 1
+2025-05-13T03:40:10.442825Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.158.76:30333/prevote
+2025-05-13T03:40:10.842917Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.158.76:30333/prevote after 3 attempts
+2025-05-13T03:40:10.842946Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:40:13.845500Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:40:13.945586Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:40:16.947809Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:40:17.147890Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.162.187:30333/prevote for round 1
+2025-05-13T03:40:20.150597Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.162.187:30333/prevote
+2025-05-13T03:40:20.550682Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.162.187:30333/prevote after 3 attempts
+2025-05-13T03:40:20.550707Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:40:23.552572Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:40:23.652663Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:40:26.654807Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:40:26.854896Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.163.64:30333/prevote for round 1
+2025-05-13T03:40:29.857439Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.163.64:30333/prevote
+2025-05-13T03:40:30.257539Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.163.64:30333/prevote after 3 attempts
+2025-05-13T03:40:30.257558Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:40:33.259604Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:40:33.359703Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:40:36.361614Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:40:36.561696Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.164.112:30333/prevote for round 1
+2025-05-13T03:40:39.563793Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.164.112:30333/prevote
+2025-05-13T03:40:39.963894Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.164.112:30333/prevote after 3 attempts
+2025-05-13T03:40:39.963923Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:40:42.966128Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.165.165:30333/prevote
+2025-05-13T03:40:43.066219Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:40:46.068631Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.165.165:30333/prevote
+2025-05-13T03:40:46.268727Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.165.165:30333/prevote for round 1
+2025-05-13T03:40:49.271704Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.165.165:30333/prevote
+2025-05-13T03:40:49.671787Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.165.165:30333/prevote after 3 attempts
+2025-05-13T03:40:49.671809Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:40:52.674776Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:40:52.774857Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:40:55.777053Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:40:55.977143Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.175.27:30333/prevote for round 1
+2025-05-13T03:40:58.979051Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.175.27:30333/prevote
+2025-05-13T03:40:59.379146Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.175.27:30333/prevote after 3 attempts
+2025-05-13T03:40:59.379175Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:41:02.381092Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:41:02.481182Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:41:05.483284Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:41:05.683373Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.182.97:30333/prevote for round 1
+2025-05-13T03:41:08.685137Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.182.97:30333/prevote
+2025-05-13T03:41:09.085238Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.182.97:30333/prevote after 3 attempts
+2025-05-13T03:41:09.085267Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:41:12.087377Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:41:12.187469Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:41:15.189289Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:41:15.389385Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.185.122:30333/prevote for round 1
+2025-05-13T03:41:18.391491Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.185.122:30333/prevote
+2025-05-13T03:41:18.791577Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.185.122:30333/prevote after 3 attempts
+2025-05-13T03:41:18.791599Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:41:21.793687Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:41:21.893772Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:41:24.896531Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:41:25.096635Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.186.223:30333/prevote for round 1
+2025-05-13T03:41:28.098644Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.186.223:30333/prevote
+2025-05-13T03:41:28.498738Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.186.223:30333/prevote after 3 attempts
+2025-05-13T03:41:28.498768Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:41:31.501386Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:41:31.601477Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:41:34.602951Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:41:34.803042Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.188.110:30333/prevote for round 1
+2025-05-13T03:41:37.805149Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.188.110:30333/prevote
+2025-05-13T03:41:38.205240Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.188.110:30333/prevote after 3 attempts
+2025-05-13T03:41:38.205260Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:41:41.207139Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:41:41.307218Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:41:44.309026Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:41:44.509119Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.190.109:30333/prevote for round 1
+2025-05-13T03:41:47.511427Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.109:30333/prevote
+2025-05-13T03:41:47.911522Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.190.109:30333/prevote after 3 attempts
+2025-05-13T03:41:47.911545Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:41:50.913531Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:41:51.013638Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 2/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:41:54.015627Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:41:54.215713Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 3/3: Node 26 sending prevote to http://10.0.190.71:30333/prevote for round 1
+2025-05-13T03:41:57.217162Z ERROR aleph_research::handlers::handle_propose: ⏱️ Node 26: Timeout sending prevote to http://10.0.190.71:30333/prevote
+2025-05-13T03:41:57.617249Z ERROR aleph_research::handlers::handle_propose: ❌ Node 26: Final failure sending prevote to http://10.0.190.71:30333/prevote after 3 attempts
+2025-05-13T03:41:57.617272Z  INFO aleph_research::handlers::handle_propose: Node 26: Enqueuing local prevote into RBCProcessor for round 1
 
 
 
+both silently failing idk why...
+ChatGPT said:
 
+From the logs you've shared, here's a clear diagnosis of the issue and suggested next steps:
+✅ What’s working:
 
+    Node 23 is successfully multicasting prevotes after proposal quorum is reached.
 
+    Initial prevotes (first ~20) are successful and acknowledged by peers.
 
+    Nodes like 10.0.186.223, 10.0.188.110, etc., are reachable and responding to proposals (from Node 26).
 
+❌ What's failing:
 
+    After the first successful wave of prevotes, Node 23 repeatedly fails to deliver prevotes to many nodes such as:
 
+        10.0.153.71
 
+        10.0.154.196
 
+        10.0.156.103
 
+        10.0.158.76
 
+        ...
 
+    Each of these fails 3 times with timeouts, followed by a Final failure log.
 
+    Despite these addresses previously being responsive to proposals, they stop responding to prevotes.
 
+⚠️ Root Cause Possibilities
 
-d this one broke here...
+    Network/Socket Saturation (likely):
 
+        Node 23 is sending ~30 HTTP requests in rapid succession.
 
+        All prevotes are sent almost synchronously without await delay, which may overload:
 
+            Node 23’s outbound connection pool.
 
+            Target nodes’ listener queues or accept buffers.
 
+        Cloud firewalls or EC2 instance limits may throttle connections.
 
+    HTTP Server Limitations:
 
+        If the target nodes use a lightweight or rate-limited server (like Axum with a small default accept backlog), they may reject excess concurrent connections.
 
+    Latency Accumulation:
 
+        As more nodes join and the number of prevotes increases, the last ~10 targets may suffer from delayed scheduling and trigger client-side timeout.
 
+    Resource Starvation:
 
+        Nodes receiving too many proposals or prevotes (e.g., 30 concurrently) might be stuck in I/O or busy processing, causing them to appear "offline" temporarily.
 
+✅ Suggested Fixes
+A. Throttle Prevote Dispatching
 
+Introduce a configurable delay or concurrency limit:
 
-sh-4.2$ tail -f /aleph/logs/node_status
-2025-05-09T02:16:23.055573Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.179.202:30333/prevote
-2025-05-09T02:16:23.055613Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.181.188:30333/prevote for round 1
-2025-05-09T02:16:24.043691Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.181.188:30333/prevote
-2025-05-09T02:16:24.043731Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.186.239:30333/prevote for round 1
-2025-05-09T02:16:25.964062Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.186.239:30333/prevote
-2025-05-09T02:16:25.964102Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.188.252:30333/prevote for round 1
-2025-05-09T02:16:27.574511Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.188.252:30333/prevote
-2025-05-09T02:16:27.574552Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 3 sending prevote to http://10.0.191.230:30333/prevote for round 1
-2025-05-09T02:16:29.373883Z  INFO aleph_research::handlers::handle_propose: ✅ Node 3: Prevote success to http://10.0.191.230:30333/prevote
-2025-05-09T02:16:29.373921Z  INFO aleph_research::handlers::handle_propose: Node 3: Enqueuing local prevote into RBCProcessor for round 1
+// Add small delay or use `FuturesUnordered` to control concurrency
+for (i, peer_url) in peer_urls.iter().enumerate() {
+    let client = client.clone();
+    let prevote = prevote.clone();
+    let url = format!("{peer_url}/prevote");
 
+    tokio::spawn(async move {
+        if let Err(e) = send_prevote_with_retry(&client, &url, &prevote).await {
+            error!("⏱️ Node {}: Final failure sending prevote to {}: {}", node_id, url, e);
+        }
+    });
 
+    // Optional: throttle every N requests
+    if i % 5 == 0 {
+        tokio::time::sleep(Duration::from_millis(50)).await;
+    }
+}
 
+B. Increase HTTP Timeouts and Retries
 
+In your HTTP client config:
 
+Client::builder()
+    .timeout(Duration::from_secs(10))
+    .pool_max_idle_per_host(10)
+    .build()
 
+C. Adjust Target Nodes' Listener Settings
 
+If you're using Axum/Hyper:
 
+    Increase accept backlog:
 
+TcpListener::bind(addr)?.listen(128)?; // or higher
 
+    Increase per-request timeout.
 
+D. Detect and Log Node Responsiveness
 
+Before multicasting:
 
-an
+    Ping each peer or log known unresponsive ones.
+
+    Avoid retrying unreachable nodes aggressively.
+
+✅ Bonus Diagnostics to Add
+
+    Log queue length and memory usage per node.
+
+    Instrument request counts at each server to confirm overload.
+
+    Compare timestamps — when was the last successful response vs timeout surge.
+
+Let me know if you'd like a specific patch to your multicast_prevote logic or help profiling memory usage/connection limits.

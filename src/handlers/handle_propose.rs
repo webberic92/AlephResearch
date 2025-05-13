@@ -1,7 +1,7 @@
 use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
 use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{sync::{Mutex, Semaphore}, time::timeout};
 use tracing::{ error, info, warn };
 use crate::{
     processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
@@ -153,26 +153,22 @@ pub async fn handle_propose(
 
         info!("Node {}: Multicasting prevote to all nodes...", node_id);
 
+       
         for target_node in node_list {
             if target_node != node_ip {
+                // Clone as needed here
                 let url = format!("http://{}/prevote", target_node);
                 let mut attempt = 0;
                 let max_attempts = 3;
+                let send_timeout = Duration::from_secs(3);
                 let mut success = false;
-                let send_timeout = Duration::from_secs(3); // adjust as needed
         
                 while attempt < max_attempts {
                     attempt += 1;
+                    info!("📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
+                          attempt, max_attempts, node_id, url, round_id);
         
-                    info!(
-                        "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
-                        attempt, max_attempts, node_id, url, round_id
-                    );
-        
-                    let send_fut = client
-                        .post(&url)
-                        .json(&prevote_request)
-                        .send();
+                    let send_fut = client.post(&url).json(&prevote_request).send();
         
                     match timeout(send_timeout, send_fut).await {
                         Ok(Ok(resp)) if resp.status().is_success() => {
@@ -204,6 +200,7 @@ pub async fn handle_propose(
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
+        
 
         // ✅ Handle prevote locally
         {

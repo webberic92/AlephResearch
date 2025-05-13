@@ -117,10 +117,10 @@ pub fn reconstruct_unit(
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    info!(
-        "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
-        round_id, transactions.len(), parent_units.len(), proposer_node
-    );
+    // info!(
+    //     "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
+    //     round_id, transactions.len(), parent_units.len(), proposer_node
+    // );
 
 
     let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();

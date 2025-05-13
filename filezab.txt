@@ -175,7 +175,7 @@ pub async fn handle_commit(
 
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, time::{sleep, timeout}};
+use tokio::{sync::{Mutex, Semaphore}, time::{sleep, timeout}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
 use reqwest::Client;
@@ -413,44 +413,55 @@ pub async fn handle_prevote(
         error!("Node {}: RBCProcessor not initialized when trying to enqueue *local* commit!", node_id);
     }
 
-    for target_node in node_list {
-        let target_url = format!("http://{}/commit", target_node);
-        let commit_payload = commit_request.clone();
-        let mut attempt = 0;
-        let max_attempts = 3;
-        let mut success = false;
-
-        while attempt < max_attempts {
-            attempt += 1;
-            message_count.fetch_add(1, Ordering::Relaxed);
-            info!("\u{1f4e4} Attempt {}/{}: Node {} sending commit to {} for round {}", attempt, max_attempts, node_id, target_url, round_id);
-
-            let res = client.post(&target_url).json(&commit_payload).send().await;
-
-            match res {
-                Ok(response) if response.status().is_success() => {
-                    info!("\u{2705} Successfully sent commit to {}", target_url);
-                    success = true;
-                    break;
+        for target_node in node_list {
+            let target_url = format!("http://{}/commit", target_node);
+            let commit_payload = commit_request.clone();
+            let node_id = node_id;
+            let round_id = round_id;
+        
+            let mut attempt = 0;
+            let max_attempts = 3;
+            let mut success = false;
+        
+            while attempt < max_attempts {
+                attempt += 1;
+                message_count.fetch_add(1, Ordering::Relaxed);
+        
+                info!(
+                    "📤 Attempt {}/{}: Node {} sending commit to {} for round {}",
+                    attempt, max_attempts, node_id, target_url, round_id
+                );
+        
+                let res = client.post(&target_url).json(&commit_payload).send().await;
+        
+                match res {
+                    Ok(response) if response.status().is_success() => {
+                        info!("✅ Successfully sent commit to {}", target_url);
+                        success = true;
+                        break;
+                    }
+                    Ok(response) => {
+                        let status = response.status();
+                        let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
+                        error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
+                    }
+                    Err(e) => {
+                        error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                    }
                 }
-                Ok(response) => {
-                    let status = response.status();
-                    let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
-                    error!("\u{274c} Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
-                }
-                Err(e) => {
-                    error!("\u{274c} Network error while sending commit to {}: {:?}", target_url, e);
-                }
+        
+                let delay = 100 * 2u64.pow((attempt - 1) as u32);
+                sleep(Duration::from_millis(delay)).await;
             }
-
-            let delay = 100 * 2u64.pow((attempt - 1) as u32);
-            sleep(Duration::from_millis(delay)).await;
+        
+            if !success {
+                error!(
+                    "❌ Node {}: Final failure to send commit to {} after {} attempts",
+                    node_id, target_url, max_attempts
+                );
+            }
         }
 
-        if !success {
-            error!("\u{274c} Node {}: Final failure to send commit to {} after {} attempts", node_id, target_url, max_attempts);
-        }
-    }
 
     {
         let node_guard = node.lock().await;
@@ -463,7 +474,7 @@ pub async fn handle_prevote(
 use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
 use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
-use tokio::{sync::Mutex, time::timeout};
+use tokio::{sync::{Mutex, Semaphore}, time::timeout};
 use tracing::{ error, info, warn };
 use crate::{
     processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
@@ -615,26 +626,22 @@ pub async fn handle_propose(
 
         info!("Node {}: Multicasting prevote to all nodes...", node_id);
 
+       
         for target_node in node_list {
             if target_node != node_ip {
+                // Clone as needed here
                 let url = format!("http://{}/prevote", target_node);
                 let mut attempt = 0;
                 let max_attempts = 3;
+                let send_timeout = Duration::from_secs(3);
                 let mut success = false;
-                let send_timeout = Duration::from_secs(3); // adjust as needed
         
                 while attempt < max_attempts {
                     attempt += 1;
+                    info!("📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
+                          attempt, max_attempts, node_id, url, round_id);
         
-                    info!(
-                        "📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
-                        attempt, max_attempts, node_id, url, round_id
-                    );
-        
-                    let send_fut = client
-                        .post(&url)
-                        .json(&prevote_request)
-                        .send();
+                    let send_fut = client.post(&url).json(&prevote_request).send();
         
                     match timeout(send_timeout, send_fut).await {
                         Ok(Ok(resp)) if resp.status().is_success() => {
@@ -666,6 +673,7 @@ pub async fn handle_propose(
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
+        
 
         // ✅ Handle prevote locally
         {
@@ -765,7 +773,7 @@ pub async fn send_proposals(
             let res = client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal)
-                .timeout(Duration::from_millis(500))
+                // .timeout(Duration::from_millis(500))
                 .send()
                 .await;
 
@@ -1245,16 +1253,16 @@ pub fn reconstruct_unit(
         return Err("Reconstruction failed: No transactions provided".to_string());
     }
 
-    info!(
-        "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
-        round_id, transactions.len(), parent_units.len(), proposer_node
-    );
+    // info!(
+    //     "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
+    //     round_id, transactions.len(), parent_units.len(), proposer_node
+    // );
 
 
     let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
     let unit_id = format!("U{}-{}", round_id, proposer_node);
 
-    info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
+    // info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
     Ok(DagUnit {
         unit_id,
         proposer_node,
@@ -2081,10 +2089,23 @@ class TestAleph(Stack):
                 "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
                 # Increase system limits
-                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                # "sudo sysctl -p",
+
+                "echo 'net.core.somaxconn=65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_max_syn_backlog=65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.ip_local_port_range=1024 65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_tw_reuse=1' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_fin_timeout=15' >> /etc/sysctl.conf",
+                "echo 'net.core.netdev_max_backlog=16384' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_keepalive_time=120' >> /etc/sysctl.conf",
                 "sudo sysctl -p",
+
+
+
+
 
                 "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
                 "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
