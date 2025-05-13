@@ -82,10 +82,23 @@ class TestAleph(Stack):
                 "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
                 # Increase system limits
-                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
+                # "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
+                # "sudo sysctl -p",
+
+                "echo 'net.core.somaxconn=65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_max_syn_backlog=65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.ip_local_port_range=1024 65535' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_tw_reuse=1' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_fin_timeout=15' >> /etc/sysctl.conf",
+                "echo 'net.core.netdev_max_backlog=16384' >> /etc/sysctl.conf",
+                "echo 'net.ipv4.tcp_keepalive_time=120' >> /etc/sysctl.conf",
                 "sudo sysctl -p",
+
+
+
+
 
                 "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
                 "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
