@@ -33,6 +33,13 @@ pub async fn create_transaction_data(
             .into_iter()
             .map(|s| s.into_bytes())
             .collect::<Vec<_>>();
+        info!(
+            "Node {}: For round {}, resolved {} parent units: {:?}",
+            node_guard.id,
+            round_id,
+            parent_units.len(),
+            parent_units
+        );
 
         (
             node_guard.id,

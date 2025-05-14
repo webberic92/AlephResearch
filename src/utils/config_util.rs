@@ -1,4 +1,5 @@
 use serde_json::json;
+use sha2::Sha256;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tracing::info;
@@ -7,7 +8,7 @@ use std::path::Path;
 use base64::{engine::general_purpose, Engine};
 use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
-
+use sha2::Digest;
 
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
@@ -64,8 +65,11 @@ pub async fn write_finalized_dag_to_file(
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),
-            "parent_hashes": unit.parent_units.iter().map(|p| hex::encode(p)).collect::<Vec<_>>(),
-            "finalization_timestamp": unit.finalization_timestamp,
+            "parent_hashes": unit.parent_units.iter().map(|p| {
+                let hash = Sha256::digest(p.as_bytes());
+                hex::encode(hash)
+            }).collect::<Vec<_>>(), 
+           "finalization_timestamp": unit.finalization_timestamp,
         })).collect();
         
 
