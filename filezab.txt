@@ -46,6 +46,7 @@ pub async fn handle_commit(
 
     info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
+    
     if commit_count == quorum_threshold {
         info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 
@@ -176,7 +177,7 @@ pub async fn handle_commit(
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
 use tokio::{sync::{Mutex, Semaphore}, time::{sleep, timeout}};
-use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
+use std::{collections::{HashMap, HashSet}, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
 use reqwest::Client;
 use crate::{
@@ -336,22 +337,22 @@ pub async fn handle_prevote(
         let node_guard = node.lock().await;
         let dag_guard = node_guard.dag.lock().await;
         
+        // Build a hash lookup: hash(unit_id) => unit_id
+        let mut unit_hash_map: HashMap<Vec<u8>, String> = HashMap::new();
+        for unit in dag_guard.values().flatten() {
+            let digest = Sha256::digest(unit.unit_id.as_bytes()).to_vec();
+            unit_hash_map.insert(digest, unit.unit_id.clone());
+        }
+
         for hash in &proposal.parents {
             let hash_hex = hex::encode(hash);
-            let maybe_match = dag_guard.values().flatten().find_map(|unit| {
-                if Sha256::digest(unit.unit_id.as_bytes()).to_vec() == *hash {
-                    Some(unit.unit_id.clone())
-                } else {
-                    None
-                }
-            });
-        
-            if let Some(unit_id) = maybe_match {
-                resolved_parents.push(unit_id);
+            if let Some(unit_id) = unit_hash_map.get(hash) {
+                resolved_parents.push(unit_id.clone());
             } else {
                 warn!("Could not resolve parent hash {} to a known unit_id", hash_hex);
             }
         }
+
 
 
 
@@ -398,6 +399,11 @@ pub async fn handle_prevote(
 
     if vote_count < quorum_threshold {
         info!("Node {}: Not enough prevote messages received ({}/{}). Waiting for quorum before proceeding to commit.", node_id, vote_count, quorum_threshold);
+        return Ok(());
+    }
+
+    if vote_count > quorum_threshold {
+        info!("Node {}: Already reached quorum for round {} ({} votes). Ignoring additional prevote.", node_id, round_id, vote_count);
         return Ok(());
     }
 
@@ -617,7 +623,7 @@ pub async fn handle_propose(
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
-    if proposal_count >= quorum_threshold {
+    if proposal_count == quorum_threshold {
         info!(
             "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
             node_id, stored_proposals.len()
@@ -789,7 +795,7 @@ pub async fn send_proposals(
             let res = local_client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal)
-                // .timeout(Duration::from_millis(500))
+                .timeout(Duration::from_millis(500))
                 .send()
                 .await;
 
@@ -2032,8 +2038,8 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
        
         INSTANCE_TYPE ="c5n.large" # Define the instance type
-        INSTANCES_NUMBER = 16 # Define the number of instances
-        BATCH_SIZE =  128# Define the number of transactions in a batch
+        INSTANCES_NUMBER = 32 # Define the number of instances
+        BATCH_SIZE =  16# Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)

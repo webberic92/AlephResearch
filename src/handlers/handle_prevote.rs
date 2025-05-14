@@ -3,7 +3,7 @@
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
 use tokio::{sync::{Mutex, Semaphore}, time::{sleep, timeout}};
-use std::{collections::HashSet, sync::{atomic::Ordering, Arc}, time::Duration};
+use std::{collections::{HashMap, HashSet}, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
 use reqwest::Client;
 use crate::{
@@ -163,22 +163,22 @@ pub async fn handle_prevote(
         let node_guard = node.lock().await;
         let dag_guard = node_guard.dag.lock().await;
         
+        // Build a hash lookup: hash(unit_id) => unit_id
+        let mut unit_hash_map: HashMap<Vec<u8>, String> = HashMap::new();
+        for unit in dag_guard.values().flatten() {
+            let digest = Sha256::digest(unit.unit_id.as_bytes()).to_vec();
+            unit_hash_map.insert(digest, unit.unit_id.clone());
+        }
+
         for hash in &proposal.parents {
             let hash_hex = hex::encode(hash);
-            let maybe_match = dag_guard.values().flatten().find_map(|unit| {
-                if Sha256::digest(unit.unit_id.as_bytes()).to_vec() == *hash {
-                    Some(unit.unit_id.clone())
-                } else {
-                    None
-                }
-            });
-        
-            if let Some(unit_id) = maybe_match {
-                resolved_parents.push(unit_id);
+            if let Some(unit_id) = unit_hash_map.get(hash) {
+                resolved_parents.push(unit_id.clone());
             } else {
                 warn!("Could not resolve parent hash {} to a known unit_id", hash_hex);
             }
         }
+
 
 
 
