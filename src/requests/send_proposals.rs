@@ -28,12 +28,16 @@ use anyhow::anyhow;
 */
 
 pub async fn send_proposals(
-    client: Arc<Client>,  
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
     //info!("🔍 [DEBUG] Attempting to acquire lock for send_proposals() in round {}", propose_request.base.round_id);
-    
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
+
     let lock_result = timeout(Duration::from_secs(5), node.lock()).await;
     
     let node_guard = match lock_result {
@@ -62,7 +66,6 @@ pub async fn send_proposals(
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
 
     for node_url in nodes {
-        let client = client.clone();
         let proposal = propose_request.clone();
         let mut attempt = 0;
         let max_attempts = 3;
@@ -73,10 +76,10 @@ pub async fn send_proposals(
 
             info!("📤 Attempt {}/{}: Sending proposal to {} (round {})", attempt, max_attempts, node_url, round_id);
 
-            let res = client
+            let res = local_client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal)
-                // .timeout(Duration::from_millis(500))
+                .timeout(Duration::from_millis(500))
                 .send()
                 .await;
 

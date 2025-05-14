@@ -15,7 +15,6 @@ use crate::{
 };
 
 
-/// **🔗 Initialize API Routes with `Arc<Mutex<Node>>`, `Client`, and `RBCProcessor`**
 pub fn initialize_apis(node: Arc<Mutex<Node>>,rbc_processor: Arc<RBCProcessor>) -> Router {
     Router::new()
         .route("/propose", post({

@@ -46,6 +46,7 @@ pub async fn handle_commit(
 
     info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
+    
     if commit_count == quorum_threshold {
         info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 

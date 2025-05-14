@@ -41,10 +41,9 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> 
     all_healthy
 }
 
-
 /// **🛠️ Wait until all nodes report healthy**  
-/// - Retries up to 10 times, checking every 3 seconds.
-pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
+/// - Retries every second until all nodes are healthy.
+pub async fn wait_for_all_nodes_health(node: Arc<Mutex<Node>>) -> Result<(), Error> {
     loop {
         info!("🔍 Checking health of all nodes...");
 
@@ -53,12 +52,12 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
             node_guard.nodes.clone()
         };
 
-
         let mut unhealthy_nodes = Vec::new();
+        let client = reqwest::Client::new(); // Create once
 
         let mut health_checks = vec![];
         for node_url in nodes {
-            let client = client.clone();
+            let client = client.clone(); // ✅ clone per task
             let url = node_url.clone();
 
             let check = async move {
@@ -92,6 +91,7 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
         }
     }
 }
+
 
 
 

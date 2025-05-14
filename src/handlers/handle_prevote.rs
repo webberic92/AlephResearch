@@ -17,9 +17,14 @@ use crate::{
 
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
+
     let (node_id, round_id, quorum_threshold, total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
@@ -223,6 +228,11 @@ pub async fn handle_prevote(
         return Ok(());
     }
 
+    if vote_count > quorum_threshold {
+        info!("Node {}: Already reached quorum for round {} ({} votes). Ignoring additional prevote.", node_id, round_id, vote_count);
+        return Ok(());
+    }
+
     info!("Node {}: Prevote Quorum reached for round {}. Proceeding to send commits.", node_id, round_id);
 
     let commit_request = CommitRequest {
@@ -259,23 +269,28 @@ pub async fn handle_prevote(
                     attempt, max_attempts, node_id, target_url, round_id
                 );
         
-                let res = client.post(&target_url).json(&commit_payload).send().await;
-        
+                let send_fut = local_client.post(&target_url).json(&commit_payload).send();
+                let res = tokio::time::timeout(Duration::from_secs(3), send_fut).await;
+                        
                 match res {
-                    Ok(response) if response.status().is_success() => {
+                    Ok(Ok(response)) if response.status().is_success() => {
                         info!("✅ Successfully sent commit to {}", target_url);
                         success = true;
                         break;
                     }
-                    Ok(response) => {
+                    Ok(Ok(response)) => {
                         let status = response.status();
                         let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
                         error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
                     }
-                    Err(e) => {
+                    Ok(Err(e)) => {
                         error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
                     }
+                    Err(_) => {
+                        error!("⏱️ Node {}: Timeout sending commit to {}", node_id, target_url);
+                    }
                 }
+                
         
                 let delay = 100 * 2u64.pow((attempt - 1) as u32);
                 sleep(Duration::from_millis(delay)).await;

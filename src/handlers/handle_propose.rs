@@ -51,13 +51,16 @@ Each transaction has:
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let proposer_id = propose_request.base.proposing_node_id as usize;
     let node_id;
-
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
@@ -131,7 +134,7 @@ pub async fn handle_propose(
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
-    if proposal_count >= quorum_threshold {
+    if proposal_count == quorum_threshold {
         info!(
             "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
             node_id, stored_proposals.len()
@@ -168,7 +171,7 @@ pub async fn handle_propose(
                     info!("📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
                           attempt, max_attempts, node_id, url, round_id);
         
-                    let send_fut = client.post(&url).json(&prevote_request).send();
+                    let send_fut = local_client.post(&url).json(&prevote_request).send();
         
                     match timeout(send_timeout, send_fut).await {
                         Ok(Ok(resp)) if resp.status().is_success() => {

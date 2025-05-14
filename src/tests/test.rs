@@ -156,7 +156,6 @@ mod tests {
             256,                              // transaction_size
             3,                                // data_shards ✅ FIXED
             1,
-            Arc::new(Client::new()),
         );
     
         // Step 2: Create a full transaction proposal from this node
@@ -172,8 +171,7 @@ mod tests {
         };
     
         // Step 4: Simulate the prevote handling
-        let client = Arc::new(Client::new());
-        let result = handle_prevote(node.clone(), client, prevote_request).await;
+        let result = handle_prevote(node.clone(), prevote_request).await;
     
         // Step 5: Assert it succeeded (i.e., shard was reconstructed + hash and proof verified)
         assert!(
@@ -199,7 +197,6 @@ mod tests {
             256,                              // transaction_size
             7,                                // data_shards ✅ FIXED
             1,
-            Arc::new(Client::new()),
         );
     
         // Step 2: Create a full transaction proposal from this node
@@ -215,8 +212,7 @@ mod tests {
         };
     
         // Step 4: Simulate the prevote handling
-        let client = Arc::new(Client::new());
-        let result = handle_prevote(node.clone(), client, prevote_request).await;
+        let result = handle_prevote(node.clone(), prevote_request).await;
     
         // Step 5: Assert it succeeded (i.e., shard was reconstructed + hash and proof verified)
         assert!(
@@ -237,7 +233,6 @@ mod tests {
             let mut padded = tx_data.clone();
             padded.resize(transaction_size, 0);
         
-            let tx_hash = Sha256::digest(&padded).to_vec();
         
             // Encode with RS
             let rs = ReedSolomon::new(data_shards, total_nodes - data_shards).unwrap();

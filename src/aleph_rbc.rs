@@ -5,6 +5,7 @@ use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
 use reqwest::Client;
 use tokio::sync::Mutex;
+use std::time::Duration;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 use tracing::{error, info};
@@ -12,15 +13,19 @@ use tracing_subscriber;
 use aleph_research::utils::config_util::load_config;
 use aleph_research::structs::node::Node;
 use anyhow::Result;
+use socket2::{Socket, Domain, Type};
+use std::net::TcpListener as StdTcpListener;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
     
+    std::panic::set_hook(Box::new(|panic_info| {
+        eprintln!("PANIC: {:?}", panic_info);
+        std::process::exit(1);
+    }));
     let config = load_config(None);
     let addr = config.network.listen_address.parse::<SocketAddr>()?;
-    let client = Arc::new(Client::new());
-
     // ✅ Step 1: Create `Node` **without `RBCProcessor` initially**
     let node = Node::new(
         config.node.id,
@@ -32,40 +37,53 @@ async fn main() -> Result<()> {
         config.consensus.transaction_size.clone(),
         config.consensus.data_shards.clone(),
         config.consensus.total_rounds.clone(),
-        client.clone(),
     );
 
     // ✅ Step 2: Now that `Node` exists, create `RBCProcessor`
-    let rbc_processor: Arc<RBCProcessor> = Arc::new(RBCProcessor::new(node.clone(), client.clone()));
+    let rbc_processor: Arc<RBCProcessor> = Arc::new(RBCProcessor::new(node.clone()));
 
     // ✅ Step 3: Attach `rbc_processor` to `Node`
-    Node::set_rbc_processor(node.clone(),rbc_processor.clone(), client.clone()).await;
+    Node::set_rbc_processor(node.clone(),rbc_processor.clone()).await;
 
     // ✅ Step 4: Pass everything to the API
     let app = initialize_apis(node.clone(), rbc_processor.clone());
 
     // ✅ **Spawn Transaction Execution Logic**
     let node_clone = node.clone();
-    let client_clone = client.clone();
     info!("LATENCY START");
     tokio::spawn(async move {
-        if let Err(e) = execute_transaction_logic(node_clone, client_clone).await {
+        if let Err(e) = execute_transaction_logic(node_clone).await {
             error!("Transaction execution failed: {:?}", e);
         }
     });
 
 
-    let listener = TcpListener::bind(addr).await?;
-    info!("API server running on {}", addr);
+    let socket = Socket::new(Domain::IPV4, Type::STREAM, None)?;
+    socket.set_reuse_address(true)?;
+    socket.set_nonblocking(true)?;
+    socket.set_nodelay(true)?;
+    socket.bind(&addr.into())?;
+    socket.listen(1024)?;
 
-    axum::serve(listener, app.into_make_service()).await?;
-    Ok(())
+    let std_listener: StdTcpListener = socket.into();
+    let listener = tokio::net::TcpListener::from_std(std_listener)?;
+    info!("✅ Custom socket listener created on {}", addr);
+    info!("✅ Starting Axum server on {}", addr);
+    let axum_handle = tokio::spawn(async move {
+        if let Err(e) = axum::serve(listener, app.into_make_service()).await {
+            error!("🔥 axum server crashed: {:?}", e);
+        }
+    });
+    
+    // block until axum server exits
+    if let Err(e) = axum_handle.await {
+        error!("Axum task join error: {:?}", e);
+    }    Ok(())
 }
 async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
-    wait_for_all_nodes_health(&client, node.clone()).await?;  
+    wait_for_all_nodes_health(node.clone()).await?;  
 
     // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
@@ -81,7 +99,7 @@ async fn execute_transaction_logic(
             );
 
             // ✅ Step 2: Send proposal
-            if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
+            if let Err(e) = send_proposals(node.clone(), propose_request).await {
                 error!(
                     "Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e
