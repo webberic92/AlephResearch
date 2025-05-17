@@ -43,8 +43,8 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
-        let round_key = round_id.to_be_bytes().to_vec();
-        if let Some(voter_set) = quorum_votes.get(&round_key) {
+        let round_key = round_id.to_be_bytes();
+        if let Some(voter_set) = quorum_votes.get(&round_key[..]) {
             if voter_set.len() >= quorum_threshold {
                 info!("Node {}: Quorum already reached for round {} ({} votes). Dropping incoming prevote.", node_guard.id, round_id, voter_set.len());
                 return Ok(());
@@ -55,7 +55,8 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let voter_set = quorum_votes.entry(round_id.to_be_bytes().to_vec()).or_insert_with(HashSet::new);
+        let round_key = round_id.to_be_bytes();
+        let voter_set = quorum_votes.entry(round_key.to_vec()).or_insert_with(HashSet::new);
         if voter_set.contains(&prevote_request.sender_url) {
             info!("Node {}: Already received prevote from Node {} for round {}. Ignoring.", node_id, prevote_request.sender_url, round_id);
             return Ok(());
@@ -72,14 +73,14 @@ pub async fn handle_prevote(
         let proposer_id = proposal.base.proposing_node_id as usize;
         for (i, transaction) in proposal.transactions.iter().enumerate() {
             for (j, shard_str) in transaction.shards.iter().enumerate() {
-                
                 match general_purpose::STANDARD.decode(shard_str) {
                     Ok(decoded) => {
                         let (transaction_size, data_shards) = {
                             let node_guard = node.lock().await;
                             (node_guard.transaction_size, node_guard.data_shards)
                         };
-                        let expected_len = (transaction_size + data_shards - 1) / data_shards;                        if decoded.len() != expected_len {
+                        let expected_len = (transaction_size + data_shards - 1) / data_shards;                        
+                        if decoded.len() != expected_len {
                             return Err(format!(
                                 "Node {}: Shard {} for tx {} is not {} bytes (got {})",
                                 node_id, j, i, expected_len, decoded.len()
@@ -88,16 +89,8 @@ pub async fn handle_prevote(
                         let node_guard = node.lock().await;
                         let mut shard_aggregator = node_guard.shard_aggregator.lock().await;
                         if j < data_shards {
-                            // shard_aggregator.insert_shard(round_id, i, j, decoded.clone());
-                            // shard_aggregator.insert_shard(round_id, i, proposer_id, decoded.clone());
-                            // shard_aggregator.insert_shard(round_id, i, prevote_request.sender_id, decoded.clone());
                             shard_aggregator.insert_shard(round_id, i, j, decoded.clone());
-                            // info!(
-                            //     "Node {}: Inserting shard j={} for tx[{}] from proposer {} into aggregator (round {})",
-                            //     node_id, j, i, proposer_id, round_id
-                            // );
                         }               
-                                 // shard_aggregator.insert_shard(round_id, i, proposer_id, decoded.clone());
                     }
                     Err(e) => {
                         warn!("Node {}: Failed to decode shard {} for tx {}: {:?}", node_id, j, i, e);
@@ -119,20 +112,8 @@ pub async fn handle_prevote(
                     return Ok(());
                 }
             };
-            // info!("Node {}: Reconstructed tx[{}] with {} bytes for round {}", node_id, i, padded_tx_bytes.len(), round_id); 
-            // info!(
-            //     "Node {}: TX[{}] padded bytes = {:?}",
-            //     node_id, i, padded_tx_bytes
-            // );
             let hash = Sha256::digest(&padded_tx_bytes).to_vec();
-            // info!(
-            //     "Node {}: TX[{}] hash = {} (expected: {})",
-            //     node_id,
-            //     i,
-            //     hex::encode(&hash),
-            //     hex::encode(&transaction.root)
-            // );
-            
+
             if hash != transaction.root {
                 return Err(format!(
                     "Node {}: Hash mismatch for tx {}. Expected {}, got {}",
@@ -158,30 +139,24 @@ pub async fn handle_prevote(
             });
         }
 
-
         let mut resolved_parents = Vec::new();
         let node_guard = node.lock().await;
         let dag_guard = node_guard.dag.lock().await;
-        
-        // Build a hash lookup: hash(unit_id) => unit_id
-        let mut unit_hash_map: HashMap<Vec<u8>, String> = HashMap::new();
+
+        let mut unit_hash_map: HashMap<String, String> = HashMap::new();
         for unit in dag_guard.values().flatten() {
-            let digest = Sha256::digest(unit.unit_id.as_bytes()).to_vec();
-            unit_hash_map.insert(digest, unit.unit_id.clone());
+            let digest = Sha256::digest(unit.unit_id.as_bytes());
+            let digest_hex = hex::encode(digest);
+            unit_hash_map.insert(digest_hex, unit.unit_id.clone());
         }
 
-        for hash in &proposal.parents {
-            let hash_hex = hex::encode(hash);
-            if let Some(unit_id) = unit_hash_map.get(hash) {
-                resolved_parents.push(unit_id.clone());
+        for parent_id in &proposal.parents {
+            if dag_guard.values().flatten().any(|u| &u.unit_id == parent_id) {
+                resolved_parents.push(parent_id.clone());
             } else {
-                warn!("Could not resolve parent hash {} to a known unit_id", hash_hex);
+                warn!("Could not resolve parent unit_id {} to known DAG unit", parent_id);
             }
         }
-
-
-
-
 
         let reconstructed_unit = reconstruct_unit(
             &reconstructed_transactions,
@@ -202,7 +177,7 @@ pub async fn handle_prevote(
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
             for parent_unit_id in &unit.parent_units {
-                if !node_guard.is_unit_committed(&parent_unit_id).await {
+                if !node_guard.is_unit_committed(parent_unit_id).await {
                     let err_msg = format!("Node {}: Missing parent unit {} in DAG. Cannot commit unit in round {}.", node_guard.id, parent_unit_id, round_id);
                     error!("{}", err_msg);
                     return Err(err_msg);
@@ -213,12 +188,12 @@ pub async fn handle_prevote(
 
     let sender_id = prevote_request.sender_url;
     let vote_count;
-    let round_key = round_id.to_be_bytes().to_vec();
+    let round_key = round_id.to_be_bytes();
 
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let voter_set = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
+        let voter_set = quorum_votes.entry(round_key.to_vec()).or_insert_with(HashSet::new);
         voter_set.insert(sender_id);
         vote_count = voter_set.len();
     }
@@ -250,60 +225,58 @@ pub async fn handle_prevote(
         error!("Node {}: RBCProcessor not initialized when trying to enqueue *local* commit!", node_id);
     }
 
-        for target_node in node_list {
-            let target_url = format!("http://{}/commit", target_node);
-            let commit_payload = commit_request.clone();
-            let node_id = node_id;
-            let round_id = round_id;
-        
-            let mut attempt = 0;
-            let max_attempts = 3;
-            let mut success = false;
-        
-            while attempt < max_attempts {
-                attempt += 1;
-                message_count.fetch_add(1, Ordering::Relaxed);
-        
-                info!(
-                    "📤 Attempt {}/{}: Node {} sending commit to {} for round {}",
-                    attempt, max_attempts, node_id, target_url, round_id
-                );
-        
-                let send_fut = local_client.post(&target_url).json(&commit_payload).send();
-                let res = tokio::time::timeout(Duration::from_secs(3), send_fut).await;
-                        
-                match res {
-                    Ok(Ok(response)) if response.status().is_success() => {
-                        info!("✅ Successfully sent commit to {}", target_url);
-                        success = true;
-                        break;
-                    }
-                    Ok(Ok(response)) => {
-                        let status = response.status();
-                        let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
-                        error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
-                    }
-                    Ok(Err(e)) => {
-                        error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
-                    }
-                    Err(_) => {
-                        error!("⏱️ Node {}: Timeout sending commit to {}", node_id, target_url);
-                    }
+    for target_node in node_list {
+        let target_url = format!("http://{}/commit", target_node);
+        let commit_payload = commit_request.clone();
+        let node_id = node_id;
+        let round_id = round_id;
+
+        let mut attempt = 0;
+        let max_attempts = 3;
+        let mut success = false;
+
+        while attempt < max_attempts {
+            attempt += 1;
+            message_count.fetch_add(1, Ordering::Relaxed);
+
+            info!(
+                "📤 Attempt {}/{}: Node {} sending commit to {} for round {}",
+                attempt, max_attempts, node_id, target_url, round_id
+            );
+
+            let send_fut = local_client.post(&target_url).json(&commit_payload).send();
+            let res = tokio::time::timeout(Duration::from_secs(3), send_fut).await;
+
+            match res {
+                Ok(Ok(response)) if response.status().is_success() => {
+                    info!("✅ Successfully sent commit to {}", target_url);
+                    success = true;
+                    break;
                 }
-                
-        
-                let delay = 100 * 2u64.pow((attempt - 1) as u32);
-                sleep(Duration::from_millis(delay)).await;
+                Ok(Ok(response)) => {
+                    let status = response.status();
+                    let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
+                    error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
+                }
+                Ok(Err(e)) => {
+                    error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                }
+                Err(_) => {
+                    error!("⏱️ Node {}: Timeout sending commit to {}", node_id, target_url);
+                }
             }
-        
-            if !success {
-                error!(
-                    "❌ Node {}: Final failure to send commit to {} after {} attempts",
-                    node_id, target_url, max_attempts
-                );
-            }
+
+            let delay = 100 * 2u64.pow((attempt - 1) as u32);
+            sleep(Duration::from_millis(delay)).await;
         }
 
+        if !success {
+            error!(
+                "❌ Node {}: Final failure to send commit to {} after {} attempts",
+                node_id, target_url, max_attempts
+            );
+        }
+    }
 
     {
         let node_guard = node.lock().await;

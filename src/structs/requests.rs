@@ -19,7 +19,7 @@ pub struct Transaction {
 pub struct ProposeRequest {
     pub base: BaseRequest,
     pub transactions: Vec<Transaction>,
-    pub parents: Vec<Vec<u8>>,
+    pub parents: Vec<String>, // ✅ Not Vec<Vec<u8>>
     pub batch_root: Vec<u8>,
     pub batch_proofs: Vec<Vec<Vec<u8>>>,
 }

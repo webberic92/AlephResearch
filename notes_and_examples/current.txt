@@ -1,19 +1,544 @@
-🧠 Observation on Timeout Failures
+sh-4.2$ cat /aleph/logs/
+cpu_usage    mem_usage    node_status
+sh-4.2$ cat /aleph/finalized_dag/round
+round1.json  round2.json  round3.json
+sh-4.2$ cat /aleph/finalized_dag/round2.json
+[
+  {
+    "batch_merkle_root": "addfd4cc4426cf52dcf33bf1c5a3dd0871d038bebeaa48de359486f368c9b7fd",
+    "creator": 5,
+    "finalization_timestamp": 1747449838099,
+    "parent_hashes": [],
+    "round": 2,
+    "transactions": [
+      {
+        "hash": "2b77bc5b6708d80ac5ed4d9cf92bfdd1015c86d1fead901383c27107578daf2c",
+        "proofs": [
+          [
+            "edc0628bc3e088136a3e93cc5d51765d6d908b1070140dee494691216c177107",
+            "353ae266f187e01bf65ad1deb2fc22fef34d0389a6dc49e79ff0395417c90e66"
+          ]
+        ],
+        "shards": [
+          "tx1_round2\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 241, 186, 82, 80, 19, 75, 165, 220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "edc0628bc3e088136a3e93cc5d51765d6d908b1070140dee494691216c177107",
+        "proofs": [
+          [
+            "2b77bc5b6708d80ac5ed4d9cf92bfdd1015c86d1fead901383c27107578daf2c",
+            "353ae266f187e01bf65ad1deb2fc22fef34d0389a6dc49e79ff0395417c90e66"
+          ]
+        ],
+        "shards": [
+          "tx2_round2\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 220, 186, 82, 80, 19, 75, 165, 220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "5c40d820c32ad07970ea715ffbf4f3d9a1ec84ea71798a051776f48758527b42",
+        "proofs": [
+          [
+            "d9de84548ff7b7d169875848a186a0bd9b174a932e9441008dd2a9077d2bb8d9",
+            "0bbe9cbc1a857e4517d605c2206071a7a49ab4b7d0369ebdef7916576c146db4"
+          ]
+        ],
+        "shards": [
+          "tx3_round2\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 199, 186, 82, 80, 19, 75, 165, 220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "d9de84548ff7b7d169875848a186a0bd9b174a932e9441008dd2a9077d2bb8d9",
+        "proofs": [
+          [
+            "5c40d820c32ad07970ea715ffbf4f3d9a1ec84ea71798a051776f48758527b42",
+            "0bbe9cbc1a857e4517d605c2206071a7a49ab4b7d0369ebdef7916576c146db4"
+          ]
+        ],
+        "shards": [
+          "tx4_round2\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 134, 186, 82, 80, 19, 75, 165, 220, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      }
+    ],
+    "unit_id": "U2-5"
+  }
+]sh-4.2$ cat /aleph/finalized_dag/round1.json
+[
+  {
+    "batch_merkle_root": "89c9dc50c307c945d3148d4a26efddc634544f3f200a09767becb3231a992669",
+    "creator": 1,
+    "finalization_timestamp": 1747449837956,
+    "parent_hashes": [],
+    "round": 1,
+    "transactions": [
+      {
+        "hash": "437ce02466a92464f14babc2e731bd4694cfeefa57f7c642038ce9f247735292",
+        "proofs": [
+          [
+            "ff68af82251b7df3b0104a096364c186461a8a0ca7a40e719374b9c869239b4a",
+            "54932aef1ba15551e3f48f3cb42039ba059cd8ea6828e27313e023bad6307bf0"
+          ]
+        ],
+        "shards": [
+          "tx1_round1\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 241, 186, 82, 80, 19, 75, 165, 241, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "ff68af82251b7df3b0104a096364c186461a8a0ca7a40e719374b9c869239b4a",
+        "proofs": [
+          [
+            "437ce02466a92464f14babc2e731bd4694cfeefa57f7c642038ce9f247735292",
+            "54932aef1ba15551e3f48f3cb42039ba059cd8ea6828e27313e023bad6307bf0"
+          ]
+        ],
+        "shards": [
+          "tx2_round1\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 220, 186, 82, 80, 19, 75, 165, 241, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "e7df9dc70471c148ef6e532a0c8bea86f80f602a3f10078438119f80931be204",
+        "proofs": [
+          [
+            "e8f4dc8525a62b0c2a9dca4dbfadcca8ec56414e1299eadd63575f9721d38984",
+            "5af42c614c2431dfe68324a15613d3d9e8f7f74315c33d56dd9faa5273aff2e2"
+          ]
+        ],
+        "shards": [
+          "tx3_round1\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 199, 186, 82, 80, 19, 75, 165, 241, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      },
+      {
+        "hash": "e8f4dc8525a62b0c2a9dca4dbfadcca8ec56414e1299eadd63575f9721d38984",
+        "proofs": [
+          [
+            "e7df9dc70471c148ef6e532a0c8bea86f80f602a3f10078438119f80931be204",
+            "5af42c614c2431dfe68324a15613d3d9e8f7f74315c33d56dd9faa5273aff2e2"
+          ]
+        ],
+        "shards": [
+          "tx4_round1\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000\u0000",
+          "[8, 188, 134, 186, 82, 80, 19, 75, 165, 241, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,0, 0, 0, 0, 0]"
+        ]
+      }
+    ],
+    "unit_id": "U1-1"
+  }
+]sh-4.2$ cat /aleph/finalized_dag/round1.jso^C
+sh-4.2$ ^C
+sh-4.2$ cat /aleph/logs/node_status
+Starting cpu and memory logs
+PRIVATE_IP = 10.0.128.249
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.137.9:30333", "10.0.138.250:30333", "10.0.152.179:30333", "10.0.165.85:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.169.130"
+ip_address = "10.0.128.249"
+nodes = ["10.0.137.9:30333", "10.0.138.250:30333", "10.0.152.179:30333", "10.0.165.85:30333"]
+total_nodes = 5
 
-Node 29 is failing to send prevotes to the second half of the list (starting around 10.0.147.81) despite successful connections earlier.
+[consensus]
+number_of_transactions = 4
+transaction_size = 256 # bytes
+data_shards = 4 # Number of data shards for erasure coding
+total_rounds = 3 # Number of rounds
 
-This is likely:
+[logging]
+level = "info"
+transaction_metrics_log = "/aleph/logs/transaction_metrics"
 
-    TCP exhaustion (ephemeral ports used up)
-
-    Per-destination rate limiting or SYN flood protection on the receiving EC2 instances
-
-    Or AWS VPC-level connection throttling
-
-✅ Suggestion:
-
-    Add logging to track open connections.
-
-    Insert a short delay (tokio::time::sleep) every X sends, or use a Semaphore to rate-limit concurrent HTTP requests.
-
-    Investigate with ulimit -n, and raise it to at least 65536 in your startup script.
+[node]
+id = 5
+Starting aleph_rbc execution
+aleph_rbc binary is found at /aleph/aleph_rbc
+Configuration file found at /aleph/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+2025-05-17T02:43:57.601690Z  INFO aleph_rbc: LATENCY START
+2025-05-17T02:43:57.601717Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-05-17T02:43:57.601728Z  INFO aleph_rbc: ✅ Custom socket listener created on 0.0.0.0:30333
+2025-05-17T02:43:57.601735Z  INFO aleph_rbc: ✅ Starting Axum server on 0.0.0.0:30333
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 5
+2025-05-17T02:43:57.624244Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
+2025-05-17T02:43:57.625437Z  INFO aleph_research::utils::create_transaction_data: Node 5: For round 1, resolved 0 parent units: []
+2025-05-17T02:43:57.625447Z  INFO aleph_research::utils::create_transaction_data: Node 5: Creating 4 transactions (256 bytes each) with RS shards (64 bytes/shard)
+2025-05-17T02:43:57.625562Z  INFO aleph_research::utils::create_transaction_data: ✅ Proposal ready: 4 txs, Round 1, Batch Root: 89c9dc50c307c945d3148d4a26efddc634544f3f200a09767becb3231a992669
+2025-05-17T02:43:57.625569Z  INFO aleph_rbc: Node 5: Created proposal with 4 transactions for round 1.
+2025-05-17T02:43:57.646035Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.137.9:30333", "10.0.138.250:30333", "10.0.152.179:30333", "10.0.165.85:30333"] for round 1
+2025-05-17T02:43:57.646058Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.137.9:30333 (round 1)
+2025-05-17T02:43:57.646767Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.137.9:30333 (round 1)
+2025-05-17T02:43:57.646796Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.138.250:30333 (round 1)
+2025-05-17T02:43:57.647465Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.138.250:30333 (round 1)
+2025-05-17T02:43:57.647487Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.152.179:30333 (round 1)
+2025-05-17T02:43:57.648145Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.152.179:30333 (round 1)
+2025-05-17T02:43:57.648170Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.165.85:30333 (round 1)
+2025-05-17T02:43:57.648862Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.165.85:30333 (round 1)
+2025-05-17T02:43:57.648883Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-05-17T02:43:57.648893Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 1 into RBCProcessor queue
+2025-05-17T02:43:57.648908Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.650094Z  INFO aleph_rbc: Node 5: Proposal for round 1 sent successfully.
+2025-05-17T02:43:57.650136Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
+2025-05-17T02:43:57.668930Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
+2025-05-17T02:43:57.668945Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
+2025-05-17T02:43:57.668976Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 5. Count: 1/4
+2025-05-17T02:43:57.808981Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.809026Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
+2025-05-17T02:43:57.819636Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
+2025-05-17T02:43:57.819647Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
+2025-05-17T02:43:57.819669Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 3. Count: 2/4
+2025-05-17T02:43:57.882095Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.882127Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
+2025-05-17T02:43:57.892592Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
+2025-05-17T02:43:57.892602Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
+2025-05-17T02:43:57.892622Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 2. Count: 3/4
+2025-05-17T02:43:57.907930Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.907961Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
+2025-05-17T02:43:57.918197Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 1...
+2025-05-17T02:43:57.918206Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 0, Target round: 1
+2025-05-17T02:43:57.918229Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 1 from node 1. Count: 4/4
+2025-05-17T02:43:57.918235Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+2025-05-17T02:43:57.918254Z  INFO aleph_research::handlers::handle_propose: Node 5: Multicasting prevote to all nodes...
+2025-05-17T02:43:57.918258Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.137.9:30333/prevote for round 1
+2025-05-17T02:43:57.919761Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.919843Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.137.9:30333/prevote
+2025-05-17T02:43:57.919861Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.138.250:30333/prevote for round 1
+2025-05-17T02:43:57.920443Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.921236Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.921569Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.138.250:30333/prevote
+2025-05-17T02:43:57.921579Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.152.179:30333/prevote for round 1
+2025-05-17T02:43:57.922479Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.152.179:30333/prevote
+2025-05-17T02:43:57.922489Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.165.85:30333/prevote for round 1
+2025-05-17T02:43:57.923472Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.165.85:30333/prevote
+2025-05-17T02:43:57.923481Z  INFO aleph_research::handlers::handle_propose: Node 5: Enqueuing local prevote into RBCProcessor for round 1
+2025-05-17T02:43:57.923485Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.924218Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.152.179
+2025-05-17T02:43:57.925189Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.935063Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (1/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:57.935744Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.137.9
+2025-05-17T02:43:57.945775Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (2/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:57.946435Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.165.85
+2025-05-17T02:43:57.956364Z  INFO aleph_research::handlers::handle_prevote: Node 5: Prevote Quorum reached for round 1. Proceeding to send commits.
+2025-05-17T02:43:57.956372Z  INFO aleph_research::handlers::handle_prevote: Node 5: Adding *local* commit to queue for round 1
+2025-05-17T02:43:57.956387Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.956408Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.137.9:30333/commit for round 1
+2025-05-17T02:43:57.957321Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.137.9:30333/commit
+2025-05-17T02:43:57.957359Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.138.250:30333/commit for round 1
+2025-05-17T02:43:57.957776Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.958740Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.138.250:30333/commit
+2025-05-17T02:43:57.958768Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.152.179:30333/commit for round 1
+2025-05-17T02:43:57.959776Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.959866Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.179:30333/commit
+2025-05-17T02:43:57.959870Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.959909Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.165.85:30333/commit for round 1
+2025-05-17T02:43:57.961277Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.165.85:30333/commit
+2025-05-17T02:43:57.961948Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.128.249
+2025-05-17T02:43:57.963411Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.972367Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 1 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:57.973008Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.138.250
+2025-05-17T02:43:57.982663Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 1 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:57.983299Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1 from node 5
+2025-05-17T02:43:57.983316Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 1 is 1/3.
+2025-05-17T02:43:57.983325Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1 from node 2
+2025-05-17T02:43:57.983336Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 1 is 2/3.
+2025-05-17T02:43:57.983346Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1 from node 4
+2025-05-17T02:43:57.983358Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 1 is 3/3.
+2025-05-17T02:43:57.983361Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalizing round 1 with quorum.
+2025-05-17T02:43:57.983389Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserting 12 units into DAG for round 1
+2025-05-17T02:43:57.983394Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserted unit U1-1 (creator: 1, tx count: 4) into DAG round 1
+2025-05-17T02:43:57.983412Z  INFO aleph_research::handlers::handle_commit: Node 5: Enqueuing RoundFinalized event for round 1
+2025-05-17T02:43:57.983415Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.983669Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 1 to file: /aleph/finalized_dag/round1.json
+2025-05-17T02:43:57.983688Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 1. COMMUNICATION OVERHEAD 21
+2025-05-17T02:43:57.983692Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 1 with 3/3 commits. USE THIS FOR TPS METRIC
+2025-05-17T02:43:57.983695Z  INFO aleph_research::handlers::handle_commit: Node 5: Local round advanced to 2
+2025-05-17T02:43:57.983747Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1 from node 3
+2025-05-17T02:43:57.983754Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 1 is finalized. Ignoring Commit request from node 3.
+2025-05-17T02:43:57.983769Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 1 from node 1
+2025-05-17T02:43:57.983772Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 1 is finalized. Ignoring Commit request from node 1.
+2025-05-17T02:43:57.983785Z  INFO aleph_research::processors::rbc_processor: 🔄 RBCProcessor: RoundFinalized received for round 1
+2025-05-17T02:43:57.983789Z  INFO aleph_research::processors::rbc_processor: 🧹 RBCProcessor: Removed stale messages → commits: 0, prevotes: 0, proposals: 0
+2025-05-17T02:43:57.983796Z  INFO aleph_research::utils::create_transaction_data: Node 5: For round 2, resolved 1 parent units: ["U1-1"]
+2025-05-17T02:43:57.983800Z  INFO aleph_research::utils::create_transaction_data: Node 5: Creating 4 transactions (256 bytes each) with RS shards (64 bytes/shard)
+2025-05-17T02:43:57.983861Z  INFO aleph_research::utils::create_transaction_data: ✅ Proposal ready: 4 txs, Round 2, Batch Root: addfd4cc4426cf52dcf33bf1c5a3dd0871d038bebeaa48de359486f368c9b7fd
+2025-05-17T02:43:57.993502Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.137.9:30333", "10.0.138.250:30333", "10.0.152.179:30333", "10.0.165.85:30333"] for round 2
+2025-05-17T02:43:57.993515Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.137.9:30333 (round 2)
+2025-05-17T02:43:57.994336Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.137.9:30333 (round 2)
+2025-05-17T02:43:57.994360Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.138.250:30333 (round 2)
+2025-05-17T02:43:57.994586Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.995213Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.138.250:30333 (round 2)
+2025-05-17T02:43:57.995227Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.152.179:30333 (round 2)
+2025-05-17T02:43:57.995982Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.152.179:30333 (round 2)
+2025-05-17T02:43:57.995998Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.165.85:30333 (round 2)
+2025-05-17T02:43:57.997160Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.997228Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.165.85:30333 (round 2)
+2025-05-17T02:43:57.997239Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 2.
+2025-05-17T02:43:57.997248Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 2 into RBCProcessor queue
+2025-05-17T02:43:57.997252Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.997811Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:57.998138Z  INFO aleph_research::processors::rbc_processor: ✅ Proposal for round 2 sent successfully.
+2025-05-17T02:43:57.998147Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 2
+2025-05-17T02:43:58.000680Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.008763Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 2...
+2025-05-17T02:43:58.008773Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 1, Target round: 2
+2025-05-17T02:43:58.008777Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 1 or beyond.
+2025-05-17T02:43:58.008793Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 2 from node 2. Count: 1/4
+2025-05-17T02:43:58.009408Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 4
+2025-05-17T02:43:58.018972Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 2...
+2025-05-17T02:43:58.018981Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 1, Target round: 2
+2025-05-17T02:43:58.018984Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 1 or beyond.
+2025-05-17T02:43:58.018999Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 2 from node 4. Count: 2/4
+2025-05-17T02:43:58.019600Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 5
+2025-05-17T02:43:58.029053Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 2...
+2025-05-17T02:43:58.029063Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 1, Target round: 2
+2025-05-17T02:43:58.029066Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 1 or beyond.
+2025-05-17T02:43:58.029083Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 2 from node 5. Count: 3/4
+2025-05-17T02:43:58.029688Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 3
+2025-05-17T02:43:58.039116Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 2...
+2025-05-17T02:43:58.039126Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 1, Target round: 2
+2025-05-17T02:43:58.039129Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 1 or beyond.
+2025-05-17T02:43:58.039150Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 2 from node 3. Count: 4/4
+2025-05-17T02:43:58.039156Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+2025-05-17T02:43:58.039178Z  INFO aleph_research::handlers::handle_propose: Node 5: Multicasting prevote to all nodes...
+2025-05-17T02:43:58.039182Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.137.9:30333/prevote for round 2
+2025-05-17T02:43:58.043388Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.045772Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.050153Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.052128Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.053251Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.137.9:30333/prevote
+2025-05-17T02:43:58.053269Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.138.250:30333/prevote for round 2
+2025-05-17T02:43:58.054377Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.138.250:30333/prevote
+2025-05-17T02:43:58.054387Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.152.179:30333/prevote for round 2
+2025-05-17T02:43:58.057159Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.152.179:30333/prevote
+2025-05-17T02:43:58.057172Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.165.85:30333/prevote for round 2
+2025-05-17T02:43:58.058118Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.165.85:30333/prevote
+2025-05-17T02:43:58.058128Z  INFO aleph_research::handlers::handle_propose: Node 5: Enqueuing local prevote into RBCProcessor for round 2
+2025-05-17T02:43:58.058132Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.058908Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 5
+2025-05-17T02:43:58.068851Z  INFO aleph_research::handlers::handle_propose: Node 5: Already received proposal for round 2 from proposer 5. Ignoring duplicate.
+2025-05-17T02:43:58.069474Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 1
+2025-05-17T02:43:58.076145Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.079381Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 2...
+2025-05-17T02:43:58.079388Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 1, Target round: 2
+2025-05-17T02:43:58.079391Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 1 or beyond.
+2025-05-17T02:43:58.079415Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 2 from node 1. Count: 5/4
+2025-05-17T02:43:58.080058Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2 from node 10.0.165.85
+2025-05-17T02:43:58.090014Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d35 to a known unit_id
+2025-05-17T02:43:58.090111Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.090181Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d32 to a known unit_id
+2025-05-17T02:43:58.090255Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.090264Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (1/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:58.090895Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2 from node 10.0.138.250
+2025-05-17T02:43:58.100867Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.100979Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.101050Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.101127Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d32 to a known unit_id
+2025-05-17T02:43:58.101200Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d35 to a known unit_id
+2025-05-17T02:43:58.101209Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (2/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:58.101838Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2 from node 10.0.152.179
+2025-05-17T02:43:58.111555Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d32 to a known unit_id
+2025-05-17T02:43:58.111631Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.111727Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d35 to a known unit_id
+2025-05-17T02:43:58.111796Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55312d31 to a known unit_id
+2025-05-17T02:43:58.111809Z  INFO aleph_research::handlers::handle_prevote: Node 5: Prevote Quorum reached for round 2. Proceeding to send commits.
+2025-05-17T02:43:58.111813Z  INFO aleph_research::handlers::handle_prevote: Node 5: Adding *local* commit to queue for round 2
+2025-05-17T02:43:58.111826Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.111842Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.137.9:30333/commit for round 2
+2025-05-17T02:43:58.112899Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.113215Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.137.9:30333/commit
+2025-05-17T02:43:58.113255Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.138.250:30333/commit for round 2
+2025-05-17T02:43:58.114385Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.138.250:30333/commit
+2025-05-17T02:43:58.114466Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.152.179:30333/commit for round 2
+2025-05-17T02:43:58.114817Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.115662Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.179:30333/commit
+2025-05-17T02:43:58.115687Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.165.85:30333/commit for round 2
+2025-05-17T02:43:58.116828Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.165.85:30333/commit
+2025-05-17T02:43:58.117525Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2 from node 10.0.137.9
+2025-05-17T02:43:58.124474Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.127723Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 2 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:58.128349Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 2 from node 10.0.128.249
+2025-05-17T02:43:58.137864Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 2 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:58.138521Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 2 from node 4
+2025-05-17T02:43:58.148066Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.148290Z  INFO aleph_research::handlers::handle_propose: Node 5: Already received proposal for round 2 from proposer 4. Ignoring duplicate.
+2025-05-17T02:43:58.148905Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 2 from node 2
+2025-05-17T02:43:58.148920Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 2 is 1/3.
+2025-05-17T02:43:58.148930Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 2 from node 5
+2025-05-17T02:43:58.148941Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 2 is 2/3.
+2025-05-17T02:43:58.148949Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 2 from node 1
+2025-05-17T02:43:58.148961Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 2 is 3/3.
+2025-05-17T02:43:58.148964Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalizing round 2 with quorum.
+2025-05-17T02:43:58.148993Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserting 12 units into DAG for round 2
+2025-05-17T02:43:58.148998Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserted unit U2-5 (creator: 5, tx count: 4) into DAG round 2
+2025-05-17T02:43:58.149016Z  INFO aleph_research::handlers::handle_commit: Node 5: Enqueuing RoundFinalized event for round 2
+2025-05-17T02:43:58.149020Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.149203Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 2 to file: /aleph/finalized_dag/round2.json
+2025-05-17T02:43:58.149221Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 2. COMMUNICATION OVERHEAD 38
+2025-05-17T02:43:58.149228Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 2 with 3/3 commits. USE THIS FOR TPS METRIC
+2025-05-17T02:43:58.149231Z  INFO aleph_research::handlers::handle_commit: Node 5: Local round advanced to 3
+2025-05-17T02:43:58.149266Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 2 from node 3
+2025-05-17T02:43:58.149269Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 2 is finalized. Ignoring Commit request from node 3.
+2025-05-17T02:43:58.149283Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 2 from node 4
+2025-05-17T02:43:58.149286Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 2 is finalized. Ignoring Commit request from node 4.
+2025-05-17T02:43:58.149296Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 2
+2025-05-17T02:43:58.158845Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 3...
+2025-05-17T02:43:58.158854Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 2, Target round: 3
+2025-05-17T02:43:58.158858Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 2 or beyond.
+2025-05-17T02:43:58.158871Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 3 from node 2. Count: 1/4
+2025-05-17T02:43:58.159481Z  INFO aleph_research::processors::rbc_processor: 🔄 RBCProcessor: RoundFinalized received for round 2
+2025-05-17T02:43:58.159487Z  INFO aleph_research::processors::rbc_processor: 🧹 RBCProcessor: Removed stale messages → commits: 0, prevotes: 0, proposals: 0
+2025-05-17T02:43:58.159499Z  INFO aleph_research::utils::create_transaction_data: Node 5: For round 3, resolved 1 parent units: ["U2-5"]
+2025-05-17T02:43:58.159503Z  INFO aleph_research::utils::create_transaction_data: Node 5: Creating 4 transactions (256 bytes each) with RS shards (64 bytes/shard)
+2025-05-17T02:43:58.159563Z  INFO aleph_research::utils::create_transaction_data: ✅ Proposal ready: 4 txs, Round 3, Batch Root: 2011202789eebe67c66c02ecb9921b4d83ff1b1a09e4f8ed40fc4fc9adc70fdd
+2025-05-17T02:43:58.160528Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.169400Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 5 preparing to send proposals to ["10.0.137.9:30333", "10.0.138.250:30333", "10.0.152.179:30333", "10.0.165.85:30333"] for round 3
+2025-05-17T02:43:58.169413Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.137.9:30333 (round 3)
+2025-05-17T02:43:58.170458Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.137.9:30333 (round 3)
+2025-05-17T02:43:58.170482Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.138.250:30333 (round 3)
+2025-05-17T02:43:58.171415Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.138.250:30333 (round 3)
+2025-05-17T02:43:58.171433Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.152.179:30333 (round 3)
+2025-05-17T02:43:58.172185Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.152.179:30333 (round 3)
+2025-05-17T02:43:58.172202Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.165.85:30333 (round 3)
+2025-05-17T02:43:58.172858Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.165.85:30333 (round 3)
+2025-05-17T02:43:58.172869Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 3.
+2025-05-17T02:43:58.172875Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 5 enqueuing proposal for round 3 into RBCProcessor queue
+2025-05-17T02:43:58.172878Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.173545Z  INFO aleph_research::processors::rbc_processor: ✅ Proposal for round 3 sent successfully.
+2025-05-17T02:43:58.173554Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 1
+2025-05-17T02:43:58.174083Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.181615Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.183828Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 3...
+2025-05-17T02:43:58.183837Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 2, Target round: 3
+2025-05-17T02:43:58.183840Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 2 or beyond.
+2025-05-17T02:43:58.183854Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 3 from node 1. Count: 2/4
+2025-05-17T02:43:58.184464Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 5
+2025-05-17T02:43:58.194026Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 3...
+2025-05-17T02:43:58.194035Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 2, Target round: 3
+2025-05-17T02:43:58.194038Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 2 or beyond.
+2025-05-17T02:43:58.194054Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 3 from node 5. Count: 3/4
+2025-05-17T02:43:58.194664Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 5
+2025-05-17T02:43:58.204289Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.204837Z  INFO aleph_research::handlers::handle_propose: Node 5: Already received proposal for round 3 from proposer 5. Ignoring duplicate.
+2025-05-17T02:43:58.205448Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 3
+2025-05-17T02:43:58.209665Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.215582Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 3...
+2025-05-17T02:43:58.215595Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 2, Target round: 3
+2025-05-17T02:43:58.215598Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 2 or beyond.
+2025-05-17T02:43:58.215622Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 3 from node 3. Count: 4/4
+2025-05-17T02:43:58.215627Z  INFO aleph_research::handlers::handle_propose: Node 5: Proposal quorum met. Aggregating and multicasting prevote for 4 proposals.
+2025-05-17T02:43:58.215641Z  INFO aleph_research::handlers::handle_propose: Node 5: Multicasting prevote to all nodes...
+2025-05-17T02:43:58.215645Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.137.9:30333/prevote for round 3
+2025-05-17T02:43:58.216943Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.137.9:30333/prevote
+2025-05-17T02:43:58.216966Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.138.250:30333/prevote for round 3
+2025-05-17T02:43:58.217899Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.218265Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.138.250:30333/prevote
+2025-05-17T02:43:58.218294Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.152.179:30333/prevote for round 3
+2025-05-17T02:43:58.218538Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.219624Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.152.179:30333/prevote
+2025-05-17T02:43:58.219634Z  INFO aleph_research::handlers::handle_propose: 📤 Attempt 1/3: Node 5 sending prevote to http://10.0.165.85:30333/prevote for round 3
+2025-05-17T02:43:58.221064Z  INFO aleph_research::handlers::handle_propose: ✅ Node 5: Prevote success to http://10.0.165.85:30333/prevote
+2025-05-17T02:43:58.221076Z  INFO aleph_research::handlers::handle_propose: Node 5: Enqueuing local prevote into RBCProcessor for round 3
+2025-05-17T02:43:58.221079Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.221736Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 3 from node 4
+2025-05-17T02:43:58.231553Z  INFO aleph_research::utils::dag_utils: Node 5: Ensuring DAG synchronization for round 3...
+2025-05-17T02:43:58.231563Z  INFO aleph_research::utils::dag_utils: Node 5: DAG latest round: 2, Target round: 3
+2025-05-17T02:43:58.231566Z  INFO aleph_research::utils::dag_utils: Node 5: DAG is synchronized for round 2 or beyond.
+2025-05-17T02:43:58.231591Z  INFO aleph_research::structs::node: Node 5: Added proposal for round 3 from node 4. Count: 5/4
+2025-05-17T02:43:58.232242Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 3 from node 10.0.152.179
+2025-05-17T02:43:58.241831Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.241927Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.242013Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.242089Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.242098Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (1/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:58.242739Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 3 from node 10.0.165.85
+2025-05-17T02:43:58.252334Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.252411Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.252490Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.252559Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.252567Z  INFO aleph_research::handlers::handle_prevote: Node 5: Not enough prevote messages received (2/3). Waiting for quorum before proceeding to commit.
+2025-05-17T02:43:58.253197Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 3 from node 10.0.137.9
+2025-05-17T02:43:58.254076Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.263103Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.263178Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.263253Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.263321Z  WARN aleph_research::handlers::handle_prevote: Could not resolve parent hash 55322d35 to a known unit_id
+2025-05-17T02:43:58.263329Z  INFO aleph_research::handlers::handle_prevote: Node 5: Prevote Quorum reached for round 3. Proceeding to send commits.
+2025-05-17T02:43:58.263332Z  INFO aleph_research::handlers::handle_prevote: Node 5: Adding *local* commit to queue for round 3
+2025-05-17T02:43:58.263345Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.263362Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.137.9:30333/commit for round 3
+2025-05-17T02:43:58.264481Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.137.9:30333/commit
+2025-05-17T02:43:58.264520Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.138.250:30333/commit for round 3
+2025-05-17T02:43:58.265589Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.138.250:30333/commit
+2025-05-17T02:43:58.265615Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.152.179:30333/commit for round 3
+2025-05-17T02:43:58.266526Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.152.179:30333/commit
+2025-05-17T02:43:58.266554Z  INFO aleph_research::handlers::handle_prevote: 📤 Attempt 1/3: Node 5 sending commit to http://10.0.165.85:30333/commit for round 3
+2025-05-17T02:43:58.266995Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.267811Z  INFO aleph_research::handlers::handle_prevote: ✅ Successfully sent commit to http://10.0.165.85:30333/commit
+2025-05-17T02:43:58.268475Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 3 from node 10.0.138.250
+2025-05-17T02:43:58.270001Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.277677Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.279246Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 3 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:58.279896Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 3 from node 10.0.128.249
+2025-05-17T02:43:58.289611Z  INFO aleph_research::handlers::handle_prevote: Node 5: Quorum already reached for round 3 (3 votes). Dropping incoming prevote.
+2025-05-17T02:43:58.290246Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 3 from node 2
+2025-05-17T02:43:58.290262Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 3 is 1/3.
+2025-05-17T02:43:58.290272Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 3 from node 5
+2025-05-17T02:43:58.290283Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 3 is 2/3.
+2025-05-17T02:43:58.290292Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 3 from node 1
+2025-05-17T02:43:58.290303Z  INFO aleph_research::handlers::handle_commit: Node 5: Commit count for round 3 is 3/3.
+2025-05-17T02:43:58.290306Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalizing round 3 with quorum.
+2025-05-17T02:43:58.290334Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserting 12 units into DAG for round 3
+2025-05-17T02:43:58.290340Z  INFO aleph_research::handlers::handle_commit: Node 5: Inserted unit U3-5 (creator: 5, tx count: 4) into DAG round 3
+2025-05-17T02:43:58.290357Z  INFO aleph_research::handlers::handle_commit: Node 5: Enqueuing RoundFinalized event for round 3
+2025-05-17T02:43:58.290361Z  INFO aleph_research::processors::rbc_processor: Message enqueued. Queue size approx: N/A
+2025-05-17T02:43:58.290544Z  INFO aleph_research::utils::config_util: Successfully wrote finalized DAG for round 3 to file: /aleph/finalized_dag/round3.json
+2025-05-17T02:43:58.290565Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 3. COMMUNICATION OVERHEAD 54
+2025-05-17T02:43:58.290569Z  INFO aleph_research::handlers::handle_commit: Node 5: Finalized round 3 with 3/3 commits. USE THIS FOR TPS METRIC
+2025-05-17T02:43:58.290572Z  INFO aleph_research::handlers::handle_commit: Node 5: Local round advanced to 4
+2025-05-17T02:43:58.290576Z  INFO aleph_research::handlers::handle_commit: Node 5: Round 3 was final. Shutting down.
+2025-05-17T02:43:58.290596Z  INFO aleph_research::handlers::handle_commit: LATENCY END: 2025-05-17 02:43:58
+2025-05-17T02:43:58.290605Z  INFO aleph_research::handlers::handle_commit: 🛑 RBCProcessor terminated.
+2025-05-17T02:43:58.290637Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 3 from node 3
+2025-05-17T02:43:58.290640Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 3 is finalized. Ignoring Commit request from node 3.
+2025-05-17T02:43:58.290650Z  INFO aleph_research::processors::rbc_processor: Processing commit for round 3 from node 4
+2025-05-17T02:43:58.290652Z  WARN aleph_research::processors::rbc_processor: Node 5: Round 3 is finalized. Ignoring Commit request from node 4.
+2025-05-17T02:43:58.290665Z  INFO aleph_research::processors::rbc_processor: 🔄 RBCProcessor: RoundFinalized received for round 3
+2025-05-17T02:43:58.290669Z  INFO aleph_research::processors::rbc_processor: ✅ All 3 rounds completed. Stopping RBCProcessor.
+2025-05-17T02:43:58.290673Z  INFO aleph_research::processors::rbc_processor: 📊 Ending Latency Logger: 2025-05-17 02:43:58
+2025-05-17T02:43:58.290815Z  INFO aleph_research::handlers::handle_commit: ✅ S3 upload triggered.

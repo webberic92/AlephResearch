@@ -4,11 +4,11 @@ mod tests {
     use reed_solomon_erasure::galois_8::ReedSolomon;
     use reqwest::Client;
     use sha2::{Digest, Sha256};
-    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::PrevoteRequest}, utils::{
+    use tracing::info;
+    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::{DagUnit, PrevoteRequest, Transaction}}, utils::{
         create_transaction_data::{create_transaction_data, pad_to_len},
         merkle_utils::{compute_merkle_branch, compute_merkle_root, validate_merkle_branch, verify_merkle_proof},
     }};
-
     const TX_SIZE: usize = 256; // ✅ Make this configurable if needed
 
     fn generate_mock_tx_hashes(n: usize) -> Vec<Vec<u8>> {
@@ -279,4 +279,145 @@ mod tests {
             assert_eq!(reconstructed, padded);
         }
     
-}
+        #[tokio::test]
+        async fn test_dagunit_parent_retrieval_across_rounds() {
+
+
+            let node = Node::new(
+                0,
+                5,
+                "127.0.0.1:3000".to_string(),
+                vec![],
+                "127.0.0.1:9999".to_string(),
+                3,
+                256,
+                3,
+                1,
+            );
+
+            // === Round 1: Insert initial unit ===
+            let round_1 = 1;
+            let parent_unit = DagUnit {
+                unit_id: "U1-1".to_string(),
+                proposer_node: 0,
+                round: round_1,
+                transactions: vec![],
+                parent_units: vec![],
+                merkle_root: vec![0u8; 32],
+                finalization_timestamp: 123456789,
+            };
+
+            {
+                let node_lock = node.lock().await;
+                let mut dag = node_lock.dag.lock().await;
+                dag.entry(round_1).or_default().push(parent_unit.clone());
+            }
+
+            // === Round 2: Insert child unit with parent reference ===
+            let round_2 = 2;
+            let child_unit = DagUnit {
+                unit_id: "U2-1".to_string(),
+                proposer_node: 0,
+                round: round_2,
+                transactions: vec![],
+                parent_units: vec![parent_unit.unit_id.clone()],
+                merkle_root: vec![0u8; 32],
+                finalization_timestamp: 123456790,
+            };
+
+            {
+                let node_lock = node.lock().await;
+                let mut dag = node_lock.dag.lock().await;
+                dag.entry(round_2).or_default().push(child_unit.clone());
+            }
+
+            // === Check that parent exists ===
+            let parent_exists = {
+                let node_lock = node.lock().await;
+                let dag = node_lock.dag.lock().await;
+                dag.values()
+                    .flatten()
+                    .any(|unit| unit.unit_id == child_unit.parent_units[0])
+            };
+
+            assert!(
+                parent_exists,
+                "Child unit's parent (U1-1) should exist in DAG"
+            );
+        }
+
+        #[tokio::test]
+        async fn test_proposal_generation_and_dag_parent_hashes() {
+            // Initialize dummy node with 3 nodes, 2 transactions, 256-byte tx, 2 data shards, 2 rounds
+            let node = Node::new(
+                1,
+                3,
+                "127.0.0.1:30333".to_string(),
+                vec!["127.0.0.1:30334".to_string(), "127.0.0.1:30335".to_string()],
+                "127.0.0.1:8080".to_string(),
+                2,
+                256,
+                2,
+                2,
+            );
+        
+            {
+                let mut node_guard = node.lock().await;
+                let parent_unit = crate::structs::requests::DagUnit {
+                    unit_id: "U1-1".to_string(),
+                    proposer_node: 1,
+                    round: 1,
+                    transactions: vec![
+                        crate::structs::requests::Transaction {
+                            root: vec![1; 32], // dummy hash
+                            proofs: vec![],
+                            shards: vec![],
+                        },
+                    ],
+                    parent_units: vec![],
+                    merkle_root: vec![1; 32],
+                    finalization_timestamp: 123456789,
+                };
+            
+                let mut dag = node_guard.dag.lock().await;
+                dag.insert(1, vec![parent_unit]);
+            
+                println!("✅ Inserted into DAG: {:?}", dag);
+                *node_guard.current_round.lock().await = 2;
+            }
+        
+
+            {
+                let node_guard = node.lock().await;
+                let dag = node_guard.dag.lock().await;
+                println!("🔍 DAG before proposal: {:?}", dag);
+            }
+            // Create proposal for round 2
+            let proposal = create_transaction_data(node.clone()).await.expect("Failed to create proposal");
+        
+            // Validate Merkle root for each transaction
+            for (i, tx) in proposal.transactions.iter().enumerate() {
+                let proof = &proposal.batch_proofs[i];
+                assert_eq!(tx.root.len(), 32);
+                assert!(
+                    verify_merkle_proof(&tx.root, proof, &proposal.batch_root, i),
+                    "Merkle proof invalid for tx[{}]", i
+                );
+            }
+        
+            // Check that round 2 proposal includes 1 parent
+            assert_eq!(proposal.base.round_id, 2);
+            assert_eq!(proposal.parents.len(), 1);
+            assert_eq!(proposal.parents[0], "U1-1");
+        
+            info!("✅ Proposal for round 2 correctly included parent unit U1-1");
+        }
+        
+        
+
+    }
+    
+    
+    
+
+

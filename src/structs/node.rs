@@ -225,20 +225,24 @@ let node_guard = node.lock().await;
     /// **🔗 Retrieve All Parents for the Previous Round**
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
         if round_id == 1 {
-            // First round has no parents
             return Vec::new();
         }
-
+    
         let dag_snapshot = {
             let dag = self.dag.lock().await;
             dag.clone()
         };
-
-        // 🔍 Fetch units from the previous round
+    
         dag_snapshot.get(&(round_id - 1))
-            .map(|units| units.iter().map(|u| u.unit_id.clone()).collect())
-            .unwrap_or_else(Vec::new)
+            .map(|units| {
+                units.iter()
+                    .filter(|u| !u.transactions.is_empty()) // ← filters out empty units
+                    .map(|u| u.unit_id.clone())
+                    .collect()
+            })
+            .unwrap_or_default()
     }
+    
 
     
 }

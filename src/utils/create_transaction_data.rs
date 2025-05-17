@@ -31,8 +31,7 @@ pub async fn create_transaction_data(
             .get_all_parents(round_id)
             .await
             .into_iter()
-            .map(|s| s.into_bytes())
-            .collect::<Vec<_>>();
+            .collect::<Vec<_>>(); // ✅ Send actual unit_id strings directly as Vec<String>
         info!(
             "Node {}: For round {}, resolved {} parent units: {:?}",
             node_guard.id,
