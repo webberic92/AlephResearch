@@ -165,7 +165,7 @@ let node_guard = node.lock().await;
         }
 
         let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
-        tracing::info!(
+        info!(
             "Node {}: Added proposal for round {} from node {}. Count: {}/{}",
             node_id, round_id,propose_request.base.proposing_node_id, proposal_count, required_proposals
         );
@@ -205,7 +205,7 @@ let node_guard = node.lock().await;
         let dag = self.dag.lock().await;
     
         // 🌐 Log the entire DAG before searching
-        tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
+        // tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
     
         let result = dag.values()
             .flatten()
