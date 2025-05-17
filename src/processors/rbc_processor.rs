@@ -62,9 +62,7 @@ impl RBCProcessor {
         let result = self.queue_tx.send(msg).await;
         if let Err(e) = result {
             error!("Failed to enqueue message: {:?}", e);
-        } else {
-            info!("Message enqueued. Queue size approx: N/A"); // optionally expose a counter
-        }
+        } 
     }
 
     /// ✅ Process all messages from the priority queue
