@@ -80,6 +80,8 @@ impl Node {
     }
 
 
+
+    
     // pub fn get_message_count(&self) -> u64 {
     //     self.message_count.load(Ordering::Relaxed)
     // }
@@ -180,6 +182,21 @@ let node_guard = node.lock().await;
         dag.get(&round_id)
             .and_then(|units| units.last())
             .map(|unit| unit.unit_id.clone())
+    }
+
+    pub async fn get_finalized_units_for_round(&self, round: u64) -> Vec<DagUnit> {
+        if round == 0 {
+            return vec![];
+        }
+    
+        let dag = self.dag.lock().await;
+    
+        dag.get(&round)
+            .cloned() // clone Vec<DagUnit>
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|unit| !unit.transactions.is_empty()) // exclude empty units
+            .collect()
     }
 
     /// **🔢 Generate Next Unit ID with Dynamic Pattern (U<round>-<index>)**

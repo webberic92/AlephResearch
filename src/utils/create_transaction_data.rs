@@ -27,11 +27,14 @@ pub async fn create_transaction_data(
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
+    
         let parent_units = node_guard
-            .get_all_parents(round_id)
+            .get_finalized_units_for_round(round_id - 1)
             .await
             .into_iter()
-            .collect::<Vec<_>>(); // ✅ Send actual unit_id strings directly as Vec<String>
+            .map(|unit| unit.unit_id)
+            .collect::<Vec<_>>(); // ✅ All finalized units from r-1 as parents
+    
         info!(
             "Node {}: For round {}, resolved {} parent units: {:?}",
             node_guard.id,
@@ -39,7 +42,7 @@ pub async fn create_transaction_data(
             parent_units.len(),
             parent_units
         );
-
+    
         (
             node_guard.id,
             node_guard.number_of_transactions,

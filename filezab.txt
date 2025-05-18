@@ -82,18 +82,6 @@ pub async fn handle_commit(
             }
         }
 
-        // ✅ Immediately emit RoundFinalized event before doing anything else
-        {
-            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
-            let round_finalized = RBCMessage::RoundFinalized(round_id);
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                rbc_processor.enqueue_message(round_finalized).await;
-            } else {
-                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
-            }
-        }
-
         let finalized_dag = {
             let node_guard = node.lock().await;
             let dag_guard = node_guard.dag.lock().await;
@@ -124,6 +112,19 @@ pub async fn handle_commit(
             if *current_round == round_id {
                 *current_round += 1;
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
+            }
+        }
+
+
+        // ✅ Immediately emit RoundFinalized event before doing anything else
+        {
+            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
+            let round_finalized = RBCMessage::RoundFinalized(round_id);
+            let node_guard = node.lock().await;
+            if let Some(rbc_processor) = &node_guard.rbc_processor {
+                rbc_processor.enqueue_message(round_finalized).await;
+            } else {
+                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
             }
         }
 
@@ -941,11 +942,14 @@ pub async fn create_transaction_data(
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
+    
         let parent_units = node_guard
-            .get_all_parents(round_id)
+            .get_finalized_units_for_round(round_id - 1)
             .await
             .into_iter()
-            .collect::<Vec<_>>(); // ✅ Send actual unit_id strings directly as Vec<String>
+            .map(|unit| unit.unit_id)
+            .collect::<Vec<_>>(); // ✅ All finalized units from r-1 as parents
+    
         info!(
             "Node {}: For round {}, resolved {} parent units: {:?}",
             node_guard.id,
@@ -953,7 +957,7 @@ pub async fn create_transaction_data(
             parent_units.len(),
             parent_units
         );
-
+    
         (
             node_guard.id,
             node_guard.number_of_transactions,
@@ -1621,6 +1625,8 @@ impl Node {
     }
 
 
+
+    
     // pub fn get_message_count(&self) -> u64 {
     //     self.message_count.load(Ordering::Relaxed)
     // }
@@ -1721,6 +1727,21 @@ let node_guard = node.lock().await;
         dag.get(&round_id)
             .and_then(|units| units.last())
             .map(|unit| unit.unit_id.clone())
+    }
+
+    pub async fn get_finalized_units_for_round(&self, round: u64) -> Vec<DagUnit> {
+        if round == 0 {
+            return vec![];
+        }
+    
+        let dag = self.dag.lock().await;
+    
+        dag.get(&round)
+            .cloned() // clone Vec<DagUnit>
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|unit| !unit.transactions.is_empty()) // exclude empty units
+            .collect()
     }
 
     /// **🔢 Generate Next Unit ID with Dynamic Pattern (U<round>-<index>)**
@@ -2024,9 +2045,9 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
        
-        INSTANCE_TYPE ="c5n.large" # Define the instance type
-        INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE =  5# Define the number of transactions in a batch
+        INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
+        INSTANCES_NUMBER = 16 # Define the number of instances
+        BATCH_SIZE =  2048#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
@@ -2378,6 +2399,7 @@ impl PartialOrd for RBCMessage {
 }
 use chrono::Local;
 use tokio::sync::{Mutex, mpsc};
+use tokio::time::{timeout, Duration};
 use tracing::{info, warn, error};
 use std::sync::Arc;
 use std::collections::BinaryHeap;
@@ -2397,7 +2419,7 @@ pub struct RBCProcessor {
 
 impl RBCProcessor {
     pub fn new(node: Arc<Mutex<Node>>) -> Self {
-        let (tx, mut rx) = mpsc::channel::<RBCMessage>(100);
+        let (tx, mut rx) = mpsc::channel::<RBCMessage>(1000);
         let tx_clone = tx.clone();
         let node_clone = node.clone();
         let shared_queue = Arc::new(Mutex::new(BinaryHeap::<RBCMessage>::new()));
@@ -2479,16 +2501,66 @@ impl RBCProcessor {
     }
 
     async fn sanitize_stale_messages(round: u64, queue: &Arc<Mutex<BinaryHeap<RBCMessage>>>) {
-        info!("🧹 Sanitizing stale messages in the queue for round {}, Queue Size = {} ", round, queue.lock().await.len());
         let mut pq = queue.lock().await;
+    
+        // Count messages before sanitizing
+        let mut before_round_finalized = 0;
+        let mut before_commits = 0;
+        let mut before_prevotes = 0;
+        let mut before_proposals = 0;
+    
+        for msg in pq.iter() {
+            match msg {
+                RBCMessage::RoundFinalized(_) => before_round_finalized += 1,
+                RBCMessage::Commit(_) => before_commits += 1,
+                RBCMessage::Prevote(_) => before_prevotes += 1,
+                RBCMessage::Proposal(_) => before_proposals += 1,
+            }
+        }
+    
+        info!(
+            "🧹 Sanitizing stale messages for round {}. Queue size = {} → RoundFinalized: {}, Commits: {}, Prevotes: {}, Proposals: {}",
+            round,
+            pq.len(),
+            before_round_finalized,
+            before_commits,
+            before_prevotes,
+            before_proposals
+        );
+    
+        // Sanitize
         pq.retain(|msg| match msg {
             RBCMessage::Commit(req) => req.round_id >= round,
             RBCMessage::Prevote(req) => req.proposals.get(0).map_or(false, |p| p.base.round_id >= round),
             RBCMessage::Proposal(req) => req.base.round_id >= round,
             _ => true,
         });
-        info!("🧹 Sanitized stale messages. Remaining queue size: {}", pq.len());
+    
+        // Count messages after sanitizing
+        let mut after_round_finalized = 0;
+        let mut after_commits = 0;
+        let mut after_prevotes = 0;
+        let mut after_proposals = 0;
+    
+        for msg in pq.iter() {
+            match msg {
+                RBCMessage::RoundFinalized(_) => after_round_finalized += 1,
+                RBCMessage::Commit(_) => after_commits += 1,
+                RBCMessage::Prevote(_) => after_prevotes += 1,
+                RBCMessage::Proposal(_) => after_proposals += 1,
+            }
+        }
+    
+        info!(
+            "🧹 Sanitized complete. Remaining — RoundFinalized: {}, Commits: {}, Prevotes: {}, Proposals: {} (Total: {})",
+            after_round_finalized,
+            after_commits,
+            after_prevotes,
+            after_proposals,
+            pq.len()
+        );
     }
+    
 
     async fn handle_round_finalized(
         new_round: u64,
@@ -2509,8 +2581,8 @@ impl RBCProcessor {
                 let round_id = propose_request.base.round_id;
                 if send_proposals(node.clone(), propose_request.clone()).await.is_ok() {
                     info!("✅ Proposal for round {} sent successfully.", round_id);
-                    if let Err(e) = tx.send(RBCMessage::Proposal(propose_request)).await {
-                        error!("❌ Failed to enqueue proposal for round {}: {:?}", round_id, e);
+                    if let Err(e) = tx.try_send(RBCMessage::Proposal(propose_request.clone())) {
+                        warn!("⚠️ Queue full for proposal round {}. Dropping: {:?}", round_id, e);
                     }
                 }
             }
