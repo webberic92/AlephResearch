@@ -70,14 +70,14 @@ pub async fn handle_commit(
                 
                 if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
                     dag_units.push(unit.clone());
-                    info!(
-                        "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
-                        node_id,
-                        unit.unit_id,
-                        unit.proposer_node,
-                        unit.transactions.len(),
-                        round_id
-                    );
+                    // info!(
+                    //     "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
+                    //     node_id,
+                    //     unit.unit_id,
+                    //     unit.proposer_node,
+                    //     unit.transactions.len(),
+                    //     round_id
+                    // );
                 }
             }
         }
@@ -324,12 +324,11 @@ pub async fn handle_prevote(
             unit_hash_map.insert(digest_hex, unit.unit_id.clone());
         }
 
-        for hash in &proposal.parents {
-            let hash_hex = hex::encode(hash);
-            if let Some(unit_id) = unit_hash_map.get(&hash_hex) {
-                resolved_parents.push(unit_id.clone());
+        for parent_id in &proposal.parents {
+            if dag_guard.values().flatten().any(|u| &u.unit_id == parent_id) {
+                resolved_parents.push(parent_id.clone());
             } else {
-                warn!("Could not resolve parent hash {} to a known unit_id", hash_hex);
+                warn!("Could not resolve parent unit_id {} to known DAG unit", parent_id);
             }
         }
 
@@ -1707,7 +1706,7 @@ let node_guard = node.lock().await;
         }
 
         let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
-        tracing::info!(
+        info!(
             "Node {}: Added proposal for round {} from node {}. Count: {}/{}",
             node_id, round_id,propose_request.base.proposing_node_id, proposal_count, required_proposals
         );
@@ -1747,13 +1746,13 @@ let node_guard = node.lock().await;
         let dag = self.dag.lock().await;
     
         // 🌐 Log the entire DAG before searching
-        tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
+        // tracing::info!("Node {}: Checking for parent unit: '{}'. Current DAG: {:?}", self.id, parent_id, *dag);
     
         let result = dag.values()
             .flatten()
             .any(|unit| unit.unit_id == parent_id);
     
-        tracing::info!(
+        info!(
             "Node {}: Parent unit '{}' committed status: {}",
             self.id,
             parent_id,
@@ -2026,8 +2025,8 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
        
         INSTANCE_TYPE ="c5n.large" # Define the instance type
-        INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE =  4# Define the number of transactions in a batch
+        INSTANCES_NUMBER = 64 # Define the number of instances
+        BATCH_SIZE =  128# Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
@@ -2391,9 +2390,7 @@ impl RBCProcessor {
         let result = self.queue_tx.send(msg).await;
         if let Err(e) = result {
             error!("Failed to enqueue message: {:?}", e);
-        } else {
-            info!("Message enqueued. Queue size approx: N/A"); // optionally expose a counter
-        }
+        } 
     }
 
     /// ✅ Process all messages from the priority queue
