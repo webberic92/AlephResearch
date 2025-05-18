@@ -82,18 +82,6 @@ pub async fn handle_commit(
             }
         }
 
-        // ✅ Immediately emit RoundFinalized event before doing anything else
-        {
-            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
-            let round_finalized = RBCMessage::RoundFinalized(round_id);
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                rbc_processor.enqueue_message(round_finalized).await;
-            } else {
-                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
-            }
-        }
-
         let finalized_dag = {
             let node_guard = node.lock().await;
             let dag_guard = node_guard.dag.lock().await;
@@ -124,6 +112,19 @@ pub async fn handle_commit(
             if *current_round == round_id {
                 *current_round += 1;
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
+            }
+        }
+
+
+        // ✅ Immediately emit RoundFinalized event before doing anything else
+        {
+            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
+            let round_finalized = RBCMessage::RoundFinalized(round_id);
+            let node_guard = node.lock().await;
+            if let Some(rbc_processor) = &node_guard.rbc_processor {
+                rbc_processor.enqueue_message(round_finalized).await;
+            } else {
+                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
             }
         }
 
