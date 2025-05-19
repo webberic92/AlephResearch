@@ -943,12 +943,9 @@ pub async fn create_transaction_data(
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
     
-        let parent_units = node_guard
-            .get_finalized_units_for_round(round_id - 1)
-            .await
-            .into_iter()
-            .map(|unit| unit.unit_id)
-            .collect::<Vec<_>>(); // ✅ All finalized units from r-1 as parents
+        let parent_units = node_guard.get_all_parents(round_id).await;
+    
+
     
         info!(
             "Node {}: For round {}, resolved {} parent units: {:?}",
@@ -1795,14 +1792,16 @@ let node_guard = node.lock().await;
             dag.clone()
         };
     
-        dag_snapshot.get(&(round_id - 1))
+        let ret_val = dag_snapshot.get(&(round_id - 1))
             .map(|units| {
                 units.iter()
                     .filter(|u| !u.transactions.is_empty()) // ← filters out empty units
                     .map(|u| u.unit_id.clone())
                     .collect()
             })
-            .unwrap_or_default()
+            .unwrap_or_default();
+        info!("Node {}: All parents for round {}: {:?}", self.id, round_id - 1, ret_val);
+        return ret_val;
     }
     
 
@@ -2046,12 +2045,12 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
        
         INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
-        INSTANCES_NUMBER = 16 # Define the number of instances
-        BATCH_SIZE =  2048#(TX PER BATCH) Define the number of transactions in a batch
+        INSTANCES_NUMBER = 5 # Define the number of instances
+        BATCH_SIZE =  7#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 3 # Define the number of rounds
+        TOTAL_ROUNDS = 4 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack

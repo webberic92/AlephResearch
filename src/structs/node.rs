@@ -241,24 +241,33 @@ let node_guard = node.lock().await;
     /// **🔗 Retrieve All Parents for a Round**
     /// **🔗 Retrieve All Parents for the Previous Round**
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
-        if round_id == 1 {
-            return Vec::new();
-        }
-    
         let dag_snapshot = {
             let dag = self.dag.lock().await;
             dag.clone()
         };
     
-        dag_snapshot.get(&(round_id - 1))
-            .map(|units| {
-                units.iter()
-                    .filter(|u| !u.transactions.is_empty()) // ← filters out empty units
-                    .map(|u| u.unit_id.clone())
-                    .collect()
-            })
-            .unwrap_or_default()
+        let mut all_parents = Vec::new();
+    
+        for r in 1..round_id {
+            if let Some(units) = dag_snapshot.get(&r) {
+                for unit in units {
+                    if !unit.transactions.is_empty() {
+                        all_parents.push(unit.unit_id.clone());
+                    }
+                }
+            }
+        }
+    
+        info!(
+            "Node {}: All parents from rounds 1 to {}: {:?}",
+            self.id,
+            round_id - 1,
+            all_parents
+        );
+    
+        all_parents
     }
+    
     
 
     

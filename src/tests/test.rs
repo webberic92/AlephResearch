@@ -415,6 +415,102 @@ mod tests {
         
         
 
+
+
+
+        #[tokio::test]
+async fn test_get_all_parents_accumulates_units_across_rounds() {
+    use crate::structs::requests::{DagUnit, Transaction};
+    use crate::structs::node::Node;
+    use std::collections::HashMap;
+
+    let node = Node::new(
+        0,
+        3,
+        "127.0.0.1:3000".into(),
+        vec![],
+        "127.0.0.1:9999".into(),
+        1,
+        250,
+        2,
+        1,
+    );
+
+    // Insert 1 unit in round 1
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(1, vec![DagUnit {
+            unit_id: "U1-0".to_string(),
+            proposer_node: 0,
+            round: 1,
+            transactions: vec![Transaction {
+                root: vec![0u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec![],
+            merkle_root: vec![0u8; 32],
+            finalization_timestamp: 111,
+        }]);
+    }
+
+    // Insert 1 unit in round 2
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(2, vec![DagUnit {
+            unit_id: "U2-0".to_string(),
+            proposer_node: 0,
+            round: 2,
+            transactions: vec![Transaction {
+                root: vec![1u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec!["U1-0".to_string()],
+            merkle_root: vec![1u8; 32],
+            finalization_timestamp: 222,
+        }]);
+    }
+
+    // Insert 1 unit in round 3
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(3, vec![DagUnit {
+            unit_id: "U3-0".to_string(),
+            proposer_node: 0,
+            round: 3,
+            transactions: vec![Transaction {
+                root: vec![2u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec!["U1-0".to_string(), "U2-0".to_string()],
+            merkle_root: vec![2u8; 32],
+            finalization_timestamp: 333,
+        }]);
+    }
+
+    // Check parents for round 2
+    let parents_round_2 = node.lock().await.get_all_parents(2).await;
+    assert_eq!(parents_round_2.len(), 1, "Round 2 should have 1 parent");
+    assert_eq!(parents_round_2[0], "U1-0");
+
+    // Check parents for round 3
+    let parents_round_3 = node.lock().await.get_all_parents(3).await;
+    assert_eq!(parents_round_3.len(), 2, "Round 3 should have 2 parents");
+    assert!(parents_round_3.contains(&"U1-0".to_string()));
+    assert!(parents_round_3.contains(&"U2-0".to_string()));
+
+    println!("✅ test_get_all_parents_accumulates_units_across_rounds passed");
+}
+
+
     }
     
     

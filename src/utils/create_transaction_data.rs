@@ -28,12 +28,9 @@ pub async fn create_transaction_data(
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
     
-        let parent_units = node_guard
-            .get_finalized_units_for_round(round_id - 1)
-            .await
-            .into_iter()
-            .map(|unit| unit.unit_id)
-            .collect::<Vec<_>>(); // ✅ All finalized units from r-1 as parents
+        let parent_units = node_guard.get_all_parents(round_id).await;
+        info!("Node {}: Getting parent units for round {}: {:?}", node_guard.id, round_id, parent_units);
+
     
         info!(
             "Node {}: For round {}, resolved {} parent units: {:?}",

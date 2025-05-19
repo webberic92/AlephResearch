@@ -70,14 +70,14 @@ pub async fn handle_commit(
                 
                 if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
                     dag_units.push(unit.clone());
-                    // info!(
-                    //     "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
-                    //     node_id,
-                    //     unit.unit_id,
-                    //     unit.proposer_node,
-                    //     unit.transactions.len(),
-                    //     round_id
-                    // );
+                    info!(
+                        "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
+                        node_id,
+                        unit.unit_id,
+                        unit.proposer_node,
+                        unit.transactions.len(),
+                        round_id
+                    );
                 }
             }
         }
