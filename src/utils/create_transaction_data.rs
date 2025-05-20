@@ -75,12 +75,20 @@ pub async fn create_transaction_data(
         let mut data_chunks: Vec<Vec<u8>> = Vec::with_capacity(data_shards);
         for i in 0..data_shards {
             let start = i * shard_size;
-            let end = std::cmp::min(start + shard_size, padded.len());
-            let mut chunk = padded[start..end].to_vec();
-            chunk.resize(shard_size, 0);
+            let chunk = if start >= padded.len() {
+                vec![0u8; shard_size] // Entirely zero-padded
+            } else {
+                let end = std::cmp::min(start + shard_size, padded.len());
+                let mut chunk = padded[start..end].to_vec();
+                chunk.resize(shard_size, 0);
+                chunk
+            };
             data_chunks.push(chunk);
         }
 
+
+
+        
         // Pad to total_nodes
         let mut shards = data_chunks.clone();
         while shards.len() < total_nodes {
