@@ -146,7 +146,7 @@ pub async fn handle_prevote(
         for unit in &reconstructed_units {
             for parent in &unit.parent_units {
                 if !node_guard.is_unit_committed(parent).await {
-                    return Err(format!("Node {}: Missing parent {} for round {}", node_id, parent, round_id));
+                    warn!("Node {}: Missing parent {} for round {}", node_id, parent, round_id);
                 }
             }
         }
