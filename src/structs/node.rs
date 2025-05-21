@@ -4,6 +4,7 @@ use std::{
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
+use tracing::info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
 use super::{requests::{CommitRequest, DagUnit, ProposeRequest}, shard_aggregator::ShardAggregator};
 use crate::utils::events::Event;
@@ -210,7 +211,7 @@ let node_guard = node.lock().await;
             .flatten()
             .any(|unit| unit.unit_id == parent_id);
     
-        tracing::info!(
+        info!(
             "Node {}: Parent unit '{}' committed status: {}",
             self.id,
             parent_id,
