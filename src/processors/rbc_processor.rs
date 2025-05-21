@@ -22,7 +22,6 @@ impl RBCProcessor {
         let (tx, mut rx) = mpsc::channel::<RBCMessage>(100);
         let tx_clone = tx.clone();
         let node_clone = node.clone();
-        let client_clone = client.clone();
 
         tokio::spawn(async move {
             let mut priority_queue = BinaryHeap::new();
@@ -36,7 +35,6 @@ impl RBCProcessor {
                         Self::handle_round_finalized(
                             *new_round,
                             &node_clone,
-                            &client_clone,
                             &tx,
                             &mut priority_queue,
                             &mut fifo_queues
@@ -50,7 +48,7 @@ impl RBCProcessor {
                 }
 
                 priority_queue.push(msg);
-                Self::drain_priority_queue(&mut priority_queue, &node_clone, &client_clone).await;
+                Self::drain_priority_queue(&mut priority_queue, &node_clone).await;
             }
 
             info!("✅ RBCProcessor: Shutting down gracefully.");
@@ -70,7 +68,6 @@ impl RBCProcessor {
     async fn drain_priority_queue(
         queue: &mut BinaryHeap<RBCMessage>,
         node: &Arc<Mutex<Node>>,
-        client: &Arc<Client>,
     ) {
         while let Some(task) = queue.pop() {
             match task {
@@ -82,13 +79,13 @@ impl RBCProcessor {
                 }
                 RBCMessage::Prevote(prevote) => {
                     info!("Processing prevote for round {} from node {}", prevote.proposals[0].base.round_id, prevote.sender_url);
-                    if let Err(e) = process_prevote(node.clone(), client.clone(), prevote).await {
+                    if let Err(e) = process_prevote(node.clone(), prevote).await {
                         error!("Error processing prevote: {:?}", e);
                     }
                 }
                 RBCMessage::Proposal(propose) => {
                     info!("Processing proposal for round {} from node {}", propose.base.round_id, propose.base.proposing_node_id);
-                    if let Err(e) = process_proposal(node.clone(), client.clone(), propose).await {
+                    if let Err(e) = process_proposal(node.clone(), propose).await {
                         error!("Error processing proposal: {:?}", e);
                     }
                 }

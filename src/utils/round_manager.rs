@@ -7,7 +7,6 @@ use crate::utils::events::Event;
 
 pub async fn round_manager_task(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
     mut event_receiver: mpsc::Receiver<Event>,
 ) -> Result<(), anyhow::Error> {
     while let Some(event) = event_receiver.recv().await {
@@ -28,7 +27,7 @@ pub async fn round_manager_task(
                 } // 🔓 Release the lock before creating the next proposal
 
                 // ✅ **Execute the transaction logic for the next round**
-                if let Err(e) = execute_transaction_logic(node.clone(), client.clone()).await {
+                if let Err(e) = execute_transaction_logic(node.clone()).await {
                     error!("❌ Failed to start next round {}: {:?}", r + 1, e);
                 }
             }
@@ -39,7 +38,6 @@ pub async fn round_manager_task(
 
 async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
 
     // ✅ Create transaction proposal with multiple transactions
@@ -60,7 +58,7 @@ async fn execute_transaction_logic(
 
             // ✅ Step 2: Send proposal
             info!("📤 Node {}: Sending proposal for round {}...", node_id, round);
-            if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
+            if let Err(e) = send_proposals(node.clone(), propose_request).await {
                 error!(
                     "❌ Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e

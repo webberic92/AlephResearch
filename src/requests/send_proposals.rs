@@ -28,7 +28,6 @@ use anyhow::anyhow;
 */
 
 pub async fn send_proposals(
-    client: Arc<Client>,  
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
