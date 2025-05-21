@@ -13,7 +13,7 @@ mod tests {
     async fn test_create_and_verify_transaction_batch() {
         let dummy_node = Node::new(
             0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-            2, 256, 4, 1, Arc::new(Client::new()),
+            2, 256, 4, 1
         );
 
         let proposal = create_transaction_data(dummy_node)
@@ -48,7 +48,7 @@ mod tests {
     async fn test_accumulator_verifies_only_data_shards() {
         let dummy_node = Node::new(
             0, 10, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            1, 256, 7, 1, Arc::new(Client::new()),
+            1, 256, 7, 1
         );
 
         let proposal = create_transaction_data(dummy_node)
@@ -104,7 +104,7 @@ mod tests {
         async fn test_create_and_verify_transaction_batch() {
             let dummy_node = Node::new(
                 0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-                2, 256, 4, 1, Arc::new(Client::new()),
+                2, 256, 4, 1
             );
     
             let proposal = create_transaction_data(dummy_node)
@@ -139,7 +139,7 @@ mod tests {
         async fn test_accumulator_verifies_only_data_shards() {
             let dummy_node = Node::new(
                 0, 10, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-                1, 256, 7, 1, Arc::new(Client::new()),
+                1, 256, 7, 1
             );
     
             let proposal = create_transaction_data(dummy_node)
@@ -192,7 +192,7 @@ mod tests {
     
         let node = Node::new(
             0, 5, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            2, 256, 4, 1, Arc::new(Client::new()),
+            2, 256, 4, 1
         );
     
         let proposal = create_transaction_data(node)

@@ -3,7 +3,6 @@ use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
-use reqwest::Client;
 use socket2::{Domain, Socket, Type};
 use tokio::sync::Mutex;
 use std::{net::SocketAddr, sync::Arc};
@@ -13,6 +12,7 @@ use tracing_subscriber;
 use aleph_research::utils::config_util::load_config;
 use aleph_research::structs::node::Node;
 use anyhow::Result;
+use std::net::TcpListener as StdTcpListener;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -93,7 +93,7 @@ async fn execute_transaction_logic(
             );
 
             // ✅ Step 2: Send proposal
-            if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
+            if let Err(e) = send_proposals(node.clone(), propose_request).await {
                 error!(
                     "Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e
