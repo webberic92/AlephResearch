@@ -27,7 +27,6 @@ pub struct Node {
     pub data_shards: usize,
     pub total_rounds: usize,
     pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
-    pub client: Arc<Client>,
     pub event_sender: mpsc::Sender<Event>,
     pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
     pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
@@ -45,7 +44,6 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
-        client: Arc<Client>,
     ) -> Arc<Mutex<Self>> {
         let (event_sender, event_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -63,7 +61,6 @@ impl Node {
             data_shards,
             total_rounds,
             commit_tracker: Arc::new(Mutex::new(HashMap::new())),
-            client: client.clone(),
             event_sender,
             rbc_processor: None, // ✅ Initialize as None, will be set later
             message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
@@ -73,7 +70,7 @@ impl Node {
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, client, event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
                 tracing::error!("RoundManager encountered an error: {:?}", e);
             }
         });
