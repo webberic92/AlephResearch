@@ -4,6 +4,7 @@ use aleph_research::requests::send_proposals::send_proposals;
 use aleph_research::utils::create_transaction_data::create_transaction_data;
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
 use reqwest::Client;
+use socket2::{Domain, Socket, Type};
 use tokio::sync::Mutex;
 use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
