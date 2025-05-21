@@ -187,7 +187,6 @@ use crate::{
 
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
     let (node_id, round_id, quorum_threshold, data_shards, node_list, rbc_processor, transaction_size) = {
@@ -347,9 +346,14 @@ pub async fn handle_prevote(
     for peer in node_list {
         let url = format!("http://{}/commit", peer);
         let payload = commit_request.clone();
+        let local_client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+        .build()
+        .expect("Failed to build HTTP client");
         for attempt in 0..3 {
             message_count.fetch_add(1, Ordering::Relaxed);
-            match client.post(&url).json(&payload).send().await {
+            match local_client.post(&url).json(&payload).send().await {
                 Ok(resp) if resp.status().is_success() => {
                     info!("✅ Commit sent to {}", url);
                     break;
@@ -399,7 +403,6 @@ use crate::{
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
@@ -492,13 +495,17 @@ pub async fn handle_propose(
             let node_guard = node.lock().await;
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
-
+        let local_client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+        .build()
+        .expect("Failed to build HTTP client");
         for target_node in node_list {
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
                 for attempt in 1..=3 {
                     info!("📤 Attempt {}/3: Node {} → {}", attempt, node_id, url);
-                    let res = client.post(&url).json(&prevote_request).send().await;
+                    let res = local_client.post(&url).json(&prevote_request).send().await;
 
                     match res {
                         Ok(resp) if resp.status().is_success() => {
@@ -562,7 +569,6 @@ use anyhow::anyhow;
 */
 
 pub async fn send_proposals(
-    client: Arc<Client>,  
     node: Arc<Mutex<Node>>,
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
@@ -594,9 +600,13 @@ pub async fn send_proposals(
 
 
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
-
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
     for node_url in nodes {
-        let client = client.clone();
+        let client = local_client.clone();
         let proposal = propose_request.clone();
         let mut attempt = 0;
         let max_attempts = 3;
@@ -785,14 +795,14 @@ pub async fn create_transaction_data(
     info!("📦 create_transaction_data(): Starting transaction data creation...");
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
-        info!(
-            "Node ID: {}, Number of Transactions: {}, Data Shards: {}, Total Nodes: {}, Transaction Size: {}",
-            node_guard.id,
-            node_guard.number_of_transactions,
-            node_guard.data_shards,
-            node_guard.total_nodes,
-            node_guard.transaction_size
-        );
+        // info!(
+        //     "Node ID: {}, Number of Transactions: {}, Data Shards: {}, Total Nodes: {}, Transaction Size: {}",
+        //     node_guard.id,
+        //     node_guard.number_of_transactions,
+        //     node_guard.data_shards,
+        //     node_guard.total_nodes,
+        //     node_guard.transaction_size
+        // );
         let round_id = *node_guard.current_round.lock().await;
         let parent_units = node_guard
             .get_all_parents(round_id)
@@ -824,7 +834,7 @@ pub async fn create_transaction_data(
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.into_bytes(), transaction_size);
         // let tx_root = Sha256::digest(&padded).to_vec();
-        info!("tx_index: {}, padded len: {}", tx_index, padded.len());
+        // info!("tx_index: {}, padded len: {}", tx_index, padded.len());
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut data_chunks: Vec<Vec<u8>> = padded
             .chunks(shard_size)
@@ -1138,7 +1148,6 @@ use crate::utils::events::Event;
 
 pub async fn round_manager_task(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
     mut event_receiver: mpsc::Receiver<Event>,
 ) -> Result<(), anyhow::Error> {
     while let Some(event) = event_receiver.recv().await {
@@ -1159,7 +1168,7 @@ pub async fn round_manager_task(
                 } // 🔓 Release the lock before creating the next proposal
 
                 // ✅ **Execute the transaction logic for the next round**
-                if let Err(e) = execute_transaction_logic(node.clone(), client.clone()).await {
+                if let Err(e) = execute_transaction_logic(node.clone()).await {
                     error!("❌ Failed to start next round {}: {:?}", r + 1, e);
                 }
             }
@@ -1170,7 +1179,6 @@ pub async fn round_manager_task(
 
 async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
 
     // ✅ Create transaction proposal with multiple transactions
@@ -1191,7 +1199,7 @@ async fn execute_transaction_logic(
 
             // ✅ Step 2: Send proposal
             info!("📤 Node {}: Sending proposal for round {}...", node_id, round);
-            if let Err(e) = send_proposals(client, node.clone(), propose_request).await {
+            if let Err(e) = send_proposals(node.clone(), propose_request).await {
                 error!(
                     "❌ Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e
@@ -1395,7 +1403,7 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> 
 
 /// **🛠️ Wait until all nodes report healthy**  
 /// - Retries up to 10 times, checking every 3 seconds.
-pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> Result<(), Error> {
+pub async fn wait_for_all_nodes_health( node: Arc<Mutex<Node>>) -> Result<(), Error> {
     loop {
         info!("🔍 Checking health of all nodes...");
 
@@ -1404,12 +1412,16 @@ pub async fn wait_for_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) 
             node_guard.nodes.clone()
         };
 
-
+        let local_client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+        .build()
+        .expect("Failed to build HTTP client");
         let mut unhealthy_nodes = Vec::new();
 
         let mut health_checks = vec![];
         for node_url in nodes {
-            let client = client.clone();
+            let client = local_client.clone();
             let url = node_url.clone();
 
             let check = async move {
@@ -1486,7 +1498,6 @@ pub struct Node {
     pub data_shards: usize,
     pub total_rounds: usize,
     pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
-    pub client: Arc<Client>,
     pub event_sender: mpsc::Sender<Event>,
     pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
     pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
@@ -1504,7 +1515,6 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
-        client: Arc<Client>,
     ) -> Arc<Mutex<Self>> {
         let (event_sender, event_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -1522,7 +1532,6 @@ impl Node {
             data_shards,
             total_rounds,
             commit_tracker: Arc::new(Mutex::new(HashMap::new())),
-            client: client.clone(),
             event_sender,
             rbc_processor: None, // ✅ Initialize as None, will be set later
             message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
@@ -1532,7 +1541,7 @@ impl Node {
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, client, event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
                 tracing::error!("RoundManager encountered an error: {:?}", e);
             }
         });
@@ -1546,7 +1555,7 @@ impl Node {
     // }
     
     /// **✅ Set `rbc_processor` After Initialization**
-    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>, client: Arc<Client>) {
+    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>) {
         let mut node_guard = node.lock().await;
         node_guard.rbc_processor = Some(rbc_processor.clone());
 
@@ -1554,7 +1563,7 @@ impl Node {
         let event_receiver = mpsc::channel(100).1;
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, client,event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
                 tracing::error!("RoundManager encountered an error after setting RBCProcessor: {:?}", e);
             }
         });
@@ -1960,7 +1969,8 @@ class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
 
-        INSTANCES_NUMBER = 12 # Define the number of instances
+        INSTANCE_TYPE = "c5n.xlarge"  # Define the instance type
+        INSTANCES_NUMBER = 6 # Define the number of instances
         BATCH_SIZE = 1024  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
@@ -2013,7 +2023,7 @@ class TestAleph(Stack):
 
         for i in range(INSTANCES_NUMBER):
             ec2_instance = ec2.Instance(self, f"MyInstance{i+1}",
-                instance_type=ec2.InstanceType("c5n.large"),
+                instance_type=ec2.InstanceType(INSTANCE_TYPE),
                 machine_image=ec2.MachineImage.latest_amazon_linux2(),
                 vpc=vpc,
                 security_group=security_group,
@@ -2186,18 +2196,80 @@ TestAleph(app, "TestAleph")  # Instantiate the TestAleph Stack within the app
 
 app.synth()
 use std::cmp::Ordering;
+use tracing::debug;
 use crate::structs::requests::{CommitRequest, PrevoteRequest, ProposeRequest};
 
-/// Assign priorities: **Lower value means higher priority**
 #[derive(Debug)]
 pub enum RBCMessage {
-    RoundFinalized(u64),    // ✅ Priority 0 (Highest)
-    Commit(CommitRequest),  // ✅ Priority 1
-    Prevote(PrevoteRequest), // ✅ Priority 2
-    Proposal(ProposeRequest), // ✅ Priority 3
+    RoundFinalized(u64),
+    Commit(CommitRequest),
+    Prevote(PrevoteRequest),
+    Proposal(ProposeRequest),
 }
 
-// ✅ Manually Implement `Eq` Based on Priority (Ignore Inner Data)
+impl RBCMessage {
+    pub fn priority(&self) -> u8 {
+        match self {
+            RBCMessage::RoundFinalized(_) => 0,
+            RBCMessage::Commit(_) => 1,
+            RBCMessage::Prevote(_) => 2,
+            RBCMessage::Proposal(_) => 3,
+        }
+    }
+
+    pub fn description(&self) -> String {
+        match self {
+            RBCMessage::RoundFinalized(r) => format!("RoundFinalized({})", r),
+            RBCMessage::Commit(req) => format!("Commit(round={}, proposer={})", req.round_id, req.proposing_node_id),
+            RBCMessage::Prevote(req) => format!(
+                "Prevote(round={}, sender={})",
+                req.proposals.get(0).map_or(0, |p| p.base.round_id),
+                req.sender_url
+            ),
+            RBCMessage::Proposal(req) => format!(
+                "Proposal(round={}, proposer={})",
+                req.base.round_id,
+                req.base.proposing_node_id
+            ),
+        }
+    }
+
+    pub fn log_enqueue(&self) {
+        debug!("📥 RBCMessage in Queue: {} → priority {}", self.description(), self.priority());
+    }
+
+    pub fn log_process(&self) {
+        debug!("⚙️ Processing RBCMessage: {} → priority {}", self.description(), self.priority());
+    }
+
+    pub fn type_str(&self) -> &'static str {
+        match self {
+            RBCMessage::RoundFinalized(_) => "rounds",
+            RBCMessage::Commit(_) => "commits",
+            RBCMessage::Prevote(_) => "prevotes",
+            RBCMessage::Proposal(_) => "proposals",
+        }
+    }
+
+    pub fn round_id(&self) -> Option<u64> {
+        match self {
+            RBCMessage::Commit(req) => Some(req.round_id),
+            RBCMessage::Prevote(req) => req.proposals.get(0).map(|p| p.base.round_id),
+            RBCMessage::Proposal(req) => Some(req.base.round_id),
+            RBCMessage::RoundFinalized(_) => None,
+        }
+    }
+
+    pub fn proposer_id(&self) -> Option<usize> {
+        match self {
+            RBCMessage::Commit(req) => Some(req.proposing_node_id as usize),
+            RBCMessage::Prevote(req) => req.proposals.get(0).map(|p| p.base.proposing_node_id as usize),
+            RBCMessage::Proposal(req) => Some(req.base.proposing_node_id as usize),
+            RBCMessage::RoundFinalized(_) => None,
+        }
+    }
+}
+
 impl PartialEq for RBCMessage {
     fn eq(&self, other: &Self) -> bool {
         self.priority() == other.priority()
@@ -2208,7 +2280,7 @@ impl Eq for RBCMessage {}
 
 impl Ord for RBCMessage {
     fn cmp(&self, other: &Self) -> Ordering {
-        other.priority().cmp(&self.priority()) // **Reverse ordering for priority queue**
+        other.priority().cmp(&self.priority())
     }
 }
 
@@ -2217,24 +2289,13 @@ impl PartialOrd for RBCMessage {
         Some(self.cmp(other))
     }
 }
-
-/// ✅ Function to Assign Priority for Each Message Type
-impl RBCMessage {
-    pub fn priority(&self) -> u8 {
-        match self {
-            RBCMessage::RoundFinalized(_) => 0,  // ✅ **Highest priority**
-            RBCMessage::Commit(_) => 1,  // **Commit is next**
-            RBCMessage::Prevote(_) => 2, // **Prevote is after commit**
-            RBCMessage::Proposal(_) => 3, // **Proposal is lowest priority**
-        }
-    }
-}
 use chrono::Local;
 use tokio::sync::{Mutex, mpsc};
+use tokio::time::{timeout, Duration};
 use tracing::{info, warn, error};
 use std::sync::Arc;
-use std::collections::{BinaryHeap, VecDeque};
-use reqwest::Client;
+use std::collections::BinaryHeap;
+use tokio::task::yield_now;
 
 use crate::handlers::handle_commit::handle_commit;
 use crate::handlers::handle_prevote::handle_prevote;
@@ -2249,93 +2310,154 @@ pub struct RBCProcessor {
 }
 
 impl RBCProcessor {
-    pub fn new(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Self {
-        let (tx, mut rx) = mpsc::channel::<RBCMessage>(100);
+    pub fn new(node: Arc<Mutex<Node>>) -> Self {
+        let (tx, mut rx) = mpsc::channel::<RBCMessage>(1000);
         let tx_clone = tx.clone();
         let node_clone = node.clone();
-        let client_clone = client.clone();
+        let shared_queue = Arc::new(Mutex::new(BinaryHeap::<RBCMessage>::new()));
+        let worker_queue = shared_queue.clone();
 
         tokio::spawn(async move {
-            let mut priority_queue = BinaryHeap::new();
-            let mut fifo_queues: Vec<VecDeque<RBCMessage>> = vec![VecDeque::new(), VecDeque::new(), VecDeque::new()];
-            let mut last_round = 0;
+            loop {
+                let task_opt = {
+                    let mut queue = worker_queue.lock().await;
+                    queue.pop()
+                };
 
+                if let Some(task) = task_opt {
+                    task.log_enqueue();
+                    match task {
+                        RBCMessage::Commit(commit) => {
+                            info!("Processing commit for round {} from node {}", commit.round_id, commit.proposing_node_id);
+                            if let Err(e) = process_commit(node_clone.clone(), commit).await {
+                                error!("Error processing commit: {:?}", e);
+                            }
+                        }
+                        RBCMessage::Prevote(prevote) => {
+                            if prevote.proposals.is_empty() {
+                                error!("❌ Received prevote with empty proposals. Skipping.");
+                                continue;
+                            }
+                            info!("Processing prevote for round {} from node {}", prevote.proposals[0].base.round_id, prevote.sender_url);
+                            if let Err(e) = process_prevote(node_clone.clone(), prevote).await {
+                                error!("Error processing prevote: {:?}", e);
+                            }
+                        }
+                        RBCMessage::Proposal(propose) => {
+                            info!("Processing proposal for round {} from node {}", propose.base.round_id, propose.base.proposing_node_id);
+                            if let Err(e) = process_proposal(node_clone.clone(), propose).await {
+                                error!("Error processing proposal: {:?}", e);
+                            }
+                        }
+                        _ => {}
+                    }
+                } else {
+                    tokio::time::sleep(tokio::time::Duration::from_millis(10)).await;
+                }
+                yield_now().await;
+            }
+        });
+
+        let queue_for_rx = shared_queue.clone();
+        let node_for_rx = node.clone();
+        tokio::spawn(async move {
+            let mut last_round = 0;
             while let Some(msg) = rx.recv().await {
-                match &msg {
+                let should_skip = match &msg {
                     RBCMessage::RoundFinalized(new_round) => {
                         last_round = *new_round;
-                        Self::handle_round_finalized(
-                            *new_round,
-                            &node_clone,
-                            &client_clone,
-                            &tx,
-                            &mut priority_queue,
-                            &mut fifo_queues
-                        ).await;
-                        continue;
+                        Self::sanitize_stale_messages(*new_round, &queue_for_rx).await;
+                        Self::handle_round_finalized(*new_round, &node_for_rx, &tx).await;
+                        true
                     }
-                    RBCMessage::Commit(req) if req.round_id < last_round => continue,
-                    RBCMessage::Prevote(req) if req.proposals[0].base.round_id < last_round => continue,
-                    RBCMessage::Proposal(req) if req.base.round_id < last_round => continue,
-                    _ => {}
+                    RBCMessage::Commit(req) => req.round_id < last_round,
+                    RBCMessage::Prevote(req) => req.proposals.get(0).map_or(true, |p| p.base.round_id < last_round),
+                    RBCMessage::Proposal(req) => req.base.round_id < last_round,
+                    _ => false,
+                };
+
+                if !should_skip {
+                    queue_for_rx.lock().await.push(msg);
                 }
-
-                priority_queue.push(msg);
-                Self::drain_priority_queue(&mut priority_queue, &node_clone, &client_clone).await;
             }
-
             info!("✅ RBCProcessor: Shutting down gracefully.");
         });
 
         Self { queue_tx: tx_clone }
     }
 
-    /// ✅ Public method to enqueue new messages
     pub async fn enqueue_message(&self, msg: RBCMessage) {
         if let Err(e) = self.queue_tx.send(msg).await {
             error!("Failed to enqueue message: {:?}", e);
         }
     }
 
-    /// ✅ Process all messages from the priority queue
-    async fn drain_priority_queue(
-        queue: &mut BinaryHeap<RBCMessage>,
-        node: &Arc<Mutex<Node>>,
-        client: &Arc<Client>,
-    ) {
-        while let Some(task) = queue.pop() {
-            match task {
-                RBCMessage::Commit(commit) => {
-                    info!("Processing commit for round {} from node {}", commit.round_id, commit.proposing_node_id);
-                    if let Err(e) = process_commit(node.clone(), commit).await {
-                        error!("Error processing commit: {:?}", e);
-                    }
-                }
-                RBCMessage::Prevote(prevote) => {
-                    info!("Processing prevote for round {} from node {}", prevote.proposals[0].base.round_id, prevote.sender_url);
-                    if let Err(e) = process_prevote(node.clone(), client.clone(), prevote).await {
-                        error!("Error processing prevote: {:?}", e);
-                    }
-                }
-                RBCMessage::Proposal(propose) => {
-                    info!("Processing proposal for round {} from node {}", propose.base.round_id, propose.base.proposing_node_id);
-                    if let Err(e) = process_proposal(node.clone(), client.clone(), propose).await {
-                        error!("Error processing proposal: {:?}", e);
-                    }
-                }
-                _ => {}
+    async fn sanitize_stale_messages(round: u64, queue: &Arc<Mutex<BinaryHeap<RBCMessage>>>) {
+        let mut pq = queue.lock().await;
+    
+        // Count messages before sanitizing
+        let mut before_round_finalized = 0;
+        let mut before_commits = 0;
+        let mut before_prevotes = 0;
+        let mut before_proposals = 0;
+    
+        for msg in pq.iter() {
+            match msg {
+                RBCMessage::RoundFinalized(_) => before_round_finalized += 1,
+                RBCMessage::Commit(_) => before_commits += 1,
+                RBCMessage::Prevote(_) => before_prevotes += 1,
+                RBCMessage::Proposal(_) => before_proposals += 1,
             }
         }
+    
+        info!(
+            "🧹 Sanitizing stale messages for round {}. Queue size = {} → RoundFinalized: {}, Commits: {}, Prevotes: {}, Proposals: {}",
+            round,
+            pq.len(),
+            before_round_finalized,
+            before_commits,
+            before_prevotes,
+            before_proposals
+        );
+    
+        // Sanitize
+        pq.retain(|msg| match msg {
+            RBCMessage::Commit(req) => req.round_id >= round,
+            RBCMessage::Prevote(req) => req.proposals.get(0).map_or(false, |p| p.base.round_id >= round),
+            RBCMessage::Proposal(req) => req.base.round_id >= round,
+            _ => true,
+        });
+    
+        // Count messages after sanitizing
+        let mut after_round_finalized = 0;
+        let mut after_commits = 0;
+        let mut after_prevotes = 0;
+        let mut after_proposals = 0;
+    
+        for msg in pq.iter() {
+            match msg {
+                RBCMessage::RoundFinalized(_) => after_round_finalized += 1,
+                RBCMessage::Commit(_) => after_commits += 1,
+                RBCMessage::Prevote(_) => after_prevotes += 1,
+                RBCMessage::Proposal(_) => after_proposals += 1,
+            }
+        }
+    
+        info!(
+            "🧹 Sanitized complete. Remaining — RoundFinalized: {}, Commits: {}, Prevotes: {}, Proposals: {} (Total: {})",
+            after_round_finalized,
+            after_commits,
+            after_prevotes,
+            after_proposals,
+            pq.len()
+        );
     }
+    
 
-    /// ✅ Handle round finalization and create the next proposal
     async fn handle_round_finalized(
         new_round: u64,
         node: &Arc<Mutex<Node>>,
-        client: &Arc<Client>,
         tx: &mpsc::Sender<RBCMessage>,
-        priority_queue: &mut BinaryHeap<RBCMessage>,
-        fifo_queues: &mut [VecDeque<RBCMessage>],
     ) {
         info!("🔄 RBCProcessor: RoundFinalized received for round {}", new_round);
 
@@ -2346,89 +2468,33 @@ impl RBCProcessor {
             return;
         }
 
-        let (commit_count, prevote_count, proposal_count) =
-            Self::remove_stale_messages(new_round, priority_queue, fifo_queues);
-
-        info!(
-            "🧹 RBCProcessor: Removed stale messages → commits: {}, prevotes: {}, proposals: {}",
-            commit_count, prevote_count, proposal_count
-        );
-
         match create_transaction_data(node.clone()).await {
             Ok(propose_request) => {
                 let round_id = propose_request.base.round_id;
-                if send_proposals(client.clone(), node.clone(), propose_request.clone()).await.is_ok() {
+                if send_proposals(node.clone(), propose_request.clone()).await.is_ok() {
                     info!("✅ Proposal for round {} sent successfully.", round_id);
-                    if let Err(e) = tx.send(RBCMessage::Proposal(propose_request)).await {
-                        error!("❌ Failed to enqueue proposal for round {}: {:?}", round_id, e);
+                    if let Err(e) = tx.try_send(RBCMessage::Proposal(propose_request.clone())) {
+                        warn!("⚠️ Queue full for proposal round {}. Dropping: {:?}", round_id, e);
                     }
                 }
             }
             Err(e) => error!("❌ Failed to create transaction data for round {}: {:?}", new_round + 1, e),
         }
     }
-
-    /// ✅ Clean up stale messages from queues for old rounds
-    fn remove_stale_messages(
-        current_round: u64,
-        priority_queue: &mut BinaryHeap<RBCMessage>,
-        fifo_queues: &mut [VecDeque<RBCMessage>],
-    ) -> (usize, usize, usize) {
-        let mut commit_count = 0;
-        let mut prevote_count = 0;
-        let mut proposal_count = 0;
-
-        for queue in fifo_queues.iter_mut() {
-            queue.retain(|msg| match msg {
-                RBCMessage::Commit(req) if req.round_id < current_round => {
-                    commit_count += 1;
-                    false
-                }
-                RBCMessage::Prevote(req) if req.proposals[0].base.round_id < current_round => {
-                    prevote_count += 1;
-                    false
-                }
-                RBCMessage::Proposal(req) if req.base.round_id < current_round => {
-                    proposal_count += 1;
-                    false
-                }
-                _ => true,
-            });
-        }
-
-        priority_queue.retain(|msg| match msg {
-            RBCMessage::Commit(req) if req.round_id < current_round => {
-                commit_count += 1;
-                false
-            }
-            RBCMessage::Prevote(req) if req.proposals[0].base.round_id < current_round => {
-                prevote_count += 1;
-                false
-            }
-            RBCMessage::Proposal(req) if req.base.round_id < current_round => {
-                proposal_count += 1;
-                false
-            }
-            _ => true,
-        });
-
-        (commit_count, prevote_count, proposal_count)
-    }
 }
 
-// ✅ Wrapper functions to call handlers
-async fn process_proposal(node: Arc<Mutex<Node>>, client: Arc<Client>, propose_request: ProposeRequest) -> Result<(), String> {
+async fn process_proposal(node: Arc<Mutex<Node>>, propose_request: ProposeRequest) -> Result<(), String> {
     if !should_process_request(node.clone(), propose_request.base.round_id, propose_request.base.proposing_node_id as usize, "Propose".into()).await {
         return Ok(());
     }
-    handle_propose(node, client, propose_request).await
+    handle_propose(node, propose_request).await
 }
 
-async fn process_prevote(node: Arc<Mutex<Node>>, client: Arc<Client>, prevote_request: PrevoteRequest) -> Result<(), String> {
+async fn process_prevote(node: Arc<Mutex<Node>>, prevote_request: PrevoteRequest) -> Result<(), String> {
     if !should_process_request(node.clone(), prevote_request.proposals[0].base.round_id, prevote_request.proposals[0].base.proposing_node_id as usize, "Prevote".into()).await {
         return Ok(());
     }
-    handle_prevote(node, client, prevote_request).await
+    handle_prevote(node, prevote_request).await
 }
 
 async fn process_commit(node: Arc<Mutex<Node>>, commit_request: CommitRequest) -> Result<(), String> {
@@ -2465,7 +2531,7 @@ mod tests {
     async fn test_create_and_verify_transaction_batch() {
         let dummy_node = Node::new(
             0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-            2, 256, 4, 1, Arc::new(Client::new()),
+            2, 256, 4, 1
         );
 
         let proposal = create_transaction_data(dummy_node)
@@ -2500,7 +2566,7 @@ mod tests {
     async fn test_accumulator_verifies_only_data_shards() {
         let dummy_node = Node::new(
             0, 10, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            1, 256, 7, 1, Arc::new(Client::new()),
+            1, 256, 7, 1
         );
 
         let proposal = create_transaction_data(dummy_node)
@@ -2556,7 +2622,7 @@ mod tests {
         async fn test_create_and_verify_transaction_batch() {
             let dummy_node = Node::new(
                 0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-                2, 256, 4, 1, Arc::new(Client::new()),
+                2, 256, 4, 1
             );
     
             let proposal = create_transaction_data(dummy_node)
@@ -2591,7 +2657,7 @@ mod tests {
         async fn test_accumulator_verifies_only_data_shards() {
             let dummy_node = Node::new(
                 0, 10, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-                1, 256, 7, 1, Arc::new(Client::new()),
+                1, 256, 7, 1
             );
     
             let proposal = create_transaction_data(dummy_node)
@@ -2644,7 +2710,7 @@ mod tests {
     
         let node = Node::new(
             0, 5, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            2, 256, 4, 1, Arc::new(Client::new()),
+            2, 256, 4, 1
         );
     
         let proposal = create_transaction_data(node)
