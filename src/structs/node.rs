@@ -84,7 +84,7 @@ impl Node {
     // }
     
     /// **✅ Set `rbc_processor` After Initialization**
-    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>, client: Arc<Client>) {
+    pub async fn set_rbc_processor(node: Arc<Mutex<Node>>, rbc_processor: Arc<RBCProcessor>) {
         let mut node_guard = node.lock().await;
         node_guard.rbc_processor = Some(rbc_processor.clone());
 
@@ -92,7 +92,7 @@ impl Node {
         let event_receiver = mpsc::channel(100).1;
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, client,event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
                 tracing::error!("RoundManager encountered an error after setting RBCProcessor: {:?}", e);
             }
         });

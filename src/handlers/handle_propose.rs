@@ -19,7 +19,6 @@ use crate::{
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
@@ -112,13 +111,17 @@ pub async fn handle_propose(
             let node_guard = node.lock().await;
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
-
+        let local_client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+        .build()
+        .expect("Failed to build HTTP client");
         for target_node in node_list {
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
                 for attempt in 1..=3 {
                     info!("📤 Attempt {}/3: Node {} → {}", attempt, node_id, url);
-                    let res = client.post(&url).json(&prevote_request).send().await;
+                    let res = local_client.post(&url).json(&prevote_request).send().await;
 
                     match res {
                         Ok(resp) if resp.status().is_success() => {
