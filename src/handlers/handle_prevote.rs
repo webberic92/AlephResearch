@@ -17,7 +17,6 @@ use crate::{
 
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
-    client: Arc<Client>,
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
     let (node_id, round_id, quorum_threshold, data_shards, node_list, rbc_processor, transaction_size) = {
@@ -177,9 +176,14 @@ pub async fn handle_prevote(
     for peer in node_list {
         let url = format!("http://{}/commit", peer);
         let payload = commit_request.clone();
+        let local_client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+        .build()
+        .expect("Failed to build HTTP client");
         for attempt in 0..3 {
             message_count.fetch_add(1, Ordering::Relaxed);
-            match client.post(&url).json(&payload).send().await {
+            match local_client.post(&url).json(&payload).send().await {
                 Ok(resp) if resp.status().is_success() => {
                     info!("✅ Commit sent to {}", url);
                     break;

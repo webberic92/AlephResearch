@@ -18,7 +18,7 @@ pub struct RBCProcessor {
 }
 
 impl RBCProcessor {
-    pub fn new(node: Arc<Mutex<Node>>, client: Arc<Client>) -> Self {
+    pub fn new(node: Arc<Mutex<Node>>) -> Self {
         let (tx, mut rx) = mpsc::channel::<RBCMessage>(100);
         let tx_clone = tx.clone();
         let node_clone = node.clone();
@@ -98,7 +98,6 @@ impl RBCProcessor {
     async fn handle_round_finalized(
         new_round: u64,
         node: &Arc<Mutex<Node>>,
-        client: &Arc<Client>,
         tx: &mpsc::Sender<RBCMessage>,
         priority_queue: &mut BinaryHeap<RBCMessage>,
         fifo_queues: &mut [VecDeque<RBCMessage>],
@@ -123,7 +122,7 @@ impl RBCProcessor {
         match create_transaction_data(node.clone()).await {
             Ok(propose_request) => {
                 let round_id = propose_request.base.round_id;
-                if send_proposals(client.clone(), node.clone(), propose_request.clone()).await.is_ok() {
+                if send_proposals(node.clone(), propose_request.clone()).await.is_ok() {
                     info!("✅ Proposal for round {} sent successfully.", round_id);
                     if let Err(e) = tx.send(RBCMessage::Proposal(propose_request)).await {
                         error!("❌ Failed to enqueue proposal for round {}: {:?}", round_id, e);
@@ -183,18 +182,18 @@ impl RBCProcessor {
 }
 
 // ✅ Wrapper functions to call handlers
-async fn process_proposal(node: Arc<Mutex<Node>>, client: Arc<Client>, propose_request: ProposeRequest) -> Result<(), String> {
+async fn process_proposal(node: Arc<Mutex<Node>>, propose_request: ProposeRequest) -> Result<(), String> {
     if !should_process_request(node.clone(), propose_request.base.round_id, propose_request.base.proposing_node_id as usize, "Propose".into()).await {
         return Ok(());
     }
-    handle_propose(node, client, propose_request).await
+    handle_propose(node, propose_request).await
 }
 
-async fn process_prevote(node: Arc<Mutex<Node>>, client: Arc<Client>, prevote_request: PrevoteRequest) -> Result<(), String> {
+async fn process_prevote(node: Arc<Mutex<Node>>, prevote_request: PrevoteRequest) -> Result<(), String> {
     if !should_process_request(node.clone(), prevote_request.proposals[0].base.round_id, prevote_request.proposals[0].base.proposing_node_id as usize, "Prevote".into()).await {
         return Ok(());
     }
-    handle_prevote(node, client, prevote_request).await
+    handle_prevote(node, prevote_request).await
 }
 
 async fn process_commit(node: Arc<Mutex<Node>>, commit_request: CommitRequest) -> Result<(), String> {

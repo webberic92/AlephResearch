@@ -74,9 +74,8 @@ async fn main() -> Result<()> {
 
 async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
-    client: Arc<Client>,
 ) -> Result<(), anyhow::Error> {  
-    wait_for_all_nodes_health(&client, node.clone()).await?;  
+    wait_for_all_nodes_health(node.clone()).await?;  
 
     info!("All Nodes are healthy starting transaction execution.");
     // ✅ Create transaction proposal with multiple transactions

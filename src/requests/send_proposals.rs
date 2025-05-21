@@ -59,9 +59,13 @@ pub async fn send_proposals(
 
 
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
-
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
     for node_url in nodes {
-        let client = client.clone();
+        let client = local_client.clone();
         let proposal = propose_request.clone();
         let mut attempt = 0;
         let max_attempts = 3;
