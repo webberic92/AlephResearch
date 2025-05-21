@@ -46,6 +46,7 @@ pub async fn handle_commit(
 
     info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
+    
     if commit_count == quorum_threshold {
         info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 
@@ -59,6 +60,7 @@ pub async fn handle_commit(
         for commit in &all_commits {
             all_units.extend(commit.units.clone());
         }
+
 
         {
             let node_guard = node.lock().await;
@@ -81,18 +83,6 @@ pub async fn handle_commit(
             }
         }
 
-        // ✅ Immediately emit RoundFinalized event before doing anything else
-        {
-            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
-            let round_finalized = RBCMessage::RoundFinalized(round_id);
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                rbc_processor.enqueue_message(round_finalized).await;
-            } else {
-                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
-            }
-        }
-
         let finalized_dag = {
             let node_guard = node.lock().await;
             let dag_guard = node_guard.dag.lock().await;
@@ -112,7 +102,10 @@ pub async fn handle_commit(
 
         let message_count = node.lock().await.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
-
+        info!(
+            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
+            node_id, round_id, commit_count, quorum_threshold
+        );
         // ✅ Update round locally
         {
             let node_guard = node.lock().await;
@@ -120,6 +113,19 @@ pub async fn handle_commit(
             if *current_round == round_id {
                 *current_round += 1;
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
+            }
+        }
+
+
+        // ✅ Immediately emit RoundFinalized event before doing anything else
+        {
+            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
+            let round_finalized = RBCMessage::RoundFinalized(round_id);
+            let node_guard = node.lock().await;
+            if let Some(rbc_processor) = &node_guard.rbc_processor {
+                rbc_processor.enqueue_message(round_finalized).await;
+            } else {
+                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
             }
         }
 
