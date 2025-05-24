@@ -39,4 +39,7 @@ pub mod requests{
 
 pub mod tests   {
     pub mod test;
+    pub mod accumulatorTests;
+    pub mod regressionTests;
+
 }

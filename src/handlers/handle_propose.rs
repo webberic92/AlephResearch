@@ -12,10 +12,9 @@ use crate::{
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
     utils::{
         dag_utils::ensure_dag_round_sync,
-        rsa_accumulator_util::{hash_to_integer, verify_proof}
+        rsa_accumulator_util::verify_proof
     },
 };
-
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -41,18 +40,21 @@ pub async fn handle_propose(
         }
     }
 
-    let accumulator_bytes = general_purpose::STANDARD
-        .decode(&propose_request.batch_accumulator)
-        .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
-    let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
+    info!("🔍 Node {}: Received proposal from proposer {} for round {}", node_id, proposer_id, round_id);
 
     for (i, tx) in propose_request.transactions.iter().enumerate() {
+        let acc_b64 = tx.accumulator.as_ref()
+            .ok_or_else(|| format!("Node {}: Missing accumulator for tx[{}]", node_id, i))?;
+
+        let acc_bytes = general_purpose::STANDARD
+            .decode(acc_b64)
+            .map_err(|e| format!("Node {}: Failed to decode accumulator for tx[{}]: {:?}", node_id, i, e))?;
+
+        let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &acc_bytes);
+        info!("🔍 Node {}: tx[{}] accumulator (hex) = {}", node_id, i, hex::encode(&acc_bytes));
+
         let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
-
-        let decoded_shard = general_purpose::STANDARD
-            .decode(&shard.shard_b64)
-            .map_err(|e| format!("Node {}: Failed to decode shard[0] of tx {}: {:?}", node_id, i, e))?;
 
         let proof_b64 = shard.proofs.get(0)
             .ok_or_else(|| format!("Node {}: Missing proof for shard[0] of tx {}", node_id, i))?;
@@ -70,14 +72,11 @@ pub async fn handle_propose(
         let hash_bytes = hex::decode(expected_hash_hex)
             .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
-        // info!(
-        //     "🧪 handle_propose(): tx[{}] shard[0] hash={}, proof_b64={}",
-        //     i,
-        //     &expected_hash_hex[..8.min(expected_hash_hex.len())],
-        //     &proof_b64[..10.min(proof_b64.len())]
-        // );
-
+        info!("🔍 tx[{}] shard[0] hash = {}", i, expected_hash_hex);
+        info!("🔍 tx[{}] shard[0] proof (base64) = {}", i, proof_b64);
+        info!("🔍 tx[{}] shard[0] proof (hex) = {}", i, hex::encode(&proof_bytes));
         if !verify_proof(&accumulator, &hash_bytes, &proof) {
+            error!("❌ Node {}: RSA proof INVALID for tx[{}] shard[0]", node_id, i);
             return Err(format!(
                 "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
                 node_id, i
@@ -112,10 +111,11 @@ pub async fn handle_propose(
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
         let local_client = reqwest::Client::builder()
-        .pool_max_idle_per_host(64)
-        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
-        .build()
-        .expect("Failed to build HTTP client");
+            .pool_max_idle_per_host(64)
+            .tcp_keepalive(Some(Duration::from_secs(60)))
+            .build()
+            .expect("Failed to build HTTP client");
+
         for target_node in node_list {
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
@@ -154,4 +154,6 @@ pub async fn handle_propose(
 
     Ok(())
 }
+
+
 

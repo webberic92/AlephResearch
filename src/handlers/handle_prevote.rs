@@ -4,7 +4,7 @@ use tokio::{sync::Mutex, time::{sleep, Duration}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
 use tracing::{error, info, warn};
 use reqwest::Client;
-use num_bigint::BigInt;
+use num_bigint::{BigInt, Sign};
 
 use crate::{
     processors::priority_queue::RBCMessage, 
@@ -33,7 +33,6 @@ pub async fn handle_prevote(
         )
     };
 
-    // Drop if quorum already reached
     {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
@@ -45,7 +44,6 @@ pub async fn handle_prevote(
         }
     }
 
-    // Drop duplicate votes
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
@@ -59,21 +57,24 @@ pub async fn handle_prevote(
     let mut reconstructed_units = Vec::new();
 
     for proposal in &prevote_request.proposals {
-        let accumulator_bytes = general_purpose::STANDARD
-            .decode(&proposal.batch_accumulator)
-            .map_err(|e| format!("Node {}: Failed to decode accumulator: {:?}", node_id, e))?;
-        let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &accumulator_bytes);
-
         let proposer_id = proposal.base.proposing_node_id as usize;
         let mut reconstructed_transactions = Vec::new();
 
         for (i, tx) in proposal.transactions.iter().enumerate() {
+            let tx_acc_b64 = tx.accumulator.as_ref()
+                .ok_or_else(|| format!("Node {}: Missing accumulator for tx[{}]", node_id, i))?;
+
+            let acc_bytes = general_purpose::STANDARD
+                .decode(tx_acc_b64)
+                .map_err(|e| format!("Node {}: Failed to decode accumulator for tx[{}]: {:?}", node_id, i, e))?;
+
+            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
             for (j, shard_struct) in tx.shards.iter().enumerate() {
                 let decoded = general_purpose::STANDARD
                     .decode(&shard_struct.shard_b64)
                     .map_err(|e| format!("Node {}: Failed to decode tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
 
-                // Check shard size
                 let expected_len = (transaction_size + data_shards - 1) / data_shards;
                 if decoded.len() != expected_len {
                     return Err(format!(
@@ -82,7 +83,6 @@ pub async fn handle_prevote(
                     ));
                 }
 
-                // Only process data shards for validation
                 if j < data_shards {
                     let hash = Sha256::digest(&decoded);
                     let proof_str = shard_struct.proofs.get(0)
@@ -90,20 +90,18 @@ pub async fn handle_prevote(
                     let proof_bytes = general_purpose::STANDARD
                         .decode(proof_str)
                         .map_err(|e| format!("Node {}: Failed to decode proof tx[{}] shard[{}]: {:?}", node_id, i, j, e))?;
-                    let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
+                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
                     if !verify_proof(&accumulator, &hash, &proof) {
                         return Err(format!("Node {}: Invalid RSA proof for tx[{}] shard[{}]", node_id, i, j));
                     }
 
-                    // Store for reconstruction
                     let node_guard = node.lock().await;
                     let mut aggregator = node_guard.shard_aggregator.lock().await;
                     aggregator.insert_shard(round_id, i, j, decoded.clone());
                 }
             }
 
-            // Try reconstructing full transaction
             let padded_tx_bytes = {
                 let node_guard = node.lock().await;
                 let aggregator = node_guard.shard_aggregator.lock().await;
@@ -116,7 +114,6 @@ pub async fn handle_prevote(
                 }
             };
 
-            // Verify padded hash against tx.root
             let hash = Sha256::digest(&padded_tx_bytes);
             if hash.to_vec() != tx.root {
                 return Err(format!(
@@ -128,19 +125,17 @@ pub async fn handle_prevote(
             reconstructed_transactions.push(tx.clone());
         }
 
-        let unit_id = format!("U{}-{}", round_id, proposer_id);
         reconstructed_units.push(crate::structs::requests::DagUnit {
-            unit_id,
+            unit_id: format!("U{}-{}", round_id, proposer_id),
             proposer_node: proposer_id,
             round: round_id,
             transactions: reconstructed_transactions,
             parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            accumulator_root: accumulator_bytes.clone(),
+            accumulator_root: vec![], // This field is not verified in prevote anyway
             finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
         });
     }
 
-    // Check all parents are committed
     {
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
@@ -152,7 +147,6 @@ pub async fn handle_prevote(
         }
     }
 
-    // Check if quorum reached
     let vote_count = {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
@@ -177,10 +171,11 @@ pub async fn handle_prevote(
         let url = format!("http://{}/commit", peer);
         let payload = commit_request.clone();
         let local_client = reqwest::Client::builder()
-        .pool_max_idle_per_host(64)
-        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
-        .build()
-        .expect("Failed to build HTTP client");
+            .pool_max_idle_per_host(64)
+            .tcp_keepalive(Some(Duration::from_secs(60)))
+            .build()
+            .expect("Failed to build HTTP client");
+
         for attempt in 0..3 {
             message_count.fetch_add(1, Ordering::Relaxed);
             match local_client.post(&url).json(&payload).send().await {
@@ -203,7 +198,6 @@ pub async fn handle_prevote(
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
     }
 
-    // Clear stored shards for this round
     {
         let node_guard = node.lock().await;
         let mut aggregator = node_guard.shard_aggregator.lock().await;

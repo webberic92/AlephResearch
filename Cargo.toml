@@ -33,7 +33,7 @@ socket2 = { version = "0.5.7" }
 # mockito = "1.6.1"
 tokio-test = "0.4"
 mockito = "0.30"
-
+itertools = "0.14.0"
 [[bin]]
 name = "aleph_rbc"
 path = "src/aleph_rbc.rs"
