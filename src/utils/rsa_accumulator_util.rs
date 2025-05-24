@@ -68,7 +68,7 @@ pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
         .enumerate()
         .map(|(i, hash)| {
             let prime = hash_to_prime_128(hash);
-            info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
+            // info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
             prime
         })
         .collect();
@@ -84,7 +84,7 @@ pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
         .enumerate()
         .map(|(i, hash)| {
             let prime = hash_to_prime_128(hash);
-            info!("🔁 generate_proofs_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
+            // info!("🔁 generate_proofs_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
             prime
         })
         .collect();
@@ -108,7 +108,7 @@ pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
         .map(|i| {
             let product = &prefix[i] * &suffix[i + 1];
             let proof = g.modpow(&product, &n);
-            info!("📜 Proof[{}] = {}", i, hex::encode(proof.to_bytes_be().1.clone()));
+            // info!("📜 Proof[{}] = {}", i, hex::encode(proof.to_bytes_be().1.clone()));
             proof
         })
         .collect()
@@ -127,6 +127,6 @@ pub fn verify_proof_with_prime(acc: &BigInt, prime: &BigInt, proof: &BigInt) -> 
 /// ✅ Verify proof from original hash
 pub fn verify_proof(acc: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
     let prime = hash_to_prime_128(hash);
-    info!("🧪 Verifying: hash={}, prime={}, proof={}", hex::encode(hash), prime, hex::encode(proof.to_bytes_be().1.clone()));
+    // info!("🧪 Verifying: hash={}, prime={}, proof={}", hex::encode(hash), prime, hex::encode(proof.to_bytes_be().1.clone()));
     proof.modpow(&prime, &get_modulus()) == *acc
 }

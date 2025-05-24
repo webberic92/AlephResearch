@@ -59,7 +59,7 @@ pub async fn create_transaction_data(
         for &tx_index in chunk {
             let content = format!("tx{}_round{}", tx_index + 1, round_id);
             let padded = pad_to_len(content.clone().into_bytes(), transaction_size);
-            info!("🧬 tx[{}] padded: {:?}", tx_index, String::from_utf8_lossy(&padded));
+            // info!("🧬 tx[{}] padded: {:?}", tx_index, String::from_utf8_lossy(&padded));
 
             let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
             let mut shards: Vec<Vec<u8>> = padded
@@ -123,10 +123,10 @@ pub async fn create_transaction_data(
                 let proofs_vec = if shard_i < data_shards {
                     let proof = proofs.get(proof_idx).expect("Missing proof");
                     let proof_b64 = general_purpose::STANDARD.encode(proof.to_bytes_be().1.clone());
-                    info!(
-                        "📎 Proof for tx[{}] shard[{}]: {}",
-                        tx_index, shard_i, &proof_b64
-                    );
+                    // info!(
+                    //     "📎 Proof for tx[{}] shard[{}]: {}",
+                    //     tx_index, shard_i, &proof_b64
+                    // );
                     proof_idx += 1;
                     vec![proof_b64]
                 } else {

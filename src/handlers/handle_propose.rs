@@ -51,7 +51,7 @@ pub async fn handle_propose(
             .map_err(|e| format!("Node {}: Failed to decode accumulator for tx[{}]: {:?}", node_id, i, e))?;
 
         let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &acc_bytes);
-        info!("🔍 Node {}: tx[{}] accumulator (hex) = {}", node_id, i, hex::encode(&acc_bytes));
+        // info!("🔍 Node {}: tx[{}] accumulator (hex) = {}", node_id, i, hex::encode(&acc_bytes));
 
         let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
@@ -72,9 +72,9 @@ pub async fn handle_propose(
         let hash_bytes = hex::decode(expected_hash_hex)
             .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
-        info!("🔍 tx[{}] shard[0] hash = {}", i, expected_hash_hex);
-        info!("🔍 tx[{}] shard[0] proof (base64) = {}", i, proof_b64);
-        info!("🔍 tx[{}] shard[0] proof (hex) = {}", i, hex::encode(&proof_bytes));
+        // info!("🔍 tx[{}] shard[0] hash = {}", i, expected_hash_hex);
+        // info!("🔍 tx[{}] shard[0] proof (base64) = {}", i, proof_b64);
+        // info!("🔍 tx[{}] shard[0] proof (hex) = {}", i, hex::encode(&proof_bytes));
         if !verify_proof(&accumulator, &hash_bytes, &proof) {
             error!("❌ Node {}: RSA proof INVALID for tx[{}] shard[0]", node_id, i);
             return Err(format!(
