@@ -1,783 +1,1485 @@
-INSERT INTO experiment_summary 
-(protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
-VALUES ('MERKLE', '104nodes_5txpb_4rounds_MERK.txt', 104, 5, 4, 
-5.0, 
-1638.69,
-11.6,
-12.16,
-86.979
+-- Drop and create schema
+DROP TABLE IF EXISTS node_tps, node_overhead, node_resource_utilization, experiment_summary CASCADE;
+
+CREATE TABLE experiment_summary (
+    id SERIAL PRIMARY KEY,
+    protocol TEXT NOT NULL,
+    filename TEXT NOT NULL,
+    nodes INTEGER NOT NULL,
+    txpb INTEGER NOT NULL,
+    rounds INTEGER NOT NULL,
+    avg_tps REAL,
+    avg_overhead REAL,
+    avg_cpu REAL,
+    avg_mem REAL,
+    latency_seconds REAL
 );
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-1', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-10', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-100', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-101', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-102', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-103', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-104', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-11', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-12', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-13', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-14', 0.31);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-15', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-16', 0.32);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-17', 0.32);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-18', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-19', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-2', 0.32);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-20', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-21', 0.32);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-22', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-23', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-24', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-25', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-26', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-27', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-28', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-29', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-3', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-30', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-31', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-32', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-33', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-34', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-35', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-36', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-37', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-38', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-39', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-4', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-40', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-41', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-42', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-43', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-44', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-45', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-46', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-47', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-48', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-49', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-5', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-50', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-51', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-52', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-53', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-54', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-55', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-56', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-57', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-58', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-59', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-6', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-60', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-61', 0.31);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-62', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-63', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-64', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-65', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-66', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-67', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-68', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-69', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-7', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-70', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-71', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-72', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-73', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-74', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-75', 0.36);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-76', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-77', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-78', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-79', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-8', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-80', 0.35);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-81', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-82', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-83', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-84', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-85', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-86', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-87', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-88', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-89', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-9', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-90', 0.37);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-91', 0.32);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-92', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-93', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-94', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-95', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-96', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-97', 0.34);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-98', 0.33);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (1, 'node-99', 0.33);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-1', 1545);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-10', 1575);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-100', 1749);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-101', 1720);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-102', 1556);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-103', 1608);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-104', 1533);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-11', 1697);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-12', 1545);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-13', 1702);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-14', 1775);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-15', 1691);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-16', 1499);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-17', 1632);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-18', 1597);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-19', 1718);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-2', 1518);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-20', 1738);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-21', 1595);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-22', 1743);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-23', 1748);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-24', 1736);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-25', 1696);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-26', 1643);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-27', 1538);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-28', 1643);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-29', 1631);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-3', 1641);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-30', 1612);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-31', 1635);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-32', 1738);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-33', 1697);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-34', 1645);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-35', 1574);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-36', 1697);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-37', 1448);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-38', 1599);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-39', 1575);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-4', 1759);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-40', 1756);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-41', 1510);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-42', 1575);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-43', 1484);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-44', 1541);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-45', 1693);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-46', 1709);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-47', 1777);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-48', 1717);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-49', 1592);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-5', 1649);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-50', 1767);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-51', 1728);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-52', 1712);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-53', 1632);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-54', 1590);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-55', 1448);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-56', 1714);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-57', 1751);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-58', 1760);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-59', 1591);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-6', 1716);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-60', 1582);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-61', 1665);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-62', 1382);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-63', 1362);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-64', 1561);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-65', 1653);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-66', 1600);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-67', 1671);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-68', 1711);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-69', 1728);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-7', 1772);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-70', 1629);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-71', 1610);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-72', 1752);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-73', 1715);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-74', 1761);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-75', 1490);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-76', 1489);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-77', 1545);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-78', 1739);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-79', 1753);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-8', 1775);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-80', 1673);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-81', 1754);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-82', 1729);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-83', 1569);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-84', 1758);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-85', 1516);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-86', 1556);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-87', 1737);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-88', 1773);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-89', 1518);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-9', 1529);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-90', 1589);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-91', 1796);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-92', 1623);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-93', 1489);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-94', 1518);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-95', 1697);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-96', 1605);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-97', 1614);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-98', 1607);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (1, 'node-99', 1426);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-1', 10.14, 11.77);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-10', 10.12, 12.03);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-100', 9.37, 11.99);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-101', 10.81, 11.84);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-102', 11.70, 12.08);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-103', 10.83, 11.62);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-104', 10.86, 11.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-11', 9.96, 11.91);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-12', 11.67, 12.09);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-13', 10.59, 12.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-14', 10.44, 12.15);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-15', 12.47, 12.17);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-16', 12.14, 12.28);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-17', 11.47, 12.42);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-18', 12.70, 12.25);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-19', 9.99, 12.33);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-2', 14.45, 12.77);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-20', 10.38, 11.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-21', 12.03, 12.14);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-22', 10.17, 11.91);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-23', 10.53, 12.48);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-24', 11.03, 12.02);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-25', 10.63, 12.12);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-26', 14.74, 12.75);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-27', 12.76, 12.58);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-28', 14.20, 12.51);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-29', 14.94, 12.46);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-3', 11.24, 11.88);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-30', 13.11, 12.24);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-31', 12.51, 12.14);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-32', 11.91, 12.05);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-33', 9.83, 12.29);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-34', 12.98, 12.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-35', 11.67, 12.14);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-36', 10.55, 12.12);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-37', 10.92, 12.29);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-38', 10.63, 11.72);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-39', 10.42, 12.02);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-4', 10.99, 12.24);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-40', 10.54, 12.05);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-41', 12.66, 12.10);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-42', 12.22, 12.23);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-43', 11.41, 12.17);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-44', 11.28, 11.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-45', 13.65, 12.10);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-46', 10.86, 11.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-47', 10.45, 11.93);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-48', 14.00, 12.44);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-49', 11.61, 11.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-5', 11.78, 12.26);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-50', 10.81, 11.90);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-51', 10.49, 12.13);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-52', 12.29, 12.04);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-53', 11.81, 12.53);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-54', 14.47, 12.25);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-55', 10.43, 12.22);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-56', 12.57, 12.22);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-57', 11.87, 12.31);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-58', 11.41, 12.37);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-59', 11.56, 12.47);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-6', 10.08, 11.96);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-60', 11.84, 11.72);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-61', 11.49, 12.13);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-62', 11.50, 11.74);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-63', 14.60, 12.44);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-64', 11.06, 12.03);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-65', 11.33, 12.44);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-66', 10.53, 11.92);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-67', 14.00, 12.61);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-68', 13.21, 12.43);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-69', 10.80, 11.91);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-7', 12.54, 12.24);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-70', 11.15, 12.37);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-71', 10.94, 11.95);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-72', 13.28, 12.37);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-73', 10.37, 11.76);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-74', 10.82, 12.18);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-75', 11.35, 12.24);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-76', 12.99, 12.66);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-77', 10.02, 12.35);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-78', 12.14, 12.18);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-79', 9.46, 12.21);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-8', 12.62, 12.35);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-80', 11.19, 12.13);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-81', 9.37, 12.09);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-82', 10.08, 12.23);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-83', 8.77, 12.15);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-84', 9.56, 12.24);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-85', 10.48, 12.11);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-86', 10.68, 12.12);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-87', 10.17, 12.16);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-88', 12.90, 12.11);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-89', 10.01, 12.01);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-9', 11.21, 12.10);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-90', 11.39, 12.08);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-91', 19.70, 13.23);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-92', 12.34, 12.22);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-93', 13.69, 12.45);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-94', 13.51, 11.72);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-95', 13.28, 12.37);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-96', 11.40, 12.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-97', 11.70, 12.14);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-98', 10.01, 12.30);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (1, 'node-99', 11.25, 12.18);
-INSERT INTO experiment_summary 
-(protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
-VALUES ('MERKLE', '64nodes_25txpb_25rounds_MERK.txt', 64, 25, 25, 
-25.0, 
-5523.42,
-21.68,
-13.85,
-776.14
+
+CREATE TABLE node_tps (
+    id SERIAL PRIMARY KEY,
+    experiment_id INTEGER NOT NULL REFERENCES experiment_summary(id),
+    node_id TEXT NOT NULL,
+    tps REAL
 );
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-1', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-10', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-11', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-12', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-13', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-14', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-15', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-16', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-17', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-18', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-19', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-2', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-20', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-21', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-22', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-23', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-24', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-25', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-26', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-27', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-28', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-29', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-3', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-30', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-31', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-32', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-33', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-34', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-35', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-36', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-37', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-38', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-39', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-4', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-40', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-41', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-42', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-43', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-44', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-45', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-46', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-47', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-48', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-49', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-5', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-50', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-51', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-52', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-53', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-54', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-55', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-56', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-57', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-58', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-59', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-6', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-60', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-61', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-62', 0.84);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-63', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-64', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-7', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-8', 0.85);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (2, 'node-9', 0.85);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-1', 5605);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-10', 5577);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-11', 5465);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-12', 5735);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-13', 5556);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-14', 5642);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-15', 5523);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-16', 5512);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-17', 5572);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-18', 5577);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-19', 4081);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-2', 5599);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-20', 5457);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-21', 5489);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-22', 5488);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-23', 5669);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-24', 5677);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-25', 5506);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-26', 5540);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-27', 5489);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-28', 5328);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-29', 5695);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-3', 5674);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-30', 5491);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-31', 5654);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-32', 5446);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-33', 5602);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-34', 5680);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-35', 5534);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-36', 5510);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-37', 5646);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-38', 5357);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-39', 5592);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-4', 5385);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-40', 5572);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-41', 5506);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-42', 5552);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-43', 5482);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-44', 5484);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-45', 5637);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-46', 5542);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-47', 5556);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-48', 5587);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-49', 5516);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-5', 5650);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-50', 5438);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-51', 5671);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-52', 5617);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-53', 5428);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-54', 5616);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-55', 5455);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-56', 5574);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-57', 5493);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-58', 5508);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-59', 5694);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-6', 5594);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-60', 5497);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-61', 5486);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-62', 5608);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-63', 5403);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-64', 5403);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-7', 5568);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-8', 5472);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (2, 'node-9', 5537);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-1', 20.93, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-10', 20.56, 14.01);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-11', 20.89, 13.80);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-12', 22.35, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-13', 21.43, 13.80);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-14', 21.37, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-15', 21.28, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-16', 22.81, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-17', 21.24, 13.77);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-18', 21.12, 13.96);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-19', 27.17, 13.89);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-2', 21.67, 13.91);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-20', 21.49, 14.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-21', 20.81, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-22', 21.46, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-23', 21.30, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-24', 22.37, 14.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-25', 20.77, 13.92);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-26', 21.12, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-27', 20.68, 13.84);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-28', 23.99, 13.81);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-29', 23.87, 13.76);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-3', 21.70, 13.82);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-30', 22.30, 13.95);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-31', 21.17, 13.75);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-32', 23.09, 13.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-33', 22.15, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-34', 21.09, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-35', 21.13, 14.09);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-36', 21.25, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-37', 21.26, 13.67);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-38', 21.07, 13.76);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-39', 21.18, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-4', 21.93, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-40', 22.66, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-41', 21.55, 13.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-42', 22.38, 13.89);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-43', 20.52, 13.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-44', 21.35, 13.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-45', 23.38, 13.71);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-46', 20.33, 13.90);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-47', 20.92, 13.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-48', 21.32, 13.72);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-49', 21.07, 13.81);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-5', 21.19, 13.73);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-50', 20.85, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-51', 21.06, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-52', 20.56, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-53', 22.36, 13.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-54', 20.63, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-55', 21.90, 13.92);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-56', 23.30, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-57', 21.66, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-58', 22.59, 13.97);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-59', 21.27, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-6', 20.91, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-60', 21.55, 13.86);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-61', 22.60, 13.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-62', 22.05, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-63', 21.71, 13.92);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-64', 21.26, 13.96);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-7', 21.52, 13.88);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-8', 21.37, 13.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (2, 'node-9', 21.75, 13.84);
-INSERT INTO experiment_summary 
-(protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
-VALUES ('RSA', '104nodes_5txpb_4rounds_RSA.txt', 104, 5, 4, 
-5.0, 
-1908.59,
-16.52,
-13.99,
-428.528
+
+CREATE TABLE node_overhead (
+    id SERIAL PRIMARY KEY,
+    experiment_id INTEGER NOT NULL REFERENCES experiment_summary(id),
+    node_id TEXT NOT NULL,
+    overhead_messages INTEGER
 );
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-1', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-10', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-100', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-101', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-102', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-103', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-104', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-11', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-12', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-14', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-15', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-16', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-17', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-18', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-19', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-20', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-23', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-24', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-25', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-26', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-27', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-28', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-29', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-3', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-30', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-31', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-32', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-33', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-34', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-35', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-36', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-37', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-38', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-39', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-4', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-40', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-42', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-44', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-45', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-46', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-49', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-5', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-50', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-51', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-52', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-53', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-54', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-56', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-57', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-58', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-59', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-6', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-60', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-61', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-62', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-63', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-64', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-65', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-66', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-67', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-68', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-69', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-7', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-70', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-72', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-73', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-74', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-75', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-76', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-78', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-8', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-81', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-85', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-86', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-87', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-88', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-90', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-91', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-93', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-94', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-95', 0.06);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-96', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-97', 0.07);
-INSERT INTO node_tps (experiment_id, node_id, tps) VALUES (3, 'node-99', 0.06);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-1', 2190);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-10', 2001);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-100', 2000);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-101', 2251);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-102', 2249);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-103', 1970);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-104', 2230);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-11', 1757);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-12', 1661);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-14', 1849);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-15', 1750);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-16', 1881);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-17', 1884);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-18', 1837);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-19', 2089);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-20', 1865);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-23', 1901);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-24', 2046);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-25', 1837);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-26', 1939);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-27', 1636);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-28', 2040);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-29', 1869);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-3', 2228);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-30', 1791);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-31', 1986);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-32', 2060);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-33', 1742);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-34', 2010);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-35', 1887);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-36', 1820);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-37', 1656);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-38', 1875);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-39', 1714);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-4', 1917);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-40', 1799);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-42', 2117);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-44', 1987);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-45', 2174);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-46', 1995);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-49', 2165);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-5', 1777);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-50', 1979);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-51', 1652);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-52', 1808);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-53', 2050);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-54', 1818);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-56', 1510);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-57', 1632);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-58', 1776);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-59', 1891);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-6', 2020);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-60', 1921);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-61', 1650);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-62', 1732);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-63', 1934);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-64', 1544);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-65', 2041);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-66', 2023);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-67', 2024);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-68', 2136);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-69', 1893);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-7', 1693);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-70', 1799);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-72', 2073);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-73', 1722);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-74', 1605);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-75', 2129);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-76', 1820);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-78', 1781);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-8', 1996);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-81', 1815);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-85', 1504);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-86', 1825);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-87', 1693);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-88', 1819);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-90', 2086);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-91', 2092);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-93', 1898);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-94', 2115);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-95', 2277);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-96', 2118);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-97', 2140);
-INSERT INTO node_overhead (experiment_id, node_id, overhead_messages) VALUES (3, 'node-99', 1856);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-1', 16.26, 13.48);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-10', 16.06, 14.27);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-100', 14.33, 14.08);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-101', 15.94, 13.60);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-102', 17.40, 14.22);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-103', 16.76, 13.95);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-104', 14.02, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-11', 14.82, 13.96);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-12', 19.19, 14.07);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-14', 15.13, 14.07);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-15', 19.61, 14.17);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-16', 17.73, 13.75);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-17', 14.46, 13.77);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-18', 18.81, 13.94);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-19', 14.78, 13.93);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-20', 14.21, 13.82);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-23', 15.19, 14.23);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-24', 15.08, 13.65);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-25', 15.99, 14.33);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-26', 15.81, 13.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-27', 22.35, 14.17);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-28', 14.21, 13.90);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-29', 21.06, 14.02);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-3', 16.58, 14.04);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-30', 18.94, 14.01);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-31', 16.19, 14.16);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-32', 17.40, 14.14);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-33', 19.51, 14.46);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-34', 16.07, 13.65);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-35', 14.88, 14.45);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-36', 14.69, 13.63);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-37', 15.54, 13.54);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-38', 18.33, 14.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-39', 15.20, 14.04);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-4', 15.25, 13.85);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-40', 18.01, 14.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-42', 15.63, 13.71);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-44', 16.22, 13.90);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-45', 14.52, 13.89);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-46', 13.89, 13.54);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-49', 15.61, 13.93);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-5', 14.80, 13.89);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-50', 18.78, 13.88);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-51', 16.60, 14.33);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-52', 19.08, 14.52);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-53', 15.65, 13.95);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-54', 14.60, 14.18);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-56', 21.88, 14.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-57', 17.97, 14.41);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-58', 14.41, 14.32);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-59', 18.79, 14.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-6', 15.08, 13.74);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-60', 15.31, 14.46);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-61', 17.30, 14.28);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-62', 15.47, 13.80);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-63', 16.45, 14.12);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-64', 19.24, 14.00);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-65', 14.61, 13.81);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-66', 16.88, 14.32);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-67', 16.06, 14.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-68', 19.87, 14.09);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-69', 14.67, 13.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-7', 15.28, 13.90);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-70', 20.03, 13.84);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-72', 17.72, 13.79);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-73', 16.10, 14.32);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-74', 19.13, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-75', 15.28, 13.99);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-76', 15.18, 13.98);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-78', 15.72, 14.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-8', 15.37, 13.86);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-81', 17.86, 14.12);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-85', 16.71, 14.45);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-86', 14.17, 13.95);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-87', 17.32, 14.27);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-88', 15.91, 14.19);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-90', 14.37, 13.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-91', 16.12, 13.78);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-93', 19.67, 13.83);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-94', 15.96, 13.87);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-95', 15.96, 13.32);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-96', 18.57, 13.68);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-97', 15.18, 13.63);
-INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util) VALUES (3, 'node-99', 15.63, 13.65);
+
+CREATE TABLE node_resource_utilization (
+    id SERIAL PRIMARY KEY,
+    experiment_id INTEGER NOT NULL REFERENCES experiment_summary(id),
+    node_id TEXT NOT NULL,
+    cpu_util REAL,
+    mem_util REAL
+);
+
+-- Optional truncation for repeatable runs
+-- TRUNCATE TABLE node_tps, node_overhead, node_resource_utilization, experiment_summary RESTART IDENTITY CASCADE;
+
+
+-- 104nodes_5txpb_4rounds_MERK.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('MERKLE', '104nodes_5txpb_4rounds_MERK.txt', 104, 5, 4, 
+   5.0, 
+   1638.69,
+   11.6,
+   12.16,
+   86.979)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 0.34),
+    (experiment_id, 'node-10', 0.34),
+    (experiment_id, 'node-100', 0.35),
+    (experiment_id, 'node-101', 0.34),
+    (experiment_id, 'node-102', 0.35),
+    (experiment_id, 'node-103', 0.34),
+    (experiment_id, 'node-104', 0.35),
+    (experiment_id, 'node-11', 0.35),
+    (experiment_id, 'node-12', 0.36),
+    (experiment_id, 'node-13', 0.36),
+    (experiment_id, 'node-14', 0.31),
+    (experiment_id, 'node-15', 0.35),
+    (experiment_id, 'node-16', 0.32),
+    (experiment_id, 'node-17', 0.32),
+    (experiment_id, 'node-18', 0.36),
+    (experiment_id, 'node-19', 0.33),
+    (experiment_id, 'node-2', 0.32),
+    (experiment_id, 'node-20', 0.34),
+    (experiment_id, 'node-21', 0.32),
+    (experiment_id, 'node-22', 0.35),
+    (experiment_id, 'node-23', 0.34),
+    (experiment_id, 'node-24', 0.33),
+    (experiment_id, 'node-25', 0.37),
+    (experiment_id, 'node-26', 0.37),
+    (experiment_id, 'node-27', 0.37),
+    (experiment_id, 'node-28', 0.33),
+    (experiment_id, 'node-29', 0.34),
+    (experiment_id, 'node-3', 0.35),
+    (experiment_id, 'node-30', 0.33),
+    (experiment_id, 'node-31', 0.37),
+    (experiment_id, 'node-32', 0.34),
+    (experiment_id, 'node-33', 0.33),
+    (experiment_id, 'node-34', 0.33),
+    (experiment_id, 'node-35', 0.35),
+    (experiment_id, 'node-36', 0.33),
+    (experiment_id, 'node-37', 0.36),
+    (experiment_id, 'node-38', 0.33),
+    (experiment_id, 'node-39', 0.34),
+    (experiment_id, 'node-4', 0.34),
+    (experiment_id, 'node-40', 0.33),
+    (experiment_id, 'node-41', 0.34),
+    (experiment_id, 'node-42', 0.35),
+    (experiment_id, 'node-43', 0.35),
+    (experiment_id, 'node-44', 0.34),
+    (experiment_id, 'node-45', 0.34),
+    (experiment_id, 'node-46', 0.34),
+    (experiment_id, 'node-47', 0.35),
+    (experiment_id, 'node-48', 0.35),
+    (experiment_id, 'node-49', 0.33),
+    (experiment_id, 'node-5', 0.37),
+    (experiment_id, 'node-50', 0.34),
+    (experiment_id, 'node-51', 0.33),
+    (experiment_id, 'node-52', 0.34),
+    (experiment_id, 'node-53', 0.35),
+    (experiment_id, 'node-54', 0.34),
+    (experiment_id, 'node-55', 0.35),
+    (experiment_id, 'node-56', 0.35),
+    (experiment_id, 'node-57', 0.33),
+    (experiment_id, 'node-58', 0.34),
+    (experiment_id, 'node-59', 0.34),
+    (experiment_id, 'node-6', 0.33),
+    (experiment_id, 'node-60', 0.33),
+    (experiment_id, 'node-61', 0.31),
+    (experiment_id, 'node-62', 0.33),
+    (experiment_id, 'node-63', 0.34),
+    (experiment_id, 'node-64', 0.34),
+    (experiment_id, 'node-65', 0.34),
+    (experiment_id, 'node-66', 0.34),
+    (experiment_id, 'node-67', 0.36),
+    (experiment_id, 'node-68', 0.33),
+    (experiment_id, 'node-69', 0.34),
+    (experiment_id, 'node-7', 0.33),
+    (experiment_id, 'node-70', 0.36),
+    (experiment_id, 'node-71', 0.34),
+    (experiment_id, 'node-72', 0.33),
+    (experiment_id, 'node-73', 0.34),
+    (experiment_id, 'node-74', 0.33),
+    (experiment_id, 'node-75', 0.36),
+    (experiment_id, 'node-76', 0.34),
+    (experiment_id, 'node-77', 0.35),
+    (experiment_id, 'node-78', 0.33),
+    (experiment_id, 'node-79', 0.33),
+    (experiment_id, 'node-8', 0.33),
+    (experiment_id, 'node-80', 0.35),
+    (experiment_id, 'node-81', 0.34),
+    (experiment_id, 'node-82', 0.34),
+    (experiment_id, 'node-83', 0.33),
+    (experiment_id, 'node-84', 0.34),
+    (experiment_id, 'node-85', 0.33),
+    (experiment_id, 'node-86', 0.33),
+    (experiment_id, 'node-87', 0.34),
+    (experiment_id, 'node-88', 0.34),
+    (experiment_id, 'node-89', 0.34),
+    (experiment_id, 'node-9', 0.33),
+    (experiment_id, 'node-90', 0.37),
+    (experiment_id, 'node-91', 0.32),
+    (experiment_id, 'node-92', 0.33),
+    (experiment_id, 'node-93', 0.33),
+    (experiment_id, 'node-94', 0.33),
+    (experiment_id, 'node-95', 0.34),
+    (experiment_id, 'node-96', 0.34),
+    (experiment_id, 'node-97', 0.34),
+    (experiment_id, 'node-98', 0.33),
+    (experiment_id, 'node-99', 0.33);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 1545),
+    (experiment_id, 'node-10', 1575),
+    (experiment_id, 'node-100', 1749),
+    (experiment_id, 'node-101', 1720),
+    (experiment_id, 'node-102', 1556),
+    (experiment_id, 'node-103', 1608),
+    (experiment_id, 'node-104', 1533),
+    (experiment_id, 'node-11', 1697),
+    (experiment_id, 'node-12', 1545),
+    (experiment_id, 'node-13', 1702),
+    (experiment_id, 'node-14', 1775),
+    (experiment_id, 'node-15', 1691),
+    (experiment_id, 'node-16', 1499),
+    (experiment_id, 'node-17', 1632),
+    (experiment_id, 'node-18', 1597),
+    (experiment_id, 'node-19', 1718),
+    (experiment_id, 'node-2', 1518),
+    (experiment_id, 'node-20', 1738),
+    (experiment_id, 'node-21', 1595),
+    (experiment_id, 'node-22', 1743),
+    (experiment_id, 'node-23', 1748),
+    (experiment_id, 'node-24', 1736),
+    (experiment_id, 'node-25', 1696),
+    (experiment_id, 'node-26', 1643),
+    (experiment_id, 'node-27', 1538),
+    (experiment_id, 'node-28', 1643),
+    (experiment_id, 'node-29', 1631),
+    (experiment_id, 'node-3', 1641),
+    (experiment_id, 'node-30', 1612),
+    (experiment_id, 'node-31', 1635),
+    (experiment_id, 'node-32', 1738),
+    (experiment_id, 'node-33', 1697),
+    (experiment_id, 'node-34', 1645),
+    (experiment_id, 'node-35', 1574),
+    (experiment_id, 'node-36', 1697),
+    (experiment_id, 'node-37', 1448),
+    (experiment_id, 'node-38', 1599),
+    (experiment_id, 'node-39', 1575),
+    (experiment_id, 'node-4', 1759),
+    (experiment_id, 'node-40', 1756),
+    (experiment_id, 'node-41', 1510),
+    (experiment_id, 'node-42', 1575),
+    (experiment_id, 'node-43', 1484),
+    (experiment_id, 'node-44', 1541),
+    (experiment_id, 'node-45', 1693),
+    (experiment_id, 'node-46', 1709),
+    (experiment_id, 'node-47', 1777),
+    (experiment_id, 'node-48', 1717),
+    (experiment_id, 'node-49', 1592),
+    (experiment_id, 'node-5', 1649),
+    (experiment_id, 'node-50', 1767),
+    (experiment_id, 'node-51', 1728),
+    (experiment_id, 'node-52', 1712),
+    (experiment_id, 'node-53', 1632),
+    (experiment_id, 'node-54', 1590),
+    (experiment_id, 'node-55', 1448),
+    (experiment_id, 'node-56', 1714),
+    (experiment_id, 'node-57', 1751),
+    (experiment_id, 'node-58', 1760),
+    (experiment_id, 'node-59', 1591),
+    (experiment_id, 'node-6', 1716),
+    (experiment_id, 'node-60', 1582),
+    (experiment_id, 'node-61', 1665),
+    (experiment_id, 'node-62', 1382),
+    (experiment_id, 'node-63', 1362),
+    (experiment_id, 'node-64', 1561),
+    (experiment_id, 'node-65', 1653),
+    (experiment_id, 'node-66', 1600),
+    (experiment_id, 'node-67', 1671),
+    (experiment_id, 'node-68', 1711),
+    (experiment_id, 'node-69', 1728),
+    (experiment_id, 'node-7', 1772),
+    (experiment_id, 'node-70', 1629),
+    (experiment_id, 'node-71', 1610),
+    (experiment_id, 'node-72', 1752),
+    (experiment_id, 'node-73', 1715),
+    (experiment_id, 'node-74', 1761),
+    (experiment_id, 'node-75', 1490),
+    (experiment_id, 'node-76', 1489),
+    (experiment_id, 'node-77', 1545),
+    (experiment_id, 'node-78', 1739),
+    (experiment_id, 'node-79', 1753),
+    (experiment_id, 'node-8', 1775),
+    (experiment_id, 'node-80', 1673),
+    (experiment_id, 'node-81', 1754),
+    (experiment_id, 'node-82', 1729),
+    (experiment_id, 'node-83', 1569),
+    (experiment_id, 'node-84', 1758),
+    (experiment_id, 'node-85', 1516),
+    (experiment_id, 'node-86', 1556),
+    (experiment_id, 'node-87', 1737),
+    (experiment_id, 'node-88', 1773),
+    (experiment_id, 'node-89', 1518),
+    (experiment_id, 'node-9', 1529),
+    (experiment_id, 'node-90', 1589),
+    (experiment_id, 'node-91', 1796),
+    (experiment_id, 'node-92', 1623),
+    (experiment_id, 'node-93', 1489),
+    (experiment_id, 'node-94', 1518),
+    (experiment_id, 'node-95', 1697),
+    (experiment_id, 'node-96', 1605),
+    (experiment_id, 'node-97', 1614),
+    (experiment_id, 'node-98', 1607),
+    (experiment_id, 'node-99', 1426);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 10.14, 11.77),
+    (experiment_id, 'node-10', 10.12, 12.03),
+    (experiment_id, 'node-100', 9.37, 11.99),
+    (experiment_id, 'node-101', 10.81, 11.84),
+    (experiment_id, 'node-102', 11.70, 12.08),
+    (experiment_id, 'node-103', 10.83, 11.62),
+    (experiment_id, 'node-104', 10.86, 11.78),
+    (experiment_id, 'node-11', 9.96, 11.91),
+    (experiment_id, 'node-12', 11.67, 12.09),
+    (experiment_id, 'node-13', 10.59, 12.00),
+    (experiment_id, 'node-14', 10.44, 12.15),
+    (experiment_id, 'node-15', 12.47, 12.17),
+    (experiment_id, 'node-16', 12.14, 12.28),
+    (experiment_id, 'node-17', 11.47, 12.42),
+    (experiment_id, 'node-18', 12.70, 12.25),
+    (experiment_id, 'node-19', 9.99, 12.33),
+    (experiment_id, 'node-2', 14.45, 12.77),
+    (experiment_id, 'node-20', 10.38, 11.94),
+    (experiment_id, 'node-21', 12.03, 12.14),
+    (experiment_id, 'node-22', 10.17, 11.91),
+    (experiment_id, 'node-23', 10.53, 12.48),
+    (experiment_id, 'node-24', 11.03, 12.02),
+    (experiment_id, 'node-25', 10.63, 12.12),
+    (experiment_id, 'node-26', 14.74, 12.75),
+    (experiment_id, 'node-27', 12.76, 12.58),
+    (experiment_id, 'node-28', 14.20, 12.51),
+    (experiment_id, 'node-29', 14.94, 12.46),
+    (experiment_id, 'node-3', 11.24, 11.88),
+    (experiment_id, 'node-30', 13.11, 12.24),
+    (experiment_id, 'node-31', 12.51, 12.14),
+    (experiment_id, 'node-32', 11.91, 12.05),
+    (experiment_id, 'node-33', 9.83, 12.29),
+    (experiment_id, 'node-34', 12.98, 12.00),
+    (experiment_id, 'node-35', 11.67, 12.14),
+    (experiment_id, 'node-36', 10.55, 12.12),
+    (experiment_id, 'node-37', 10.92, 12.29),
+    (experiment_id, 'node-38', 10.63, 11.72),
+    (experiment_id, 'node-39', 10.42, 12.02),
+    (experiment_id, 'node-4', 10.99, 12.24),
+    (experiment_id, 'node-40', 10.54, 12.05),
+    (experiment_id, 'node-41', 12.66, 12.10),
+    (experiment_id, 'node-42', 12.22, 12.23),
+    (experiment_id, 'node-43', 11.41, 12.17),
+    (experiment_id, 'node-44', 11.28, 11.94),
+    (experiment_id, 'node-45', 13.65, 12.10),
+    (experiment_id, 'node-46', 10.86, 11.98),
+    (experiment_id, 'node-47', 10.45, 11.93),
+    (experiment_id, 'node-48', 14.00, 12.44),
+    (experiment_id, 'node-49', 11.61, 11.98),
+    (experiment_id, 'node-5', 11.78, 12.26),
+    (experiment_id, 'node-50', 10.81, 11.90),
+    (experiment_id, 'node-51', 10.49, 12.13),
+    (experiment_id, 'node-52', 12.29, 12.04),
+    (experiment_id, 'node-53', 11.81, 12.53),
+    (experiment_id, 'node-54', 14.47, 12.25),
+    (experiment_id, 'node-55', 10.43, 12.22),
+    (experiment_id, 'node-56', 12.57, 12.22),
+    (experiment_id, 'node-57', 11.87, 12.31),
+    (experiment_id, 'node-58', 11.41, 12.37),
+    (experiment_id, 'node-59', 11.56, 12.47),
+    (experiment_id, 'node-6', 10.08, 11.96),
+    (experiment_id, 'node-60', 11.84, 11.72),
+    (experiment_id, 'node-61', 11.49, 12.13),
+    (experiment_id, 'node-62', 11.50, 11.74),
+    (experiment_id, 'node-63', 14.60, 12.44),
+    (experiment_id, 'node-64', 11.06, 12.03),
+    (experiment_id, 'node-65', 11.33, 12.44),
+    (experiment_id, 'node-66', 10.53, 11.92),
+    (experiment_id, 'node-67', 14.00, 12.61),
+    (experiment_id, 'node-68', 13.21, 12.43),
+    (experiment_id, 'node-69', 10.80, 11.91),
+    (experiment_id, 'node-7', 12.54, 12.24),
+    (experiment_id, 'node-70', 11.15, 12.37),
+    (experiment_id, 'node-71', 10.94, 11.95),
+    (experiment_id, 'node-72', 13.28, 12.37),
+    (experiment_id, 'node-73', 10.37, 11.76),
+    (experiment_id, 'node-74', 10.82, 12.18),
+    (experiment_id, 'node-75', 11.35, 12.24),
+    (experiment_id, 'node-76', 12.99, 12.66),
+    (experiment_id, 'node-77', 10.02, 12.35),
+    (experiment_id, 'node-78', 12.14, 12.18),
+    (experiment_id, 'node-79', 9.46, 12.21),
+    (experiment_id, 'node-8', 12.62, 12.35),
+    (experiment_id, 'node-80', 11.19, 12.13),
+    (experiment_id, 'node-81', 9.37, 12.09),
+    (experiment_id, 'node-82', 10.08, 12.23),
+    (experiment_id, 'node-83', 8.77, 12.15),
+    (experiment_id, 'node-84', 9.56, 12.24),
+    (experiment_id, 'node-85', 10.48, 12.11),
+    (experiment_id, 'node-86', 10.68, 12.12),
+    (experiment_id, 'node-87', 10.17, 12.16),
+    (experiment_id, 'node-88', 12.90, 12.11),
+    (experiment_id, 'node-89', 10.01, 12.01),
+    (experiment_id, 'node-9', 11.21, 12.10),
+    (experiment_id, 'node-90', 11.39, 12.08),
+    (experiment_id, 'node-91', 19.70, 13.23),
+    (experiment_id, 'node-92', 12.34, 12.22),
+    (experiment_id, 'node-93', 13.69, 12.45),
+    (experiment_id, 'node-94', 13.51, 11.72),
+    (experiment_id, 'node-95', 13.28, 12.37),
+    (experiment_id, 'node-96', 11.40, 12.19),
+    (experiment_id, 'node-97', 11.70, 12.14),
+    (experiment_id, 'node-98', 10.01, 12.30),
+    (experiment_id, 'node-99', 11.25, 12.18);
+END $$;
+
+
+-- 10nodes_25txpb_2rounds_MERK.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('MERKLE', '10nodes_25txpb_2rounds_MERK.txt', 10, 25, 2, 
+   25.0, 
+   150.1,
+   39.99,
+   27.72,
+   7.002)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 56.11),
+    (experiment_id, 'node-10', 58.52),
+    (experiment_id, 'node-2', 61.24),
+    (experiment_id, 'node-3', 51.05),
+    (experiment_id, 'node-4', 56.05),
+    (experiment_id, 'node-5', 58.23),
+    (experiment_id, 'node-6', 51.51),
+    (experiment_id, 'node-7', 56.64),
+    (experiment_id, 'node-8', 51.41),
+    (experiment_id, 'node-9', 56.38);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 140),
+    (experiment_id, 'node-10', 158),
+    (experiment_id, 'node-2', 156),
+    (experiment_id, 'node-3', 152),
+    (experiment_id, 'node-4', 141),
+    (experiment_id, 'node-5', 146),
+    (experiment_id, 'node-6', 151),
+    (experiment_id, 'node-7', 156),
+    (experiment_id, 'node-8', 153),
+    (experiment_id, 'node-9', 148);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 42.21, 27.67),
+    (experiment_id, 'node-10', 35.15, 27.47),
+    (experiment_id, 'node-2', 47.73, 27.35),
+    (experiment_id, 'node-3', 27.80, 27.91),
+    (experiment_id, 'node-4', 46.24, 27.96),
+    (experiment_id, 'node-5', 42.68, 27.83),
+    (experiment_id, 'node-6', 37.50, 27.65),
+    (experiment_id, 'node-7', 39.72, 27.69),
+    (experiment_id, 'node-8', 37.11, 27.77),
+    (experiment_id, 'node-9', 43.83, 27.95);
+END $$;
+
+
+-- 16nodes_256txpb_3rounds_MERK.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('MERKLE', '16nodes_256txpb_3rounds_MERK.txt', 16, 256, 3, 
+   256.0, 
+   195.0,
+   38.57,
+   22.93,
+   36.258)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 35.85),
+    (experiment_id, 'node-10', 36.69),
+    (experiment_id, 'node-11', 37.17),
+    (experiment_id, 'node-12', 38.09),
+    (experiment_id, 'node-13', 36.66),
+    (experiment_id, 'node-14', 37.62),
+    (experiment_id, 'node-15', 37.81),
+    (experiment_id, 'node-16', 37.47),
+    (experiment_id, 'node-2', 37.18),
+    (experiment_id, 'node-3', 38.40),
+    (experiment_id, 'node-4', 37.46),
+    (experiment_id, 'node-5', 37.56),
+    (experiment_id, 'node-6', 37.47),
+    (experiment_id, 'node-7', 36.82),
+    (experiment_id, 'node-8', 37.52),
+    (experiment_id, 'node-9', 39.37);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 177),
+    (experiment_id, 'node-10', 197),
+    (experiment_id, 'node-11', 191),
+    (experiment_id, 'node-12', 202),
+    (experiment_id, 'node-13', 198),
+    (experiment_id, 'node-14', 183),
+    (experiment_id, 'node-15', 201),
+    (experiment_id, 'node-16', 209),
+    (experiment_id, 'node-2', 199),
+    (experiment_id, 'node-3', 183),
+    (experiment_id, 'node-4', 188),
+    (experiment_id, 'node-5', 181),
+    (experiment_id, 'node-6', 210),
+    (experiment_id, 'node-7', 187),
+    (experiment_id, 'node-8', 212),
+    (experiment_id, 'node-9', 202);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 41.21, 23.08),
+    (experiment_id, 'node-10', 37.04, 22.84),
+    (experiment_id, 'node-11', 38.65, 22.81),
+    (experiment_id, 'node-12', 38.25, 23.01),
+    (experiment_id, 'node-13', 36.20, 22.94),
+    (experiment_id, 'node-14', 37.48, 23.00),
+    (experiment_id, 'node-15', 36.64, 22.86),
+    (experiment_id, 'node-16', 37.47, 22.89),
+    (experiment_id, 'node-2', 38.08, 22.68),
+    (experiment_id, 'node-3', 41.41, 23.27),
+    (experiment_id, 'node-4', 37.89, 23.10),
+    (experiment_id, 'node-5', 44.15, 23.08),
+    (experiment_id, 'node-6', 38.55, 22.75),
+    (experiment_id, 'node-7', 39.92, 22.97),
+    (experiment_id, 'node-8', 36.60, 22.85),
+    (experiment_id, 'node-9', 37.61, 22.83);
+END $$;
+
+
+-- 32nodes_256txpb_3rounds_MERK.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('MERKLE', '32nodes_256txpb_3rounds_MERK.txt', 32, 256, 3, 
+   256.0, 
+   395.0,
+   38.34,
+   28.56,
+   185.994)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 6.52),
+    (experiment_id, 'node-10', 6.37),
+    (experiment_id, 'node-11', 6.08),
+    (experiment_id, 'node-12', 6.40),
+    (experiment_id, 'node-13', 6.42),
+    (experiment_id, 'node-14', 6.28),
+    (experiment_id, 'node-15', 6.30),
+    (experiment_id, 'node-16', 6.24),
+    (experiment_id, 'node-17', 6.32),
+    (experiment_id, 'node-18', 6.20),
+    (experiment_id, 'node-19', 6.84),
+    (experiment_id, 'node-2', 6.56),
+    (experiment_id, 'node-20', 6.21),
+    (experiment_id, 'node-21', 6.60),
+    (experiment_id, 'node-22', 6.38),
+    (experiment_id, 'node-23', 6.42),
+    (experiment_id, 'node-24', 6.76),
+    (experiment_id, 'node-25', 6.60),
+    (experiment_id, 'node-26', 6.12),
+    (experiment_id, 'node-27', 6.33),
+    (experiment_id, 'node-28', 6.56),
+    (experiment_id, 'node-29', 6.26),
+    (experiment_id, 'node-3', 6.40),
+    (experiment_id, 'node-30', 6.46),
+    (experiment_id, 'node-31', 6.39),
+    (experiment_id, 'node-32', 6.68),
+    (experiment_id, 'node-4', 6.41),
+    (experiment_id, 'node-5', 6.65),
+    (experiment_id, 'node-6', 6.56),
+    (experiment_id, 'node-7', 6.26),
+    (experiment_id, 'node-8', 6.50),
+    (experiment_id, 'node-9', 6.05);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 369),
+    (experiment_id, 'node-10', 396),
+    (experiment_id, 'node-11', 398),
+    (experiment_id, 'node-12', 449),
+    (experiment_id, 'node-13', 371),
+    (experiment_id, 'node-14', 407),
+    (experiment_id, 'node-15', 371),
+    (experiment_id, 'node-16', 437),
+    (experiment_id, 'node-17', 375),
+    (experiment_id, 'node-18', 419),
+    (experiment_id, 'node-19', 366),
+    (experiment_id, 'node-2', 406),
+    (experiment_id, 'node-20', 437),
+    (experiment_id, 'node-21', 399),
+    (experiment_id, 'node-22', 376),
+    (experiment_id, 'node-23', 307),
+    (experiment_id, 'node-24', 391),
+    (experiment_id, 'node-25', 419),
+    (experiment_id, 'node-26', 420),
+    (experiment_id, 'node-27', 403),
+    (experiment_id, 'node-28', 415),
+    (experiment_id, 'node-29', 431),
+    (experiment_id, 'node-3', 362),
+    (experiment_id, 'node-30', 275),
+    (experiment_id, 'node-31', 446),
+    (experiment_id, 'node-32', 377),
+    (experiment_id, 'node-4', 420),
+    (experiment_id, 'node-5', 387),
+    (experiment_id, 'node-6', 397),
+    (experiment_id, 'node-7', 419),
+    (experiment_id, 'node-8', 387),
+    (experiment_id, 'node-9', 408);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 38.03, 28.34),
+    (experiment_id, 'node-10', 40.20, 29.04),
+    (experiment_id, 'node-11', 36.48, 28.49),
+    (experiment_id, 'node-12', 40.81, 28.25),
+    (experiment_id, 'node-13', 38.91, 26.48),
+    (experiment_id, 'node-14', 38.05, 27.86),
+    (experiment_id, 'node-15', 38.80, 28.20),
+    (experiment_id, 'node-16', 40.38, 28.94),
+    (experiment_id, 'node-17', 37.05, 28.35),
+    (experiment_id, 'node-18', 37.24, 27.71),
+    (experiment_id, 'node-19', 39.06, 29.25),
+    (experiment_id, 'node-2', 36.94, 28.07),
+    (experiment_id, 'node-20', 40.22, 28.81),
+    (experiment_id, 'node-21', 38.50, 28.91),
+    (experiment_id, 'node-22', 38.75, 27.79),
+    (experiment_id, 'node-23', 39.57, 30.00),
+    (experiment_id, 'node-24', 37.02, 28.73),
+    (experiment_id, 'node-25', 36.99, 28.56),
+    (experiment_id, 'node-26', 36.49, 28.55),
+    (experiment_id, 'node-27', 36.58, 28.31),
+    (experiment_id, 'node-28', 38.74, 28.92),
+    (experiment_id, 'node-29', 36.89, 27.57),
+    (experiment_id, 'node-3', 39.26, 28.47),
+    (experiment_id, 'node-30', 42.98, 32.13),
+    (experiment_id, 'node-31', 39.52, 27.85),
+    (experiment_id, 'node-32', 38.72, 30.03),
+    (experiment_id, 'node-4', 37.27, 27.80),
+    (experiment_id, 'node-5', 38.17, 28.38),
+    (experiment_id, 'node-6', 38.05, 27.72),
+    (experiment_id, 'node-7', 37.54, 27.77),
+    (experiment_id, 'node-8', 37.36, 29.92),
+    (experiment_id, 'node-9', 36.63, 28.97);
+END $$;
+
+
+-- 64nodes_25txpb_25rounds_MERK.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('MERKLE', '64nodes_25txpb_25rounds_MERK.txt', 64, 25, 25, 
+   25.0, 
+   5523.42,
+   21.68,
+   13.85,
+   776.14)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 0.85),
+    (experiment_id, 'node-10', 0.84),
+    (experiment_id, 'node-11', 0.85),
+    (experiment_id, 'node-12', 0.85),
+    (experiment_id, 'node-13', 0.85),
+    (experiment_id, 'node-14', 0.85),
+    (experiment_id, 'node-15', 0.84),
+    (experiment_id, 'node-16', 0.84),
+    (experiment_id, 'node-17', 0.85),
+    (experiment_id, 'node-18', 0.84),
+    (experiment_id, 'node-19', 0.85),
+    (experiment_id, 'node-2', 0.85),
+    (experiment_id, 'node-20', 0.84),
+    (experiment_id, 'node-21', 0.85),
+    (experiment_id, 'node-22', 0.85),
+    (experiment_id, 'node-23', 0.84),
+    (experiment_id, 'node-24', 0.85),
+    (experiment_id, 'node-25', 0.84),
+    (experiment_id, 'node-26', 0.85),
+    (experiment_id, 'node-27', 0.85),
+    (experiment_id, 'node-28', 0.84),
+    (experiment_id, 'node-29', 0.85),
+    (experiment_id, 'node-3', 0.85),
+    (experiment_id, 'node-30', 0.85),
+    (experiment_id, 'node-31', 0.85),
+    (experiment_id, 'node-32', 0.85),
+    (experiment_id, 'node-33', 0.84),
+    (experiment_id, 'node-34', 0.85),
+    (experiment_id, 'node-35', 0.85),
+    (experiment_id, 'node-36', 0.84),
+    (experiment_id, 'node-37', 0.85),
+    (experiment_id, 'node-38', 0.84),
+    (experiment_id, 'node-39', 0.85),
+    (experiment_id, 'node-4', 0.85),
+    (experiment_id, 'node-40', 0.84),
+    (experiment_id, 'node-41', 0.84),
+    (experiment_id, 'node-42', 0.84),
+    (experiment_id, 'node-43', 0.84),
+    (experiment_id, 'node-44', 0.85),
+    (experiment_id, 'node-45', 0.85),
+    (experiment_id, 'node-46', 0.84),
+    (experiment_id, 'node-47', 0.85),
+    (experiment_id, 'node-48', 0.85),
+    (experiment_id, 'node-49', 0.85),
+    (experiment_id, 'node-5', 0.85),
+    (experiment_id, 'node-50', 0.85),
+    (experiment_id, 'node-51', 0.85),
+    (experiment_id, 'node-52', 0.85),
+    (experiment_id, 'node-53', 0.85),
+    (experiment_id, 'node-54', 0.85),
+    (experiment_id, 'node-55', 0.85),
+    (experiment_id, 'node-56', 0.85),
+    (experiment_id, 'node-57', 0.85),
+    (experiment_id, 'node-58', 0.85),
+    (experiment_id, 'node-59', 0.85),
+    (experiment_id, 'node-6', 0.85),
+    (experiment_id, 'node-60', 0.85),
+    (experiment_id, 'node-61', 0.85),
+    (experiment_id, 'node-62', 0.84),
+    (experiment_id, 'node-63', 0.85),
+    (experiment_id, 'node-64', 0.85),
+    (experiment_id, 'node-7', 0.85),
+    (experiment_id, 'node-8', 0.85),
+    (experiment_id, 'node-9', 0.85);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 5605),
+    (experiment_id, 'node-10', 5577),
+    (experiment_id, 'node-11', 5465),
+    (experiment_id, 'node-12', 5735),
+    (experiment_id, 'node-13', 5556),
+    (experiment_id, 'node-14', 5642),
+    (experiment_id, 'node-15', 5523),
+    (experiment_id, 'node-16', 5512),
+    (experiment_id, 'node-17', 5572),
+    (experiment_id, 'node-18', 5577),
+    (experiment_id, 'node-19', 4081),
+    (experiment_id, 'node-2', 5599),
+    (experiment_id, 'node-20', 5457),
+    (experiment_id, 'node-21', 5489),
+    (experiment_id, 'node-22', 5488),
+    (experiment_id, 'node-23', 5669),
+    (experiment_id, 'node-24', 5677),
+    (experiment_id, 'node-25', 5506),
+    (experiment_id, 'node-26', 5540),
+    (experiment_id, 'node-27', 5489),
+    (experiment_id, 'node-28', 5328),
+    (experiment_id, 'node-29', 5695),
+    (experiment_id, 'node-3', 5674),
+    (experiment_id, 'node-30', 5491),
+    (experiment_id, 'node-31', 5654),
+    (experiment_id, 'node-32', 5446),
+    (experiment_id, 'node-33', 5602),
+    (experiment_id, 'node-34', 5680),
+    (experiment_id, 'node-35', 5534),
+    (experiment_id, 'node-36', 5510),
+    (experiment_id, 'node-37', 5646),
+    (experiment_id, 'node-38', 5357),
+    (experiment_id, 'node-39', 5592),
+    (experiment_id, 'node-4', 5385),
+    (experiment_id, 'node-40', 5572),
+    (experiment_id, 'node-41', 5506),
+    (experiment_id, 'node-42', 5552),
+    (experiment_id, 'node-43', 5482),
+    (experiment_id, 'node-44', 5484),
+    (experiment_id, 'node-45', 5637),
+    (experiment_id, 'node-46', 5542),
+    (experiment_id, 'node-47', 5556),
+    (experiment_id, 'node-48', 5587),
+    (experiment_id, 'node-49', 5516),
+    (experiment_id, 'node-5', 5650),
+    (experiment_id, 'node-50', 5438),
+    (experiment_id, 'node-51', 5671),
+    (experiment_id, 'node-52', 5617),
+    (experiment_id, 'node-53', 5428),
+    (experiment_id, 'node-54', 5616),
+    (experiment_id, 'node-55', 5455),
+    (experiment_id, 'node-56', 5574),
+    (experiment_id, 'node-57', 5493),
+    (experiment_id, 'node-58', 5508),
+    (experiment_id, 'node-59', 5694),
+    (experiment_id, 'node-6', 5594),
+    (experiment_id, 'node-60', 5497),
+    (experiment_id, 'node-61', 5486),
+    (experiment_id, 'node-62', 5608),
+    (experiment_id, 'node-63', 5403),
+    (experiment_id, 'node-64', 5403),
+    (experiment_id, 'node-7', 5568),
+    (experiment_id, 'node-8', 5472),
+    (experiment_id, 'node-9', 5537);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 20.93, 13.85),
+    (experiment_id, 'node-10', 20.56, 14.01),
+    (experiment_id, 'node-11', 20.89, 13.80),
+    (experiment_id, 'node-12', 22.35, 13.79),
+    (experiment_id, 'node-13', 21.43, 13.80),
+    (experiment_id, 'node-14', 21.37, 13.79),
+    (experiment_id, 'node-15', 21.28, 13.79),
+    (experiment_id, 'node-16', 22.81, 13.87),
+    (experiment_id, 'node-17', 21.24, 13.77),
+    (experiment_id, 'node-18', 21.12, 13.96),
+    (experiment_id, 'node-19', 27.17, 13.89),
+    (experiment_id, 'node-2', 21.67, 13.91),
+    (experiment_id, 'node-20', 21.49, 14.00),
+    (experiment_id, 'node-21', 20.81, 13.85),
+    (experiment_id, 'node-22', 21.46, 13.79),
+    (experiment_id, 'node-23', 21.30, 13.85),
+    (experiment_id, 'node-24', 22.37, 14.00),
+    (experiment_id, 'node-25', 20.77, 13.92),
+    (experiment_id, 'node-26', 21.12, 13.79),
+    (experiment_id, 'node-27', 20.68, 13.84),
+    (experiment_id, 'node-28', 23.99, 13.81),
+    (experiment_id, 'node-29', 23.87, 13.76),
+    (experiment_id, 'node-3', 21.70, 13.82),
+    (experiment_id, 'node-30', 22.30, 13.95),
+    (experiment_id, 'node-31', 21.17, 13.75),
+    (experiment_id, 'node-32', 23.09, 13.94),
+    (experiment_id, 'node-33', 22.15, 13.87),
+    (experiment_id, 'node-34', 21.09, 13.87),
+    (experiment_id, 'node-35', 21.13, 14.09),
+    (experiment_id, 'node-36', 21.25, 13.78),
+    (experiment_id, 'node-37', 21.26, 13.67),
+    (experiment_id, 'node-38', 21.07, 13.76),
+    (experiment_id, 'node-39', 21.18, 13.79),
+    (experiment_id, 'node-4', 21.93, 13.78),
+    (experiment_id, 'node-40', 22.66, 13.85),
+    (experiment_id, 'node-41', 21.55, 13.83),
+    (experiment_id, 'node-42', 22.38, 13.89),
+    (experiment_id, 'node-43', 20.52, 13.94),
+    (experiment_id, 'node-44', 21.35, 13.94),
+    (experiment_id, 'node-45', 23.38, 13.71),
+    (experiment_id, 'node-46', 20.33, 13.90),
+    (experiment_id, 'node-47', 20.92, 13.98),
+    (experiment_id, 'node-48', 21.32, 13.72),
+    (experiment_id, 'node-49', 21.07, 13.81),
+    (experiment_id, 'node-5', 21.19, 13.73),
+    (experiment_id, 'node-50', 20.85, 13.87),
+    (experiment_id, 'node-51', 21.06, 13.79),
+    (experiment_id, 'node-52', 20.56, 13.79),
+    (experiment_id, 'node-53', 22.36, 13.98),
+    (experiment_id, 'node-54', 20.63, 13.79),
+    (experiment_id, 'node-55', 21.90, 13.92),
+    (experiment_id, 'node-56', 23.30, 13.78),
+    (experiment_id, 'node-57', 21.66, 13.87),
+    (experiment_id, 'node-58', 22.59, 13.97),
+    (experiment_id, 'node-59', 21.27, 13.78),
+    (experiment_id, 'node-6', 20.91, 13.85),
+    (experiment_id, 'node-60', 21.55, 13.86),
+    (experiment_id, 'node-61', 22.60, 13.83),
+    (experiment_id, 'node-62', 22.05, 13.87),
+    (experiment_id, 'node-63', 21.71, 13.92),
+    (experiment_id, 'node-64', 21.26, 13.96),
+    (experiment_id, 'node-7', 21.52, 13.88),
+    (experiment_id, 'node-8', 21.37, 13.83),
+    (experiment_id, 'node-9', 21.75, 13.84);
+END $$;
+
+
+-- 104nodes_5txpb_4rounds_RSA.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('RSA', '104nodes_5txpb_4rounds_RSA.txt', 104, 5, 4, 
+   5.0, 
+   1908.59,
+   16.52,
+   13.99,
+   428.528)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 0.06),
+    (experiment_id, 'node-10', 0.07),
+    (experiment_id, 'node-100', 0.06),
+    (experiment_id, 'node-101', 0.07),
+    (experiment_id, 'node-102', 0.06),
+    (experiment_id, 'node-103', 0.07),
+    (experiment_id, 'node-104', 0.06),
+    (experiment_id, 'node-11', 0.06),
+    (experiment_id, 'node-12', 0.06),
+    (experiment_id, 'node-14', 0.07),
+    (experiment_id, 'node-15', 0.07),
+    (experiment_id, 'node-16', 0.06),
+    (experiment_id, 'node-17', 0.06),
+    (experiment_id, 'node-18', 0.07),
+    (experiment_id, 'node-19', 0.07),
+    (experiment_id, 'node-20', 0.06),
+    (experiment_id, 'node-23', 0.06),
+    (experiment_id, 'node-24', 0.06),
+    (experiment_id, 'node-25', 0.06),
+    (experiment_id, 'node-26', 0.07),
+    (experiment_id, 'node-27', 0.07),
+    (experiment_id, 'node-28', 0.07),
+    (experiment_id, 'node-29', 0.06),
+    (experiment_id, 'node-3', 0.07),
+    (experiment_id, 'node-30', 0.06),
+    (experiment_id, 'node-31', 0.07),
+    (experiment_id, 'node-32', 0.06),
+    (experiment_id, 'node-33', 0.06),
+    (experiment_id, 'node-34', 0.07),
+    (experiment_id, 'node-35', 0.07),
+    (experiment_id, 'node-36', 0.06),
+    (experiment_id, 'node-37', 0.06),
+    (experiment_id, 'node-38', 0.06),
+    (experiment_id, 'node-39', 0.07),
+    (experiment_id, 'node-4', 0.06),
+    (experiment_id, 'node-40', 0.07),
+    (experiment_id, 'node-42', 0.06),
+    (experiment_id, 'node-44', 0.06),
+    (experiment_id, 'node-45', 0.06),
+    (experiment_id, 'node-46', 0.06),
+    (experiment_id, 'node-49', 0.06),
+    (experiment_id, 'node-5', 0.06),
+    (experiment_id, 'node-50', 0.06),
+    (experiment_id, 'node-51', 0.07),
+    (experiment_id, 'node-52', 0.07),
+    (experiment_id, 'node-53', 0.07),
+    (experiment_id, 'node-54', 0.07),
+    (experiment_id, 'node-56', 0.06),
+    (experiment_id, 'node-57', 0.06),
+    (experiment_id, 'node-58', 0.06),
+    (experiment_id, 'node-59', 0.06),
+    (experiment_id, 'node-6', 0.06),
+    (experiment_id, 'node-60', 0.06),
+    (experiment_id, 'node-61', 0.07),
+    (experiment_id, 'node-62', 0.07),
+    (experiment_id, 'node-63', 0.07),
+    (experiment_id, 'node-64', 0.06),
+    (experiment_id, 'node-65', 0.07),
+    (experiment_id, 'node-66', 0.06),
+    (experiment_id, 'node-67', 0.06),
+    (experiment_id, 'node-68', 0.06),
+    (experiment_id, 'node-69', 0.06),
+    (experiment_id, 'node-7', 0.07),
+    (experiment_id, 'node-70', 0.07),
+    (experiment_id, 'node-72', 0.06),
+    (experiment_id, 'node-73', 0.07),
+    (experiment_id, 'node-74', 0.06),
+    (experiment_id, 'node-75', 0.07),
+    (experiment_id, 'node-76', 0.06),
+    (experiment_id, 'node-78', 0.07),
+    (experiment_id, 'node-8', 0.06),
+    (experiment_id, 'node-81', 0.06),
+    (experiment_id, 'node-85', 0.07),
+    (experiment_id, 'node-86', 0.06),
+    (experiment_id, 'node-87', 0.06),
+    (experiment_id, 'node-88', 0.07),
+    (experiment_id, 'node-90', 0.06),
+    (experiment_id, 'node-91', 0.07),
+    (experiment_id, 'node-93', 0.07),
+    (experiment_id, 'node-94', 0.07),
+    (experiment_id, 'node-95', 0.06),
+    (experiment_id, 'node-96', 0.07),
+    (experiment_id, 'node-97', 0.07),
+    (experiment_id, 'node-99', 0.06);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 2190),
+    (experiment_id, 'node-10', 2001),
+    (experiment_id, 'node-100', 2000),
+    (experiment_id, 'node-101', 2251),
+    (experiment_id, 'node-102', 2249),
+    (experiment_id, 'node-103', 1970),
+    (experiment_id, 'node-104', 2230),
+    (experiment_id, 'node-11', 1757),
+    (experiment_id, 'node-12', 1661),
+    (experiment_id, 'node-14', 1849),
+    (experiment_id, 'node-15', 1750),
+    (experiment_id, 'node-16', 1881),
+    (experiment_id, 'node-17', 1884),
+    (experiment_id, 'node-18', 1837),
+    (experiment_id, 'node-19', 2089),
+    (experiment_id, 'node-20', 1865),
+    (experiment_id, 'node-23', 1901),
+    (experiment_id, 'node-24', 2046),
+    (experiment_id, 'node-25', 1837),
+    (experiment_id, 'node-26', 1939),
+    (experiment_id, 'node-27', 1636),
+    (experiment_id, 'node-28', 2040),
+    (experiment_id, 'node-29', 1869),
+    (experiment_id, 'node-3', 2228),
+    (experiment_id, 'node-30', 1791),
+    (experiment_id, 'node-31', 1986),
+    (experiment_id, 'node-32', 2060),
+    (experiment_id, 'node-33', 1742),
+    (experiment_id, 'node-34', 2010),
+    (experiment_id, 'node-35', 1887),
+    (experiment_id, 'node-36', 1820),
+    (experiment_id, 'node-37', 1656),
+    (experiment_id, 'node-38', 1875),
+    (experiment_id, 'node-39', 1714),
+    (experiment_id, 'node-4', 1917),
+    (experiment_id, 'node-40', 1799),
+    (experiment_id, 'node-42', 2117),
+    (experiment_id, 'node-44', 1987),
+    (experiment_id, 'node-45', 2174),
+    (experiment_id, 'node-46', 1995),
+    (experiment_id, 'node-49', 2165),
+    (experiment_id, 'node-5', 1777),
+    (experiment_id, 'node-50', 1979),
+    (experiment_id, 'node-51', 1652),
+    (experiment_id, 'node-52', 1808),
+    (experiment_id, 'node-53', 2050),
+    (experiment_id, 'node-54', 1818),
+    (experiment_id, 'node-56', 1510),
+    (experiment_id, 'node-57', 1632),
+    (experiment_id, 'node-58', 1776),
+    (experiment_id, 'node-59', 1891),
+    (experiment_id, 'node-6', 2020),
+    (experiment_id, 'node-60', 1921),
+    (experiment_id, 'node-61', 1650),
+    (experiment_id, 'node-62', 1732),
+    (experiment_id, 'node-63', 1934),
+    (experiment_id, 'node-64', 1544),
+    (experiment_id, 'node-65', 2041),
+    (experiment_id, 'node-66', 2023),
+    (experiment_id, 'node-67', 2024),
+    (experiment_id, 'node-68', 2136),
+    (experiment_id, 'node-69', 1893),
+    (experiment_id, 'node-7', 1693),
+    (experiment_id, 'node-70', 1799),
+    (experiment_id, 'node-72', 2073),
+    (experiment_id, 'node-73', 1722),
+    (experiment_id, 'node-74', 1605),
+    (experiment_id, 'node-75', 2129),
+    (experiment_id, 'node-76', 1820),
+    (experiment_id, 'node-78', 1781),
+    (experiment_id, 'node-8', 1996),
+    (experiment_id, 'node-81', 1815),
+    (experiment_id, 'node-85', 1504),
+    (experiment_id, 'node-86', 1825),
+    (experiment_id, 'node-87', 1693),
+    (experiment_id, 'node-88', 1819),
+    (experiment_id, 'node-90', 2086),
+    (experiment_id, 'node-91', 2092),
+    (experiment_id, 'node-93', 1898),
+    (experiment_id, 'node-94', 2115),
+    (experiment_id, 'node-95', 2277),
+    (experiment_id, 'node-96', 2118),
+    (experiment_id, 'node-97', 2140),
+    (experiment_id, 'node-99', 1856);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 16.26, 13.48),
+    (experiment_id, 'node-10', 16.06, 14.27),
+    (experiment_id, 'node-100', 14.33, 14.08),
+    (experiment_id, 'node-101', 15.94, 13.60),
+    (experiment_id, 'node-102', 17.40, 14.22),
+    (experiment_id, 'node-103', 16.76, 13.95),
+    (experiment_id, 'node-104', 14.02, 13.87),
+    (experiment_id, 'node-11', 14.82, 13.96),
+    (experiment_id, 'node-12', 19.19, 14.07),
+    (experiment_id, 'node-14', 15.13, 14.07),
+    (experiment_id, 'node-15', 19.61, 14.17),
+    (experiment_id, 'node-16', 17.73, 13.75),
+    (experiment_id, 'node-17', 14.46, 13.77),
+    (experiment_id, 'node-18', 18.81, 13.94),
+    (experiment_id, 'node-19', 14.78, 13.93),
+    (experiment_id, 'node-20', 14.21, 13.82),
+    (experiment_id, 'node-23', 15.19, 14.23),
+    (experiment_id, 'node-24', 15.08, 13.65),
+    (experiment_id, 'node-25', 15.99, 14.33),
+    (experiment_id, 'node-26', 15.81, 13.98),
+    (experiment_id, 'node-27', 22.35, 14.17),
+    (experiment_id, 'node-28', 14.21, 13.90),
+    (experiment_id, 'node-29', 21.06, 14.02),
+    (experiment_id, 'node-3', 16.58, 14.04),
+    (experiment_id, 'node-30', 18.94, 14.01),
+    (experiment_id, 'node-31', 16.19, 14.16),
+    (experiment_id, 'node-32', 17.40, 14.14),
+    (experiment_id, 'node-33', 19.51, 14.46),
+    (experiment_id, 'node-34', 16.07, 13.65),
+    (experiment_id, 'node-35', 14.88, 14.45),
+    (experiment_id, 'node-36', 14.69, 13.63),
+    (experiment_id, 'node-37', 15.54, 13.54),
+    (experiment_id, 'node-38', 18.33, 14.19),
+    (experiment_id, 'node-39', 15.20, 14.04),
+    (experiment_id, 'node-4', 15.25, 13.85),
+    (experiment_id, 'node-40', 18.01, 14.00),
+    (experiment_id, 'node-42', 15.63, 13.71),
+    (experiment_id, 'node-44', 16.22, 13.90),
+    (experiment_id, 'node-45', 14.52, 13.89),
+    (experiment_id, 'node-46', 13.89, 13.54),
+    (experiment_id, 'node-49', 15.61, 13.93),
+    (experiment_id, 'node-5', 14.80, 13.89),
+    (experiment_id, 'node-50', 18.78, 13.88),
+    (experiment_id, 'node-51', 16.60, 14.33),
+    (experiment_id, 'node-52', 19.08, 14.52),
+    (experiment_id, 'node-53', 15.65, 13.95),
+    (experiment_id, 'node-54', 14.60, 14.18),
+    (experiment_id, 'node-56', 21.88, 14.19),
+    (experiment_id, 'node-57', 17.97, 14.41),
+    (experiment_id, 'node-58', 14.41, 14.32),
+    (experiment_id, 'node-59', 18.79, 14.19),
+    (experiment_id, 'node-6', 15.08, 13.74),
+    (experiment_id, 'node-60', 15.31, 14.46),
+    (experiment_id, 'node-61', 17.30, 14.28),
+    (experiment_id, 'node-62', 15.47, 13.80),
+    (experiment_id, 'node-63', 16.45, 14.12),
+    (experiment_id, 'node-64', 19.24, 14.00),
+    (experiment_id, 'node-65', 14.61, 13.81),
+    (experiment_id, 'node-66', 16.88, 14.32),
+    (experiment_id, 'node-67', 16.06, 14.19),
+    (experiment_id, 'node-68', 19.87, 14.09),
+    (experiment_id, 'node-69', 14.67, 13.98),
+    (experiment_id, 'node-7', 15.28, 13.90),
+    (experiment_id, 'node-70', 20.03, 13.84),
+    (experiment_id, 'node-72', 17.72, 13.79),
+    (experiment_id, 'node-73', 16.10, 14.32),
+    (experiment_id, 'node-74', 19.13, 13.78),
+    (experiment_id, 'node-75', 15.28, 13.99),
+    (experiment_id, 'node-76', 15.18, 13.98),
+    (experiment_id, 'node-78', 15.72, 14.83),
+    (experiment_id, 'node-8', 15.37, 13.86),
+    (experiment_id, 'node-81', 17.86, 14.12),
+    (experiment_id, 'node-85', 16.71, 14.45),
+    (experiment_id, 'node-86', 14.17, 13.95),
+    (experiment_id, 'node-87', 17.32, 14.27),
+    (experiment_id, 'node-88', 15.91, 14.19),
+    (experiment_id, 'node-90', 14.37, 13.83),
+    (experiment_id, 'node-91', 16.12, 13.78),
+    (experiment_id, 'node-93', 19.67, 13.83),
+    (experiment_id, 'node-94', 15.96, 13.87),
+    (experiment_id, 'node-95', 15.96, 13.32),
+    (experiment_id, 'node-96', 18.57, 13.68),
+    (experiment_id, 'node-97', 15.18, 13.63),
+    (experiment_id, 'node-99', 15.63, 13.65);
+END $$;
+
+
+-- 10nodes_25txpb_3rounds_RSA.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('RSA', '10nodes_25txpb_3rounds_RSA.txt', 10, 25, 3, 
+   25.0, 
+   171.0,
+   62.06,
+   27.71,
+   25.987)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 5.02),
+    (experiment_id, 'node-10', 4.98),
+    (experiment_id, 'node-2', 4.89),
+    (experiment_id, 'node-3', 5.02),
+    (experiment_id, 'node-4', 5.01),
+    (experiment_id, 'node-5', 4.87),
+    (experiment_id, 'node-6', 4.88),
+    (experiment_id, 'node-7', 4.92),
+    (experiment_id, 'node-8', 4.97),
+    (experiment_id, 'node-9', 4.95);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 176),
+    (experiment_id, 'node-10', 176),
+    (experiment_id, 'node-2', 167),
+    (experiment_id, 'node-3', 178),
+    (experiment_id, 'node-4', 173),
+    (experiment_id, 'node-5', 179),
+    (experiment_id, 'node-6', 168),
+    (experiment_id, 'node-7', 174),
+    (experiment_id, 'node-8', 157),
+    (experiment_id, 'node-9', 162);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 64.33, 27.57),
+    (experiment_id, 'node-10', 55.12, 27.85),
+    (experiment_id, 'node-2', 67.87, 27.51),
+    (experiment_id, 'node-3', 71.28, 27.64),
+    (experiment_id, 'node-4', 55.78, 27.77),
+    (experiment_id, 'node-5', 63.21, 27.72),
+    (experiment_id, 'node-6', 58.99, 27.86),
+    (experiment_id, 'node-7', 55.08, 27.62),
+    (experiment_id, 'node-8', 59.50, 27.90),
+    (experiment_id, 'node-9', 69.46, 27.70);
+END $$;
+
+
+-- 16nodes_256txpb_3rounds_RSA.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('RSA', '16nodes_256txpb_3rounds_RSA.txt', 16, 256, 3, 
+   256.0, 
+   290.87,
+   34.71,
+   13.79,
+   1131.509)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 1.04),
+    (experiment_id, 'node-10', 1.02),
+    (experiment_id, 'node-11', 1.03),
+    (experiment_id, 'node-12', 1.03),
+    (experiment_id, 'node-13', 1.03),
+    (experiment_id, 'node-14', 1.02),
+    (experiment_id, 'node-15', 1.02),
+    (experiment_id, 'node-16', 1.04),
+    (experiment_id, 'node-2', 1.03),
+    (experiment_id, 'node-3', 1.04),
+    (experiment_id, 'node-4', 1.04),
+    (experiment_id, 'node-5', 1.04),
+    (experiment_id, 'node-6', 1.03),
+    (experiment_id, 'node-7', 1.05),
+    (experiment_id, 'node-8', 1.02),
+    (experiment_id, 'node-9', 1.03);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 139),
+    (experiment_id, 'node-10', 360),
+    (experiment_id, 'node-11', 164),
+    (experiment_id, 'node-12', 402),
+    (experiment_id, 'node-13', 323),
+    (experiment_id, 'node-14', 405),
+    (experiment_id, 'node-15', 244),
+    (experiment_id, 'node-16', 310),
+    (experiment_id, 'node-2', 149),
+    (experiment_id, 'node-3', 263),
+    (experiment_id, 'node-4', 387),
+    (experiment_id, 'node-5', 390),
+    (experiment_id, 'node-6', 421),
+    (experiment_id, 'node-7', 122),
+    (experiment_id, 'node-8', 214),
+    (experiment_id, 'node-9', 361);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 36.34, 14.04),
+    (experiment_id, 'node-10', 33.80, 13.67),
+    (experiment_id, 'node-11', 35.64, 14.00),
+    (experiment_id, 'node-12', 33.91, 13.67),
+    (experiment_id, 'node-13', 34.37, 13.84),
+    (experiment_id, 'node-14', 32.92, 13.68),
+    (experiment_id, 'node-15', 36.99, 14.06),
+    (experiment_id, 'node-16', 33.93, 13.77),
+    (experiment_id, 'node-2', 37.44, 13.79),
+    (experiment_id, 'node-3', 35.27, 13.70),
+    (experiment_id, 'node-4', 33.22, 13.66),
+    (experiment_id, 'node-5', 33.30, 13.68),
+    (experiment_id, 'node-6', 33.18, 13.65),
+    (experiment_id, 'node-7', 36.61, 14.04),
+    (experiment_id, 'node-8', 34.89, 13.74),
+    (experiment_id, 'node-9', 33.61, 13.68);
+END $$;
+
+
+-- 64nodes_25txpb_25rounds_RSA.txt
+DO $$
+DECLARE
+  experiment_id INTEGER;
+BEGIN
+  INSERT INTO experiment_summary 
+  (protocol, filename, nodes, txpb, rounds, avg_tps, avg_overhead, avg_cpu, avg_mem, latency_seconds)
+  VALUES 
+  ('RSA', '64nodes_25txpb_25rounds_RSA.txt', 64, 25, 25, 
+   25.0, 
+   6077.9,
+   32.09,
+   18.88,
+   5836.129)
+  RETURNING id INTO experiment_id;
+
+  INSERT INTO node_tps (experiment_id, node_id, tps)
+  VALUES
+    (experiment_id, 'node-1', 0.11),
+    (experiment_id, 'node-10', 0.11),
+    (experiment_id, 'node-11', 0.11),
+    (experiment_id, 'node-12', 0.11),
+    (experiment_id, 'node-13', 0.11),
+    (experiment_id, 'node-14', 0.11),
+    (experiment_id, 'node-15', 0.11),
+    (experiment_id, 'node-16', 0.11),
+    (experiment_id, 'node-17', 0.11),
+    (experiment_id, 'node-18', 0.11),
+    (experiment_id, 'node-19', 0.11),
+    (experiment_id, 'node-2', 0.11),
+    (experiment_id, 'node-20', 0.11),
+    (experiment_id, 'node-21', 0.11),
+    (experiment_id, 'node-22', 0.11),
+    (experiment_id, 'node-23', 0.11),
+    (experiment_id, 'node-24', 0.11),
+    (experiment_id, 'node-25', 0.11),
+    (experiment_id, 'node-26', 0.11),
+    (experiment_id, 'node-27', 0.11),
+    (experiment_id, 'node-28', 0.11),
+    (experiment_id, 'node-29', 0.11),
+    (experiment_id, 'node-3', 0.11),
+    (experiment_id, 'node-30', 0.11),
+    (experiment_id, 'node-31', 0.11),
+    (experiment_id, 'node-32', 0.11),
+    (experiment_id, 'node-33', 0.11),
+    (experiment_id, 'node-34', 0.11),
+    (experiment_id, 'node-35', 0.11),
+    (experiment_id, 'node-36', 0.11),
+    (experiment_id, 'node-37', 0.11),
+    (experiment_id, 'node-38', 0.11),
+    (experiment_id, 'node-39', 0.11),
+    (experiment_id, 'node-4', 0.11),
+    (experiment_id, 'node-40', 0.11),
+    (experiment_id, 'node-41', 0.11),
+    (experiment_id, 'node-42', 0.11),
+    (experiment_id, 'node-43', 0.11),
+    (experiment_id, 'node-44', 0.11),
+    (experiment_id, 'node-45', 0.11),
+    (experiment_id, 'node-46', 0.11),
+    (experiment_id, 'node-47', 0.11),
+    (experiment_id, 'node-48', 0.11),
+    (experiment_id, 'node-49', 0.11),
+    (experiment_id, 'node-5', 0.11),
+    (experiment_id, 'node-50', 0.11),
+    (experiment_id, 'node-51', 0.11),
+    (experiment_id, 'node-52', 0.11),
+    (experiment_id, 'node-53', 0.11),
+    (experiment_id, 'node-54', 0.11),
+    (experiment_id, 'node-55', 0.11),
+    (experiment_id, 'node-56', 0.11),
+    (experiment_id, 'node-57', 0.11),
+    (experiment_id, 'node-58', 0.11),
+    (experiment_id, 'node-59', 0.11),
+    (experiment_id, 'node-6', 0.11),
+    (experiment_id, 'node-60', 0.11),
+    (experiment_id, 'node-61', 0.11),
+    (experiment_id, 'node-62', 0.11),
+    (experiment_id, 'node-63', 0.11),
+    (experiment_id, 'node-64', 0.11),
+    (experiment_id, 'node-7', 0.11),
+    (experiment_id, 'node-8', 0.11),
+    (experiment_id, 'node-9', 0.11);
+
+  INSERT INTO node_overhead (experiment_id, node_id, overhead_messages)
+  VALUES
+    (experiment_id, 'node-1', 6397),
+    (experiment_id, 'node-10', 5898),
+    (experiment_id, 'node-11', 6186),
+    (experiment_id, 'node-12', 5660),
+    (experiment_id, 'node-13', 5800),
+    (experiment_id, 'node-14', 5903),
+    (experiment_id, 'node-15', 5906),
+    (experiment_id, 'node-16', 6410),
+    (experiment_id, 'node-17', 6185),
+    (experiment_id, 'node-18', 6254),
+    (experiment_id, 'node-19', 5942),
+    (experiment_id, 'node-2', 5967),
+    (experiment_id, 'node-20', 6208),
+    (experiment_id, 'node-21', 5830),
+    (experiment_id, 'node-22', 5966),
+    (experiment_id, 'node-23', 6521),
+    (experiment_id, 'node-24', 5935),
+    (experiment_id, 'node-25', 6306),
+    (experiment_id, 'node-26', 6160),
+    (experiment_id, 'node-27', 6342),
+    (experiment_id, 'node-28', 5903),
+    (experiment_id, 'node-29', 6065),
+    (experiment_id, 'node-3', 6231),
+    (experiment_id, 'node-30', 5970),
+    (experiment_id, 'node-31', 6675),
+    (experiment_id, 'node-32', 5925),
+    (experiment_id, 'node-33', 6303),
+    (experiment_id, 'node-34', 6445),
+    (experiment_id, 'node-35', 6287),
+    (experiment_id, 'node-36', 5891),
+    (experiment_id, 'node-37', 6067),
+    (experiment_id, 'node-38', 6406),
+    (experiment_id, 'node-39', 5777),
+    (experiment_id, 'node-4', 6180),
+    (experiment_id, 'node-40', 6079),
+    (experiment_id, 'node-41', 5962),
+    (experiment_id, 'node-42', 5803),
+    (experiment_id, 'node-43', 6680),
+    (experiment_id, 'node-44', 5788),
+    (experiment_id, 'node-45', 6235),
+    (experiment_id, 'node-46', 5949),
+    (experiment_id, 'node-47', 5848),
+    (experiment_id, 'node-48', 5786),
+    (experiment_id, 'node-49', 5796),
+    (experiment_id, 'node-5', 6038),
+    (experiment_id, 'node-50', 5810),
+    (experiment_id, 'node-51', 6208),
+    (experiment_id, 'node-52', 6151),
+    (experiment_id, 'node-53', 6045),
+    (experiment_id, 'node-54', 5030),
+    (experiment_id, 'node-55', 6005),
+    (experiment_id, 'node-56', 6202),
+    (experiment_id, 'node-57', 5988),
+    (experiment_id, 'node-58', 6214),
+    (experiment_id, 'node-59', 6344),
+    (experiment_id, 'node-6', 6093),
+    (experiment_id, 'node-60', 6393),
+    (experiment_id, 'node-61', 6435),
+    (experiment_id, 'node-62', 6355),
+    (experiment_id, 'node-63', 6216),
+    (experiment_id, 'node-64', 5830),
+    (experiment_id, 'node-7', 5780),
+    (experiment_id, 'node-8', 6013),
+    (experiment_id, 'node-9', 6009);
+
+  INSERT INTO node_resource_utilization (experiment_id, node_id, cpu_util, mem_util)
+  VALUES
+    (experiment_id, 'node-1', 29.15, 19.24),
+    (experiment_id, 'node-10', 31.79, 18.16),
+    (experiment_id, 'node-11', 30.66, 19.09),
+    (experiment_id, 'node-12', 32.11, 18.15),
+    (experiment_id, 'node-13', 30.69, 18.45),
+    (experiment_id, 'node-14', 30.74, 18.06),
+    (experiment_id, 'node-15', 32.52, 18.22),
+    (experiment_id, 'node-16', 36.26, 18.86),
+    (experiment_id, 'node-17', 34.15, 18.52),
+    (experiment_id, 'node-18', 30.00, 18.66),
+    (experiment_id, 'node-19', 31.06, 18.02),
+    (experiment_id, 'node-2', 31.51, 19.27),
+    (experiment_id, 'node-20', 31.96, 19.76),
+    (experiment_id, 'node-21', 32.61, 18.81),
+    (experiment_id, 'node-22', 32.10, 18.68),
+    (experiment_id, 'node-23', 33.98, 18.42),
+    (experiment_id, 'node-24', 30.44, 17.76),
+    (experiment_id, 'node-25', 36.78, 18.64),
+    (experiment_id, 'node-26', 31.60, 19.21),
+    (experiment_id, 'node-27', 34.38, 18.90),
+    (experiment_id, 'node-28', 33.56, 18.00),
+    (experiment_id, 'node-29', 29.63, 19.07),
+    (experiment_id, 'node-3', 32.55, 19.06),
+    (experiment_id, 'node-30', 31.67, 18.42),
+    (experiment_id, 'node-31', 34.59, 18.45),
+    (experiment_id, 'node-32', 31.81, 18.81),
+    (experiment_id, 'node-33', 31.43, 18.90),
+    (experiment_id, 'node-34', 30.33, 19.41),
+    (experiment_id, 'node-35', 32.13, 19.48),
+    (experiment_id, 'node-36', 31.82, 18.96),
+    (experiment_id, 'node-37', 31.45, 18.81),
+    (experiment_id, 'node-38', 34.27, 18.06),
+    (experiment_id, 'node-39', 31.31, 17.93),
+    (experiment_id, 'node-4', 31.18, 18.87),
+    (experiment_id, 'node-40', 31.43, 18.32),
+    (experiment_id, 'node-41', 32.60, 18.50),
+    (experiment_id, 'node-42', 32.85, 18.91),
+    (experiment_id, 'node-43', 33.78, 18.56),
+    (experiment_id, 'node-44', 32.26, 20.30),
+    (experiment_id, 'node-45', 31.48, 18.28),
+    (experiment_id, 'node-46', 32.09, 19.35),
+    (experiment_id, 'node-47', 30.89, 19.86),
+    (experiment_id, 'node-48', 30.79, 19.83),
+    (experiment_id, 'node-49', 31.97, 18.57),
+    (experiment_id, 'node-5', 30.84, 18.11),
+    (experiment_id, 'node-50', 32.83, 18.84),
+    (experiment_id, 'node-51', 31.24, 19.42),
+    (experiment_id, 'node-52', 30.88, 19.44),
+    (experiment_id, 'node-53', 29.60, 19.44),
+    (experiment_id, 'node-54', 37.95, 20.36),
+    (experiment_id, 'node-55', 31.68, 18.68),
+    (experiment_id, 'node-56', 32.52, 19.88),
+    (experiment_id, 'node-57', 32.12, 19.69),
+    (experiment_id, 'node-58', 31.12, 20.06),
+    (experiment_id, 'node-59', 30.78, 19.01),
+    (experiment_id, 'node-6', 30.81, 20.00),
+    (experiment_id, 'node-60', 35.58, 18.51),
+    (experiment_id, 'node-61', 30.18, 18.84),
+    (experiment_id, 'node-62', 33.31, 18.56),
+    (experiment_id, 'node-63', 31.03, 19.75),
+    (experiment_id, 'node-64', 33.19, 19.20),
+    (experiment_id, 'node-7', 31.64, 18.23),
+    (experiment_id, 'node-8', 33.44, 18.74),
+    (experiment_id, 'node-9', 30.72, 18.33);
+END $$;
+
