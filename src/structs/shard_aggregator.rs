@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use tracing::{error, info, warn};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
@@ -6,9 +6,10 @@ use reed_solomon_erasure::galois_8::ReedSolomon;
 pub struct ShardAggregator {
     pub data_shards: usize,
     pub total_shards: usize,
-    // Mapping: (round_id, tx_index, sender_id) => shard
     pub shard_store: HashMap<(u64, usize, usize), Vec<u8>>,
+    pub seen_shards: HashSet<(u64, usize, usize)>, // NEW: (round_id, tx_index, sender)
 }
+
 
 impl Default for ShardAggregator {
     fn default() -> Self {
@@ -22,11 +23,17 @@ impl ShardAggregator {
             data_shards,
             total_shards,
             shard_store: HashMap::new(),
+            seen_shards: HashSet::new(),
         }
     }
 
     pub fn insert_shard(&mut self, round_id: u64, tx_index: usize, sender_id: usize, shard: Vec<u8>) {
-        self.shard_store.insert((round_id, tx_index, sender_id), shard);
+        let key = (round_id, tx_index, sender_id);
+        if self.seen_shards.contains(&key) {
+            return;
+        }
+        self.shard_store.insert(key, shard);
+        self.seen_shards.insert(key);
     }
 
     /// Try to reconstruct a transaction from collected shards.
@@ -84,5 +91,6 @@ impl ShardAggregator {
 
     pub fn clear_round(&mut self, round_id: u64) {
         self.shard_store.retain(|(r, _, _), _| *r != round_id);
+        self.seen_shards.retain(|(r, _, _)| *r != round_id);
     }
 }

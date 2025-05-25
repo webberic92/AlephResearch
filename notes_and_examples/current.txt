@@ -201,5 +201,10 @@ If you're hitting a performance wall, I can help profile hot spots or optimize a
 Optimization	How It Helps	Effect on Output
 (DONE)✅ Batch-Level Proofs	Accumulate the entire transaction batch under one RSA root, reducing per-tx proofs	Drastically reduces total proof size per batch (→ lowers bandwidth)
 (DONE)✅ Prune Aggregator State	Clear shard_store immediately after commit finalization	Frees memory early, prevents shard bloat
-✅ Avoid Duplicates	Add seen_shards: HashSet<(tx, sender)> to prevent re-inserts	Eliminates redundant inserts, improves memory efficiency
+(DONE)✅ Avoid Duplicates	Add seen_shards: HashSet<(tx, sender)> to prevent re-inserts	Eliminates redundant inserts, improves memory efficiency
+    🧠 Batch verify_proof (optional)	Group proof checks per tx	Optional
+    ⚙️ Proposal-level par_iter	Unlock multicore gains	Medium
+    🧼 Faster insert: HashMap pool reuse	(Only if insert time is high)	Optiona
+
+
 ✅ Use BLS or SNARK (future)	Replace RSA with more compact & verifier-efficient crypto	Better verifier speed, potential for faster prevote phases
