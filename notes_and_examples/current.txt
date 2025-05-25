@@ -1,91 +1,10 @@
-Great question. Here's a direct comparison of which optimization would save the most — in terms of runtime performance, memory, and network overhead in your RSA accumulator-based Aleph ch-RBC protocol.
-🔍 1. Embedding shard_primes in the Transaction struct
-
-Purpose: Avoid recomputing hash_to_prime_128 during verification.
-
-Cost savings:
-
-    ✅ CPU savings: hash_to_prime_128 is expensive due to SHA-256 + Miller-Rabin primality test (even with caching).
-
-    ❌ Network cost increases slightly: Transmitting additional ~16 bytes per prime, base64-encoded (~22 chars).
-
-    ⚠️ Memory cost increases: Slightly larger DAG in memory.
-
-Conclusion:
-✅ Saves moderate CPU during prevote/commit phase.
-Recommended if you are verifying thousands of transactions per round or suspect CPU bottlenecks.
-🔍 2. Radix vs Precomputed Proofs (already solved)
-
-You already optimized this by switching to compute_accumulator_from_primes and generate_proofs_from_primes.
-
-This removed recomputation of hash_to_prime_128 twice (once for accumulator, once for proofs), and:
-
-    🧠 Reused Vec<BigInt> once per batch.
-
-    ✅ Halved prime-mapping cost.
-
-You already got most of the speed win here. ✅
-🔍 3. Compact proof serialization (instead of base64)
-
-Problem: Current base64 encoding of 256-bit proof = ~344 bits (43+ chars). That’s:
-
-    ~44 bytes per proof per shard.
-
-    Across 256 transactions and 4 data shards = ~45 KB extra per proposal message.
-
-Improvement:
-
-    Use raw bytes with binary serialization (e.g., bincode or prost) instead of base64.
-
-    Or compress with zstd.
-
-Conclusion:
-✅ Big win on network size (~30–40% reduction in proof payload).
-Especially valuable when scaling to high batch sizes (e.g., 131072 txs) or many shards.
-🧠 Final Summary — What saves the most?
-Optimization	Saves Most	Description
-✅ Binary proof serialization	⭐⭐⭐⭐	Reduces network load per proposal & prevote
-✅ Embed shard_primes	⭐⭐⭐	Reduces CPU work for verification
-✅ Radix→Precomputed Proofs	⭐⭐⭐	You've already done this — great win
-📦 Recommendations
-
-If you're optimizing for:
-
-    Network bandwidth (S3 logs, EC2 egress, latency):
-    ➤ Prioritize binary serialization for proofs and shards.
-
-    CPU-bound performance (at prevote/commit):
-    ➤ Embed shard_primes so you skip expensive prime derivation.
-
-Would you like me to:
-
-    Rewrite the Transaction struct to include shard_primes: Option<Vec<String>>?
-
-    Show how to switch to bincode or prost for efficient proof serialization?
-
-
-
-📈 How the 4 Optimizations Help
-Optimization	How It Helps	Effect on Output
-(DONE)✅ Batch-Level Proofs	Accumulate the entire transaction batch under one RSA root, reducing per-tx proofs	Drastically reduces total proof size per batch (→ lowers bandwidth)
-(DONE)✅ Prune Aggregator State	Clear shard_store immediately after commit finalization	Frees memory early, prevents shard bloat
-(DONE)✅ Avoid Duplicates	Add seen_shards: HashSet<(tx, sender)> to prevent re-inserts	Eliminates redundant inserts, improves memory efficiency
-(DONE) Batch verify_proof (optional)	Group proof checks per tx	Optional
-    ⚙️ Proposal-level par_iter	Unlock multicore gains	Medium
-    🧼 Faster insert: HashMap pool reuse	(Only if insert time is high)	Optiona
-
-
-✅ Use BLS or SNARK (future)	Replace RSA with more compact & verifier-efficient crypto	Better verifier speed, potential for faster prevote phases
-
-
-
-
-Conclusion:
-✅ Big win on network size (~30–40% reduction in proof payload).
-Especially valuable when scaling to high batch sizes (e.g., 131072 txs) or many shards.
-🧠 Final Summary — What saves the most?
-Optimization	Saves Most	Description
-✅ Binary proof serialization	⭐⭐⭐⭐	Reduces network load per proposal & prevote
-✅ Embed shard_primes	⭐⭐⭐	Reduces CPU work for verification
-✅ Radix→Precomputed Proofs	⭐⭐⭐	You've already done this — great win
-📦 Recommendations
+🔧 Summary: Steps to Optimize RSA Version
+Priority	Action
+(DONE) ⭐️ High	Parallelize RSA proof validation in handle_propose and handle_prevote
+⭐️ High	Move generate_proofs_from_primes into a parallel-friendly batch generator
+⭐️ High	Add fine-grained logging to create_transaction_data proof generation
+⚠️ Medium	Consider using separate accumulator per transaction or per small batch
+⚠️ Medium	Move locking logic out of shard iteration (especially inside prevote)
+⚠️ Medium	Consider lazy proof verification (e.g., validate quorum then proofs)
+✅ Low	Minify base64/hex usage; reduce encoding overhead
+✅ Low	If using Galois-8 RS, ensure it's hardware-accelerated (SIMD-enabled)

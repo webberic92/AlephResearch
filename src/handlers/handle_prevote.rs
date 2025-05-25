@@ -1,4 +1,5 @@
 use base64::{engine::general_purpose, Engine};
+use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
 use std::{collections::{HashSet}, sync::{atomic::Ordering, Arc}};
@@ -105,11 +106,13 @@ pub async fn handle_prevote(
                 verified_shards.push((j, decoded));
             }
 
-            let batch_valid = batch_hashes.iter().zip(batch_proofs.iter()).all(|(hash, proof)| {
+            let batch_valid = batch_hashes
+            .par_iter()
+            .zip(batch_proofs.par_iter())
+            .all(|(hash, proof)| {
                 let prime = hash_to_prime_128(hash);
                 proof.modpow(&prime, &modulus) == accumulator
             });
-
             if !batch_valid {
                 return Err(format!("Node {}: tx[{}]: at least one shard failed RSA batch check", node_id, i));
             }

@@ -6,7 +6,7 @@ use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::{error, info};
-
+use rayon::prelude::*;
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
@@ -78,7 +78,10 @@ pub async fn handle_propose(
         batch_proofs.push(proof);
     }
 
-    let batch_valid = batch_hashes.iter().zip(batch_proofs.iter()).all(|(hash, proof)| {
+    let batch_valid = batch_hashes
+    .par_iter()
+    .zip(batch_proofs.par_iter())
+    .all(|(hash, proof)| {
         let prime = hash_to_prime_128(hash);
         proof.modpow(&prime, &modulus) == accumulator
     });
