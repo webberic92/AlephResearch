@@ -2,8 +2,8 @@
 import os
 import re
 
-BASE_PATH = "logs/.final"
-OUTPUT_FILE = "insert_all.sql"
+BASE_PATH = "../logs/.final"
+OUTPUT_FILE = "../insert_all.sql"
 
 TABLE_SUMMARY = "experiment_summary"
 TABLE_TPS = "node_tps"
