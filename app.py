@@ -12,14 +12,14 @@ from datetime import datetime
 class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-
-        INSTANCE_TYPE = "c5n.xlarge"  # Define the instance type
+        #RSA
+        INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
         INSTANCES_NUMBER = 64 # Define the number of instances
-        BATCH_SIZE = 25  # Define the number of transactions in a batch
+        BATCH_SIZE =  25#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 50 # Number of rounds for the consensus process
+        TOTAL_ROUNDS = 25 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -75,40 +75,68 @@ class TestAleph(Stack):
                 # credit_specification=ec2.CpuCredits.UNLIMITED,
             )
 
-            # Part 1: Initial Setup Commands
             ec2_instance.user_data.add_commands(
-                # Install dependencies and prepare environment
+                # System updates and tools
                 "sudo yum update -y",
                 "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
-                # Increase system limits
-                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
-                "sudo sysctl -p",
+                # Increase max number of incoming connections
+                "echo 'net.core.somaxconn=65535' >> /etc/sysctl.conf",
 
-                "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
-                "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+                # Increase maximum number of packets allowed to queue when interface receives them faster than kernel can process
+                "echo 'net.core.netdev_max_backlog=16384' >> /etc/sysctl.conf",
 
-                # Create necessary logs
+                # Max number of connections that can be queued for acceptance
+                "echo 'net.ipv4.tcp_max_syn_backlog=65535' >> /etc/sysctl.conf",
+
+                # Reduce time TCP waits before closing sockets (helps with many short-lived connections)
+                "echo 'net.ipv4.tcp_fin_timeout=15' >> /etc/sysctl.conf",
+
+                # Allow reuse of sockets in TIME_WAIT (lowers connection overhead)
+                "echo 'net.ipv4.tcp_tw_reuse=1' >> /etc/sysctl.conf",
+
+                # Frequency of TCP keepalive messages (helps detect dead peers faster)
+                "echo 'net.ipv4.tcp_keepalive_time=120' >> /etc/sysctl.conf",
+
+                # Allow larger port range to reduce bind failures under many outbound connections
+                "echo 'net.ipv4.ip_local_port_range=1024 65535' >> /etc/sysctl.conf",
+
+                # Raise system-wide file descriptor cap (needed for many open connections/files)
+                "echo 'fs.file-max=2097152' >> /etc/sysctl.conf",
+
+                # Apply the sysctl changes immediately
+                "sysctl -p",
+
+                # Set soft limit for number of open file descriptors per user
+                "echo '* soft nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Set hard limit for number of open file descriptors per user
+                "echo '* hard nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Ensure root user also gets higher limits
+                "echo 'root soft nofile 1048576' | tee -a /etc/security/limits.conf",
+                "echo 'root hard nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Enable PAM module to enforce limits (required for limits.conf to take effect)
+                "grep -qxF 'session required pam_limits.so' /etc/pam.d/common-session || echo 'session required pam_limits.so' | tee -a /etc/pam.d/common-session",
+                "grep -qxF 'session required pam_limits.so' /etc/pam.d/su || echo 'session required pam_limits.so' | tee -a /etc/pam.d/su",
+
+                # Raise ulimit for open files (applies immediately to shell, useful for logging/tests)
+                "ulimit -n 1048576",
+                # Aleph setup
                 "mkdir -p /aleph/logs/",
-                "touch /aleph/logs/node_status",
-                "touch /aleph/logs/cpu_usage",
-                "touch /aleph/logs/mem_usage",
+                "touch /aleph/logs/node_status /aleph/logs/cpu_usage /aleph/logs/mem_usage",
                 "chmod -R 777 /aleph/logs/",
                 "echo 'Starting cpu and memory logs' >> /aleph/logs/node_status",
                 "nohup sar -u 1 >> /aleph/logs/cpu_usage 2>&1 &",
                 "nohup sar -r 1 >> /aleph/logs/mem_usage 2>&1 &",
-                # Continue setup for Aleph node
                 "aws s3 cp s3://aleph-research/aleph_rbc /aleph/ --quiet",
-                # "aws s3 cp s3://aleph-research/aleph_start /aleph/ --quiet",
                 "sudo chmod -R 777 /aleph/",
 
-                # Retrieve and log the private IP for ongoing reference
+                # Capture IP and register
                 "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
                 "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /aleph/logs/node_status",
 
-                # Register node as ready with the IP Manager using the expanded PRIVATE_IP
                 f"""
                 while true; do
                     RESPONSE=$(curl -s -o /dev/null -w "%{{http_code}}" -X POST -H 'Content-Type: application/json' -d '{{"node_ip": "'$PRIVATE_IP'"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready)
@@ -117,22 +145,25 @@ class TestAleph(Stack):
                         break
                     else
                         echo "Node registration failed with status $RESPONSE. Retrying..." >> /aleph/logs/node_status
-                        sleep 5  # Wait before retrying
+                        sleep 5
                     fi
                 done
                 """,
 
-                # Loop to check IP Manager endpoint readiness
-                "while true; do",
-                f"  if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '\"all_ready\": true'; then",
-                "    echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status;",
-                "    break;",  # Exit loop if IP Manager is reachable and all nodes are ready
-                "  else",
-                "    echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status;",
-                "  fi",
-                "  sleep 5;",  # Wait before retrying
-                "done"
+                # Wait for IP manager to report readiness
+                f"""
+                while true; do
+                    if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '"all_ready": true'; then
+                        echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status
+                        break
+                    else
+                        echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status
+                    fi
+                    sleep 5
+                done
+                """,
             )
+
 
             ec2_instance.user_data.add_commands(
                 # Extract the private IP from logs
@@ -187,8 +218,9 @@ class TestAleph(Stack):
 
                 # Start the Aleph APIs
                 "echo 'Attempting to execute aleph_rbc with configuration' >> /aleph/logs/node_status;",
-                "ulimit -n 1048576",
-                "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
+                # Launch aleph_rbc with FD limits
+                "ulimit -n 1048576 && /aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &"
+                # "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
 
                 # Wait for the aleph_rbc server to be ready (simple retry logic)
                 "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /aleph/logs/node_status;",
