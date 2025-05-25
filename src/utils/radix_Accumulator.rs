@@ -25,10 +25,10 @@ pub fn get_modulus() -> BigInt {
 // }
 
 
-pub fn hash_to_integer(data: &[u8]) -> BigInt {
-    let hash = Sha256::digest(data).to_vec();
-    BigInt::from_bytes_be(Sign::Plus, &hash)
-}
+// pub fn hash_to_integer(data: &[u8]) -> BigInt {
+//     let hash = Sha256::digest(data).to_vec();
+//     BigInt::from_bytes_be(Sign::Plus, &hash)
+// }
 
 
 /// Miller-Rabin primality test
@@ -63,45 +63,45 @@ pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
 }
 
 /// Computes the accumulator using a radix (balanced binary tree) strategy
-pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
+// pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
+//     let n = get_modulus();
+//     let g = BigInt::from(2u8);
 
-    // Map to primes in parallel
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
+//     // Map to primes in parallel
+//     let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
 
-    // Use tree reduction to multiply them
-    let total_product = parallel_product(primes);
+//     // Use tree reduction to multiply them
+//     let total_product = parallel_product(primes);
 
-    g.modpow(&total_product, &n)
-}
+//     g.modpow(&total_product, &n)
+// }
 
 /// Generates proofs for each hash using radix-style subset exclusion
-pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-    let len = primes.len();
+// pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
+//     let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
+//     let n = get_modulus();
+//     let g = BigInt::from(2u8);
+//     let len = primes.len();
 
-    // Compute prefix/suffix products
-    let mut prefix_products = vec![BigInt::one(); len + 1];
-    let mut suffix_products = vec![BigInt::one(); len + 1];
+//     // Compute prefix/suffix products
+//     let mut prefix_products = vec![BigInt::one(); len + 1];
+//     let mut suffix_products = vec![BigInt::one(); len + 1];
 
-    for i in 0..len {
-        prefix_products[i + 1] = &prefix_products[i] * &primes[i];
-    }
-    for i in (0..len).rev() {
-        suffix_products[i] = &suffix_products[i + 1] * &primes[i];
-    }
+//     for i in 0..len {
+//         prefix_products[i + 1] = &prefix_products[i] * &primes[i];
+//     }
+//     for i in (0..len).rev() {
+//         suffix_products[i] = &suffix_products[i + 1] * &primes[i];
+//     }
 
-    (0..len)
-        .into_par_iter()
-        .map(|i| {
-            let product = &prefix_products[i] * &suffix_products[i + 1];
-            g.modpow(&product, &n)
-        })
-        .collect()
-}
+//     (0..len)
+//         .into_par_iter()
+//         .map(|i| {
+//             let product = &prefix_products[i] * &suffix_products[i + 1];
+//             g.modpow(&product, &n)
+//         })
+//         .collect()
+// }
 
 /// Parallel recursive product
 fn parallel_product(mut items: Vec<BigInt>) -> BigInt {

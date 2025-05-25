@@ -4,7 +4,7 @@ mod accumulator_tests {
     use base64::{engine::general_purpose, Engine};
     use num_bigint::{BigInt, Sign};
     use sha2::{Sha256, Digest};
-    use crate::{structs::{node::Node, requests::PrevoteRequest, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix, get_modulus, hash_to_prime_128, verify_proof}}};
+    use crate::{structs::{node::Node, requests::PrevoteRequest, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, generate_proofs_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
 
     fn generate_fake_hashes(count: usize) -> Vec<Vec<u8>> {
         (0..count).map(|i| {
@@ -31,26 +31,6 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
     let result = aggregator.try_reconstruct(1, tx_index, 256);
     assert!(result.is_some(), "Expected reconstruction for round 1");
 }
-
-
-    #[test]
-    fn test_generate_proofs_radix_profiled() {
-        let count = 256; // adjust for load
-        let hashes = generate_fake_hashes(count);
-
-        let t0 = Instant::now();
-        let _acc = compute_accumulator_radix(&hashes);
-        println!("🔢 Accumulator computed in: {:?}", t0.elapsed());
-
-        let t1 = Instant::now();
-        let proofs = generate_proofs_radix(&hashes);
-        println!("🧮 Proofs generated in: {:?}", t1.elapsed());
-
-        assert_eq!(proofs.len(), count);
-        println!("✅ test_generate_proofs_radix_profiled passed with {} proofs", count);
-    }
-
-
 
 
     #[cfg(test)]
@@ -262,7 +242,19 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
     }
     
 
-
+    #[test]
+    fn test_compute_and_verify_from_primes() {
+        let hashes = generate_fake_hashes(8);
+        let primes: Vec<BigInt> = hashes.iter().map(|h| hash_to_prime_128(h)).collect();
+        let acc = compute_accumulator_from_primes(&primes);
+        let proofs = generate_proofs_from_primes(&primes);
+    
+        for (hash, proof) in hashes.iter().zip(proofs.iter()) {
+            let prime = hash_to_prime_128(hash);
+            assert!(verify_proof_with_prime(&acc, &prime, proof));
+        }
+    }
+    
 
 
 

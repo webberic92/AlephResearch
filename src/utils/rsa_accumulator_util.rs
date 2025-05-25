@@ -5,16 +5,27 @@ use rayon::prelude::*;
 use sha2::{Sha256, Digest};
 use rand::thread_rng;
 use tracing::info;
+use lazy_static::lazy_static;
+use std::{collections::HashMap, sync::Mutex};
 
-/// ✅ RSA-1024 modulus (fast & safe enough for ephemeral accumulator use)
+lazy_static! {
+    static ref PRIME_CACHE: Mutex<HashMap<Vec<u8>, BigInt>> = Mutex::new(HashMap::new());
+}
+
+/// ✅ RSA-1024 modulus
 pub fn get_modulus() -> BigInt {
     BigInt::parse_bytes(b"134078079299425970995740249982058461274793658205923933\
                           77723561443721764030073546976801874298166903427690031", 10)
         .expect("Failed to parse RSA-1024 modulus")
 }
 
-/// ✅ Hash to probable 128-bit prime using retry + nonce suffix
+/// ✅ Hash to 128-bit prime with caching
 pub fn hash_to_prime_128(data: &[u8]) -> BigInt {
+    let mut cache = PRIME_CACHE.lock().unwrap();
+    if let Some(prime) = cache.get(data) {
+        return prime.clone();
+    }
+
     let mut digest = Sha256::digest(data).to_vec();
     for _ in 0..20 {
         let mut candidate_bytes = digest[..16].to_vec();
@@ -22,14 +33,18 @@ pub fn hash_to_prime_128(data: &[u8]) -> BigInt {
         candidate_bytes[15] |= 0b0000_0001;
         let candidate = BigInt::from_bytes_be(Sign::Plus, &candidate_bytes);
         if is_probably_prime(&candidate, 4) {
+            cache.insert(data.to_vec(), candidate.clone());
             return candidate;
         }
-        digest = Sha256::digest(&digest).to_vec(); // retry with next hash
+        digest = Sha256::digest(&digest).to_vec();
     }
-    BigInt::from_bytes_be(Sign::Plus, &digest[..16]) // fallback (rare)
+
+    let fallback = BigInt::from_bytes_be(Sign::Plus, &digest[..16]);
+    cache.insert(data.to_vec(), fallback.clone());
+    fallback
 }
 
-/// ✅ Miller-Rabin primality test (4 rounds)
+/// ✅ Miller-Rabin primality test
 pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
     if *n <= BigInt::from(1u32) || n.is_even() {
         return false;
@@ -58,37 +73,28 @@ pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
     true
 }
 
-/// ✅ Compute RSA accumulator from hashed values
-pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
+// /// 🚫 Deprecated: use `compute_accumulator_from_primes`
+// pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
+//     let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_prime_128(h)).collect();
+//     compute_accumulator_from_primes(&primes)
+// }
+
+// /// 🚫 Deprecated: use `generate_proofs_from_primes`
+// pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
+//     let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_prime_128(h)).collect();
+//     generate_proofs_from_primes(&primes)
+// }
+
+/// ✅ New: Computes accumulator from primes
+pub fn compute_accumulator_from_primes(primes: &[BigInt]) -> BigInt {
     let n = get_modulus();
     let g = BigInt::from(2u8);
-    info!("🔢 Computing RSA accumulator radix...n:{} and g{}",n,g);
-    let primes: Vec<BigInt> = hashes
-        .par_iter()
-        .enumerate()
-        .map(|(i, hash)| {
-            let prime = hash_to_prime_128(hash);
-            info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
-            prime
-        })
-        .collect();
-
-    let product = primes.into_par_iter().reduce(BigInt::one, |a, b| a * b);
+    let product = primes.par_iter().cloned().reduce(BigInt::one, |a, b| a * b);
     g.modpow(&product, &n)
 }
 
-/// ✅ Generate exclusion proofs using prefix/suffix scan
-pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = hashes
-        .par_iter()
-        .enumerate()
-        .map(|(i, hash)| {
-            let prime = hash_to_prime_128(hash);
-            // info!("🔁 generate_proofs_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
-            prime
-        })
-        .collect();
-
+/// ✅ New: Generates exclusion proofs from primes
+pub fn generate_proofs_from_primes(primes: &[BigInt]) -> Vec<BigInt> {
     let n = get_modulus();
     let g = BigInt::from(2u8);
     let len = primes.len();
@@ -107,26 +113,23 @@ pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
         .into_par_iter()
         .map(|i| {
             let product = &prefix[i] * &suffix[i + 1];
-            let proof = g.modpow(&product, &n);
-            // info!("📜 Proof[{}] = {}", i, hex::encode(proof.to_bytes_be().1.clone()));
-            proof
+            g.modpow(&product, &n)
         })
         .collect()
 }
 
-/// ✅ Batch verification of (prime, proof) pairs
+/// ✅ Verify vector of (prime, proof) pairs
 pub fn verify_proofs(accumulator: &BigInt, pairs: &[(BigInt, BigInt)]) -> bool {
     pairs.par_iter().all(|(p, proof)| verify_proof_with_prime(accumulator, p, proof))
 }
 
-/// ✅ Verify individual proof given prime
+/// ✅ Verify single proof from prime
 pub fn verify_proof_with_prime(acc: &BigInt, prime: &BigInt, proof: &BigInt) -> bool {
     proof.modpow(prime, &get_modulus()) == *acc
 }
 
-/// ✅ Verify proof from original hash
+/// ✅ Verify proof from hash
 pub fn verify_proof(acc: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
     let prime = hash_to_prime_128(hash);
-    // info!("🧪 Verifying: hash={}, prime={}, proof={}", hex::encode(hash), prime, hex::encode(proof.to_bytes_be().1.clone()));
     proof.modpow(&prime, &get_modulus()) == *acc
 }

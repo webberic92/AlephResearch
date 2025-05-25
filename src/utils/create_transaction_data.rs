@@ -1,16 +1,17 @@
 use std::sync::Arc;
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, task::spawn_blocking, time::Instant};
+use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
 use reed_solomon_erasure::galois_8::ReedSolomon;
+use num_bigint::BigInt;
 
 use crate::{
     structs::{
         node::Node,
         requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
     },
-    utils::rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix},
+    utils::rsa_accumulator_util::{compute_accumulator_from_primes, generate_proofs_from_primes, hash_to_prime_128},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -84,12 +85,14 @@ pub async fn create_transaction_data(
         all_shards.push(shards);
         shard_meta.push(tx_hashes);
     }
-    info!("🧮 Computing RSA accumulator and proofs...");
-        let hash_copy = all_hashes.clone();
-            let acc = compute_accumulator_radix(&hash_copy);
-            let proofs = generate_proofs_radix(&hash_copy);
-    
+
+    // ✅ Precompute all primes once
+    info!("🧮 Computing RSA accumulator and proofs with precomputed primes...");
+    let all_primes: Vec<BigInt> = all_hashes.iter().map(|h| hash_to_prime_128(h)).collect();
+    let acc = compute_accumulator_from_primes(&all_primes);
+    let proofs = generate_proofs_from_primes(&all_primes);
     info!("✅ RSA accumulator and proofs computed.");
+
     let encoded_acc = general_purpose::STANDARD.encode(acc.to_bytes_be().1);
     let mut shard_proof_index = 0;
 
