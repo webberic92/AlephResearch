@@ -62,13 +62,13 @@ pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
 pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
     let n = get_modulus();
     let g = BigInt::from(2u8);
-
+    info!("🔢 Computing RSA accumulator radix...n:{} and g{}",n,g);
     let primes: Vec<BigInt> = hashes
         .par_iter()
         .enumerate()
         .map(|(i, hash)| {
             let prime = hash_to_prime_128(hash);
-            // info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
+            info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
             prime
         })
         .collect();

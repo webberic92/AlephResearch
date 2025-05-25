@@ -89,6 +89,7 @@ pub async fn handle_commit(
             dag_guard.clone()
         };
 
+        
         if let Err(e) = write_finalized_dag_to_file(
             "/aleph/finalized_dag",
             &finalized_dag,
@@ -99,13 +100,19 @@ pub async fn handle_commit(
             error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
             return Err(format!("DAG write failed: {:?}", e));
         }
-
+        
         let message_count = node.lock().await.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
         info!(
             "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
             node_id, round_id, commit_count, quorum_threshold
         );
+        {
+            let node_guard = node.lock().await;
+            let mut aggregator = node_guard.shard_aggregator.lock().await;
+            aggregator.clear_round(round_id);
+            info!("Node {}: Cleared aggregator state for round {}", node_guard.id, round_id);
+        }
         // ✅ Update round locally
         {
             let node_guard = node.lock().await;
@@ -115,8 +122,8 @@ pub async fn handle_commit(
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
             }
         }
-
-
+        
+        
         // ✅ Immediately emit RoundFinalized event before doing anything else
         {
             info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);

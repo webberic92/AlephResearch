@@ -2,7 +2,7 @@ use std::sync::{atomic::Ordering, Arc};
 use base64::{engine::general_purpose, Engine};
 use num_bigint::BigInt;
 use reqwest::Client;
-use sha2::{Digest, Sha256};
+use sha2::Sha256;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration};
 use tracing::{error, info};
@@ -10,10 +10,7 @@ use tracing::{error, info};
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{
-        dag_utils::ensure_dag_round_sync,
-        rsa_accumulator_util::verify_proof
-    },
+    utils::{dag_utils::ensure_dag_round_sync, rsa_accumulator_util::verify_proof},
 };
 
 pub async fn handle_propose(
@@ -42,17 +39,14 @@ pub async fn handle_propose(
 
     info!("🔍 Node {}: Received proposal from proposer {} for round {}", node_id, proposer_id, round_id);
 
+    // ✅ Decode accumulator ONCE outside the loop
+    let acc_bytes = general_purpose::STANDARD
+        .decode(&propose_request.batch_accumulator)
+        .map_err(|e| format!("Node {}: Failed to decode batch accumulator: {:?}", node_id, e))?;
+
+    let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &acc_bytes);
+
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let acc_b64 = tx.accumulator.as_ref()
-            .ok_or_else(|| format!("Node {}: Missing accumulator for tx[{}]", node_id, i))?;
-
-        let acc_bytes = general_purpose::STANDARD
-            .decode(acc_b64)
-            .map_err(|e| format!("Node {}: Failed to decode accumulator for tx[{}]: {:?}", node_id, i, e))?;
-
-        let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &acc_bytes);
-        // info!("🔍 Node {}: tx[{}] accumulator (hex) = {}", node_id, i, hex::encode(&acc_bytes));
-
         let shard = tx.shards.get(0)
             .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
 
@@ -72,17 +66,11 @@ pub async fn handle_propose(
         let hash_bytes = hex::decode(expected_hash_hex)
             .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
 
-        // info!("🔍 tx[{}] shard[0] hash = {}", i, expected_hash_hex);
-        // info!("🔍 tx[{}] shard[0] proof (base64) = {}", i, proof_b64);
-        // info!("🔍 tx[{}] shard[0] proof (hex) = {}", i, hex::encode(&proof_bytes));
         if !verify_proof(&accumulator, &hash_bytes, &proof) {
-            error!("❌ Node {}: RSA proof INVALID for tx[{}] shard[0]", node_id, i);
             return Err(format!(
                 "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
                 node_id, i
             ));
-        } else {
-            info!("✅ Node {}: RSA proof verified for tx[{}] shard[0]", node_id, i);
         }
     }
 
@@ -110,7 +98,8 @@ pub async fn handle_propose(
             let node_guard = node.lock().await;
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
-        let local_client = reqwest::Client::builder()
+
+        let local_client = Client::builder()
             .pool_max_idle_per_host(64)
             .tcp_keepalive(Some(Duration::from_secs(60)))
             .build()
@@ -120,7 +109,6 @@ pub async fn handle_propose(
             if target_node != node_ip {
                 let url = format!("http://{}/prevote", target_node);
                 for attempt in 1..=3 {
-                    info!("📤 Attempt {}/3: Node {} → {}", attempt, node_id, url);
                     let res = local_client.post(&url).json(&prevote_request).send().await;
 
                     match res {
@@ -133,17 +121,19 @@ pub async fn handle_propose(
                             let body = resp.text().await.unwrap_or_default();
                             error!("❌ Node {}: Prevote failed to {}: {} - {}", node_id, url, status, body);
                         }
-                        Err(e) => error!("❌ Node {}: Network error to {}: {:?}", node_id, url, e),
+                        Err(e) => {
+                            error!("❌ Node {}: Network error to {}: {:?}", node_id, url, e);
+                        }
                     }
 
                     sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
                 }
+
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
 
         if let Some(rbc_processor) = &node.lock().await.rbc_processor {
-            info!("Node {}: Enqueuing local prevote", node_id);
             rbc_processor
                 .enqueue_message(RBCMessage::Prevote(prevote_request))
                 .await;
@@ -154,6 +144,3 @@ pub async fn handle_propose(
 
     Ok(())
 }
-
-
-

@@ -15,7 +15,7 @@ class TestAleph(Stack):
 
         INSTANCE_TYPE = "c5n.xlarge"  # Define the instance type
         INSTANCES_NUMBER = 32 # Define the number of instances
-        BATCH_SIZE = 256  # Define the number of transactions in a batch
+        BATCH_SIZE = 16  # Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)

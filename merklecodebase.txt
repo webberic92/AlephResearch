@@ -61,7 +61,6 @@ pub async fn handle_commit(
             all_units.extend(commit.units.clone());
         }
 
-
         {
             let node_guard = node.lock().await;
             let mut dag = node_guard.dag.lock().await;
@@ -69,7 +68,7 @@ pub async fn handle_commit(
             info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
             for unit in all_units {
                 
-                if !dag_units.iter().any(|u| u.accumulator_root == unit.accumulator_root) {
+                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
                     dag_units.push(unit.clone());
                     info!(
                         "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
@@ -89,7 +88,6 @@ pub async fn handle_commit(
             dag_guard.clone()
         };
 
-        
         if let Err(e) = write_finalized_dag_to_file(
             "/aleph/finalized_dag",
             &finalized_dag,
@@ -100,19 +98,13 @@ pub async fn handle_commit(
             error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
             return Err(format!("DAG write failed: {:?}", e));
         }
-        
+
         let message_count = node.lock().await.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
         info!(
             "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
             node_id, round_id, commit_count, quorum_threshold
         );
-        {
-            let node_guard = node.lock().await;
-            let mut aggregator = node_guard.shard_aggregator.lock().await;
-            aggregator.clear_round(round_id);
-            info!("Node {}: Cleared aggregator state for round {}", node_guard.id, round_id);
-        }
         // ✅ Update round locally
         {
             let node_guard = node.lock().await;
@@ -122,8 +114,8 @@ pub async fn handle_commit(
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
             }
         }
-        
-        
+
+
         // ✅ Immediately emit RoundFinalized event before doing anything else
         {
             info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
@@ -158,7 +150,7 @@ pub async fn handle_commit(
                 };
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
@@ -181,48 +173,55 @@ pub async fn handle_commit(
     }
 
     Ok(())
-}use base64::{engine::general_purpose, Engine};
+}// Copy this file as-is into your handle_prevote.rs
+
+use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, time::{sleep, Duration}};
-use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
+use tokio::{sync::{Mutex, Semaphore}, time::{sleep, timeout}};
+use std::{collections::{HashMap, HashSet}, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
 use reqwest::Client;
-use num_bigint::{BigInt, Sign};
-use rayon::prelude::*;
-
 use crate::{
     processors::priority_queue::RBCMessage, 
     structs::{
         node::Node,
-        requests::{CommitRequest, PrevoteRequest},
+        requests::{CommitRequest, PrevoteRequest, Transaction},
     }, 
-    utils::rsa_accumulator_util::{verify_proof, hash_to_prime_128, get_modulus},
+    utils::merkle_utils::{reconstruct_unit, validate_merkle_branch}
 };
 
 pub async fn handle_prevote(
     node: Arc<Mutex<Node>>,
-    prevote_request: PrevoteRequest,
+    prevote_request: PrevoteRequest,  
 ) -> Result<(), String> {
-    let (node_id, round_id, quorum_threshold, data_shards, node_list, rbc_processor, transaction_size) = {
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
+
+    let (node_id, round_id, quorum_threshold, total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
             node_guard.id,
             prevote_request.proposals[0].base.round_id,
             node_guard.get_quorum_threshold(),
+            node_guard.total_nodes,
             node_guard.data_shards,
             node_guard.nodes.clone(),
             node_guard.rbc_processor.clone(),
             node_guard.transaction_size,
         )
-    };
+    }; 
 
     {
         let node_guard = node.lock().await;
         let quorum_votes = node_guard.quorum_votes.lock().await;
-        if let Some(voter_set) = quorum_votes.get(&round_id.to_be_bytes().to_vec()) {
+        let round_key = round_id.to_be_bytes();
+        if let Some(voter_set) = quorum_votes.get(&round_key[..]) {
             if voter_set.len() >= quorum_threshold {
-                info!("Node {}: Quorum already reached for round {}. Dropping prevote.", node_id, round_id);
+                info!("Node {}: Quorum already reached for round {} ({} votes). Dropping incoming prevote.", node_guard.id, round_id, voter_set.len());
                 return Ok(());
             }
         }
@@ -231,124 +230,160 @@ pub async fn handle_prevote(
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let entry = quorum_votes.entry(round_id.to_be_bytes().to_vec()).or_insert_with(HashSet::new);
-        if !entry.insert(prevote_request.sender_url.clone()) {
-            info!("Node {}: Duplicate prevote from {} for round {}.", node_id, prevote_request.sender_url, round_id);
+        let round_key = round_id.to_be_bytes();
+        let voter_set = quorum_votes.entry(round_key.to_vec()).or_insert_with(HashSet::new);
+        if voter_set.contains(&prevote_request.sender_url) {
+            info!("Node {}: Already received prevote from Node {} for round {}. Ignoring.", node_id, prevote_request.sender_url, round_id);
             return Ok(());
         }
-    }
+    } 
 
     let mut reconstructed_units = Vec::new();
 
     for proposal in &prevote_request.proposals {
-        let proposer_id = proposal.base.proposing_node_id as usize;
-
-        // ✅ decode batch accumulator ONCE
-        let acc_bytes = base64::engine::general_purpose::STANDARD
-            .decode(&proposal.batch_accumulator)
-            .map_err(|e| format!("Node {}: Failed to decode batch accumulator: {:?}", node_id, e))?;
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let modulus = get_modulus();
-
         let mut reconstructed_transactions = Vec::new();
+        let batch_root = &proposal.batch_root;
+        let batch_proofs = &proposal.batch_proofs;
 
-        for (i, tx) in proposal.transactions.iter().enumerate() {
-            let verified_shards: Result<Vec<_>, String> = tx.shards.par_iter().enumerate()
-                .filter(|(j, _)| *j < data_shards)
-                .map(|(j, shard_struct)| {
-                    let decoded = general_purpose::STANDARD
-                        .decode(&shard_struct.shard_b64)
-                        .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", i, j, e))?;
-
-                    let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                    if decoded.len() != expected_len {
-                        return Err(format!("tx[{}] shard[{}]: expected {}, got {}", i, j, expected_len, decoded.len()));
+        let proposer_id = proposal.base.proposing_node_id as usize;
+        for (i, transaction) in proposal.transactions.iter().enumerate() {
+            for (j, shard_str) in transaction.shards.iter().enumerate() {
+                match general_purpose::STANDARD.decode(shard_str) {
+                    Ok(decoded) => {
+                        let (transaction_size, data_shards) = {
+                            let node_guard = node.lock().await;
+                            (node_guard.transaction_size, node_guard.data_shards)
+                        };
+                        let expected_len = (transaction_size + data_shards - 1) / data_shards;                        
+                        if decoded.len() != expected_len {
+                            return Err(format!(
+                                "Node {}: Shard {} for tx {} is not {} bytes (got {})",
+                                node_id, j, i, expected_len, decoded.len()
+                            ));
+                        }
+                        let node_guard = node.lock().await;
+                        let mut shard_aggregator = node_guard.shard_aggregator.lock().await;
+                        if j < data_shards {
+                            shard_aggregator.insert_shard(round_id, i, j, decoded.clone());
+                        }               
                     }
-
-                    let hash = Sha256::digest(&decoded);
-                    let proof_str = shard_struct.proofs.get(0)
-                        .ok_or_else(|| format!("tx[{}] shard[{}]: missing proof", i, j))?;
-                    let proof_bytes = general_purpose::STANDARD.decode(proof_str)
-                        .map_err(|e| format!("tx[{}] shard[{}] proof decode error: {:?}", i, j, e))?;
-                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                    let prime = hash_to_prime_128(&hash);
-
-                    if proof.modpow(&prime, &modulus) != accumulator {
-                        return Err(format!("tx[{}] shard[{}]: RSA proof invalid", i, j));
+                    Err(e) => {
+                        warn!("Node {}: Failed to decode shard {} for tx {}: {:?}", node_id, j, i, e);
                     }
-
-                    Ok((j, decoded))
-                }).collect();
-
-            let verified = verified_shards?;
-
-            // ✅ Insert all verified shards in one lock
-            {
-                let node_guard = node.lock().await;
-                let mut aggregator = node_guard.shard_aggregator.lock().await;
-                for (j, decoded) in verified {
-                    aggregator.insert_shard(round_id, i, j, decoded);
                 }
             }
 
-            // ✅ Attempt reconstruction
-            let padded_tx_bytes = {
+            let maybe_reconstructed = {
                 let node_guard = node.lock().await;
-                let aggregator = node_guard.shard_aggregator.lock().await;
-                match aggregator.try_reconstruct(round_id, i, transaction_size) {
-                    Some(data) => data,
-                    None => {
-                        warn!("Node {}: Not enough shards for tx[{}] in round {}.", node_id, i, round_id);
-                        return Ok(());
-                    }
-                }
+                let shard_aggregator = node_guard.shard_aggregator.lock().await;
+                
+                shard_aggregator.try_reconstruct(round_id, i, transaction_size)
             };
 
-            let hash = Sha256::digest(&padded_tx_bytes);
-            if hash.to_vec() != tx.root {
+            let padded_tx_bytes = match maybe_reconstructed {
+                Some(data) => data,
+                None => {
+                    warn!("Node {}: Not enough shards to reconstruct tx[{}] in round {}. Waiting for more...", node_id, i, round_id);
+                    return Ok(());
+                }
+            };
+            let hash = Sha256::digest(&padded_tx_bytes).to_vec();
+
+            if hash != transaction.root {
                 return Err(format!(
-                    "Node {}: tx[{}] hash mismatch. Expected {}, got {}",
-                    node_id, i, hex::encode(&tx.root), hex::encode(&hash)
+                    "Node {}: Hash mismatch for tx {}. Expected {}, got {}",
+                    node_id,
+                    i,
+                    hex::encode(&transaction.root),
+                    hex::encode(&hash)
                 ));
             }
 
-            reconstructed_transactions.push(tx.clone());
+            let proof = &batch_proofs[i];
+            if !validate_merkle_branch(&transaction.root, proof, i, batch_root) {
+                return Err(format!(
+                    "Node {}: Invalid Merkle proof for transaction {} in batch",
+                    node_id, i
+                ));
+            }
+
+            reconstructed_transactions.push(Transaction {
+                root: transaction.root.clone(),
+                proofs: vec![batch_proofs[i].iter().map(hex::encode).collect()],
+                shards: transaction.shards.clone(),
+            });
         }
 
-        reconstructed_units.push(crate::structs::requests::DagUnit {
-            unit_id: format!("U{}-{}", round_id, proposer_id),
-            proposer_node: proposer_id,
-            round: round_id,
-            transactions: reconstructed_transactions,
-            parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            accumulator_root: vec![],
-            finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
-        });
+        let mut resolved_parents = Vec::new();
+        let node_guard = node.lock().await;
+        let dag_guard = node_guard.dag.lock().await;
+
+        let mut unit_hash_map: HashMap<String, String> = HashMap::new();
+        for unit in dag_guard.values().flatten() {
+            let digest = Sha256::digest(unit.unit_id.as_bytes());
+            let digest_hex = hex::encode(digest);
+            unit_hash_map.insert(digest_hex, unit.unit_id.clone());
+        }
+
+        for parent_id in &proposal.parents {
+            if dag_guard.values().flatten().any(|u| &u.unit_id == parent_id) {
+                resolved_parents.push(parent_id.clone());
+            } else {
+                warn!("Could not resolve parent unit_id {} to known DAG unit", parent_id);
+            }
+        }
+
+        let reconstructed_unit = reconstruct_unit(
+            &reconstructed_transactions,
+            round_id,
+            resolved_parents,
+            proposer_id,
+            batch_root.clone(),
+        )?;
+
+        if reconstructed_unit.transactions.is_empty() {
+            return Err(format!("Node {}: Reconstructed unit is invalid or empty", node_id));
+        }
+
+        reconstructed_units.push(reconstructed_unit);
     }
 
     {
         let node_guard = node.lock().await;
         for unit in &reconstructed_units {
-            for parent in &unit.parent_units {
-                if !node_guard.is_unit_committed(parent).await {
-                    warn!("Node {}: Missing parent {} for round {}", node_id, parent, round_id);
+            for parent_unit_id in &unit.parent_units {
+                if !node_guard.is_unit_committed(parent_unit_id).await {
+                    let err_msg = format!("Node {}: Missing parent unit {} in DAG. Cannot commit unit in round {}.", node_guard.id, parent_unit_id, round_id);
+                    error!("{}", err_msg);
+                    return Err(err_msg);
                 }
             }
         }
     }
 
-    let vote_count = {
+    let sender_id = prevote_request.sender_url;
+    let vote_count;
+    let round_key = round_id.to_be_bytes();
+
+    {
         let node_guard = node.lock().await;
-        let quorum_votes = node_guard.quorum_votes.lock().await;
-        quorum_votes.get(&round_id.to_be_bytes().to_vec()).unwrap().len()
-    };
+        let mut quorum_votes = node_guard.quorum_votes.lock().await;
+        let voter_set = quorum_votes.entry(round_key.to_vec()).or_insert_with(HashSet::new);
+        voter_set.insert(sender_id);
+        vote_count = voter_set.len();
+    }
 
     if vote_count < quorum_threshold {
-        info!("Node {}: Waiting for more prevotes ({}/{})", node_id, vote_count, quorum_threshold);
+        info!("Node {}: Not enough prevote messages received ({}/{}). Waiting for quorum before proceeding to commit.", node_id, vote_count, quorum_threshold);
         return Ok(());
     }
 
-    info!("Node {}: Quorum reached for round {}. Broadcasting commits...", node_id, round_id);
+    if vote_count > quorum_threshold {
+        info!("Node {}: Already reached quorum for round {} ({} votes). Ignoring additional prevote.", node_id, round_id, vote_count);
+        return Ok(());
+    }
+
+    info!("Node {}: Prevote Quorum reached for round {}. Proceeding to send commits.", node_id, round_id);
 
     let commit_request = CommitRequest {
         units: reconstructed_units,
@@ -357,60 +392,125 @@ pub async fn handle_prevote(
     };
 
     let message_count = node.lock().await.message_count.clone();
-    for peer in node_list {
-        let url = format!("http://{}/commit", peer);
-        let payload = commit_request.clone();
-        let local_client = Client::builder()
-            .pool_max_idle_per_host(64)
-            .tcp_keepalive(Some(Duration::from_secs(60)))
-            .build()
-            .expect("Failed to build HTTP client");
 
-        for attempt in 0..3 {
-            message_count.fetch_add(1, Ordering::Relaxed);
-            match local_client.post(&url).json(&payload).send().await {
-                Ok(resp) if resp.status().is_success() => {
-                    info!("✅ Commit sent to {}", url);
-                    break;
-                }
-                Ok(resp) => {
-                    error!("❌ Commit failed to {}. Status: {}, Body: {}", url, resp.status(), resp.text().await.unwrap_or_default());
-                }
-                Err(e) => {
-                    error!("❌ Commit error to {}: {:?}", url, e);
-                }
-            }
-            sleep(Duration::from_millis(100 * 2u64.pow(attempt))).await;
-        }
+    if let Some(rbc_processor) = &rbc_processor {
+        info!("Node {}: Adding *local* commit to queue for round {}", node_id, round_id);
+        rbc_processor.enqueue_message(RBCMessage::Commit(commit_request.clone())).await;
+    } else {
+        error!("Node {}: RBCProcessor not initialized when trying to enqueue *local* commit!", node_id);
     }
 
-    if let Some(rbc_processor) = rbc_processor {
-        rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
+    for target_node in node_list {
+        let target_url = format!("http://{}/commit", target_node);
+        let commit_payload = commit_request.clone();
+        let node_id = node_id;
+        let round_id = round_id;
+
+        let mut attempt = 0;
+        let max_attempts = 3;
+        let mut success = false;
+
+        while attempt < max_attempts {
+            attempt += 1;
+            message_count.fetch_add(1, Ordering::Relaxed);
+
+            info!(
+                "📤 Attempt {}/{}: Node {} sending commit to {} for round {}",
+                attempt, max_attempts, node_id, target_url, round_id
+            );
+
+            let send_fut = local_client.post(&target_url).json(&commit_payload).send();
+            let res = tokio::time::timeout(Duration::from_secs(3), send_fut).await;
+
+            match res {
+                Ok(Ok(response)) if response.status().is_success() => {
+                    info!("✅ Successfully sent commit to {}", target_url);
+                    success = true;
+                    break;
+                }
+                Ok(Ok(response)) => {
+                    let status = response.status();
+                    let body = response.text().await.unwrap_or_else(|_| "No response".to_string());
+                    error!("❌ Commit failed to {}. Status: {}. Body: {}", target_url, status, body);
+                }
+                Ok(Err(e)) => {
+                    error!("❌ Network error while sending commit to {}: {:?}", target_url, e);
+                }
+                Err(_) => {
+                    error!("⏱️ Node {}: Timeout sending commit to {}", node_id, target_url);
+                }
+            }
+
+            let delay = 100 * 2u64.pow((attempt - 1) as u32);
+            sleep(Duration::from_millis(delay)).await;
+        }
+
+        if !success {
+            error!(
+                "❌ Node {}: Final failure to send commit to {} after {} attempts",
+                node_id, target_url, max_attempts
+            );
+        }
     }
 
     {
         let node_guard = node.lock().await;
-        let mut aggregator = node_guard.shard_aggregator.lock().await;
-        aggregator.clear_round(round_id);
+        let mut shard_aggregator = node_guard.shard_aggregator.lock().await;
+        shard_aggregator.clear_round(round_id);
     }
 
     Ok(())
 }
-
-use std::sync::{atomic::Ordering, Arc};
-use base64::{engine::general_purpose, Engine};
-use num_bigint::BigInt;
+use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
+use base64::{ engine::general_purpose, Engine };
 use reqwest::Client;
-use sha2::Sha256;
-use tokio::sync::Mutex;
-use tokio::time::{sleep, Duration};
-use tracing::{error, info};
-
+use tokio::{sync::{Mutex, Semaphore}, time::timeout};
+use tracing::{ error, info, warn };
 use crate::{
-    processors::priority_queue::RBCMessage,
-    structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{dag_utils::ensure_dag_round_sync, rsa_accumulator_util::verify_proof},
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
 };
+use sha2::Digest;
+
+/*
+**ch-RBC Proof Validation for `handle_propose`**
+--------------------------------------------------
+
+**Step 7:** Upon receiving `propose(h, b_j, s_j)` from `P_s`
+   - This function (`handle_propose`) is invoked upon receiving a `ProposeRequest` from another node.
+
+**Step 8:** If `received_propose(P_i, r)` then terminate
+   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same round (`r`).
+   - If a duplicate exists, the function returns early.
+
+**Step 9:** If `check_size(s_j)` then
+   - The function `check_size(&decoded_shards)` validates the shard sizes.
+   - If the size is invalid, the function returns early.
+
+**Step 20:** Wait until `D_i` reaches round `r−1`
+   - The function `ensure_dag_round_sync(node.clone(), round_id).await?` ensures that the DAG is synchronized to `r-1` before proceeding.
+
+**Step 11:** Multicast `prevote(h, b_j, s_j)` to all nodes
+   - If enough proposals are received (`proposal_count >= required_proposals`), all `prevote` messages are aggregated into a single request and multicast to all nodes.
+
+**Step 12:** `received_propose(P_i, r) = True`
+   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring that the proposal is marked as received.
+
+**Step 13:** Confirm proposal handling
+   - Log that the proposal was successfully handled.
+*/
+
+// Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
+// - This function `handle_propose` is called when a proposal message is received.
+
+/*
+**ch-RBC Proof Validation for `handle_propose`**
+--------------------------------------------------
+Handles proposals containing multiple transactions in a single request.
+Each transaction has:
+  - Merkle root
+  - Proofs
+  - Encoded shards
+*/
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -419,68 +519,87 @@ pub async fn handle_propose(
     let round_id = propose_request.base.round_id;
     let proposer_id = propose_request.base.proposing_node_id as usize;
     let node_id;
-
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
     {
         let node_guard = node.lock().await;
         node_id = node_guard.id;
 
+        // ✅ Only drop if we've already received a proposal from THIS proposer for this round
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
                 info!(
-                    "Node {}: Duplicate proposal from proposer {} for round {}. Ignoring.",
-                    node_id, proposer_id, round_id
+                    "Node {}: Already received proposal for round {} from proposer {}. Ignoring duplicate.",
+                    node_id, round_id, proposer_id
                 );
                 return Ok(());
             }
         }
     }
 
-    info!("🔍 Node {}: Received proposal from proposer {} for round {}", node_id, proposer_id, round_id);
-
-    // ✅ Decode accumulator ONCE outside the loop
-    let acc_bytes = general_purpose::STANDARD
-        .decode(&propose_request.batch_accumulator)
-        .map_err(|e| format!("Node {}: Failed to decode batch accumulator: {:?}", node_id, e))?;
-
-    let accumulator = BigInt::from_bytes_be(num_bigint::Sign::Plus, &acc_bytes);
+    // ✅ Validate Merkle proof and shard sizes for each transaction
+    if propose_request.batch_proofs.len() != propose_request.transactions.len() {
+        return Err(format!(
+            "Node {}: batch_proofs length ({}) does not match transactions length ({})",
+            node_id,
+            propose_request.batch_proofs.len(),
+            propose_request.transactions.len()
+        ));
+    }
 
     for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let shard = tx.shards.get(0)
-            .ok_or_else(|| format!("Node {}: Missing shard for tx {}", node_id, i))?;
+        let proof = &propose_request.batch_proofs[i];
+        let root = &propose_request.batch_root;
 
-        let proof_b64 = shard.proofs.get(0)
-            .ok_or_else(|| format!("Node {}: Missing proof for shard[0] of tx {}", node_id, i))?;
-
-        let proof_bytes = general_purpose::STANDARD
-            .decode(proof_b64)
-            .map_err(|e| format!("Node {}: Failed to decode proof: {:?}", node_id, e))?;
-
-        let proof = BigInt::from_bytes_be(num_bigint::Sign::Plus, &proof_bytes);
-
-        let expected_hash_hex = tx.shard_hashes.as_ref()
-            .and_then(|h| h.get(0))
-            .ok_or_else(|| format!("Node {}: Missing shard hash for tx[{}] shard[0]", node_id, i))?;
-
-        let hash_bytes = hex::decode(expected_hash_hex)
-            .map_err(|e| format!("Node {}: Invalid hex hash for tx[{}] shard[0]: {:?}", node_id, i, e))?;
-
-        if !verify_proof(&accumulator, &hash_bytes, &proof) {
+        if tx.root.len() != 32 {
             return Err(format!(
-                "❌ Node {}: RSA proof INVALID for tx {} (shard 0)",
-                node_id, i
+                "Node {}: Invalid tx root length at index {}: expected 32, got {}",
+                node_id, i, tx.root.len()
+            ));
+        }
+
+        let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
+        let decoded_shard = general_purpose::STANDARD
+            .decode(encoded_shard.as_bytes())
+            .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
+
+        let (transaction_size, data_shards) = {
+            let node_guard = node.lock().await;
+            (node_guard.transaction_size, node_guard.data_shards)
+        };
+
+        let expected_shard_size = (transaction_size + data_shards - 1) / data_shards;
+
+        if decoded_shard.len() != expected_shard_size {
+            return Err(format!(
+                "Node {}: Transaction {} decoded shard size mismatch. Expected {} bytes ({} / {}), got {} bytes.",
+                node_id, i, expected_shard_size, transaction_size, data_shards, decoded_shard.len()
+            ));
+        }
+
+        let valid = verify_merkle_proof(&tx.root, proof, root, i);
+        if !valid {
+            return Err(format!(
+                "Node {}: Invalid Merkle proof for tx {}. tx.root = {:x?}, Proof = {:?}, Expected root = {:x?}",
+                node_id, i, tx.root, proof, root
             ));
         }
     }
 
+    // ✅ Ensure DAG is synchronized to r - 1
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
+    // ✅ Add proposal to tracker
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
-    if proposal_count >= quorum_threshold {
+    if proposal_count == quorum_threshold {
         info!(
-            "Node {}: Proposal quorum met. Broadcasting prevote for {} proposals.",
+            "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
             node_id, stored_proposals.len()
         );
 
@@ -489,7 +608,7 @@ pub async fn handle_propose(
             PrevoteRequest {
                 proposals: stored_proposals.clone(),
                 sender_url: node_guard.ip_address.clone(),
-                sender_id: node_guard.id,
+                sender_id: node_guard.id, // NEW
             }
         };
 
@@ -498,54 +617,80 @@ pub async fn handle_propose(
             (node_guard.ip_address.clone(), node_guard.nodes.clone())
         };
 
-        let local_client = Client::builder()
-            .pool_max_idle_per_host(64)
-            .tcp_keepalive(Some(Duration::from_secs(60)))
-            .build()
-            .expect("Failed to build HTTP client");
+        info!("Node {}: Multicasting prevote to all nodes...", node_id);
 
+       
         for target_node in node_list {
             if target_node != node_ip {
+                // Clone as needed here
                 let url = format!("http://{}/prevote", target_node);
-                for attempt in 1..=3 {
-                    let res = local_client.post(&url).json(&prevote_request).send().await;
-
-                    match res {
-                        Ok(resp) if resp.status().is_success() => {
-                            info!("✅ Node {}: Prevote delivered to {}", node_id, url);
+                let mut attempt = 0;
+                let max_attempts = 3;
+                let send_timeout = Duration::from_secs(3);
+                let mut success = false;
+        
+                while attempt < max_attempts {
+                    attempt += 1;
+                    info!("📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
+                          attempt, max_attempts, node_id, url, round_id);
+        
+                    let send_fut = local_client.post(&url).json(&prevote_request).send();
+        
+                    match timeout(send_timeout, send_fut).await {
+                        Ok(Ok(resp)) if resp.status().is_success() => {
+                            info!("✅ Node {}: Prevote success to {}", node_id, url);
+                            success = true;
                             break;
                         }
-                        Ok(resp) => {
+                        Ok(Ok(resp)) => {
                             let status = resp.status();
-                            let body = resp.text().await.unwrap_or_default();
-                            error!("❌ Node {}: Prevote failed to {}: {} - {}", node_id, url, status, body);
+                            let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
+                            error!("❌ Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
                         }
-                        Err(e) => {
-                            error!("❌ Node {}: Network error to {}: {:?}", node_id, url, e);
+                        Ok(Err(e)) => {
+                            error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
+                        }
+                        Err(_) => {
+                            error!("⏱️ Node {}: Timeout sending prevote to {}", node_id, url);
                         }
                     }
-
-                    sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
+        
+                    let delay = 100 * 2u64.pow((attempt - 1) as u32);
+                    sleep(Duration::from_millis(delay));
                 }
-
+        
+                if !success {
+                    error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
+                }
+        
                 node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
             }
         }
+        
 
-        if let Some(rbc_processor) = &node.lock().await.rbc_processor {
-            rbc_processor
-                .enqueue_message(RBCMessage::Prevote(prevote_request))
-                .await;
-        } else {
-            error!("Node {}: No RBCProcessor to enqueue local prevote", node_id);
+        // ✅ Handle prevote locally
+        {
+            let node_guard = node.lock().await;
+            if let Some(rbc_processor) = &node_guard.rbc_processor {
+                info!("Node {}: Enqueuing local prevote into RBCProcessor for round {}", node_id, round_id);
+                rbc_processor
+                    .enqueue_message(RBCMessage::Prevote(prevote_request))
+                    .await;
+            } else {
+                error!("Node {}: RBCProcessor not initialized for local prevote enqueue!", node_id);
+            }
         }
     }
 
     Ok(())
 }
+
+
+
+
 use reqwest::Client;
 use tracing::{error, info};
-use std::{sync:: Arc, time::Duration};
+use std::{sync::{atomic::Ordering, Arc}, time::Duration};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use crate::{processors::priority_queue::RBCMessage, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
@@ -577,7 +722,12 @@ pub async fn send_proposals(
     propose_request: ProposeRequest,
 ) -> Result<(), anyhow::Error> {
     //info!("🔍 [DEBUG] Attempting to acquire lock for send_proposals() in round {}", propose_request.base.round_id);
-    
+    let local_client = reqwest::Client::builder()
+    .pool_max_idle_per_host(64)
+    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
+    .build()
+    .expect("Failed to build HTTP client");
+
     let lock_result = timeout(Duration::from_secs(5), node.lock()).await;
     
     let node_guard = match lock_result {
@@ -604,13 +754,8 @@ pub async fn send_proposals(
 
 
     let mut results: Vec<Result<(), anyhow::Error>> = Vec::new();
-    let local_client = reqwest::Client::builder()
-    .pool_max_idle_per_host(64)
-    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
-    .build()
-    .expect("Failed to build HTTP client");
+
     for node_url in nodes {
-        let client = local_client.clone();
         let proposal = propose_request.clone();
         let mut attempt = 0;
         let max_attempts = 3;
@@ -621,10 +766,10 @@ pub async fn send_proposals(
 
             info!("📤 Attempt {}/{}: Sending proposal to {} (round {})", attempt, max_attempts, node_url, round_id);
 
-            let res = client
+            let res = local_client
                 .post(format!("http://{}/propose", node_url))
                 .json(&proposal)
-                // .timeout(Duration::from_millis(500))
+                .timeout(Duration::from_millis(500))
                 .send()
                 .await;
 
@@ -680,6 +825,7 @@ pub async fn send_proposals(
 
 
 use serde_json::json;
+use sha2::Sha256;
 use tokio::fs::{self, OpenOptions};
 use tokio::io::AsyncWriteExt;
 use tracing::info;
@@ -688,6 +834,7 @@ use std::path::Path;
 use base64::{engine::general_purpose, Engine};
 use crate::structs::requests::DagUnit;
 use crate::structs::toml_config::TomlConfig;
+use sha2::Digest;
 
 /// Load configuration
 pub fn load_config(path: Option<&str>) -> TomlConfig {
@@ -729,24 +876,26 @@ pub async fn write_finalized_dag_to_file(
             "unit_id": unit.unit_id,
             "creator": unit.proposer_node,
             "round": unit.round,
-            "accumulator_root": hex::encode(&unit.accumulator_root),
+            "batch_merkle_root": hex::encode(&unit.merkle_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "hash": hex::encode(&tx.root),
-                "proofs": tx.shards.iter().map(|s| s.proofs.clone()).collect::<Vec<_>>(),
+                "hash": hex::encode(&tx.root),  // renamed for clarity
+                "proofs": tx.proofs.clone(),
                 "shards": tx.shards.iter().map(|shard| {
-                    let decoded_bytes = general_purpose::STANDARD
-                        .decode(&shard.shard_b64)
+                    let decoded_bytes = general_purpose::STANDARD.decode(shard)
                         .unwrap_or_else(|_| vec![]);
                     if !decoded_bytes.is_empty() {
                         String::from_utf8(decoded_bytes.clone())
                             .unwrap_or_else(|_| format!("{:?}", decoded_bytes))
                     } else {
-                        shard.shard_b64.clone()
+                        shard.clone()
                     }
                 }).collect::<Vec<String>>(),
             })).collect::<Vec<_>>(),
-            "parent_hashes": unit.parent_units.iter().map(|p| hex::encode(p)).collect::<Vec<_>>(),
-            "finalization_timestamp": unit.finalization_timestamp,
+            "parent_hashes": unit.parent_units.iter().map(|p| {
+                let hash = Sha256::digest(p.as_bytes());
+                hex::encode(hash)
+            }).collect::<Vec<_>>(), 
+           "finalization_timestamp": unit.finalization_timestamp,
         })).collect();
         
 
@@ -765,20 +914,19 @@ pub async fn write_finalized_dag_to_file(
     Ok(())
 }
 use std::sync::Arc;
-use base64::{engine::general_purpose, Engine};
+use tokio::sync::Mutex;
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, task::spawn_blocking, time::Instant};
-use tracing::info;
+use tracing::{info, error};
+use anyhow::Error;
+use base64::{engine::general_purpose, Engine};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 use crate::{
-    structs::{
-        node::Node,
-        requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
-    },
-    utils::rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix},
+    structs::{node::Node, requests::{BaseRequest, ProposeRequest, Transaction}}, 
+    utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof}
 };
 
+/// Pads or truncates a vector to a target size
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     if data.len() >= target_len {
         data.truncate(target_len);
@@ -789,19 +937,24 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
 }
 
 pub async fn create_transaction_data(
-    node: Arc<Mutex<Node>>,
-) -> Result<ProposeRequest, anyhow::Error> {
-    let timer = Instant::now();
-    info!("📦 Starting transaction data creation...");
-
+    node: Arc<Mutex<Node>>, 
+) -> Result<ProposeRequest, Error> {  
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
         let round_id = *node_guard.current_round.lock().await;
-        let parent_units = node_guard.get_all_parents(round_id)
-            .await
-            .into_iter()
-            .map(|s| s.into_bytes())
-            .collect::<Vec<_>>();
+    
+        let parent_units = node_guard.get_all_parents(round_id).await;
+        info!("Node {}: Getting parent units for round {}: {:?}", node_guard.id, round_id, parent_units);
+
+    
+        info!(
+            "Node {}: For round {}, resolved {} parent units: {:?}",
+            node_guard.id,
+            round_id,
+            parent_units.len(),
+            parent_units
+        );
+    
         (
             node_guard.id,
             node_guard.number_of_transactions,
@@ -813,90 +966,92 @@ pub async fn create_transaction_data(
         )
     };
 
-    let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let mut transactions = Vec::with_capacity(num_txs);
-    let mut all_shards = Vec::new();
-    let mut all_hashes = Vec::new();
-    let mut shard_meta = Vec::new();
+    let shard_size = (transaction_size + data_shards - 1) / data_shards; // ceil division
+    info!(
+        "Node {}: Creating {} transactions ({} bytes each) with RS shards ({} bytes/shard)",
+        node_id, num_txs, transaction_size, shard_size
+    );
+
+    let mut tx_hashes = Vec::new();
+    let mut transactions = Vec::new();
 
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
-        let padded = pad_to_len(content.clone().into_bytes(), transaction_size);
+        let mut padded = content.into_bytes();
+        padded.resize(transaction_size, 0);
 
-        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
-        let mut shards: Vec<Vec<u8>> = padded
-            .chunks(shard_size)
-            .map(|chunk| {
-                let mut v = chunk.to_vec();
-                v.resize(shard_size, 0);
-                v
-            })
-            .collect();
+        let tx_hash = Sha256::digest(&padded).to_vec();
+        tx_hashes.push(tx_hash.clone());
 
+        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)
+            .map_err(|e| Error::msg(format!("RS init failed: {:?}", e)))?;
+
+        // ✅ Manual split to ensure all shards are shard_size
+        let mut data_chunks: Vec<Vec<u8>> = Vec::with_capacity(data_shards);
+        for i in 0..data_shards {
+            let start = i * shard_size;
+            let chunk = if start >= padded.len() {
+                vec![0u8; shard_size] // Entirely zero-padded
+            } else {
+                let end = std::cmp::min(start + shard_size, padded.len());
+                let mut chunk = padded[start..end].to_vec();
+                chunk.resize(shard_size, 0);
+                chunk
+            };
+            data_chunks.push(chunk);
+        }
+
+
+
+        
+        // Pad to total_nodes
+        let mut shards = data_chunks.clone();
         while shards.len() < total_nodes {
             shards.push(vec![0u8; shard_size]);
         }
 
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
-        rs.encode(&mut shard_refs)?;
+        rs.encode(&mut shard_refs)
+            .map_err(|e| Error::msg(format!("RS encoding failed: {:?}", e)))?;
 
-        let mut tx_hashes = Vec::new();
-        for s in &shards[..data_shards] {
-            let hash = Sha256::digest(s).to_vec();
-            all_hashes.push(hash.clone());
-            tx_hashes.push(hash);
-        }
-
-        all_shards.push(shards);
-        shard_meta.push(tx_hashes);
-    }
-
-    let (accumulator, proofs) = {
-        let hash_copy = all_hashes.clone();
-        spawn_blocking(move || {
-            let acc = compute_accumulator_radix(&hash_copy);
-            let proofs = generate_proofs_radix(&hash_copy);
-            (acc, proofs)
-        }).await?
-    };
-
-    let encoded_acc = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
-    let mut shard_proof_index = 0;
-
-    for (tx_index, shards) in all_shards.iter().enumerate() {
-        let mut shard_structs = Vec::with_capacity(total_nodes);
-        for shard_i in 0..total_nodes {
-            let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
-            let proofs_vec = if shard_i < data_shards {
-                let proof = &proofs[shard_proof_index];
-                shard_proof_index += 1;
-                let proof_b64 = general_purpose::STANDARD.encode(proof.to_bytes_be().1.clone());
-                vec![proof_b64]
-            } else {
-                vec![]
-            };
-
-            shard_structs.push(ShardWithProofs {
-                shard_b64,
-                proofs: proofs_vec,
-            });
-        }
-
-        let shard_hashes: Vec<String> = shard_meta[tx_index].iter()
-            .map(|h| hex::encode(h))
+        let encoded_shards: Vec<String> = shards
+            .into_iter()
+            .map(|shard| general_purpose::STANDARD.encode(&shard))
             .collect();
 
+        // info!(
+        //     "Node {}: TX[{}] {:?}, hash = {}",
+        //     node_id, tx_index, padded, hex::encode(&tx_hash)
+        // );
+
         transactions.push(Transaction {
-            root: Sha256::digest(&pad_to_len(
-                format!("tx{}_round{}", tx_index + 1, round_id).into_bytes(),
-                transaction_size,
-            ))
-            .to_vec(),
-            shards: shard_structs,
-            accumulator: Some(encoded_acc.clone()),
-            shard_hashes: Some(shard_hashes),
+            root: tx_hash,
+            proofs: vec![],
+            shards: encoded_shards,
         });
     }
+
+    let batch_root = compute_merkle_root(&tx_hashes);
+    let batch_proofs: Vec<Vec<Vec<u8>>> = tx_hashes
+        .iter()
+        .enumerate()
+        .map(|(i, _)| compute_merkle_branch(&tx_hashes, i))
+        .collect();
+
+    for (i, hash) in tx_hashes.iter().enumerate() {
+        let proof = &batch_proofs[i];
+        if !verify_merkle_proof(hash, proof, &batch_root, i) {
+            error!("❌ Merkle proof verification failed for tx[{}]", i);
+            return Err(Error::msg(format!("Merkle proof failed at tx[{}]", i)));
+        }
+    }
+
+    info!(
+        "✅ Proposal ready: {} txs, Round {}, Batch Root: {}",
+        num_txs,
+        round_id,
+        hex::encode(&batch_root)
+    );
 
     Ok(ProposeRequest {
         base: BaseRequest {
@@ -905,9 +1060,11 @@ pub async fn create_transaction_data(
         },
         transactions,
         parents: parent_units,
-        batch_accumulator: encoded_acc,
+        batch_root,
+        batch_proofs,
     })
 }
+
 use std::{ sync::Arc, usize};
 use tokio::sync::Mutex;
 use tracing::{ error, info};
@@ -991,126 +1148,208 @@ pub fn check_size(shards: &[Vec<u8>], number_of_transactions: usize, transaction
 #[derive(Debug)]
 pub enum Event {
     RoundFinalized(u64),
-}use num_bigint::{BigInt, Sign};
-use num_traits::One;
-use rayon::prelude::*;
+}use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
+use tracing::{error, info};
 
-/// RSA-2048 modulus used for all operations
-pub fn get_modulus() -> BigInt {
-    BigInt::parse_bytes(b"2519590847565789349402718324004839857142928212620403202777713783604366202070\
-                          7595556264018525880784406918290641249515082189298559149176184502808489127\
-                          3562522293781971855916539641139942736573411618276031500127101821331960060\
-                          10713507615215201023218265236877223636045", 10)
-        .expect("Failed to parse RSA-2048 modulus")
-}
-
-/// Hash input to a unique prime using retry strategy
-// pub fn hash_to_integer(data: &[u8]) -> BigInt {
-//     let mut x = Sha256::digest(data).to_vec();
-//     loop {
-//         let candidate = BigInt::from_bytes_be(Sign::Plus, &x);
-//         if is_probably_prime(&candidate, 4) {   // 🛠️ Reduce from 16 → 4
-//             return candidate;
-//         }
-//         x = Sha256::digest(&x).to_vec();
-//     }
-// }
+use crate::structs:: requests::{DagUnit, Transaction};
 
 
-pub fn hash_to_integer(data: &[u8]) -> BigInt {
-    let hash = Sha256::digest(data).to_vec();
-    BigInt::from_bytes_be(Sign::Plus, &hash)
-}
-
-
-/// Miller-Rabin primality test
-pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
-    if *n <= BigInt::from(1u32) || n.is_even() {
-        return false;
+pub fn compute_merkle_root(hashes: &[Vec<u8>]) -> Vec<u8> {
+    if hashes.is_empty() {
+        return vec![0; 32]; // Standard default empty Merkle root
     }
 
-    let mut d = n - 1u32;
-    let mut r = 0;
-    while d.is_even() {
-        d /= 2u32;
-        r += 1;
-    }
-
-    let mut rng = rand::thread_rng();
-    'witness: for _ in 0..k {
-        let a = rng.gen_bigint_range(&BigInt::from(2u32), &(n - 2u32));
-        let mut x = a.modpow(&d, n);
-        if x == BigInt::one() || x == n - 1u32 {
-            continue;
-        }
-        for _ in 0..r - 1 {
-            x = x.modpow(&BigInt::from(2u32), n);
-            if x == n - 1u32 {
-                continue 'witness;
+    let mut current_level = hashes.to_vec();
+    
+    while current_level.len() > 1 {
+        let mut next_level = Vec::new();
+        
+        for chunk in current_level.chunks(2) {
+            let mut combined = chunk[0].clone();
+            
+            // If odd-sized level, duplicate the last element
+            if chunk.len() > 1 {
+                combined.extend(&chunk[1]);
+            } else {
+                combined.extend(&chunk[0]); // Duplication instead of zero-padding
             }
+
+            next_level.push(Sha256::digest(&combined).to_vec());
         }
-        return false;
-    }
-    true
-}
-
-/// Computes the accumulator using a radix (balanced binary tree) strategy
-pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-
-    // Map to primes in parallel
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
-
-    // Use tree reduction to multiply them
-    let total_product = parallel_product(primes);
-
-    g.modpow(&total_product, &n)
-}
-
-/// Generates proofs for each hash using radix-style subset exclusion
-pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = hashes.par_iter().map(|h| hash_to_integer(h)).collect();
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-    let len = primes.len();
-
-    // Compute prefix/suffix products
-    let mut prefix_products = vec![BigInt::one(); len + 1];
-    let mut suffix_products = vec![BigInt::one(); len + 1];
-
-    for i in 0..len {
-        prefix_products[i + 1] = &prefix_products[i] * &primes[i];
-    }
-    for i in (0..len).rev() {
-        suffix_products[i] = &suffix_products[i + 1] * &primes[i];
+        
+        current_level = next_level;
     }
 
-    (0..len)
-        .into_par_iter()
-        .map(|i| {
-            let product = &prefix_products[i] * &suffix_products[i + 1];
-            g.modpow(&product, &n)
-        })
-        .collect()
+    current_level[0].clone()
 }
 
-/// Parallel recursive product
-fn parallel_product(mut items: Vec<BigInt>) -> BigInt {
-    while items.len() > 1 {
-        items = items
+
+
+
+pub fn compute_merkle_branch(hashes: &[Vec<u8>], mut index: usize) -> Vec<Vec<u8>> {
+    let mut branch = vec![];
+    let mut current_level = hashes.to_vec();
+
+    while current_level.len() > 1 {
+        let is_right_node = index % 2 == 1;
+        let sibling_index = if is_right_node { index - 1 } else { index + 1 };
+
+        if sibling_index < current_level.len() {
+            branch.push(current_level[sibling_index].clone());
+        } else {
+            // 🔁 For odd-sized levels, include duplicate of current hash (not sibling)
+            branch.push(current_level[index].clone());
+        }
+
+        index /= 2;
+        current_level = current_level
             .chunks(2)
-            .map(|chunk| {
-                if chunk.len() == 2 {
-                    &chunk[0] * &chunk[1]
-                } else {
-                    chunk[0].clone()
-                }
+            .map(|pair| {
+                let left = &pair[0];
+                let right = if pair.len() == 2 { &pair[1] } else { &pair[0] };
+                Sha256::digest([left.clone(), right.clone()].concat()).to_vec()
             })
             .collect();
     }
-    items.pop().unwrap_or_else(BigInt::one)
+
+    branch
+}
+
+
+
+
+
+pub fn validate_merkle_branch(
+    leaf: &[u8],        // The leaf (shard hash)
+    proof: &[Vec<u8>],  // The proof path (Merkle branch)
+    index: usize,       // Index of the leaf in the original tree
+    expected_root: &[u8] // Expected Merkle root
+) -> bool {
+    let mut current_hash = leaf.to_vec();  // Start with the **actual leaf hash**
+    let mut current_index = index;
+
+    for sibling_hash in proof {
+        let combined = if current_index % 2 == 0 {
+            [current_hash.clone(), sibling_hash.clone()].concat()
+        } else {
+            [sibling_hash.clone(), current_hash.clone()].concat()
+        };
+
+        current_hash = Sha256::digest(&combined).to_vec();
+        current_index /= 2;
+    }
+
+    // info!(
+    //     "Validation result: Final hash = {:?}, Expected root = {:?}",
+    //     current_hash, expected_root
+    // );
+
+    current_hash == expected_root
+}
+
+
+
+/**
+ * **Reconstructs a DAG Unit from received transactions**
+ * - Extracts transactions from decoded shards.
+ * - Computes a separate Merkle root per transaction.
+ * - Generates a unique unit ID for DAG tracking.
+ */
+pub fn reconstruct_unit(
+    transactions: &[Transaction],
+    round_id: u64,
+    parent_units: Vec<String>, // ✅ use unit_id strings like "U1-1"
+    proposer_node: usize,
+    batch_merkle_root: Vec<u8>,
+) -> Result<DagUnit, String> {
+    if transactions.is_empty() {
+        return Err("Reconstruction failed: No transactions provided".to_string());
+    }
+
+    // info!(
+    //     "Reconstructing unit for round {} from {} transactions, parent count = {}, proposer = {}",
+    //     round_id, transactions.len(), parent_units.len(), proposer_node
+    // );
+
+
+    let reconstructed_transactions: Vec<Transaction> = transactions.iter().cloned().collect();
+    let unit_id = format!("U{}-{}", round_id, proposer_node);
+
+    // info!("✅ Reconstructed unit {} with Merkle root {}", unit_id, hex::encode(&batch_merkle_root));
+    Ok(DagUnit {
+        unit_id,
+        proposer_node,
+        round: round_id,
+        transactions: reconstructed_transactions,
+        parent_units,
+        merkle_root: batch_merkle_root, // ✅ Store actual root here
+        finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
+    })
+}
+
+
+
+
+
+
+
+/// Validate shard sizes
+pub fn validate_shard_sizes(shards: &[Vec<u8>], transaction_size: usize) -> Result<(), String> {
+    let total_size: usize = shards.iter().map(|shard| shard.len()).sum();
+    if total_size != transaction_size {
+        let error_message = format!(
+            "Shard size validation failed. Total shard size: {}, Expected transaction size: {}",
+            total_size, transaction_size
+        );
+        error!("{}", error_message);
+        return Err(error_message);
+    }
+
+    // info!(
+    //     "Shard size validation successful. Total shard size: {} matches transaction size: {}",
+    //     total_size, transaction_size
+    // );
+    Ok(())
+}
+
+
+/// Verifies a Merkle proof for a given leaf, its branch, and the expected root.
+///
+/// # Arguments
+/// * `leaf_hash` - The hash of the leaf node (i.e., tx.root)
+/// * `proof` - A vector of sibling hashes from the leaf to the root
+/// * `expected_root` - The root hash of the Merkle tree
+/// * `index` - The index of the leaf in the original tree (used to determine left/right sibling order)
+///
+/// # Returns
+/// `true` if the proof is valid, `false` otherwise
+pub fn verify_merkle_proof(
+    leaf_hash: &[u8],
+    proof: &Vec<Vec<u8>>,
+    expected_root: &[u8],
+    mut index: usize,
+) -> bool {
+    let mut computed_hash = leaf_hash.to_vec();
+
+    for sibling_hash in proof {
+        let mut hasher = Sha256::new();
+
+        if index % 2 == 0 {
+            // Current node is on the left
+            hasher.update(&computed_hash);
+            hasher.update(sibling_hash);
+        } else {
+            // Current node is on the right
+            hasher.update(sibling_hash);
+            hasher.update(&computed_hash);
+        }
+
+        computed_hash = hasher.finalize().to_vec();
+        index /= 2;
+    }
+
+    computed_hash == expected_root
 }
 use reqwest::Client;
 use tokio::sync::{mpsc, Mutex};
@@ -1172,7 +1411,7 @@ async fn execute_transaction_logic(
 
             // ✅ Step 2: Send proposal
             info!("📤 Node {}: Sending proposal for round {}...", node_id, round);
-            if let Err(e) = send_proposals(node.clone(), propose_request).await {
+            if let Err(e) = send_proposals( node.clone(), propose_request).await {
                 error!(
                     "❌ Node {}: Failed to send proposal for round {}. Error: {:?}",
                     node_id, round, e
@@ -1200,138 +1439,6 @@ async fn execute_transaction_logic(
 
     info!("✅ Node: All rounds completed successfully.");
     Ok(())
-}
-use num_bigint::{BigInt, RandBigInt, Sign};
-use num_traits::{One, Zero};
-use num_integer::Integer;
-use rayon::prelude::*;
-use sha2::{Sha256, Digest};
-use rand::thread_rng;
-use tracing::info;
-
-/// ✅ RSA-1024 modulus (fast & safe enough for ephemeral accumulator use)
-pub fn get_modulus() -> BigInt {
-    BigInt::parse_bytes(b"134078079299425970995740249982058461274793658205923933\
-                          77723561443721764030073546976801874298166903427690031", 10)
-        .expect("Failed to parse RSA-1024 modulus")
-}
-
-/// ✅ Hash to probable 128-bit prime using retry + nonce suffix
-pub fn hash_to_prime_128(data: &[u8]) -> BigInt {
-    let mut digest = Sha256::digest(data).to_vec();
-    for _ in 0..20 {
-        let mut candidate_bytes = digest[..16].to_vec();
-        candidate_bytes[0] |= 0b1000_0000;
-        candidate_bytes[15] |= 0b0000_0001;
-        let candidate = BigInt::from_bytes_be(Sign::Plus, &candidate_bytes);
-        if is_probably_prime(&candidate, 4) {
-            return candidate;
-        }
-        digest = Sha256::digest(&digest).to_vec(); // retry with next hash
-    }
-    BigInt::from_bytes_be(Sign::Plus, &digest[..16]) // fallback (rare)
-}
-
-/// ✅ Miller-Rabin primality test (4 rounds)
-pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
-    if *n <= BigInt::from(1u32) || n.is_even() {
-        return false;
-    }
-    let mut d = n - 1u32;
-    let mut r = 0;
-    while d.is_even() {
-        d /= 2u32;
-        r += 1;
-    }
-    let mut rng = thread_rng();
-    'witness: for _ in 0..k {
-        let a = rng.gen_bigint_range(&BigInt::from(2u32), &(n - 2u32));
-        let mut x = a.modpow(&d, n);
-        if x == BigInt::one() || x == n - 1u32 {
-            continue;
-        }
-        for _ in 0..r - 1 {
-            x = x.modpow(&BigInt::from(2u32), n);
-            if x == n - 1u32 {
-                continue 'witness;
-            }
-        }
-        return false;
-    }
-    true
-}
-
-/// ✅ Compute RSA accumulator from hashed values
-pub fn compute_accumulator_radix(hashes: &[Vec<u8>]) -> BigInt {
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-
-    let primes: Vec<BigInt> = hashes
-        .par_iter()
-        .enumerate()
-        .map(|(i, hash)| {
-            let prime = hash_to_prime_128(hash);
-            // info!("🔢 compute_accumulator_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
-            prime
-        })
-        .collect();
-
-    let product = primes.into_par_iter().reduce(BigInt::one, |a, b| a * b);
-    g.modpow(&product, &n)
-}
-
-/// ✅ Generate exclusion proofs using prefix/suffix scan
-pub fn generate_proofs_radix(hashes: &[Vec<u8>]) -> Vec<BigInt> {
-    let primes: Vec<BigInt> = hashes
-        .par_iter()
-        .enumerate()
-        .map(|(i, hash)| {
-            let prime = hash_to_prime_128(hash);
-            // info!("🔁 generate_proofs_radix[{}]: hash={}, prime={}", i, hex::encode(hash), prime);
-            prime
-        })
-        .collect();
-
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-    let len = primes.len();
-
-    let mut prefix = vec![BigInt::one(); len + 1];
-    for i in 0..len {
-        prefix[i + 1] = &prefix[i] * &primes[i];
-    }
-
-    let mut suffix = vec![BigInt::one(); len + 1];
-    for i in (0..len).rev() {
-        suffix[i] = &suffix[i + 1] * &primes[i];
-    }
-
-    (0..len)
-        .into_par_iter()
-        .map(|i| {
-            let product = &prefix[i] * &suffix[i + 1];
-            let proof = g.modpow(&product, &n);
-            // info!("📜 Proof[{}] = {}", i, hex::encode(proof.to_bytes_be().1.clone()));
-            proof
-        })
-        .collect()
-}
-
-/// ✅ Batch verification of (prime, proof) pairs
-pub fn verify_proofs(accumulator: &BigInt, pairs: &[(BigInt, BigInt)]) -> bool {
-    pairs.par_iter().all(|(p, proof)| verify_proof_with_prime(accumulator, p, proof))
-}
-
-/// ✅ Verify individual proof given prime
-pub fn verify_proof_with_prime(acc: &BigInt, prime: &BigInt, proof: &BigInt) -> bool {
-    proof.modpow(prime, &get_modulus()) == *acc
-}
-
-/// ✅ Verify proof from original hash
-pub fn verify_proof(acc: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
-    let prime = hash_to_prime_128(hash);
-    // info!("🧪 Verifying: hash={}, prime={}, proof={}", hex::encode(hash), prime, hex::encode(proof.to_bytes_be().1.clone()));
-    proof.modpow(&prime, &get_modulus()) == *acc
 }
 use anyhow::Error;
 use reqwest::Client;
@@ -1376,10 +1483,9 @@ pub async fn check_all_nodes_health(client: &Client, node: Arc<Mutex<Node>>) -> 
     all_healthy
 }
 
-
 /// **🛠️ Wait until all nodes report healthy**  
-/// - Retries up to 10 times, checking every 3 seconds.
-pub async fn wait_for_all_nodes_health( node: Arc<Mutex<Node>>) -> Result<(), Error> {
+/// - Retries every second until all nodes are healthy.
+pub async fn wait_for_all_nodes_health(node: Arc<Mutex<Node>>) -> Result<(), Error> {
     loop {
         info!("🔍 Checking health of all nodes...");
 
@@ -1388,16 +1494,12 @@ pub async fn wait_for_all_nodes_health( node: Arc<Mutex<Node>>) -> Result<(), Er
             node_guard.nodes.clone()
         };
 
-        let local_client = reqwest::Client::builder()
-        .pool_max_idle_per_host(64)
-        .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
-        .build()
-        .expect("Failed to build HTTP client");
         let mut unhealthy_nodes = Vec::new();
+        let client = reqwest::Client::new(); // Create once
 
         let mut health_checks = vec![];
         for node_url in nodes {
-            let client = local_client.clone();
+            let client = client.clone(); // ✅ clone per task
             let url = node_url.clone();
 
             let check = async move {
@@ -1434,6 +1536,7 @@ pub async fn wait_for_all_nodes_health( node: Arc<Mutex<Node>>) -> Result<(), Er
 
 
 
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -1451,7 +1554,7 @@ use std::{
 };
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
-use tracing::info;
+use tracing:: info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
 use super::{requests::{CommitRequest, DagUnit, ProposeRequest}, shard_aggregator::ShardAggregator};
 use crate::utils::events::Event;
@@ -1527,6 +1630,8 @@ impl Node {
     }
 
 
+
+    
     // pub fn get_message_count(&self) -> u64 {
     //     self.message_count.load(Ordering::Relaxed)
     // }
@@ -1540,7 +1645,7 @@ impl Node {
         let event_receiver = mpsc::channel(100).1;
         let node_clone = node.clone();
         tokio::spawn(async move {
-            if let Err(e) = round_manager_task(node_clone, event_receiver).await {
+            if let Err(e) = round_manager_task(node_clone,event_receiver).await {
                 tracing::error!("RoundManager encountered an error after setting RBCProcessor: {:?}", e);
             }
         });
@@ -1612,7 +1717,7 @@ let node_guard = node.lock().await;
         }
 
         let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
-        tracing::info!(
+        info!(
             "Node {}: Added proposal for round {} from node {}. Count: {}/{}",
             node_id, round_id,propose_request.base.proposing_node_id, proposal_count, required_proposals
         );
@@ -1627,6 +1732,21 @@ let node_guard = node.lock().await;
         dag.get(&round_id)
             .and_then(|units| units.last())
             .map(|unit| unit.unit_id.clone())
+    }
+
+    pub async fn get_finalized_units_for_round(&self, round: u64) -> Vec<DagUnit> {
+        if round == 0 {
+            return vec![];
+        }
+    
+        let dag = self.dag.lock().await;
+    
+        dag.get(&round)
+            .cloned() // clone Vec<DagUnit>
+            .unwrap_or_default()
+            .into_iter()
+            .filter(|unit| !unit.transactions.is_empty()) // exclude empty units
+            .collect()
     }
 
     /// **🔢 Generate Next Unit ID with Dynamic Pattern (U<round>-<index>)**
@@ -1671,21 +1791,34 @@ let node_guard = node.lock().await;
     /// **🔗 Retrieve All Parents for a Round**
     /// **🔗 Retrieve All Parents for the Previous Round**
     pub async fn get_all_parents(&self, round_id: u64) -> Vec<String> {
-        if round_id == 1 {
-            // First round has no parents
-            return Vec::new();
-        }
-
         let dag_snapshot = {
             let dag = self.dag.lock().await;
             dag.clone()
         };
-
-        // 🔍 Fetch units from the previous round
-        dag_snapshot.get(&(round_id - 1))
-            .map(|units| units.iter().map(|u| u.unit_id.clone()).collect())
-            .unwrap_or_else(Vec::new)
+    
+        let mut all_parents = Vec::new();
+    
+        for r in 1..round_id {
+            if let Some(units) = dag_snapshot.get(&r) {
+                for unit in units {
+                    if !unit.transactions.is_empty() {
+                        all_parents.push(unit.unit_id.clone());
+                    }
+                }
+            }
+        }
+    
+        info!(
+            "Node {}: All parents from rounds 1 to {}: {:?}",
+            self.id,
+            round_id - 1,
+            all_parents
+        );
+    
+        all_parents
     }
+    
+    
 
     
 }
@@ -1698,20 +1831,11 @@ pub struct BaseRequest {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ShardWithProofs {
-    pub shard_b64: String,
-    pub proofs: Vec<String>, // each entry is a round-specific proof
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub root: Vec<u8>,
-    pub shards: Vec<ShardWithProofs>,
-    pub accumulator: Option<String>,           // the group accumulator
-    pub shard_hashes: Option<Vec<String>>,
+    pub root: Vec<u8>,    // SHA256(tx)
+    pub proofs: Vec<Vec<String>>, // unused
+    pub shards: Vec<String>,      // contains base64-encoded 256-byte tx
 }
-
-
 
 
 
@@ -1719,8 +1843,9 @@ pub struct Transaction {
 pub struct ProposeRequest {
     pub base: BaseRequest,
     pub transactions: Vec<Transaction>,
-    pub parents: Vec<Vec<u8>>,
-    pub batch_accumulator: String,  
+    pub parents: Vec<String>, // ✅ Not Vec<Vec<u8>>
+    pub batch_root: Vec<u8>,
+    pub batch_proofs: Vec<Vec<Vec<u8>>>,
 }
 
 
@@ -1754,7 +1879,7 @@ pub struct DagUnit {
     pub round: u64,
     pub transactions: Vec<Transaction>,
     pub parent_units: Vec<String>, // ["U1-1", "U1-2"]
-    pub accumulator_root: Vec<u8>,       // ✅ Single batch root
+    pub merkle_root: Vec<u8>,       // ✅ Single batch root
     pub finalization_timestamp: u64,
 }
 
@@ -1773,7 +1898,7 @@ use serde::Serialize;
 pub struct Response {
 pub status: String,
 }use std::collections::HashMap;
-use tracing::{error, info, warn};
+use tracing::{info, warn, error};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 /// ShardAggregator holds partial shards for a transaction across prevotes.
@@ -1782,12 +1907,6 @@ pub struct ShardAggregator {
     pub total_shards: usize,
     // Mapping: (round_id, tx_index, sender_id) => shard
     pub shard_store: HashMap<(u64, usize, usize), Vec<u8>>,
-}
-
-impl Default for ShardAggregator {
-    fn default() -> Self {
-        Self::new(1, 1)
-    }
 }
 
 impl ShardAggregator {
@@ -1806,14 +1925,30 @@ impl ShardAggregator {
     /// Try to reconstruct a transaction from collected shards.
     pub fn try_reconstruct(&self, round_id: u64, tx_index: usize, transaction_size: usize) -> Option<Vec<u8>> {
         let mut shards: Vec<Option<Vec<u8>>> = vec![None; self.total_shards];
-
+    
         for ((r, tx_i, sender), shard) in &self.shard_store {
             if *r == round_id && *tx_i == tx_index && *sender < self.total_shards {
+                // info!(
+                //     "Aggregator: Found shard for tx[{}] round {}, sender {} ({} bytes)",
+                //     tx_index, round_id, sender, shard.len()
+                // );
                 shards[*sender] = Some(shard.clone());
             }
         }
-
+    
         let received_count = shards.iter().filter(|s| s.is_some()).count();
+        let received_indices: Vec<_> = shards
+            .iter()
+            .enumerate()
+            .filter(|(_, s)| s.is_some())
+            .map(|(i, _)| i)
+            .collect();
+    
+        // info!(
+        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
+        //     tx_index, round_id, received_count, self.total_shards, received_indices
+        // );
+    
         if received_count < self.data_shards {
             warn!(
                 "Aggregator: Not enough shards to reconstruct tx[{}] in round {}: have {}, need {}",
@@ -1821,7 +1956,7 @@ impl ShardAggregator {
             );
             return None;
         }
-
+    
         let mut shards_clone = shards.clone();
         let rs = match ReedSolomon::new(self.data_shards, self.total_shards - self.data_shards) {
             Ok(r) => r,
@@ -1830,31 +1965,50 @@ impl ShardAggregator {
                 return None;
             }
         };
-
+    
         if let Err(e) = rs.reconstruct(&mut shards_clone) {
             error!(
-                "Aggregator: Failed to reconstruct tx[{}] in round {}: {:?}",
+                "Aggregator: Failed to reconstruct shards for tx[{}] in round {}: {:?}",
                 tx_index, round_id, e
             );
             return None;
         }
-
+    
+        // Collect only data shards
         let combined_data: Vec<u8> = shards_clone[..self.data_shards]
             .iter()
             .flat_map(|opt| opt.clone().unwrap_or_default())
             .collect();
-
         if combined_data.len() < transaction_size {
             error!(
-                "Aggregator: Reconstructed tx[{}] too short: got {}, expected {}",
-                tx_index, combined_data.len(), transaction_size
+                "Aggregator: Reconstructed data too short: got {}, expected {}",
+                combined_data.len(),
+                transaction_size
             );
             return None;
         }
-
         let padded = combined_data[..transaction_size].to_vec();
+        // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
+        // 🚨 Debug hash from aggregator side
+        use sha2::{Sha256, Digest};
+        let hash = Sha256::digest(&padded);
+        // info!(
+        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
+        //     tx_index,
+        //     round_id,
+        //     padded.len(),
+        //     hex::encode(&hash)
+        // );
+    
+        // info!(
+        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
+        //     tx_index,
+        //     padded
+        // );
+    
         Some(padded)
     }
+    
 
     pub fn clear_round(&mut self, round_id: u64) {
         self.shard_store.retain(|(r, _, _), _| *r != round_id);
@@ -1904,14 +2058,14 @@ from datetime import datetime
 class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-
-        INSTANCE_TYPE = "c5n.xlarge"  # Define the instance type
-        INSTANCES_NUMBER = 32 # Define the number of instances
-        BATCH_SIZE = 256  # Define the number of transactions in a batch
+       
+        INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
+        INSTANCES_NUMBER = 104 # Define the number of instances
+        BATCH_SIZE =  128#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 3 # Number of rounds for the consensus process
+        TOTAL_ROUNDS = 4 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -1967,40 +2121,68 @@ class TestAleph(Stack):
                 # credit_specification=ec2.CpuCredits.UNLIMITED,
             )
 
-            # Part 1: Initial Setup Commands
             ec2_instance.user_data.add_commands(
-                # Install dependencies and prepare environment
+                # System updates and tools
                 "sudo yum update -y",
                 "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
 
-                # Increase system limits
-                "echo 'fs.inotify.max_user_watches=5242880' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.inotify.max_user_instances=2048' | sudo tee -a /etc/sysctl.conf",
-                "echo 'fs.file-max=1000000' | sudo tee -a /etc/sysctl.conf",
-                "sudo sysctl -p",
+                # Increase max number of incoming connections
+                "echo 'net.core.somaxconn=65535' >> /etc/sysctl.conf",
 
-                "echo '* soft nofile 1048576' | sudo tee -a /etc/security/limits.conf",
-                "echo '* hard nofile 1048576' | sudo tee -a /etc/security/limits.conf",
+                # Increase maximum number of packets allowed to queue when interface receives them faster than kernel can process
+                "echo 'net.core.netdev_max_backlog=16384' >> /etc/sysctl.conf",
 
-                # Create necessary logs
+                # Max number of connections that can be queued for acceptance
+                "echo 'net.ipv4.tcp_max_syn_backlog=65535' >> /etc/sysctl.conf",
+
+                # Reduce time TCP waits before closing sockets (helps with many short-lived connections)
+                "echo 'net.ipv4.tcp_fin_timeout=15' >> /etc/sysctl.conf",
+
+                # Allow reuse of sockets in TIME_WAIT (lowers connection overhead)
+                "echo 'net.ipv4.tcp_tw_reuse=1' >> /etc/sysctl.conf",
+
+                # Frequency of TCP keepalive messages (helps detect dead peers faster)
+                "echo 'net.ipv4.tcp_keepalive_time=120' >> /etc/sysctl.conf",
+
+                # Allow larger port range to reduce bind failures under many outbound connections
+                "echo 'net.ipv4.ip_local_port_range=1024 65535' >> /etc/sysctl.conf",
+
+                # Raise system-wide file descriptor cap (needed for many open connections/files)
+                "echo 'fs.file-max=2097152' >> /etc/sysctl.conf",
+
+                # Apply the sysctl changes immediately
+                "sysctl -p",
+
+                # Set soft limit for number of open file descriptors per user
+                "echo '* soft nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Set hard limit for number of open file descriptors per user
+                "echo '* hard nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Ensure root user also gets higher limits
+                "echo 'root soft nofile 1048576' | tee -a /etc/security/limits.conf",
+                "echo 'root hard nofile 1048576' | tee -a /etc/security/limits.conf",
+
+                # Enable PAM module to enforce limits (required for limits.conf to take effect)
+                "grep -qxF 'session required pam_limits.so' /etc/pam.d/common-session || echo 'session required pam_limits.so' | tee -a /etc/pam.d/common-session",
+                "grep -qxF 'session required pam_limits.so' /etc/pam.d/su || echo 'session required pam_limits.so' | tee -a /etc/pam.d/su",
+
+                # Raise ulimit for open files (applies immediately to shell, useful for logging/tests)
+                "ulimit -n 1048576",
+                # Aleph setup
                 "mkdir -p /aleph/logs/",
-                "touch /aleph/logs/node_status",
-                "touch /aleph/logs/cpu_usage",
-                "touch /aleph/logs/mem_usage",
+                "touch /aleph/logs/node_status /aleph/logs/cpu_usage /aleph/logs/mem_usage",
                 "chmod -R 777 /aleph/logs/",
                 "echo 'Starting cpu and memory logs' >> /aleph/logs/node_status",
                 "nohup sar -u 1 >> /aleph/logs/cpu_usage 2>&1 &",
                 "nohup sar -r 1 >> /aleph/logs/mem_usage 2>&1 &",
-                # Continue setup for Aleph node
                 "aws s3 cp s3://aleph-research/aleph_rbc /aleph/ --quiet",
-                # "aws s3 cp s3://aleph-research/aleph_start /aleph/ --quiet",
                 "sudo chmod -R 777 /aleph/",
 
-                # Retrieve and log the private IP for ongoing reference
+                # Capture IP and register
                 "PRIVATE_IP=$(curl -s http://169.254.169.254/latest/meta-data/local-ipv4)",
                 "echo \"PRIVATE_IP = $PRIVATE_IP\" >> /aleph/logs/node_status",
 
-                # Register node as ready with the IP Manager using the expanded PRIVATE_IP
                 f"""
                 while true; do
                     RESPONSE=$(curl -s -o /dev/null -w "%{{http_code}}" -X POST -H 'Content-Type: application/json' -d '{{"node_ip": "'$PRIVATE_IP'"}}' http://{ip_manager_instance.instance_private_ip}:8080/node_ready)
@@ -2009,22 +2191,25 @@ class TestAleph(Stack):
                         break
                     else
                         echo "Node registration failed with status $RESPONSE. Retrying..." >> /aleph/logs/node_status
-                        sleep 5  # Wait before retrying
+                        sleep 5
                     fi
                 done
                 """,
 
-                # Loop to check IP Manager endpoint readiness
-                "while true; do",
-                f"  if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '\"all_ready\": true'; then",
-                "    echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status;",
-                "    break;",  # Exit loop if IP Manager is reachable and all nodes are ready
-                "  else",
-                "    echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status;",
-                "  fi",
-                "  sleep 5;",  # Wait before retrying
-                "done"
+                # Wait for IP manager to report readiness
+                f"""
+                while true; do
+                    if curl -s http://{ip_manager_instance.instance_private_ip}:8080/check_all_ready | grep -q '"all_ready": true'; then
+                        echo 'IP Manager is reachable and all nodes are ready.' >> /aleph/logs/node_status
+                        break
+                    else
+                        echo 'IP Manager not ready, retrying...' >> /aleph/logs/node_status
+                    fi
+                    sleep 5
+                done
+                """,
             )
+
 
             ec2_instance.user_data.add_commands(
                 # Extract the private IP from logs
@@ -2079,8 +2264,9 @@ class TestAleph(Stack):
 
                 # Start the Aleph APIs
                 "echo 'Attempting to execute aleph_rbc with configuration' >> /aleph/logs/node_status;",
-                "ulimit -n 1048576",
-                "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
+                # Launch aleph_rbc with FD limits
+                "ulimit -n 1048576 && /aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &"
+                # "/aleph/aleph_rbc --config /aleph/aleph-node-config.toml >> /aleph/logs/node_status 2>&1 &",
 
                 # Wait for the aleph_rbc server to be ready (simple retry logic)
                 "echo 'Waiting for aleph_rbc to be ready on port 30333' >> /aleph/logs/node_status;",
@@ -2453,441 +2639,521 @@ async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, prop
     true
 }
 #[cfg(test)]
-mod accumulator_tests {
-    use std::time::Instant;
-    use base64::{engine::general_purpose, Engine};
-    use num_bigint::{BigInt, Sign};
-    use sha2::{Sha256, Digest};
-    use crate::{structs::{node::Node, requests::PrevoteRequest, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_radix, generate_proofs_radix, get_modulus, hash_to_prime_128, verify_proof}}};
-
-    fn generate_fake_hashes(count: usize) -> Vec<Vec<u8>> {
-        (0..count).map(|i| {
-            let data = format!("dummy_tx_{}", i).into_bytes();
-            Sha256::digest(&data).to_vec()
-        }).collect()
-    }
-
-    #[test]
-fn test_shard_aggregator_multiple_rounds_does_not_panic() {
-    let mut aggregator = ShardAggregator::new(2, 4); // 2 data shards, 4 total
-
-    let tx_index = 0;
-    let shard_data = vec![1u8; 128];
-
-    // Insert valid shards for round 1
-    aggregator.insert_shard(1, tx_index, 0, shard_data.clone());
-    aggregator.insert_shard(1, tx_index, 1, shard_data.clone());
-
-    // Insert unrelated shard from round 2 (should be ignored safely)
-    aggregator.insert_shard(2, tx_index, 0, shard_data.clone());
-
-    // This should NOT panic and should succeed with reconstruction
-    let result = aggregator.try_reconstruct(1, tx_index, 256);
-    assert!(result.is_some(), "Expected reconstruction for round 1");
-}
-
-
-    #[test]
-    fn test_generate_proofs_radix_profiled() {
-        let count = 256; // adjust for load
-        let hashes = generate_fake_hashes(count);
-
-        let t0 = Instant::now();
-        let _acc = compute_accumulator_radix(&hashes);
-        println!("🔢 Accumulator computed in: {:?}", t0.elapsed());
-
-        let t1 = Instant::now();
-        let proofs = generate_proofs_radix(&hashes);
-        println!("🧮 Proofs generated in: {:?}", t1.elapsed());
-
-        assert_eq!(proofs.len(), count);
-        println!("✅ test_generate_proofs_radix_profiled passed with {} proofs", count);
-    }
-
-
-
-
-    #[cfg(test)]
-    mod accumulator_tests {
-        use std::sync::Arc;
-        use base64::{engine::general_purpose, Engine};
-        use num_bigint::{BigInt, Sign};
-        use sha2::{Digest, Sha256};
-        use crate::structs::node::Node;
-        use crate::utils::create_transaction_data::create_transaction_data;
-        use crate::utils::rsa_accumulator_util::{verify_proof, hash_to_prime_128, get_modulus};
-    
-        #[tokio::test]
-        async fn test_rsa_proposal_valid_proof_snapshot_runtime() {
-            let dummy_node = Node::new(
-                0,
-                5,
-                "127.0.0.1:8080".to_string(),
-                vec![],
-                "".to_string(),
-                2,
-                256,
-                4,
-                1,
-            );
-    
-            let proposal = create_transaction_data(dummy_node)
-                .await
-                .expect("Failed to generate transaction data");
-    
-            let tx = &proposal.transactions[0];
-            let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-            let acc_bytes = general_purpose::STANDARD.decode(acc_b64).expect("Accumulator decode failed");
-            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-            let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
-    
-            println!("\n🧪 Validating generated transaction (tx[0])...");
-            println!("Accumulator (base64): {}", acc_b64);
-            println!("Accumulator (bytes): 0x{}", hex::encode(&acc_bytes));
-    
-            for (j, hash_hex) in shard_hashes.iter().enumerate() {
-                let hash_bytes = hex::decode(hash_hex).expect("Invalid hex");
-                let proofs = &tx.shards[j].proofs;
-                assert!(!proofs.is_empty(), "Missing proof for shard[{}]", j);
-                let proof_b64 = &proofs[0];
-                let proof_bytes = general_purpose::STANDARD.decode(proof_b64).expect("Proof decode failed");
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                let prime = hash_to_prime_128(&hash_bytes);
-                let lhs = proof.modpow(&prime, &get_modulus());
-    
-                println!("Shard[{}]:", j);
-                println!("  hash      = {}", hash_hex);
-                println!("  prime     = {}", prime);
-                println!("  proof     = {}", hex::encode(&proof_bytes));
-                println!("  result    = 0x{}", hex::encode(lhs.to_bytes_be().1.clone()));
-    
-                assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
-                    "❌ Verification failed for shard[{}]",
-                    j
-                );
-            }
-    
-            println!("✅ test_rsa_proposal_valid_proof_snapshot_runtime passed");
-        }
-    }
-    
-
-
-    #[tokio::test]
-    async fn test_rsa_proposal_valid_proof_snapshot_runtime() {
-        let dummy_node = Node::new(
-            0,
-            5,
-            "127.0.0.1:8080".to_string(),
-            vec![],
-            "".to_string(),
-            2,
-            256,
-            4,
-            1,
-        );
-
-        let proposal = create_transaction_data(dummy_node)
-            .await
-            .expect("Failed to generate transaction data");
-
-        let tx = &proposal.transactions[0];
-        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-        let acc_bytes = general_purpose::STANDARD.decode(acc_b64).expect("Accumulator decode failed");
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
-
-        println!("\n🧪 Validating generated transaction (tx[0])...");
-        println!("Accumulator (base64): {}", acc_b64);
-        println!("Accumulator (bytes): 0x{}", hex::encode(&acc_bytes));
-
-        for (j, hash_hex) in shard_hashes.iter().enumerate() {
-            let hash_bytes = hex::decode(hash_hex).expect("Invalid hex");
-            let proofs = &tx.shards[j].proofs;
-            assert!(!proofs.is_empty(), "Missing proof for shard[{}]", j);
-            let proof_b64 = &proofs[0];
-            let proof_bytes = general_purpose::STANDARD.decode(proof_b64).expect("Proof decode failed");
-            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-            let prime = hash_to_prime_128(&hash_bytes);
-            let lhs = proof.modpow(&prime, &get_modulus());
-
-            println!("Shard[{}]:", j);
-            println!("  hash      = {}", hash_hex);
-            println!("  prime     = {}", prime);
-            println!("  proof     = {}", hex::encode(&proof_bytes));
-            println!("  result    = 0x{}", hex::encode(lhs.to_bytes_be().1.clone()));
-
-            assert!(
-                verify_proof(&accumulator, &hash_bytes, &proof),
-                "❌ Verification failed for shard[{}]",
-                j
-            );
-        }
-
-        println!("✅ test_rsa_proposal_valid_proof_snapshot_runtime passed");
-    }
-
-    #[tokio::test]
-    async fn test_invalid_proof_or_shard_order_should_fail() {
-        let dummy_node = Node::new(
-            0,
-            5,
-            "127.0.0.1:8080".to_string(),
-            vec![],
-            "".to_string(),
-            2,
-            256,
-            4,
-            1,
-        );
-    
-        let proposal = create_transaction_data(dummy_node)
-            .await
-            .expect("Failed to generate transaction data");
-    
-        let tx = &proposal.transactions[0];
-        let acc_b64 = tx.accumulator.as_ref().unwrap();
-        let acc_bytes = general_purpose::STANDARD.decode(acc_b64).unwrap();
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().unwrap();
-    
-        println!("\n🧪 Testing with mismatched random data as proof...");
-    
-        for (j, hash_hex) in shard_hashes.iter().enumerate() {
-            let hash_bytes = hex::decode(hash_hex).unwrap();
-    
-            // 👇 Create a **random unrelated proof** by rotating, double-hashing, and decoding
-            let unrelated_data = format!("random_noise_shard_{}", j);
-            let unrelated_hash = Sha256::digest(unrelated_data.as_bytes());
-            let unrelated_proof = BigInt::from_bytes_be(Sign::Plus, &unrelated_hash);
-    
-            let result = verify_proof(&accumulator, &hash_bytes, &unrelated_proof);
-            assert!(
-                !result,
-                "❌ Expected verification to fail for hash[{}] with unrelated proof, but it passed!",
-                j
-            );
-        }
-    
-        println!("✅ test_invalid_proof_or_shard_order_should_fail passed");
-    }
-    
-    #[tokio::test]
-    async fn test_current_logic_validates_itself() {
-        let dummy_node = Node::new(0, 5, "127.0.0.1:8080".to_string(), vec![], "".to_string(), 1, 256, 4, 1);
-        let proposal = create_transaction_data(dummy_node).await.unwrap();
-    
-        let tx = &proposal.transactions[0];
-        let acc_b64 = tx.accumulator.as_ref().unwrap();
-        let acc_bytes = base64::engine::general_purpose::STANDARD.decode(acc_b64).unwrap();
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().unwrap();
-    
-        for (j, hash_hex) in shard_hashes.iter().enumerate() {
-            let hash_bytes = hex::decode(hash_hex).unwrap();
-            let proof_b64 = &tx.shards[j].proofs[0];
-            let proof_bytes = base64::engine::general_purpose::STANDARD.decode(proof_b64).unwrap();
-            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-    
-            assert!(
-                verify_proof(&accumulator, &hash_bytes, &proof),
-                "Proof verification failed for shard {}",
-                j
-            );
-        }
-    }
-    
-
-   
-
-    #[tokio::test]
-    async fn test_invalid_accumulator_detection() {
-        let dummy_node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 1, 256, 4, 1);
-        let mut proposal = create_transaction_data(dummy_node.clone()).await.unwrap();
-    
-        // ❌ Tamper the batch-level accumulator
-        proposal.batch_accumulator = "ZmFrZV9iYXNlNjRfYWNjdW11bGF0b3I=".into(); // base64("fake_base64_accumulator")
-    
-        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 1, 256, 4, 1);
-        let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), proposal).await;
-    
-        assert!(result.is_err(), "Tampered batch-level accumulator should fail verification");
-    }
-    
-
-
-
-
-
-#[tokio::test]
-async fn test_propose_to_prevote_cross_validation() {
-    let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-    let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
-
-    // Step 1: Generate proposal from proposer
-    let proposal = create_transaction_data(proposer.clone())
-        .await
-        .expect("Proposal creation failed");
-
-    // Step 2: Pass it to verifier node via handle_propose
-    let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), proposal.clone()).await;
-    assert!(result.is_ok(), "handle_propose failed on valid proposal");
-
-    // Step 3: Simulate the prevote step using handle_prevote
-    let prevote = PrevoteRequest {
-        proposals: vec![proposal],
-        sender_url: "127.0.0.1:8080".into(),
-        sender_id: 0,
-    };
-
-    let result = crate::handlers::handle_prevote::handle_prevote(verifier.clone(), prevote).await;
-    assert!(result.is_ok(), "handle_prevote failed on valid prevote");
-}
-
-
-
-
-    
-}#[cfg(test)]
-mod accumulator_tests {
-    use std::time::Instant;
-    use num_bigint::{BigInt, Sign};
-    use sha2::{Sha256, Digest};
-    use crate::utils::rsa_accumulator_util::{generate_proofs_radix, compute_accumulator_radix};
-
-    
-}#[cfg(test)]
 mod tests {
     use std::sync::Arc;
-    use base64::{engine::general_purpose, Engine};
-    use num_bigint::{BigInt, Sign};
+    use reed_solomon_erasure::galois_8::ReedSolomon;
+    use reqwest::Client;
     use sha2::{Digest, Sha256};
-    use crate::structs::node::Node;
-    use crate::utils::create_transaction_data::create_transaction_data;
-    use crate::utils::rsa_accumulator_util::verify_proof;
+    use tracing::info;
+    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::{DagUnit, PrevoteRequest, Transaction}}, utils::{
+        create_transaction_data::{create_transaction_data, pad_to_len},
+        merkle_utils::{compute_merkle_branch, compute_merkle_root, validate_merkle_branch, verify_merkle_proof},
+    }};
+    const TX_SIZE: usize = 256; // ✅ Make this configurable if needed
 
-    #[tokio::test]
-    async fn test_create_and_verify_transaction_batch() {
-        let dummy_node = Node::new(
-            0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-            25, 256, 4, 1
-        );
+    fn generate_mock_tx_hashes(n: usize) -> Vec<Vec<u8>> {
+        (0..n)
+            .map(|i| {
+                let content = format!("tx_content_{}", i);
+                let padded = pad_to_len(content.into_bytes(), TX_SIZE);
+                Sha256::digest(&padded).to_vec()
+            })
+            .collect()
+    }
 
-        let proposal = create_transaction_data(dummy_node)
-            .await
-            .expect("Failed to generate transaction data");
+    #[test]
+    fn test_merkle_proof_verification_round_trip() {
+        let tx_hashes = generate_mock_tx_hashes(5); // Try different values: 3, 4, 5, 7, 8, 9
 
-        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-            let acc_bytes = general_purpose::STANDARD.decode(acc_b64).expect("Accumulator decode failed");
-            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-            let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
+        let root = compute_merkle_root(&tx_hashes);
+        assert_eq!(root.len(), 32, "Merkle root should be 32 bytes");
 
-            for (j, hash_hex) in shard_hashes.iter().enumerate() {
-                let shard = &tx.shards[j];
-                let proof_b64 = &shard.proofs[0];
-                let proof_bytes = general_purpose::STANDARD.decode(proof_b64).expect("Proof decode failed");
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                let hash_bytes = hex::decode(hash_hex).expect("Hash decode failed");
+        for (i, leaf) in tx_hashes.iter().enumerate() {
+            let proof = compute_merkle_branch(&tx_hashes, i);
+            let valid = verify_merkle_proof(leaf, &proof, &root, i);
 
-                assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
-                    "❌ Verification failed for tx[{}] shard[{}]", tx_index, j
-                );
-            }
+            assert!(
+                valid,
+                "Merkle proof failed for index {}: leaf = {:x?}, proof = {:?}, root = {:x?}",
+                i,
+                leaf,
+                proof.iter().map(hex::encode).collect::<Vec<_>>(),
+                root
+            );
         }
+    }
 
-        println!("✅ test_create_and_verify_transaction_batch passed");
+    #[test]
+    fn test_merkle_proof_should_fail_on_wrong_index() {
+        let tx_hashes = generate_mock_tx_hashes(4);
+        let root = compute_merkle_root(&tx_hashes);
+
+        let valid_index = 1;
+        let wrong_index = 2;
+        let leaf = &tx_hashes[valid_index];
+        let proof = compute_merkle_branch(&tx_hashes, valid_index);
+
+        let valid = verify_merkle_proof(leaf, &proof, &root, wrong_index);
+        assert!(
+            !valid,
+            "Proof should fail if index is incorrect (used {}, expected {})",
+            wrong_index,
+            valid_index
+        );
+    }
+
+    #[test]
+    fn test_merkle_proof_should_fail_on_wrong_leaf() {
+        let tx_hashes = generate_mock_tx_hashes(4);
+        let root = compute_merkle_root(&tx_hashes);
+
+        let valid_index = 1;
+        let wrong_leaf = vec![0u8; 32]; // bogus leaf
+        let proof = compute_merkle_branch(&tx_hashes, valid_index);
+
+        let valid = verify_merkle_proof(&wrong_leaf, &proof, &root, valid_index);
+        assert!(
+            !valid,
+            "Proof should fail if leaf is incorrect"
+        );
+    }
+
+    #[test]
+    fn test_merkle_tree_end_to_end_validation() {
+        use crate::utils::create_transaction_data::pad_to_len;
+        use crate::utils::merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof};
+        use sha2::{Sha256, Digest};
+    
+        let data_shards = 4;
+        let total_shards = 7;
+        let transaction_size = 250;
+        let shard_size = (transaction_size + data_shards - 1) / data_shards;
+        let total_txs = 6096;
+    
+        let mut tx_hashes = Vec::with_capacity(total_txs);
+    
+        for tx_index in 0..total_txs {
+            let content = format!("tx{}_round{}", tx_index + 1, 1);
+            let padded = pad_to_len(content.into_bytes(), transaction_size);
+    
+            // Simulate erasure encoding (like RSA test)
+            let rs = reed_solomon_erasure::galois_8::ReedSolomon::new(data_shards, total_shards - data_shards)
+                .expect("RS init failed");
+    
+            let mut data_chunks: Vec<Vec<u8>> = padded
+                .chunks(shard_size)
+                .map(|chunk| {
+                    let mut v = chunk.to_vec();
+                    v.resize(shard_size, 0);
+                    v
+                })
+                .collect();
+    
+            while data_chunks.len() < data_shards {
+                data_chunks.push(vec![0u8; shard_size]);
+            }
+    
+            let mut shards = data_chunks.clone();
+            while shards.len() < total_shards {
+                shards.push(vec![0u8; shard_size]);
+            }
+    
+            let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
+            rs.encode(&mut shard_refs).expect("RS encoding failed");
+    
+            // Hash padded tx directly (Merkle tree works on full tx not shards)
+            let tx_hash = Sha256::digest(&padded).to_vec();
+            tx_hashes.push(tx_hash);
+        }
+    
+        let root = compute_merkle_root(&tx_hashes);
+        assert_eq!(root.len(), 32, "Merkle root must be 32 bytes");
+    
+        for (i, hash) in tx_hashes.iter().enumerate() {
+            let proof = compute_merkle_branch(&tx_hashes, i);
+            assert!(
+                verify_merkle_proof(hash, &proof, &root, i),
+                "❌ Merkle proof failed for tx[{}]", i
+            );
+        }
+    
+        println!("✅ test_merkle_tree_end_to_end_validation passed");
     }
 
     #[tokio::test]
-    async fn test_accumulator_verifies_only_data_shards() {
-        let dummy_node = Node::new(
-            0, 10, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            1, 256, 7, 1
-        );
+    async fn test_handle_prevote_end_to_end_integration_small() {
 
-        let proposal = create_transaction_data(dummy_node)
-            .await
-            .expect("Failed to generate transaction data");
-
-        let tx = &proposal.transactions[0];
-        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-        let acc_bytes = general_purpose::STANDARD.decode(acc_b64).expect("Accumulator decode failed");
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
-
-        for (j, shard) in tx.shards.iter().enumerate() {
-            if j < shard_hashes.len() {
-                assert_eq!(shard.proofs.len(), 1, "Shard {} should have a proof", j);
-                let proof_bytes = general_purpose::STANDARD.decode(&shard.proofs[0]).expect("Proof decode failed");
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-                let hash_bytes = hex::decode(&shard_hashes[j]).expect("Hash decode failed");
-
-                assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
-                    "❌ Invalid proof for data shard[{}]", j
-                );
-            } else {
-                assert!(shard.proofs.is_empty(), "Parity shard {} should not have a proof", j);
-            }
-        }
-
-        println!("✅ test_accumulator_verifies_only_data_shards passed");
-    }
-
-    #[tokio::test]
-    async fn test_rsa_accumulator_proof_validation_post_encoding() {
+    
+        // Step 1: Initialize test node
+        let node_id = 0;
         let node = Node::new(
-            0, 5, "127.0.0.1:8080".to_string(), vec![], "".to_string(),
-            2, 256, 4, 1
+            node_id,
+            5,                                // total_nodes ✅ FIXED
+            "127.0.0.1:30333".into(),
+            vec![],
+            "127.0.0.1:9999".into(),
+            3,                                // number_of_transactions
+            256,                              // transaction_size
+            3,                                // data_shards ✅ FIXED
+            1,
         );
-
-        let proposal = create_transaction_data(node)
+    
+        // Step 2: Create a full transaction proposal from this node
+        let propose_request = create_transaction_data(node.clone())
             .await
-            .expect("Failed to generate transaction data");
+            .expect("Failed to create transaction data");
+    
+        // Step 3: Wrap into a PrevoteRequest with same node as sender
+        let prevote_request = PrevoteRequest {
+            proposals: vec![propose_request.clone()],
+            sender_url: "127.0.0.1:30333".into(),
+            sender_id: 1,
+        };
+    
+        // Step 4: Simulate the prevote handling
+        let result = handle_prevote(node.clone(), prevote_request).await;
+    
+        // Step 5: Assert it succeeded (i.e., shard was reconstructed + hash and proof verified)
+        assert!(
+            result.is_ok(),
+            "Expected handle_prevote to succeed, but got error: {:?}",
+            result.err()
+        );
+    }
+    
+    #[tokio::test]
+    async fn test_handle_prevote_end_to_end_integration_large() {
 
-        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-            let acc_bytes = general_purpose::STANDARD.decode(acc_b64).expect("Accumulator decode failed");
-            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-            let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard hashes");
+    
+        // Step 1: Initialize test node
+        let node_id = 0;
+        let node = Node::new(
+            node_id,
+            10,                                // total_nodes ✅ FIXED
+            "127.0.0.1:30333".into(),
+            vec![],
+            "127.0.0.1:9999".into(),
+            1028,                                // number_of_transactions
+            256,                              // transaction_size
+            7,                                // data_shards ✅ FIXED
+            1,
+        );
+    
+        // Step 2: Create a full transaction proposal from this node
+        let propose_request = create_transaction_data(node.clone())
+            .await
+            .expect("Failed to create transaction data");
+    
+        // Step 3: Wrap into a PrevoteRequest with same node as sender
+        let prevote_request = PrevoteRequest {
+            proposals: vec![propose_request.clone()],
+            sender_url: "127.0.0.1:30333".into(),
+            sender_id: 1,
+        };
+    
+        // Step 4: Simulate the prevote handling
+        let result = handle_prevote(node.clone(), prevote_request).await;
+    
+        // Step 5: Assert it succeeded (i.e., shard was reconstructed + hash and proof verified)
+        assert!(
+            result.is_ok(),
+            "Expected handle_prevote to succeed, but got error: {:?}",
+            result.err()
+        );
+    }
 
-            for (j, hash_hex) in shard_hashes.iter().enumerate() {
-                let hash_bytes = hex::decode(hash_hex).unwrap();
-                let proof_b64 = &tx.shards[j].proofs[0];
-                let proof_bytes = general_purpose::STANDARD.decode(proof_b64).unwrap();
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
-                assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
-                    "❌ Invalid proof post-encoding for tx[{}] shard[{}]", tx_index, j
-                );
+        #[test]
+        fn test_rs_encoding_and_merkle_verification() {
+            let data_shards = 4;
+            let total_nodes = 7;
+            let transaction_size = 256;
+            let shard_size = (transaction_size + data_shards - 1) / data_shards;
+        
+            let tx_data = b"tx_test_round1".to_vec();
+            let mut padded = tx_data.clone();
+            padded.resize(transaction_size, 0);
+        
+        
+            // Encode with RS
+            let rs = ReedSolomon::new(data_shards, total_nodes - data_shards).unwrap();
+        
+            let mut data_chunks: Vec<Vec<u8>> = padded
+                .chunks(shard_size)
+                .map(|chunk| {
+                    let mut v = chunk.to_vec();
+                    v.resize(shard_size, 0);
+                    v
+                })
+                .collect();
+        
+            while data_chunks.len() < data_shards {
+                data_chunks.push(vec![0u8; shard_size]);
             }
+        
+            let mut shards = data_chunks.clone();
+            while shards.len() < total_nodes {
+                shards.push(vec![0u8; shard_size]);
+            }
+        
+            let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
+            rs.encode(&mut shard_refs).unwrap();
+        
+            // Simulate reconstructing from first `data_shards` shards
+            let mut received: Vec<Option<Vec<u8>>> = shards
+                .into_iter()
+                .enumerate()
+                .map(|(i, shard)| if i < data_shards { Some(shard) } else { None })
+                .collect();
+        
+            // Reconstruct missing shards
+            rs.reconstruct(&mut received).unwrap();
+        
+            // Join reconstructed shards
+            let reconstructed: Vec<u8> = received[..data_shards]
+                .iter()
+                .flat_map(|opt| opt.as_ref().unwrap())
+                .cloned()
+                .collect();
+        
+            // Verify that the reconstructed data matches the original padded data
+            assert_eq!(reconstructed, padded);
+        }
+    
+        #[tokio::test]
+        async fn test_dagunit_parent_retrieval_across_rounds() {
+
+
+            let node = Node::new(
+                0,
+                5,
+                "127.0.0.1:3000".to_string(),
+                vec![],
+                "127.0.0.1:9999".to_string(),
+                3,
+                256,
+                3,
+                1,
+            );
+
+            // === Round 1: Insert initial unit ===
+            let round_1 = 1;
+            let parent_unit = DagUnit {
+                unit_id: "U1-1".to_string(),
+                proposer_node: 0,
+                round: round_1,
+                transactions: vec![],
+                parent_units: vec![],
+                merkle_root: vec![0u8; 32],
+                finalization_timestamp: 123456789,
+            };
+
+            {
+                let node_lock = node.lock().await;
+                let mut dag = node_lock.dag.lock().await;
+                dag.entry(round_1).or_default().push(parent_unit.clone());
+            }
+
+            // === Round 2: Insert child unit with parent reference ===
+            let round_2 = 2;
+            let child_unit = DagUnit {
+                unit_id: "U2-1".to_string(),
+                proposer_node: 0,
+                round: round_2,
+                transactions: vec![],
+                parent_units: vec![parent_unit.unit_id.clone()],
+                merkle_root: vec![0u8; 32],
+                finalization_timestamp: 123456790,
+            };
+
+            {
+                let node_lock = node.lock().await;
+                let mut dag = node_lock.dag.lock().await;
+                dag.entry(round_2).or_default().push(child_unit.clone());
+            }
+
+            // === Check that parent exists ===
+            let parent_exists = {
+                let node_lock = node.lock().await;
+                let dag = node_lock.dag.lock().await;
+                dag.values()
+                    .flatten()
+                    .any(|unit| unit.unit_id == child_unit.parent_units[0])
+            };
+
+            assert!(
+                parent_exists,
+                "Child unit's parent (U1-1) should exist in DAG"
+            );
         }
 
-        println!("✅ test_rsa_accumulator_proof_validation_post_encoding passed");
+        #[tokio::test]
+        async fn test_proposal_generation_and_dag_parent_hashes() {
+            // Initialize dummy node with 3 nodes, 2 transactions, 256-byte tx, 2 data shards, 2 rounds
+            let node = Node::new(
+                1,
+                3,
+                "127.0.0.1:30333".to_string(),
+                vec!["127.0.0.1:30334".to_string(), "127.0.0.1:30335".to_string()],
+                "127.0.0.1:8080".to_string(),
+                2,
+                256,
+                2,
+                2,
+            );
+        
+            {
+                let mut node_guard = node.lock().await;
+                let parent_unit = crate::structs::requests::DagUnit {
+                    unit_id: "U1-1".to_string(),
+                    proposer_node: 1,
+                    round: 1,
+                    transactions: vec![
+                        crate::structs::requests::Transaction {
+                            root: vec![1; 32], // dummy hash
+                            proofs: vec![],
+                            shards: vec![],
+                        },
+                    ],
+                    parent_units: vec![],
+                    merkle_root: vec![1; 32],
+                    finalization_timestamp: 123456789,
+                };
+            
+                let mut dag = node_guard.dag.lock().await;
+                dag.insert(1, vec![parent_unit]);
+            
+                println!("✅ Inserted into DAG: {:?}", dag);
+                *node_guard.current_round.lock().await = 2;
+            }
+        
+
+            {
+                let node_guard = node.lock().await;
+                let dag = node_guard.dag.lock().await;
+                println!("🔍 DAG before proposal: {:?}", dag);
+            }
+            // Create proposal for round 2
+            let proposal = create_transaction_data(node.clone()).await.expect("Failed to create proposal");
+        
+            // Validate Merkle root for each transaction
+            for (i, tx) in proposal.transactions.iter().enumerate() {
+                let proof = &proposal.batch_proofs[i];
+                assert_eq!(tx.root.len(), 32);
+                assert!(
+                    verify_merkle_proof(&tx.root, proof, &proposal.batch_root, i),
+                    "Merkle proof invalid for tx[{}]", i
+                );
+            }
+        
+            // Check that round 2 proposal includes 1 parent
+            assert_eq!(proposal.base.round_id, 2);
+            assert_eq!(proposal.parents.len(), 1);
+            assert_eq!(proposal.parents[0], "U1-1");
+        
+            info!("✅ Proposal for round 2 correctly included parent unit U1-1");
+        }
+        
+        
+
+
+
+
+        #[tokio::test]
+async fn test_get_all_parents_accumulates_units_across_rounds() {
+    use crate::structs::requests::{DagUnit, Transaction};
+    use crate::structs::node::Node;
+    use std::collections::HashMap;
+
+    let node = Node::new(
+        0,
+        3,
+        "127.0.0.1:3000".into(),
+        vec![],
+        "127.0.0.1:9999".into(),
+        1,
+        250,
+        2,
+        1,
+    );
+
+    // Insert 1 unit in round 1
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(1, vec![DagUnit {
+            unit_id: "U1-0".to_string(),
+            proposer_node: 0,
+            round: 1,
+            transactions: vec![Transaction {
+                root: vec![0u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec![],
+            merkle_root: vec![0u8; 32],
+            finalization_timestamp: 111,
+        }]);
     }
 
-    #[tokio::test]
-    async fn test_handle_propose_round_trip() {
-        let proposer = Node::new(
-            1, 5, "127.0.0.1:8080".into(), vec![], "".into(),
-            2, 256, 4, 1
-        );
-    
-        let verifier = Node::new(
-            2, 5, "127.0.0.1:8081".into(), vec![], "".into(),
-            2, 256, 4, 1
-        );
-    
-        let propose_req = create_transaction_data(proposer.clone())
-            .await
-            .expect("Failed to create proposal");
-    
-        let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), propose_req.clone()).await;
-        assert!(result.is_ok(), "handle_propose should succeed on valid proposal");
+    // Insert 1 unit in round 2
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(2, vec![DagUnit {
+            unit_id: "U2-0".to_string(),
+            proposer_node: 0,
+            round: 2,
+            transactions: vec![Transaction {
+                root: vec![1u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec!["U1-0".to_string()],
+            merkle_root: vec![1u8; 32],
+            finalization_timestamp: 222,
+        }]);
     }
 
+    // Insert 1 unit in round 3
+    {
+        let mut node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+
+        dag.insert(3, vec![DagUnit {
+            unit_id: "U3-0".to_string(),
+            proposer_node: 0,
+            round: 3,
+            transactions: vec![Transaction {
+                root: vec![2u8; 32],
+                proofs: vec![],
+                shards: vec![],
+            }],
+            parent_units: vec!["U1-0".to_string(), "U2-0".to_string()],
+            merkle_root: vec![2u8; 32],
+            finalization_timestamp: 333,
+        }]);
+    }
+
+    // Check parents for round 2
+    let parents_round_2 = node.lock().await.get_all_parents(2).await;
+    assert_eq!(parents_round_2.len(), 1, "Round 2 should have 1 parent");
+    assert_eq!(parents_round_2[0], "U1-0");
+
+    // Check parents for round 3
+    let parents_round_3 = node.lock().await.get_all_parents(3).await;
+    assert_eq!(parents_round_3.len(), 2, "Round 3 should have 2 parents");
+    assert!(parents_round_3.contains(&"U1-0".to_string()));
+    assert!(parents_round_3.contains(&"U2-0".to_string()));
+
+    println!("✅ test_get_all_parents_accumulates_units_across_rounds passed");
 }
+
+
+    }
+    
+    
+    
+
+

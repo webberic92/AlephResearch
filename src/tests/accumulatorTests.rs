@@ -71,7 +71,7 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
                 "127.0.0.1:8080".to_string(),
                 vec![],
                 "".to_string(),
-                2,
+                256,
                 256,
                 4,
                 1,
@@ -245,22 +245,22 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
     }
     
 
+   
+
     #[tokio::test]
-async fn test_invalid_accumulator_detection() {
-    let dummy_node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 1, 256, 4, 1);
-    let mut proposal = create_transaction_data(dummy_node.clone()).await.unwrap();
-
-    // Tamper the accumulator in tx[0] — simulate wrong accumulator
-    proposal.transactions[0].accumulator = Some("ZmFrZV9iYXNlNjRfYWNjdW11bGF0b3I=".into()); // base64("fake_base64_accumulator")
-
-    let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 1, 256, 4, 1);
-    let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), proposal).await;
-
-    assert!(result.is_err(), "Tampered accumulator should fail verification");
-}
-
-
-
+    async fn test_invalid_accumulator_detection() {
+        let dummy_node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 1, 256, 4, 1);
+        let mut proposal = create_transaction_data(dummy_node.clone()).await.unwrap();
+    
+        // ❌ Tamper the batch-level accumulator
+        proposal.batch_accumulator = "ZmFrZV9iYXNlNjRfYWNjdW11bGF0b3I=".into(); // base64("fake_base64_accumulator")
+    
+        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 1, 256, 4, 1);
+        let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), proposal).await;
+    
+        assert!(result.is_err(), "Tampered batch-level accumulator should fail verification");
+    }
+    
 
 
 

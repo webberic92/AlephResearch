@@ -112,29 +112,6 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_accumulator_batch_grouping_and_ordering() {
-        let dummy_node = Node::new(
-            0, 8, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-            16, 256, 4, 1
-        );
-
-        let proposal = create_transaction_data(dummy_node)
-            .await
-            .expect("Failed to generate transaction data");
-
-        let mut group_ids = vec![];
-        for tx in &proposal.transactions {
-            let group_id = tx.accumulator_group_id.expect("Missing group ID");
-            group_ids.push(group_id);
-        }
-
-        let mut sorted = group_ids.clone();
-        sorted.sort();
-        assert_eq!(group_ids, sorted, "Group IDs are not ordered consistently");
-        println!("✅ test_accumulator_batch_grouping_and_ordering passed");
-    }
-    #[tokio::test]
-
     async fn test_handle_propose_round_trip() {
         let proposer = Node::new(
             1, 5, "127.0.0.1:8080".into(), vec![], "".into(),

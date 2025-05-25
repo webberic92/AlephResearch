@@ -14,7 +14,7 @@ use aleph_research::structs::node::Node;
 use anyhow::Result;
 use std::net::TcpListener as StdTcpListener;
 
-#[tokio::main]
+#[tokio::main(flavor = "multi_thread", worker_threads = 8)]
 async fn main() -> Result<()> {
     tracing_subscriber::fmt().init();
     

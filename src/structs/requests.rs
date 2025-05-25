@@ -17,7 +17,6 @@ pub struct Transaction {
     pub root: Vec<u8>,
     pub shards: Vec<ShardWithProofs>,
     pub accumulator: Option<String>,           // the group accumulator
-    pub accumulator_group_id: Option<usize>,   // batch group index
     pub shard_hashes: Option<Vec<String>>,
 }
 
@@ -31,7 +30,6 @@ pub struct ProposeRequest {
     pub transactions: Vec<Transaction>,
     pub parents: Vec<Vec<u8>>,
     pub batch_accumulator: String,  
-                 // 🆕 base64-encoded RSA accumulator
 }
 
 
