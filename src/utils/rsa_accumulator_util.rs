@@ -93,30 +93,53 @@ pub fn compute_accumulator_from_primes(primes: &[BigInt]) -> BigInt {
     g.modpow(&product, &n)
 }
 
-/// ✅ New: Generates exclusion proofs from primes
-pub fn generate_proofs_from_primes(primes: &[BigInt]) -> Vec<BigInt> {
+/// ✅ Radix-style tree proof generation
+pub fn generate_proofs_from_primes_radix(primes: &[BigInt]) -> Vec<BigInt> {
     let n = get_modulus();
     let g = BigInt::from(2u8);
     let len = primes.len();
 
-    let mut prefix = vec![BigInt::one(); len + 1];
-    for i in 0..len {
-        prefix[i + 1] = &prefix[i] * &primes[i];
+    // Tree levels: level[0] = leaves (primes), level[1] = pairs of products, etc.
+    let mut levels: Vec<Vec<BigInt>> = Vec::new();
+    levels.push(primes.to_vec());
+
+    // Build tree up
+    while levels.last().unwrap().len() > 1 {
+        let prev = levels.last().unwrap();
+        let mut next = Vec::with_capacity((prev.len() + 1) / 2);
+        for i in (0..prev.len()).step_by(2) {
+            if i + 1 < prev.len() {
+                next.push(&prev[i] * &prev[i + 1]);
+            } else {
+                next.push(prev[i].clone()); // odd number of elements
+            }
+        }
+        levels.push(next);
     }
 
-    let mut suffix = vec![BigInt::one(); len + 1];
-    for i in (0..len).rev() {
-        suffix[i] = &suffix[i + 1] * &primes[i];
+    // Now for each leaf, compute exclusion product from sibling subtrees
+    fn compute_product_excluding(index: usize, levels: &Vec<Vec<BigInt>>) -> BigInt {
+        let mut product = BigInt::one();
+        let mut idx = index;
+        for level in 0..levels.len() - 1 {
+            let sibling = if idx % 2 == 0 { idx + 1 } else { idx - 1 };
+            if sibling < levels[level].len() {
+                product *= &levels[level][sibling];
+            }
+            idx /= 2;
+        }
+        product
     }
 
     (0..len)
         .into_par_iter()
         .map(|i| {
-            let product = &prefix[i] * &suffix[i + 1];
-            g.modpow(&product, &n)
+            let excl = compute_product_excluding(i, &levels);
+            g.modpow(&excl, &n)
         })
         .collect()
 }
+
 
 /// ✅ Verify vector of (prime, proof) pairs
 pub fn verify_proofs(accumulator: &BigInt, pairs: &[(BigInt, BigInt)]) -> bool {

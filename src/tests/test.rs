@@ -12,7 +12,7 @@ mod tests {
     async fn test_create_and_verify_transaction_batch() {
         let dummy_node = Node::new(
             0, 5, "127.0.0.1:3030".to_string(), vec![], "".to_string(),
-            25, 256, 4, 1
+            128, 256, 4, 1
         );
 
         let proposal = create_transaction_data(dummy_node)

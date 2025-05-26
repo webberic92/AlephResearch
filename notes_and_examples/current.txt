@@ -1,10 +1,10 @@
 🔧 Summary: Steps to Optimize RSA Version
 Priority	Action
 (DONE) ⭐️ High	Parallelize RSA proof validation in handle_propose and handle_prevote
-⭐️ High	Move generate_proofs_from_primes into a parallel-friendly batch generator
-⭐️ High	Add fine-grained logging to create_transaction_data proof generation
+(DONE)⭐️ High	Move generate_proofs_from_primes into a parallel-friendly batch generator
+(DONE) ⚠️ Medium	Consider lazy proof verification (e.g., validate quorum then proofs)
 ⚠️ Medium	Consider using separate accumulator per transaction or per small batch
 ⚠️ Medium	Move locking logic out of shard iteration (especially inside prevote)
-⚠️ Medium	Consider lazy proof verification (e.g., validate quorum then proofs)
-✅ Low	Minify base64/hex usage; reduce encoding overhead
-✅ Low	If using Galois-8 RS, ensure it's hardware-accelerated (SIMD-enabled)
+    Reduces exponent size, improving performance.
+    Scales better to large batches. (good for >128txs)
+

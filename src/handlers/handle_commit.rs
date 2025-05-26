@@ -2,6 +2,7 @@ use std::{process::Command, sync::{atomic::Ordering, Arc}};
 use chrono::Local;
 use tokio::sync::Mutex;
 use tracing::{info, error};
+
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::CommitRequest},
@@ -27,9 +28,7 @@ pub async fn handle_commit(
         }
     }
 
-    let commit_count;
-    let quorum_threshold;
-    {
+    let (commit_count, quorum_threshold) = {
         let node_guard = node.lock().await;
         let mut commit_tracker = node_guard.commit_tracker.lock().await;
 
@@ -40,13 +39,11 @@ pub async fn handle_commit(
         }
 
         round_commits.push(commit_request.clone());
-        commit_count = round_commits.len();
-        quorum_threshold = node_guard.get_quorum_threshold();
-    }
+        (round_commits.len(), node_guard.get_quorum_threshold())
+    };
 
     info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
-    
     if commit_count == quorum_threshold {
         info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 
@@ -61,15 +58,13 @@ pub async fn handle_commit(
             all_units.extend(commit.units.clone());
         }
 
-
         {
             let node_guard = node.lock().await;
             let mut dag = node_guard.dag.lock().await;
             let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
             info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
             for unit in all_units {
-                
-                if !dag_units.iter().any(|u| u.accumulator_root == unit.accumulator_root) {
+                if !dag_units.iter().any(|u| u.unit_id == unit.unit_id) {
                     dag_units.push(unit.clone());
                     info!(
                         "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
@@ -89,31 +84,22 @@ pub async fn handle_commit(
             dag_guard.clone()
         };
 
-        
-        if let Err(e) = write_finalized_dag_to_file(
-            "/aleph/finalized_dag",
-            &finalized_dag,
-            round_id,
-        )
-        .await
-        {
+        if let Err(e) = write_finalized_dag_to_file("/aleph/finalized_dag", &finalized_dag, round_id).await {
             error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
             return Err(format!("DAG write failed: {:?}", e));
         }
-        
-        let message_count = node.lock().await.message_count.clone();
-        info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
-        info!(
-            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
-            node_id, round_id, commit_count, quorum_threshold
-        );
+
         {
             let node_guard = node.lock().await;
+            let message_count = node_guard.message_count.clone();
+            info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
+            info!("Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC", node_id, round_id, commit_count, quorum_threshold);
+
             let mut aggregator = node_guard.shard_aggregator.lock().await;
             aggregator.clear_round(round_id);
-            info!("Node {}: Cleared aggregator state for round {}", node_guard.id, round_id);
+            info!("Node {}: Cleared aggregator state for round {}", node_id, round_id);
         }
-        // ✅ Update round locally
+
         {
             let node_guard = node.lock().await;
             let mut current_round = node_guard.current_round.lock().await;
@@ -122,9 +108,7 @@ pub async fn handle_commit(
                 info!("Node {}: Local round advanced to {}", node_id, *current_round);
             }
         }
-        
-        
-        // ✅ Immediately emit RoundFinalized event before doing anything else
+
         {
             info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
             let round_finalized = RBCMessage::RoundFinalized(round_id);
@@ -136,29 +120,23 @@ pub async fn handle_commit(
             }
         }
 
-        // ✅ Final round: log, upload, terminate
         {
-            let total_rounds = {
+            let (instances, txs, rounds, id) = {
                 let node_guard = node.lock().await;
-                node_guard.total_rounds as u64
+                (
+                    node_guard.total_nodes,
+                    node_guard.number_of_transactions,
+                    node_guard.total_rounds,
+                    node_guard.id,
+                )
             };
 
-            if round_id >= total_rounds {
+            if round_id >= rounds as u64 {
                 info!("Node {}: Round {} was final. Shutting down.", node_id, round_id);
                 info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
-                let (instances, txs, rounds, node_id) = {
-                    let node_guard = node.lock().await;
-                    (
-                        node_guard.total_nodes,
-                        node_guard.number_of_transactions,
-                        node_guard.total_rounds,
-                        node_guard.id,
-                    )
-                };
-
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER=\"logs/RSA_N{instances}_T{txs}_R{rounds}/node-{id}\" && \
                     aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
@@ -169,12 +147,10 @@ pub async fn handle_commit(
                     }
                 });
 
-                {
-                    let mut node_guard = node.lock().await;
-                    if let Some(processor) = node_guard.rbc_processor.take() {
-                        drop(processor);
-                        info!("🛑 RBCProcessor terminated.");
-                    }
+                let mut node_guard = node.lock().await;
+                if let Some(processor) = node_guard.rbc_processor.take() {
+                    drop(processor);
+                    info!("🛑 RBCProcessor terminated.");
                 }
             }
         }

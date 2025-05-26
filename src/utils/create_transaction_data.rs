@@ -1,4 +1,5 @@
 use std::sync::Arc;
+
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::Instant};
@@ -11,7 +12,7 @@ use crate::{
         node::Node,
         requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
     },
-    utils::rsa_accumulator_util::{compute_accumulator_from_primes, generate_proofs_from_primes, hash_to_prime_128},
+    utils::rsa_accumulator_util::{compute_accumulator_from_primes, generate_proofs_from_primes_radix, hash_to_prime_128},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -52,7 +53,7 @@ pub async fn create_transaction_data(
     let mut transactions = Vec::with_capacity(num_txs);
     let mut all_shards = Vec::new();
     let mut all_hashes = Vec::new();
-    let mut shard_meta = Vec::new();
+    let mut shard_hashes_per_tx = Vec::with_capacity(num_txs);
 
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
@@ -75,7 +76,7 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs)?;
 
-        let mut tx_hashes = Vec::new();
+        let mut tx_hashes = Vec::with_capacity(data_shards);
         for s in &shards[..data_shards] {
             let hash = Sha256::digest(s).to_vec();
             all_hashes.push(hash.clone());
@@ -83,27 +84,28 @@ pub async fn create_transaction_data(
         }
 
         all_shards.push(shards);
-        shard_meta.push(tx_hashes);
+        shard_hashes_per_tx.push(tx_hashes);
     }
 
-    // ✅ Precompute all primes once
-    info!("🧮 Computing RSA accumulator and proofs with precomputed primes...");
+    // Compute accumulator and radix-based proofs
+    info!("🧮 Computing RSA accumulator and radix proofs...");
     let all_primes: Vec<BigInt> = all_hashes.iter().map(|h| hash_to_prime_128(h)).collect();
-    let acc = compute_accumulator_from_primes(&all_primes);
-    let proofs = generate_proofs_from_primes(&all_primes);
-    info!("✅ RSA accumulator and proofs computed.");
+    let accumulator = compute_accumulator_from_primes(&all_primes);
+    let proofs = generate_proofs_from_primes_radix(&all_primes);
+    info!("✅ RSA accumulator and radix-style proofs computed.");
 
-    let encoded_acc = general_purpose::STANDARD.encode(acc.to_bytes_be().1);
-    let mut shard_proof_index = 0;
+    let encoded_acc = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
+    let mut proof_index = 0;
 
-    for (tx_index, shards) in all_shards.iter().enumerate() {
+    for (tx_index, shards) in all_shards.into_iter().enumerate() {
         let mut shard_structs = Vec::with_capacity(total_nodes);
         for shard_i in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
+
             let proofs_vec = if shard_i < data_shards {
-                let proof = &proofs[shard_proof_index];
-                shard_proof_index += 1;
+                let proof = &proofs[proof_index];
                 let proof_b64 = general_purpose::STANDARD.encode(proof.to_bytes_be().1.clone());
+                proof_index += 1;
                 vec![proof_b64]
             } else {
                 vec![]
@@ -115,21 +117,25 @@ pub async fn create_transaction_data(
             });
         }
 
-        let shard_hashes: Vec<String> = shard_meta[tx_index].iter()
+        let shard_hashes_hex: Vec<String> = shard_hashes_per_tx[tx_index]
+            .iter()
             .map(|h| hex::encode(h))
             .collect();
 
+        let padded_root = pad_to_len(
+            format!("tx{}_round{}", tx_index + 1, round_id).into_bytes(),
+            transaction_size,
+        );
+
         transactions.push(Transaction {
-            root: Sha256::digest(&pad_to_len(
-                format!("tx{}_round{}", tx_index + 1, round_id).into_bytes(),
-                transaction_size,
-            ))
-            .to_vec(),
+            root: Sha256::digest(&padded_root).to_vec(),
             shards: shard_structs,
             accumulator: Some(encoded_acc.clone()),
-            shard_hashes: Some(shard_hashes),
+            shard_hashes: Some(shard_hashes_hex),
         });
     }
+
+    info!("📝 Created {} transactions in {:?}", num_txs, timer.elapsed());
 
     Ok(ProposeRequest {
         base: BaseRequest {
