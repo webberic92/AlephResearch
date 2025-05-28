@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod accumulator_tests {
-    use std::time::Instant;
+    use std::{sync::Arc, time::Instant};
     use base64::{engine::general_purpose, Engine};
     use num_bigint::{BigInt, Sign};
     use sha2::{Sha256, Digest};
-    use crate::{structs::{node::Node, requests::PrevoteRequest, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
+    use crate::{structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
 
     fn generate_fake_hashes(count: usize) -> Vec<Vec<u8>> {
         (0..count).map(|i| {
@@ -133,6 +133,9 @@ async fn test_proofs_generated_by_create_transaction_data_are_valid() {
 
     println!("✅ All generated primes and proofs verified successfully.");
 
+    
+    
+}
 
 #[test]
 fn test_shard_aggregator_multiple_rounds_does_not_panic() {
@@ -151,5 +154,88 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
 }
 
 
+
+
+
+
+#[tokio::test]
+async fn test_end_to_end_rsa_proof_validation_consistency() {
+    use crate::{
+        structs::{node::Node, requests::ProposeRequest},
+        utils::{create_transaction_data, rsa_accumulator_util::{get_modulus, hash_to_prime_128}},
+    };
+    use base64::engine::general_purpose;
+    use num_bigint::{BigInt, Sign};
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
+
+    // Setup a dummy node
+    let node = Node::new(
+        0,  // node_id
+        5,  // total_nodes
+        "127.0.0.1:8080".into(),
+        vec![], "".into(),
+        2,  // data_shards
+        256, // tx_size
+        4,   // number of txs
+        1,   // total_rounds
+    );
+
+    // Step 1: Create transaction data
+    let proposal = create_transaction_data(node.clone())
+        .await
+        .expect("create_transaction_data failed");
+
+    // Step 2: Simulate serialization and deserialization
+    let serialized = serde_json::to_string(&proposal).expect("serialization failed");
+    let deserialized: ProposeRequest =
+        serde_json::from_str(&serialized).expect("deserialization failed");
+
+    // Step 3: Proof validation (as done in handle_propose)
+    for (tx_index, tx) in deserialized.transactions.iter().enumerate() {
+        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
+        let acc_bytes = general_purpose::STANDARD
+            .decode(acc_b64)
+            .expect("Failed to decode accumulator");
+        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
+        let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard_hashes");
+
+        assert_eq!(
+            shard_hashes.len(),
+            2, // data_shards must match expected
+            "Mismatch in shard hash length"
+        );
+
+        for (j, shard) in tx.shards.iter().enumerate() {
+            if j >= shard_hashes.len() || shard.proofs.is_empty() {
+                continue; // skip parity shards or missing proofs
+            }
+
+            let proof_b64 = &shard.proofs[0];
+            let proof_bytes = general_purpose::STANDARD
+                .decode(proof_b64)
+                .expect("Failed to decode proof");
+            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+            let hash_bytes =
+                hex::decode(&shard_hashes[j]).expect("Failed to decode expected hash");
+            let prime = hash_to_prime_128(&hash_bytes);
+
+            let result = proof.modpow(&prime, &get_modulus());
+
+            assert_eq!(
+                result, accumulator,
+                "❌ RSA proof validation failed at tx {} shard {}",
+                tx_index, j
+            );
+        }
+    }
 }
+
+
+
+
+
+
 }

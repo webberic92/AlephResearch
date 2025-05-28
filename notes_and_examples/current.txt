@@ -1,102 +1,182 @@
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/
+aleph-node-config.toml  aleph_rbc               logs/
+sh-4.2$ cat /aleph/logs/node_status
+Starting cpu and memory logs
+PRIVATE_IP = 10.0.165.59
+Node registration success.
+IP Manager not ready, retrying...
+IP Manager is reachable and all nodes are ready.
+Retrieved all nodes for nodes (excluding self): "10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"
+[network]
+listen_address = "0.0.0.0:30333"
+ip_manager_address = "10.0.138.131"
+ip_address = "10.0.165.59"
+nodes = ["10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"]
+total_nodes = 16
 
+[consensus]
+number_of_transactions = 256
+transaction_size = 256 # bytes
+data_shards = 11 # Number of data shards for erasure coding
+total_rounds = 3 # Number of rounds
 
-3. 🧱 Shard Proof Verification Is Still Sequential Per Tx
+[logging]
+level = "info"
+transaction_metrics_log = "/aleph/logs/transaction_metrics"
 
-Even if validation is parallel per batch, you're likely verifying per-tx proofs serially, or hitting a lock inside the aggregator.
-
-✅ Fix:
-
-    Batch-verify all proofs of all txs per round using a task pool.
-
-    Do not lock shard aggregator inside the proof verification loop.
-
-You’ve left this unoptimized too:
-
-⚠️ Medium Move locking logic out of shard iteration (especially inside prevote)
-
-✅ What You Can Do Right Now
-1. Profile Proof Verification Cost
-
-Enable timing logs:
-
-let start = Instant::now();
-let valid = verify_proof(&acc, &hash, &proof);
-log::info!("🕓 RSA verification took {:?}", start.elapsed());
-
-Run that on 64-node batch.
-2. Enable Parallel Proof Verification with Logging
-
-If you already parallelized with rayon, add ThreadId in logs to ensure it’s spreading:
-
-log::info!("🔧 Thread {:?} verified shard {}", std::thread::current().id(), shard_idx);
-
-You should see 64 cores working at once.
-3. Test Smaller N (32 nodes, 25 txpb, 10 rounds)
-
-Just to isolate:
-
-    Do we still hit a wall even at half the cluster?
-
-    This helps confirm whether cost is O(N^2) or O(N log N) still.
-
-4. Enable Per-Tx Accumulators
-
-Update your create_transaction_data() to:
-
-    Use accumulator = 1 per transaction
-
-    Only compute 64 shard hashes per tx
-
-    Verify with verify_proof(tx.acc, shard_hash, proof)
-
-This will reduce:
-
-    Memory lock contention
-
-    Accumulator exponent size
-
-    Total proof complexity
-
-🧪 Summary of Immediate Fixes
-Action	Purpose
-✅ Profile verify_proof() timing	Identify if proof step dominates
-✅ Add thread logs during parallel proofing	Confirm parallel execution
-✅ Reduce data_shards from 64 → 16	Reduce RSA cost
-✅ Use per-tx accumulator	Shorter proofs, easier validation
-✅ Avoid locking aggregator inside loop	Remove serial bottleneck
-
-Let me know which of these you'd like to apply first — I can help you patch create_transaction_data() or shard aggregator to support per-tx accumulators or reduced shard count right now.
-
-
-
-DONE create_transaction_data.rs	Compute, store shard_hashes; ensure ordered proof generation
-DONE rsa_utils.rs	Validate consistent hashing + proof ordering
-DONEhandle_propose.rs	Use shard_hashes[i], not SHA256(shard)
-DONE handle_prevote.rs	Use shard_hashes[i], not SHA256(shard)
-
-
-🔧 What to do next for faster, scalable performance?
-
-    Lower data_shards to 16 or even 8 (depends on fault tolerance you want).
-
-    Switch from one batch accumulator to per-tx accumulators:
-
-        Add accumulator: Option<String> at each transaction level (you already have this).
-
-        Generate & verify proofs per-tx, not per-batch.
-
-Would you like a code walkthrough on how to switch to per-tx accumulators or reduce shards dynamically?
-
-
-
-ou should also verify or update the following related files to ensure end-to-end consistency:
-
-    create_transaction_data.rs (if not yet updated): Ensure it populates shard_hashes with SHA256 hashes of each shard and uses them for RSA proof generation.
-
-    Transaction struct definition (likely in structs/transaction.rs or similar): Ensure it includes the shard_hashes: Option<Vec<String>> field.
-
-    Unit tests in tests/ directory: Ensure they reflect the updated logic for proof validation using shard hashes.
-
-    rsa_accumulator_util.rs: Already in use; ensure it provides get_modulus() and hash_to_prime_128() functions used in verification.
-
-Let me know if you’d like help auditing or updating any of those files.
+[node]
+id = 13
+Starting aleph_rbc execution
+aleph_rbc binary is found at /aleph/aleph_rbc
+Configuration file found at /aleph/aleph-node-config.toml
+Attempting to execute aleph_rbc with configuration
+Waiting for aleph_rbc to be ready on port 30333
+2025-05-28T01:58:00.299157Z  INFO aleph_rbc: LATENCY START
+2025-05-28T01:58:00.299212Z  INFO aleph_rbc: ✅ Custom socket listener created on 0.0.0.0:30333
+2025-05-28T01:58:00.299200Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-05-28T01:58:00.299217Z  INFO aleph_rbc: ✅ Starting Axum server on 0.0.0.0:30333
+aleph_rbc APIs are ready.
+Waiting for aleph_rbc API readiness...
+aleph_rbc API is ready.
+Done with aleph_rbc loop for node 13
+2025-05-28T01:58:00.316061Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.147.66:30333"]: Trying again....
+2025-05-28T01:58:01.318495Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-05-28T01:58:01.330811Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
+2025-05-28T01:58:01.331677Z  INFO aleph_rbc: All Nodes are healthy starting transaction execution.
+2025-05-28T01:58:01.331701Z  INFO aleph_research::utils::create_transaction_data: data_shards already optimal (11); no update needed.
+2025-05-28T01:58:01.331710Z  INFO aleph_research::utils::create_transaction_data: 📦 Starting transaction data creation...
+2025-05-28T01:58:06.637338Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 12
+2025-05-28T01:58:06.637384Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:06.637391Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:06.673221Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 12. Count: 1/11
+2025-05-28T01:58:06.674704Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (1 < 11)
+2025-05-28T01:58:06.835541Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
+2025-05-28T01:58:06.835575Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:06.835582Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:06.971030Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 3. Count: 2/11
+2025-05-28T01:58:06.976413Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (2 < 11)
+2025-05-28T01:58:06.985680Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 11
+2025-05-28T01:58:06.985710Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:06.985716Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.073810Z  INFO aleph_research::utils::create_transaction_data: 📝 Created 256 transactions in 5.74209557s
+2025-05-28T01:58:07.077124Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 11. Count: 3/11
+2025-05-28T01:58:07.078713Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (3 < 11)
+2025-05-28T01:58:07.084051Z  INFO aleph_rbc: Node 13: Created proposal with 256 transactions for round 1.
+2025-05-28T01:58:07.084088Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 13 preparing to send proposals to ["10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"] for round 1
+2025-05-28T01:58:07.110267Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.130.35:30333 (round 1)
+2025-05-28T01:58:07.112310Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 8
+2025-05-28T01:58:07.112328Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.112334Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.120584Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 8. Count: 4/11
+2025-05-28T01:58:07.121153Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (4 < 11)
+2025-05-28T01:58:07.124203Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 15
+2025-05-28T01:58:07.124216Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.124220Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.132406Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 15. Count: 5/11
+2025-05-28T01:58:07.132820Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (5 < 11)
+2025-05-28T01:58:07.136143Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
+2025-05-28T01:58:07.136154Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.136158Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.144652Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 2. Count: 6/11
+2025-05-28T01:58:07.145024Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (6 < 11)
+2025-05-28T01:58:07.148853Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
+2025-05-28T01:58:07.148865Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.148869Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.155963Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.130.35:30333 (round 1)
+2025-05-28T01:58:07.164756Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.137.116:30333 (round 1)
+2025-05-28T01:58:07.166410Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 1. Count: 7/11
+2025-05-28T01:58:07.166893Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (7 < 11)
+2025-05-28T01:58:07.172076Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
+2025-05-28T01:58:07.172091Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.172095Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.183876Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 4. Count: 8/11
+2025-05-28T01:58:07.184318Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (8 < 11)
+2025-05-28T01:58:07.218258Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.137.116:30333 (round 1)
+2025-05-28T01:58:07.224149Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.140.1:30333 (round 1)
+2025-05-28T01:58:07.237525Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
+2025-05-28T01:58:07.237548Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.237552Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.251882Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 5. Count: 9/11
+2025-05-28T01:58:07.252526Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (9 < 11)
+2025-05-28T01:58:07.265663Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.140.1:30333 (round 1)
+2025-05-28T01:58:07.267731Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.147.66:30333 (round 1)
+2025-05-28T01:58:07.313888Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 6
+2025-05-28T01:58:07.313912Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.313917Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.314342Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.147.66:30333 (round 1)
+2025-05-28T01:58:07.322490Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.148.128:30333 (round 1)
+2025-05-28T01:58:07.343908Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.148.128:30333 (round 1)
+2025-05-28T01:58:07.355477Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.150.204:30333 (round 1)
+2025-05-28T01:58:07.362105Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 6. Count: 10/11
+2025-05-28T01:58:07.366407Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (10 < 11)
+2025-05-28T01:58:07.392156Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.150.204:30333 (round 1)
+2025-05-28T01:58:07.395925Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.156.245:30333 (round 1)
+2025-05-28T01:58:07.402513Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 14
+2025-05-28T01:58:07.402531Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.402536Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.419123Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 14. Count: 11/11
+2025-05-28T01:58:07.419664Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.429555Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 4"
+2025-05-28T01:58:07.429596Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 10
+2025-05-28T01:58:07.429605Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.429610Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.444349Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.156.245:30333 (round 1)
+2025-05-28T01:58:07.455589Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.158.101:30333 (round 1)
+2025-05-28T01:58:07.469217Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.158.101:30333 (round 1)
+2025-05-28T01:58:07.479024Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.159.184:30333 (round 1)
+2025-05-28T01:58:07.499176Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 10. Count: 12/11
+2025-05-28T01:58:07.500790Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.502650Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.159.184:30333 (round 1)
+2025-05-28T01:58:07.514066Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.161.117:30333 (round 1)
+2025-05-28T01:58:07.522104Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 8"
+2025-05-28T01:58:07.522133Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 9
+2025-05-28T01:58:07.522142Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.522148Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.531297Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.161.117:30333 (round 1)
+2025-05-28T01:58:07.538001Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.170.225:30333 (round 1)
+2025-05-28T01:58:07.546216Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 9. Count: 13/11
+2025-05-28T01:58:07.546699Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.558082Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 6"
+2025-05-28T01:58:07.558113Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 7
+2025-05-28T01:58:07.558122Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.558127Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.558718Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.170.225:30333 (round 1)
+2025-05-28T01:58:07.563478Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.181.80:30333 (round 1)
+2025-05-28T01:58:07.579187Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.181.80:30333 (round 1)
+2025-05-28T01:58:07.599899Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 7. Count: 14/11
+2025-05-28T01:58:07.600486Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.185.93:30333 (round 1)
+2025-05-28T01:58:07.601090Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.616841Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.185.93:30333 (round 1)
+2025-05-28T01:58:07.620736Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.187.51:30333 (round 1)
+2025-05-28T01:58:07.622730Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 4"
+2025-05-28T01:58:07.622757Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 16
+2025-05-28T01:58:07.622766Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.622771Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.644067Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 16. Count: 15/11
+2025-05-28T01:58:07.644938Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.653198Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.187.51:30333 (round 1)
+2025-05-28T01:58:07.656905Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.191.102:30333 (round 1)
+2025-05-28T01:58:07.658639Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 2"
+2025-05-28T01:58:07.684701Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.191.102:30333 (round 1)
+2025-05-28T01:58:07.685861Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-05-28T01:58:07.687289Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 13 enqueuing proposal for round 1 into RBCProcessor queue
+2025-05-28T01:58:07.690362Z  INFO aleph_rbc: Node 13: Proposal for round 1 sent successfully.
+2025-05-28T01:58:07.691743Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 13
+2025-05-28T01:58:07.691759Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
+2025-05-28T01:58:07.691763Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
+2025-05-28T01:58:07.714174Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 13. Count: 16/11
+2025-05-28T01:58:07.714788Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T01:58:07.726778Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 0"
+sh-4.2$

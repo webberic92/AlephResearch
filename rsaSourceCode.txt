@@ -706,8 +706,6 @@ use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use num_bigint::BigInt;
-use dashmap::DashMap;
-use once_cell::sync::Lazy;
 
 use crate::{
     structs::{
@@ -729,8 +727,6 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     }
     data
 }
-
-static PROOF_CACHE: Lazy<DashMap<String, (BigInt, String)>> = Lazy::new(DashMap::new);
 
 pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
@@ -781,38 +777,35 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs).unwrap();
 
-        let mut tx_hashes = Vec::with_capacity(data_shards);
-        let mut tx_primes = Vec::with_capacity(data_shards);
-        let mut cached_proofs = Vec::with_capacity(data_shards);
+        // Step 1: Hash data shards and compute primes
+        let tx_hashes: Vec<Vec<u8>> = shards[..data_shards]
+            .iter()
+            .map(|s| Sha256::digest(s).to_vec())
+            .collect();
 
-        for s in &shards[..data_shards] {
-            let hash = Sha256::digest(s).to_vec();
-            let hash_hex = hex::encode(&hash);
+        let tx_primes: Vec<BigInt> = tx_hashes
+            .iter()
+            .map(|hash| hash_to_prime_128(hash))
+            .collect();
 
-            let (prime, proof_b64) = PROOF_CACHE
-                .entry(hash_hex.clone())
-                .or_insert_with(|| {
-                    let prime = hash_to_prime_128(&hash);
-                    let proof = generate_proofs_from_primes_radix(&[prime.clone()])[0].clone();
-                    let proof_b64 = general_purpose::STANDARD.encode(proof.to_bytes_be().1);
-                    (prime, proof_b64)
-                })
-                .clone();
-
-            tx_hashes.push(hash);
-            tx_primes.push(prime);
-            cached_proofs.push(proof_b64);
-        }
-
+        // Step 2: Compute accumulator from all primes
         let tx_accumulator = compute_accumulator_from_primes(&tx_primes);
         let tx_acc_encoded = general_purpose::STANDARD.encode(tx_accumulator.to_bytes_be().1);
 
+        // Step 3: Generate proofs for each prime against the accumulator
+        let proofs = generate_proofs_from_primes_radix(&tx_primes);
+        let encoded_proofs: Vec<String> = proofs
+            .iter()
+            .map(|p| general_purpose::STANDARD.encode(p.to_bytes_be().1))
+            .collect();
+
+        // Step 4: Build shard structs, attaching proofs to data shards
         let mut shard_structs = Vec::with_capacity(total_nodes);
         for shard_i in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
 
             let proofs_vec = if shard_i < data_shards {
-                vec![cached_proofs[shard_i].clone()]
+                vec![encoded_proofs[shard_i].clone()]
             } else {
                 vec![]
             };
@@ -823,6 +816,7 @@ pub async fn create_transaction_data(
             });
         }
 
+        // Step 5: Finalize transaction
         let shard_hashes_hex: Vec<String> = tx_hashes.iter().map(|h| hex::encode(h)).collect();
         let padded_root = pad_to_len(content.into_bytes(), transaction_size);
 
@@ -846,6 +840,7 @@ pub async fn create_transaction_data(
         batch_accumulator: "".to_string(),
     })
 }
+
 
 /// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
 /// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
@@ -2490,11 +2485,11 @@ async fn should_process_request(node: Arc<Mutex<Node>>, request_round: u64, prop
 }
 #[cfg(test)]
 mod accumulator_tests {
-    use std::time::Instant;
+    use std::{sync::Arc, time::Instant};
     use base64::{engine::general_purpose, Engine};
     use num_bigint::{BigInt, Sign};
     use sha2::{Sha256, Digest};
-    use crate::{structs::{node::Node, requests::PrevoteRequest, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
+    use crate::{structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
 
     fn generate_fake_hashes(count: usize) -> Vec<Vec<u8>> {
         (0..count).map(|i| {
@@ -2623,6 +2618,9 @@ async fn test_proofs_generated_by_create_transaction_data_are_valid() {
 
     println!("✅ All generated primes and proofs verified successfully.");
 
+    
+    
+}
 
 #[test]
 fn test_shard_aggregator_multiple_rounds_does_not_panic() {
@@ -2641,7 +2639,56 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
 }
 
 
+
+
+#[tokio::test]
+async fn test_realistic_rsa_proof_validation_from_create_transaction_data() {
+    use crate::utils::create_transaction_data;
+    use num_bigint::{BigInt, Sign};
+    use sha2::Digest;
+
+    let node = Node::new(
+        0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1,
+    );
+
+    let proposal = create_transaction_data(node.clone()).await.unwrap();
+    let serialized = serde_json::to_string(&proposal).unwrap();
+    let deserialized: ProposeRequest = serde_json::from_str(&serialized).unwrap();
+
+    for (tx_index, tx) in deserialized.transactions.iter().enumerate() {
+        let acc_bytes = base64::decode(tx.accumulator.as_ref().unwrap()).unwrap();
+        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
+        let shard_hashes = tx.shard_hashes.as_ref().expect("shard hashes missing");
+
+        for (j, shard_with_proof) in tx.shards.iter().enumerate() {
+            if j >= shard_hashes.len() || shard_with_proof.proofs.is_empty() {
+                continue;
+            }
+
+            let proof_bytes = base64::decode(&shard_with_proof.proofs[0]).unwrap();
+            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+            let expected_hash_bytes = hex::decode(&shard_hashes[j]).unwrap();
+            let prime = hash_to_prime_128(&expected_hash_bytes);
+
+            let result = proof.modpow(&prime, &get_modulus());
+
+            assert_eq!(
+                result, accumulator,
+                "RSA validation failed at tx {}, shard {}",
+                tx_index, j
+            );
+        }
+    }
 }
+
+
+
+
+
+
+
 }
 #[cfg(test)]
 mod accumulator_tests {
