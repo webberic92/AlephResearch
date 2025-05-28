@@ -1,10 +1,102 @@
-🔧 Summary: Steps to Optimize RSA Version
-Priority	Action
-(DONE) ⭐️ High	Parallelize RSA proof validation in handle_propose and handle_prevote
-(DONE)⭐️ High	Move generate_proofs_from_primes into a parallel-friendly batch generator
-(DONE) ⚠️ Medium	Consider lazy proof verification (e.g., validate quorum then proofs)
-⚠️ Medium	Consider using separate accumulator per transaction or per small batch
-⚠️ Medium	Move locking logic out of shard iteration (especially inside prevote)
-    Reduces exponent size, improving performance.
-    Scales better to large batches. (good for >128txs)
 
+
+3. 🧱 Shard Proof Verification Is Still Sequential Per Tx
+
+Even if validation is parallel per batch, you're likely verifying per-tx proofs serially, or hitting a lock inside the aggregator.
+
+✅ Fix:
+
+    Batch-verify all proofs of all txs per round using a task pool.
+
+    Do not lock shard aggregator inside the proof verification loop.
+
+You’ve left this unoptimized too:
+
+⚠️ Medium Move locking logic out of shard iteration (especially inside prevote)
+
+✅ What You Can Do Right Now
+1. Profile Proof Verification Cost
+
+Enable timing logs:
+
+let start = Instant::now();
+let valid = verify_proof(&acc, &hash, &proof);
+log::info!("🕓 RSA verification took {:?}", start.elapsed());
+
+Run that on 64-node batch.
+2. Enable Parallel Proof Verification with Logging
+
+If you already parallelized with rayon, add ThreadId in logs to ensure it’s spreading:
+
+log::info!("🔧 Thread {:?} verified shard {}", std::thread::current().id(), shard_idx);
+
+You should see 64 cores working at once.
+3. Test Smaller N (32 nodes, 25 txpb, 10 rounds)
+
+Just to isolate:
+
+    Do we still hit a wall even at half the cluster?
+
+    This helps confirm whether cost is O(N^2) or O(N log N) still.
+
+4. Enable Per-Tx Accumulators
+
+Update your create_transaction_data() to:
+
+    Use accumulator = 1 per transaction
+
+    Only compute 64 shard hashes per tx
+
+    Verify with verify_proof(tx.acc, shard_hash, proof)
+
+This will reduce:
+
+    Memory lock contention
+
+    Accumulator exponent size
+
+    Total proof complexity
+
+🧪 Summary of Immediate Fixes
+Action	Purpose
+✅ Profile verify_proof() timing	Identify if proof step dominates
+✅ Add thread logs during parallel proofing	Confirm parallel execution
+✅ Reduce data_shards from 64 → 16	Reduce RSA cost
+✅ Use per-tx accumulator	Shorter proofs, easier validation
+✅ Avoid locking aggregator inside loop	Remove serial bottleneck
+
+Let me know which of these you'd like to apply first — I can help you patch create_transaction_data() or shard aggregator to support per-tx accumulators or reduced shard count right now.
+
+
+
+DONE create_transaction_data.rs	Compute, store shard_hashes; ensure ordered proof generation
+DONE rsa_utils.rs	Validate consistent hashing + proof ordering
+DONEhandle_propose.rs	Use shard_hashes[i], not SHA256(shard)
+DONE handle_prevote.rs	Use shard_hashes[i], not SHA256(shard)
+
+
+🔧 What to do next for faster, scalable performance?
+
+    Lower data_shards to 16 or even 8 (depends on fault tolerance you want).
+
+    Switch from one batch accumulator to per-tx accumulators:
+
+        Add accumulator: Option<String> at each transaction level (you already have this).
+
+        Generate & verify proofs per-tx, not per-batch.
+
+Would you like a code walkthrough on how to switch to per-tx accumulators or reduce shards dynamically?
+
+
+
+ou should also verify or update the following related files to ensure end-to-end consistency:
+
+    create_transaction_data.rs (if not yet updated): Ensure it populates shard_hashes with SHA256 hashes of each shard and uses them for RSA proof generation.
+
+    Transaction struct definition (likely in structs/transaction.rs or similar): Ensure it includes the shard_hashes: Option<Vec<String>> field.
+
+    Unit tests in tests/ directory: Ensure they reflect the updated logic for proof validation using shard hashes.
+
+    rsa_accumulator_util.rs: Already in use; ensure it provides get_modulus() and hash_to_prime_128() functions used in verification.
+
+Let me know if you’d like help auditing or updating any of those files.

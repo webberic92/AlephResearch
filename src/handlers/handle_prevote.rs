@@ -1,5 +1,5 @@
 use base64::{engine::general_purpose, Engine};
-use rayon::iter::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::*;
 use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
@@ -22,7 +22,6 @@ pub async fn handle_prevote(
 ) -> Result<(), String> {
     let timer_total = Instant::now();
 
-    // Extract static values
     let (node_id, round_id, quorum_threshold, data_shards, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
@@ -37,7 +36,6 @@ pub async fn handle_prevote(
         )
     };
 
-    // Register vote
     {
         let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
@@ -70,47 +68,44 @@ pub async fn handle_prevote(
         let mut reconstructed_transactions = Vec::new();
 
         for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let mut batch_hashes = Vec::new();
-            let mut batch_proofs = Vec::new();
-            let mut decoded_shards = vec![None; data_shards];
-
-            for (shard_index, shard) in tx.shards.iter().enumerate().take(data_shards) {
-                let decoded = general_purpose::STANDARD
-                    .decode(&shard.shard_b64)
-                    .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
-
-                let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                if decoded.len() != expected_len {
-                    return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
-                }
-
-                let expected_hash_hex = tx.shard_hashes
-                    .as_ref()
-                    .and_then(|h| h.get(shard_index))
-                    .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
-                let expected_hash = hex::decode(expected_hash_hex)
-                    .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
-
-                let proof_b64 = shard.proofs.get(0)
-                    .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
-                let proof_bytes = general_purpose::STANDARD
-                    .decode(proof_b64)
-                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
-                batch_hashes.push(expected_hash);
-                batch_proofs.push(proof);
-                decoded_shards[shard_index] = Some(decoded);
-            }
-
             let t1 = Instant::now();
-            let batch_valid = batch_hashes
-                .par_iter()
-                .zip(batch_proofs.par_iter())
-                .all(|(hash, proof)| {
-                    let prime = hash_to_prime_128(hash);
-                    proof.modpow(&prime, &modulus) == accumulator
-                });
+
+            let hash_proof_pairs: Vec<_> = tx.shards
+                .iter()
+                .enumerate()
+                .take(data_shards)
+                .map(|(shard_index, shard)| {
+                    let decoded = general_purpose::STANDARD
+                        .decode(&shard.shard_b64)
+                        .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
+
+                    let expected_len = (transaction_size + data_shards - 1) / data_shards;
+                    if decoded.len() != expected_len {
+                        return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
+                    }
+
+                    let expected_hash_hex = tx.shard_hashes
+                        .as_ref()
+                        .and_then(|h| h.get(shard_index))
+                        .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
+                    let expected_hash = hex::decode(expected_hash_hex)
+                        .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
+
+                    let proof_b64 = shard.proofs.get(0)
+                        .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
+                    let proof_bytes = general_purpose::STANDARD
+                        .decode(proof_b64)
+                        .map_err(|e| format!("Proof decode error: {:?}", e))?;
+                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                    Ok((expected_hash, proof, decoded))
+                })
+                .collect::<Result<_, _>>()?;
+
+            let batch_valid = hash_proof_pairs.par_iter().all(|(hash, proof, _)| {
+                let prime = hash_to_prime_128(hash);
+                proof.modpow(&prime, &modulus) == accumulator
+            });
             duration_proof += t1.elapsed();
 
             if !batch_valid {
@@ -120,12 +115,8 @@ pub async fn handle_prevote(
             let t2 = Instant::now();
             let padded_tx_bytes = {
                 let mut buffer = Vec::with_capacity(transaction_size);
-                for shard_opt in decoded_shards.iter().take(data_shards) {
-                    if let Some(bytes) = shard_opt {
-                        buffer.extend_from_slice(bytes);
-                    } else {
-                        return Err(format!("tx[{}]: insufficient shards to reconstruct", tx_index));
-                    }
+                for i in 0..data_shards {
+                    buffer.extend_from_slice(&hash_proof_pairs[i].2);
                 }
                 buffer.truncate(transaction_size);
                 buffer
@@ -161,7 +152,6 @@ pub async fn handle_prevote(
         node_id, round_id, timer_total.elapsed(), duration_proof, duration_reconstruct
     );
 
-    // Send Commit to peers
     let commit_request = CommitRequest {
         units: reconstructed_units,
         proposing_node_id: node_id,

@@ -136,9 +136,11 @@ pub async fn handle_commit(
                 info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER=\"logs/RSA_N{instances}_T{txs}_R{rounds}/node-{id}\" && \
+                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
                     aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
+
+                
 
                 tokio::spawn(async move {
                     match Command::new("sh").arg("-c").arg(&s3_upload_cmd).spawn() {

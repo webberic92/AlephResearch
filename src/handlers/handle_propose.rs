@@ -50,6 +50,43 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
+    // Verify each transaction proof using precomputed shard_hashes
+    if let Some(acc_encoded) = propose_request.transactions.first().and_then(|tx| tx.accumulator.clone()) {
+        let acc_bytes = base64::engine::general_purpose::STANDARD.decode(acc_encoded)
+            .map_err(|e| format!("Accumulator base64 decode error: {:?}", e))?;
+        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+
+        for tx in &propose_request.transactions {
+            let Some(shard_hashes) = &tx.shard_hashes else {
+                return Err("Missing shard_hashes field for transaction".to_string());
+            };
+
+            let proof_checks: Result<Vec<_>, _> = tx.shards.par_iter().enumerate().map(|(j, proof_list)| {
+                if j >= shard_hashes.len() || proof_list.proofs.is_empty() {
+                    return Ok(None);
+                }
+
+                let proof_b64 = &proof_list.proofs[0];
+                let proof_bytes = base64::engine::general_purpose::STANDARD.decode(proof_b64)
+                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
+                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                let hash_bytes = hex::decode(&shard_hashes[j])
+                    .map_err(|e| format!("Hash decode error: {:?}", e))?;
+                let prime = hash_to_prime_128(&hash_bytes);
+
+                let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
+                if !valid {
+                    return Err(format!("RSA proof verification failed for tx shard {}", j));
+                }
+
+                Ok(Some(()))
+            }).collect();
+
+            proof_checks?;
+        }
+    }
+
     let prevote_request = {
         let node_guard = node.lock().await;
         PrevoteRequest {
@@ -88,4 +125,3 @@ pub async fn handle_propose(
     );
     Ok(())
 }
-
