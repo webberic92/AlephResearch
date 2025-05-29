@@ -143,33 +143,33 @@ pub async fn create_transaction_data(
 }
 
 
-/// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
-/// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
-pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
-    let mut node_guard = node.lock().await;
+// /// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
+// /// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
+// pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
+//     let mut node_guard = node.lock().await;
 
-    let total_nodes = node_guard.total_nodes;
-    let num_txs = node_guard.number_of_transactions;
+//     let total_nodes = node_guard.total_nodes;
+//     let num_txs = node_guard.number_of_transactions;
 
-    // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
-    let optimal_data_shards = std::cmp::max(
-        1,
-        std::cmp::min(num_txs, total_nodes - total_nodes / 3),
-    );
+//     // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
+//     let optimal_data_shards = std::cmp::max(
+//         1,
+//         std::cmp::min(num_txs, total_nodes - total_nodes / 3),
+//     );
 
-    if node_guard.data_shards != optimal_data_shards {
-        tracing::info!(
-            "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
-            node_guard.data_shards,
-            optimal_data_shards,
-            total_nodes,
-            num_txs
-        );
-        node_guard.data_shards = optimal_data_shards;
-    } else {
-        tracing::info!(
-            "data_shards already optimal ({}); no update needed.",
-            node_guard.data_shards
-        );
-    }
-}
+//     if node_guard.data_shards != optimal_data_shards {
+//         tracing::info!(
+//             "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
+//             node_guard.data_shards,
+//             optimal_data_shards,
+//             total_nodes,
+//             num_txs
+//         );
+//         node_guard.data_shards = optimal_data_shards;
+//     } else {
+//         tracing::info!(
+//             "data_shards already optimal ({}); no update needed.",
+//             node_guard.data_shards
+//         );
+//     }
+// }

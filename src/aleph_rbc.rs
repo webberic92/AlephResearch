@@ -1,7 +1,7 @@
 use aleph_research::controllers::api_routes::initialize_apis;
 use aleph_research::processors::rbc_processor::RBCProcessor;
 use aleph_research::requests::send_proposals::send_proposals;
-use aleph_research::utils::create_transaction_data::{create_transaction_data, maybe_adjust_shard_count};
+use aleph_research::utils::create_transaction_data::{create_transaction_data};
 use aleph_research::utils::start_util::wait_for_all_nodes_health;
 use socket2::{Domain, Socket, Type};
 use tokio::sync::Mutex;
@@ -80,7 +80,7 @@ async fn execute_transaction_logic(
 
     info!("All Nodes are healthy starting transaction execution.");
 
-    maybe_adjust_shard_count(node.clone()).await;
+    // maybe_adjust_shard_count(node.clone()).await;
     // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {

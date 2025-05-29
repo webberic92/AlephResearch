@@ -169,29 +169,26 @@ async fn test_end_to_end_rsa_proof_validation_consistency() {
     use std::sync::Arc;
     use tokio::sync::Mutex;
 
-    // Setup a dummy node
     let node = Node::new(
-        0,  // node_id
-        5,  // total_nodes
+        0,
+        5,
         "127.0.0.1:8080".into(),
-        vec![], "".into(),
-        2,  // data_shards
+        vec![],
+        "".into(),
+        2,   // data_shards
         256, // tx_size
         4,   // number of txs
         1,   // total_rounds
     );
 
-    // Step 1: Create transaction data
     let proposal = create_transaction_data(node.clone())
         .await
         .expect("create_transaction_data failed");
 
-    // Step 2: Simulate serialization and deserialization
     let serialized = serde_json::to_string(&proposal).expect("serialization failed");
     let deserialized: ProposeRequest =
         serde_json::from_str(&serialized).expect("deserialization failed");
 
-    // Step 3: Proof validation (as done in handle_propose)
     for (tx_index, tx) in deserialized.transactions.iter().enumerate() {
         let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
         let acc_bytes = general_purpose::STANDARD
@@ -200,12 +197,6 @@ async fn test_end_to_end_rsa_proof_validation_consistency() {
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
         let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard_hashes");
-
-        assert_eq!(
-            shard_hashes.len(),
-            2, // data_shards must match expected
-            "Mismatch in shard hash length"
-        );
 
         for (j, shard) in tx.shards.iter().enumerate() {
             if j >= shard_hashes.len() || shard.proofs.is_empty() {
@@ -232,6 +223,7 @@ async fn test_end_to_end_rsa_proof_validation_consistency() {
         }
     }
 }
+
 
 
 

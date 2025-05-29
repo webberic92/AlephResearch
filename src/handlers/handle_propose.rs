@@ -4,16 +4,16 @@ use num_bigint::{BigInt, Sign};
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
-use tracing::{error, info};
+use tracing::{info};
 use rayon::prelude::*;
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{dag_utils::ensure_dag_round_sync, rsa_accumulator_util::{hash_to_prime_128, get_modulus}},
+    utils::{
+        dag_utils::ensure_dag_round_sync,
+        rsa_accumulator_util::{hash_to_prime_128, get_modulus},
+    },
 };
-
-// Minimal relay logic to support quorum, then broadcast prevote
-// Decoding/verification deferred until handle_prevote
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -50,41 +50,47 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
-    // Verify each transaction proof using precomputed shard_hashes
-    if let Some(acc_encoded) = propose_request.transactions.first().and_then(|tx| tx.accumulator.clone()) {
-        let acc_bytes = base64::engine::general_purpose::STANDARD.decode(acc_encoded)
-            .map_err(|e| format!("Accumulator base64 decode error: {:?}", e))?;
+    // 🔒 Validate each transaction's shard proofs using its specific accumulator
+    for tx in &propose_request.transactions {
+        let Some(shard_hashes) = &tx.shard_hashes else {
+            return Err("Missing shard_hashes field for transaction".to_string());
+        };
+
+        let acc_encoded = tx
+            .accumulator
+            .as_ref()
+            .ok_or("Missing accumulator in transaction")?;
+        let acc_bytes = general_purpose::STANDARD
+            .decode(acc_encoded)
+            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        for tx in &propose_request.transactions {
-            let Some(shard_hashes) = &tx.shard_hashes else {
-                return Err("Missing shard_hashes field for transaction".to_string());
-            };
+        let results: Result<Vec<_>, String> = (0..shard_hashes.len()).into_par_iter().map(|j| {
+            let shard = &tx.shards[j];
 
-            let proof_checks: Result<Vec<_>, _> = tx.shards.par_iter().enumerate().map(|(j, proof_list)| {
-                if j >= shard_hashes.len() || proof_list.proofs.is_empty() {
-                    return Ok(None);
-                }
+            if shard.proofs.is_empty() {
+                return Ok(()); // skip parity shards
+            }
 
-                let proof_b64 = &proof_list.proofs[0];
-                let proof_bytes = base64::engine::general_purpose::STANDARD.decode(proof_b64)
-                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+            let proof_b64 = &shard.proofs[0];
+            let proof_bytes = general_purpose::STANDARD
+                .decode(proof_b64)
+                .map_err(|e| format!("Proof decode error: {:?}", e))?;
+            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
-                let hash_bytes = hex::decode(&shard_hashes[j])
-                    .map_err(|e| format!("Hash decode error: {:?}", e))?;
-                let prime = hash_to_prime_128(&hash_bytes);
+            let hash_bytes = hex::decode(&shard_hashes[j])
+                .map_err(|e| format!("Hash decode error: {:?}", e))?;
+            let prime = hash_to_prime_128(&hash_bytes);
 
-                let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
-                if !valid {
-                    return Err(format!("RSA proof verification failed for tx shard {}", j));
-                }
+            let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
+            if !valid {
+                return Err(format!("RSA proof verification failed for tx shard {}", j));
+            }
 
-                Ok(Some(()))
-            }).collect();
+            Ok(())
+        }).collect();
 
-            proof_checks?;
-        }
+        results?;
     }
 
     let prevote_request = {
@@ -101,13 +107,18 @@ pub async fn handle_propose(
         (node_guard.ip_address.clone(), node_guard.nodes.clone())
     };
 
-    let client = Client::builder().build().map_err(|e| format!("HTTP client build error: {:?}", e))?;
+    let client = Client::builder()
+        .build()
+        .map_err(|e| format!("HTTP client build error: {:?}", e))?;
+
     for peer in node_list {
         if peer != node_ip {
             let url = format!("http://{}/prevote", peer);
             for attempt in 1..=3 {
                 if let Ok(resp) = client.post(&url).json(&prevote_request).send().await {
-                    if resp.status().is_success() { break; }
+                    if resp.status().is_success() {
+                        break;
+                    }
                 }
                 sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
             }
@@ -121,7 +132,11 @@ pub async fn handle_propose(
 
     info!(
         "Node {}: handle_propose round {} done in {:?} [dag_sync: {:?}]",
-        node_id, round_id, timer_total.elapsed(), duration_dag_sync
+        node_id,
+        round_id,
+        timer_total.elapsed(),
+        duration_dag_sync
     );
+
     Ok(())
 }

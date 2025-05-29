@@ -355,16 +355,16 @@ use num_bigint::{BigInt, Sign};
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
-use tracing::{error, info};
+use tracing::{info};
 use rayon::prelude::*;
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{dag_utils::ensure_dag_round_sync, rsa_accumulator_util::{hash_to_prime_128, get_modulus}},
+    utils::{
+        dag_utils::ensure_dag_round_sync,
+        rsa_accumulator_util::{hash_to_prime_128, get_modulus},
+    },
 };
-
-// Minimal relay logic to support quorum, then broadcast prevote
-// Decoding/verification deferred until handle_prevote
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -401,41 +401,47 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
-    // Verify each transaction proof using precomputed shard_hashes
-    if let Some(acc_encoded) = propose_request.transactions.first().and_then(|tx| tx.accumulator.clone()) {
-        let acc_bytes = base64::engine::general_purpose::STANDARD.decode(acc_encoded)
-            .map_err(|e| format!("Accumulator base64 decode error: {:?}", e))?;
+    // 🔒 Validate each transaction's shard proofs using its specific accumulator
+    for tx in &propose_request.transactions {
+        let Some(shard_hashes) = &tx.shard_hashes else {
+            return Err("Missing shard_hashes field for transaction".to_string());
+        };
+
+        let acc_encoded = tx
+            .accumulator
+            .as_ref()
+            .ok_or("Missing accumulator in transaction")?;
+        let acc_bytes = general_purpose::STANDARD
+            .decode(acc_encoded)
+            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        for tx in &propose_request.transactions {
-            let Some(shard_hashes) = &tx.shard_hashes else {
-                return Err("Missing shard_hashes field for transaction".to_string());
-            };
+        let results: Result<Vec<_>, String> = (0..shard_hashes.len()).into_par_iter().map(|j| {
+            let shard = &tx.shards[j];
 
-            let proof_checks: Result<Vec<_>, _> = tx.shards.par_iter().enumerate().map(|(j, proof_list)| {
-                if j >= shard_hashes.len() || proof_list.proofs.is_empty() {
-                    return Ok(None);
-                }
+            if shard.proofs.is_empty() {
+                return Ok(()); // skip parity shards
+            }
 
-                let proof_b64 = &proof_list.proofs[0];
-                let proof_bytes = base64::engine::general_purpose::STANDARD.decode(proof_b64)
-                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+            let proof_b64 = &shard.proofs[0];
+            let proof_bytes = general_purpose::STANDARD
+                .decode(proof_b64)
+                .map_err(|e| format!("Proof decode error: {:?}", e))?;
+            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
-                let hash_bytes = hex::decode(&shard_hashes[j])
-                    .map_err(|e| format!("Hash decode error: {:?}", e))?;
-                let prime = hash_to_prime_128(&hash_bytes);
+            let hash_bytes = hex::decode(&shard_hashes[j])
+                .map_err(|e| format!("Hash decode error: {:?}", e))?;
+            let prime = hash_to_prime_128(&hash_bytes);
 
-                let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
-                if !valid {
-                    return Err(format!("RSA proof verification failed for tx shard {}", j));
-                }
+            let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
+            if !valid {
+                return Err(format!("RSA proof verification failed for tx shard {}", j));
+            }
 
-                Ok(Some(()))
-            }).collect();
+            Ok(())
+        }).collect();
 
-            proof_checks?;
-        }
+        results?;
     }
 
     let prevote_request = {
@@ -452,13 +458,18 @@ pub async fn handle_propose(
         (node_guard.ip_address.clone(), node_guard.nodes.clone())
     };
 
-    let client = Client::builder().build().map_err(|e| format!("HTTP client build error: {:?}", e))?;
+    let client = Client::builder()
+        .build()
+        .map_err(|e| format!("HTTP client build error: {:?}", e))?;
+
     for peer in node_list {
         if peer != node_ip {
             let url = format!("http://{}/prevote", peer);
             for attempt in 1..=3 {
                 if let Ok(resp) = client.post(&url).json(&prevote_request).send().await {
-                    if resp.status().is_success() { break; }
+                    if resp.status().is_success() {
+                        break;
+                    }
                 }
                 sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
             }
@@ -472,8 +483,12 @@ pub async fn handle_propose(
 
     info!(
         "Node {}: handle_propose round {} done in {:?} [dag_sync: {:?}]",
-        node_id, round_id, timer_total.elapsed(), duration_dag_sync
+        node_id,
+        round_id,
+        timer_total.elapsed(),
+        duration_dag_sync
     );
+
     Ok(())
 }
 use reqwest::Client;
@@ -842,36 +857,36 @@ pub async fn create_transaction_data(
 }
 
 
-/// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
-/// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
-pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
-    let mut node_guard = node.lock().await;
+// /// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
+// /// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
+// pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
+//     let mut node_guard = node.lock().await;
 
-    let total_nodes = node_guard.total_nodes;
-    let num_txs = node_guard.number_of_transactions;
+//     let total_nodes = node_guard.total_nodes;
+//     let num_txs = node_guard.number_of_transactions;
 
-    // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
-    let optimal_data_shards = std::cmp::max(
-        1,
-        std::cmp::min(num_txs, total_nodes - total_nodes / 3),
-    );
+//     // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
+//     let optimal_data_shards = std::cmp::max(
+//         1,
+//         std::cmp::min(num_txs, total_nodes - total_nodes / 3),
+//     );
 
-    if node_guard.data_shards != optimal_data_shards {
-        tracing::info!(
-            "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
-            node_guard.data_shards,
-            optimal_data_shards,
-            total_nodes,
-            num_txs
-        );
-        node_guard.data_shards = optimal_data_shards;
-    } else {
-        tracing::info!(
-            "data_shards already optimal ({}); no update needed.",
-            node_guard.data_shards
-        );
-    }
-}
+//     if node_guard.data_shards != optimal_data_shards {
+//         tracing::info!(
+//             "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
+//             node_guard.data_shards,
+//             optimal_data_shards,
+//             total_nodes,
+//             num_txs
+//         );
+//         node_guard.data_shards = optimal_data_shards;
+//     } else {
+//         tracing::info!(
+//             "data_shards already optimal ({}); no update needed.",
+//             node_guard.data_shards
+//         );
+//     }
+// }
 use std::{ sync::Arc, usize};
 use tokio::sync::Mutex;
 use tracing::{ error, info};
@@ -1905,12 +1920,12 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
         #RSA
         INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
-        INSTANCES_NUMBER = 16 # Define the number of instances
-        BATCH_SIZE =  256#(TX PER BATCH) Define the number of transactions in a batch
+        INSTANCES_NUMBER = 5 # Define the number of instances
+        BATCH_SIZE =  5#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 3 # Define the number of rounds
+        TOTAL_ROUNDS = 5 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -2641,42 +2656,68 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
 
 
 
+
+
 #[tokio::test]
-async fn test_realistic_rsa_proof_validation_from_create_transaction_data() {
-    use crate::utils::create_transaction_data;
+async fn test_end_to_end_rsa_proof_validation_consistency() {
+    use crate::{
+        structs::{node::Node, requests::ProposeRequest},
+        utils::{create_transaction_data, rsa_accumulator_util::{get_modulus, hash_to_prime_128}},
+    };
+    use base64::engine::general_purpose;
     use num_bigint::{BigInt, Sign};
-    use sha2::Digest;
+    use std::sync::Arc;
+    use tokio::sync::Mutex;
 
     let node = Node::new(
-        0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1,
+        0,
+        5,
+        "127.0.0.1:8080".into(),
+        vec![],
+        "".into(),
+        2,   // data_shards
+        256, // tx_size
+        4,   // number of txs
+        1,   // total_rounds
     );
 
-    let proposal = create_transaction_data(node.clone()).await.unwrap();
-    let serialized = serde_json::to_string(&proposal).unwrap();
-    let deserialized: ProposeRequest = serde_json::from_str(&serialized).unwrap();
+    let proposal = create_transaction_data(node.clone())
+        .await
+        .expect("create_transaction_data failed");
+
+    let serialized = serde_json::to_string(&proposal).expect("serialization failed");
+    let deserialized: ProposeRequest =
+        serde_json::from_str(&serialized).expect("deserialization failed");
 
     for (tx_index, tx) in deserialized.transactions.iter().enumerate() {
-        let acc_bytes = base64::decode(tx.accumulator.as_ref().unwrap()).unwrap();
+        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
+        let acc_bytes = general_purpose::STANDARD
+            .decode(acc_b64)
+            .expect("Failed to decode accumulator");
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        let shard_hashes = tx.shard_hashes.as_ref().expect("shard hashes missing");
+        let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard_hashes");
 
-        for (j, shard_with_proof) in tx.shards.iter().enumerate() {
-            if j >= shard_hashes.len() || shard_with_proof.proofs.is_empty() {
-                continue;
+        for (j, shard) in tx.shards.iter().enumerate() {
+            if j >= shard_hashes.len() || shard.proofs.is_empty() {
+                continue; // skip parity shards or missing proofs
             }
 
-            let proof_bytes = base64::decode(&shard_with_proof.proofs[0]).unwrap();
+            let proof_b64 = &shard.proofs[0];
+            let proof_bytes = general_purpose::STANDARD
+                .decode(proof_b64)
+                .expect("Failed to decode proof");
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
-            let expected_hash_bytes = hex::decode(&shard_hashes[j]).unwrap();
-            let prime = hash_to_prime_128(&expected_hash_bytes);
+            let hash_bytes =
+                hex::decode(&shard_hashes[j]).expect("Failed to decode expected hash");
+            let prime = hash_to_prime_128(&hash_bytes);
 
             let result = proof.modpow(&prime, &get_modulus());
 
             assert_eq!(
                 result, accumulator,
-                "RSA validation failed at tx {}, shard {}",
+                "❌ RSA proof validation failed at tx {} shard {}",
                 tx_index, j
             );
         }

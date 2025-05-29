@@ -8,22 +8,18 @@ sh-4.2$ cat /aleph/
 aleph-node-config.toml  aleph_rbc               logs/
 sh-4.2$ cat /aleph/
 aleph-node-config.toml  aleph_rbc               logs/
-sh-4.2$ cat /aleph/
-aleph-node-config.toml  aleph_rbc               logs/
-sh-4.2$ cat /aleph/
-aleph-node-config.toml  aleph_rbc               logs/
 sh-4.2$ cat /aleph/logs/node_status
 Starting cpu and memory logs
-PRIVATE_IP = 10.0.165.59
+PRIVATE_IP = 10.0.178.164
 Node registration success.
 IP Manager not ready, retrying...
 IP Manager is reachable and all nodes are ready.
-Retrieved all nodes for nodes (excluding self): "10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"
+Retrieved all nodes for nodes (excluding self): "10.0.140.30:30333", "10.0.146.116:30333", "10.0.150.109:30333", "10.0.156.31:30333", "10.0.157.28:30333", "10.0.162.108:30333", "10.0.162.57:30333", "10.0.162.94:30333", "10.0.168.72:30333", "10.0.168.94:30333", "10.0.176.203:30333", "10.0.177.172:30333", "10.0.181.18:30333", "10.0.185.96:30333", "10.0.187.116:30333"
 [network]
 listen_address = "0.0.0.0:30333"
-ip_manager_address = "10.0.138.131"
-ip_address = "10.0.165.59"
-nodes = ["10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"]
+ip_manager_address = "10.0.183.77"
+ip_address = "10.0.178.164"
+nodes = ["10.0.140.30:30333", "10.0.146.116:30333", "10.0.150.109:30333", "10.0.156.31:30333", "10.0.157.28:30333", "10.0.162.108:30333", "10.0.162.57:30333", "10.0.162.94:30333", "10.0.168.72:30333", "10.0.168.94:30333", "10.0.176.203:30333", "10.0.177.172:30333", "10.0.181.18:30333", "10.0.185.96:30333", "10.0.187.116:30333"]
 total_nodes = 16
 
 [consensus]
@@ -37,146 +33,237 @@ level = "info"
 transaction_metrics_log = "/aleph/logs/transaction_metrics"
 
 [node]
-id = 13
+id = 15
 Starting aleph_rbc execution
 aleph_rbc binary is found at /aleph/aleph_rbc
 Configuration file found at /aleph/aleph-node-config.toml
 Attempting to execute aleph_rbc with configuration
 Waiting for aleph_rbc to be ready on port 30333
-2025-05-28T01:58:00.299157Z  INFO aleph_rbc: LATENCY START
-2025-05-28T01:58:00.299212Z  INFO aleph_rbc: ✅ Custom socket listener created on 0.0.0.0:30333
-2025-05-28T01:58:00.299200Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-05-28T01:58:00.299217Z  INFO aleph_rbc: ✅ Starting Axum server on 0.0.0.0:30333
+2025-05-28T03:41:31.224848Z  INFO aleph_rbc: LATENCY START
+2025-05-28T03:41:31.224898Z  INFO aleph_rbc: ✅ Custom socket listener created on 0.0.0.0:30333
+2025-05-28T03:41:31.224903Z  INFO aleph_rbc: ✅ Starting Axum server on 0.0.0.0:30333
+2025-05-28T03:41:31.224899Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
 aleph_rbc APIs are ready.
 Waiting for aleph_rbc API readiness...
 aleph_rbc API is ready.
-Done with aleph_rbc loop for node 13
-2025-05-28T01:58:00.316061Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.147.66:30333"]: Trying again....
-2025-05-28T01:58:01.318495Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
-2025-05-28T01:58:01.330811Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
-2025-05-28T01:58:01.331677Z  INFO aleph_rbc: All Nodes are healthy starting transaction execution.
-2025-05-28T01:58:01.331701Z  INFO aleph_research::utils::create_transaction_data: data_shards already optimal (11); no update needed.
-2025-05-28T01:58:01.331710Z  INFO aleph_research::utils::create_transaction_data: 📦 Starting transaction data creation...
-2025-05-28T01:58:06.637338Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 12
-2025-05-28T01:58:06.637384Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:06.637391Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:06.673221Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 12. Count: 1/11
-2025-05-28T01:58:06.674704Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (1 < 11)
-2025-05-28T01:58:06.835541Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
-2025-05-28T01:58:06.835575Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:06.835582Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:06.971030Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 3. Count: 2/11
-2025-05-28T01:58:06.976413Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (2 < 11)
-2025-05-28T01:58:06.985680Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 11
-2025-05-28T01:58:06.985710Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:06.985716Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.073810Z  INFO aleph_research::utils::create_transaction_data: 📝 Created 256 transactions in 5.74209557s
-2025-05-28T01:58:07.077124Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 11. Count: 3/11
-2025-05-28T01:58:07.078713Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (3 < 11)
-2025-05-28T01:58:07.084051Z  INFO aleph_rbc: Node 13: Created proposal with 256 transactions for round 1.
-2025-05-28T01:58:07.084088Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 13 preparing to send proposals to ["10.0.130.35:30333", "10.0.137.116:30333", "10.0.140.1:30333", "10.0.147.66:30333", "10.0.148.128:30333", "10.0.150.204:30333", "10.0.156.245:30333", "10.0.158.101:30333", "10.0.159.184:30333", "10.0.161.117:30333", "10.0.170.225:30333", "10.0.181.80:30333", "10.0.185.93:30333", "10.0.187.51:30333", "10.0.191.102:30333"] for round 1
-2025-05-28T01:58:07.110267Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.130.35:30333 (round 1)
-2025-05-28T01:58:07.112310Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 8
-2025-05-28T01:58:07.112328Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.112334Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.120584Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 8. Count: 4/11
-2025-05-28T01:58:07.121153Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (4 < 11)
-2025-05-28T01:58:07.124203Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 15
-2025-05-28T01:58:07.124216Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.124220Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.132406Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 15. Count: 5/11
-2025-05-28T01:58:07.132820Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (5 < 11)
-2025-05-28T01:58:07.136143Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
-2025-05-28T01:58:07.136154Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.136158Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.144652Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 2. Count: 6/11
-2025-05-28T01:58:07.145024Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (6 < 11)
-2025-05-28T01:58:07.148853Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
-2025-05-28T01:58:07.148865Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.148869Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.155963Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.130.35:30333 (round 1)
-2025-05-28T01:58:07.164756Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.137.116:30333 (round 1)
-2025-05-28T01:58:07.166410Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 1. Count: 7/11
-2025-05-28T01:58:07.166893Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (7 < 11)
-2025-05-28T01:58:07.172076Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
-2025-05-28T01:58:07.172091Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.172095Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.183876Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 4. Count: 8/11
-2025-05-28T01:58:07.184318Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (8 < 11)
-2025-05-28T01:58:07.218258Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.137.116:30333 (round 1)
-2025-05-28T01:58:07.224149Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.140.1:30333 (round 1)
-2025-05-28T01:58:07.237525Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 5
-2025-05-28T01:58:07.237548Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.237552Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.251882Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 5. Count: 9/11
-2025-05-28T01:58:07.252526Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (9 < 11)
-2025-05-28T01:58:07.265663Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.140.1:30333 (round 1)
-2025-05-28T01:58:07.267731Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.147.66:30333 (round 1)
-2025-05-28T01:58:07.313888Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 6
-2025-05-28T01:58:07.313912Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.313917Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.314342Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.147.66:30333 (round 1)
-2025-05-28T01:58:07.322490Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.148.128:30333 (round 1)
-2025-05-28T01:58:07.343908Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.148.128:30333 (round 1)
-2025-05-28T01:58:07.355477Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.150.204:30333 (round 1)
-2025-05-28T01:58:07.362105Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 6. Count: 10/11
-2025-05-28T01:58:07.366407Z  INFO aleph_research::handlers::handle_propose: Node 13: Waiting for quorum (10 < 11)
-2025-05-28T01:58:07.392156Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.150.204:30333 (round 1)
-2025-05-28T01:58:07.395925Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.156.245:30333 (round 1)
-2025-05-28T01:58:07.402513Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 14
-2025-05-28T01:58:07.402531Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.402536Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.419123Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 14. Count: 11/11
-2025-05-28T01:58:07.419664Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.429555Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 4"
-2025-05-28T01:58:07.429596Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 10
-2025-05-28T01:58:07.429605Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.429610Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.444349Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.156.245:30333 (round 1)
-2025-05-28T01:58:07.455589Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.158.101:30333 (round 1)
-2025-05-28T01:58:07.469217Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.158.101:30333 (round 1)
-2025-05-28T01:58:07.479024Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.159.184:30333 (round 1)
-2025-05-28T01:58:07.499176Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 10. Count: 12/11
-2025-05-28T01:58:07.500790Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.502650Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.159.184:30333 (round 1)
-2025-05-28T01:58:07.514066Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.161.117:30333 (round 1)
-2025-05-28T01:58:07.522104Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 8"
-2025-05-28T01:58:07.522133Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 9
-2025-05-28T01:58:07.522142Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.522148Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.531297Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.161.117:30333 (round 1)
-2025-05-28T01:58:07.538001Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.170.225:30333 (round 1)
-2025-05-28T01:58:07.546216Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 9. Count: 13/11
-2025-05-28T01:58:07.546699Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.558082Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 6"
-2025-05-28T01:58:07.558113Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 7
-2025-05-28T01:58:07.558122Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.558127Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.558718Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.170.225:30333 (round 1)
-2025-05-28T01:58:07.563478Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.181.80:30333 (round 1)
-2025-05-28T01:58:07.579187Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.181.80:30333 (round 1)
-2025-05-28T01:58:07.599899Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 7. Count: 14/11
-2025-05-28T01:58:07.600486Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.185.93:30333 (round 1)
-2025-05-28T01:58:07.601090Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.616841Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.185.93:30333 (round 1)
-2025-05-28T01:58:07.620736Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.187.51:30333 (round 1)
-2025-05-28T01:58:07.622730Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 4"
-2025-05-28T01:58:07.622757Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 16
-2025-05-28T01:58:07.622766Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.622771Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.644067Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 16. Count: 15/11
-2025-05-28T01:58:07.644938Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.653198Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.187.51:30333 (round 1)
-2025-05-28T01:58:07.656905Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.191.102:30333 (round 1)
-2025-05-28T01:58:07.658639Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 2"
-2025-05-28T01:58:07.684701Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.191.102:30333 (round 1)
-2025-05-28T01:58:07.685861Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
-2025-05-28T01:58:07.687289Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 13 enqueuing proposal for round 1 into RBCProcessor queue
-2025-05-28T01:58:07.690362Z  INFO aleph_rbc: Node 13: Proposal for round 1 sent successfully.
-2025-05-28T01:58:07.691743Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 13
-2025-05-28T01:58:07.691759Z  INFO aleph_research::utils::dag_utils: Node 13: Ensuring DAG synchronization for round 1...
-2025-05-28T01:58:07.691763Z  INFO aleph_research::utils::dag_utils: Node 13: DAG latest round: 0, Target round: 1
-2025-05-28T01:58:07.714174Z  INFO aleph_research::structs::node: Node 13: Added proposal for round 1 from node 13. Count: 16/11
-2025-05-28T01:58:07.714788Z  INFO aleph_research::handlers::handle_propose: Node 13: Quorum reached for round 1, broadcasting prevote...
-2025-05-28T01:58:07.726778Z ERROR aleph_research::processors::rbc_processor: Error processing proposal: "RSA proof verification failed for tx shard 0"
-sh-4.2$
+Done with aleph_rbc loop for node 15
+2025-05-28T03:41:31.241813Z  WARN aleph_research::utils::start_util: ⛔ Unhealthy nodes detected: ["10.0.162.108:30333"]: Trying again....
+2025-05-28T03:41:32.244121Z  INFO aleph_research::utils::start_util: 🔍 Checking health of all nodes...
+2025-05-28T03:41:32.257106Z  INFO aleph_research::utils::start_util: ✅ All nodes are healthy.
+2025-05-28T03:41:32.257958Z  INFO aleph_rbc: All Nodes are healthy starting transaction execution.
+2025-05-28T03:41:32.257973Z  INFO aleph_research::utils::create_transaction_data: 📦 Starting transaction data creation...
+2025-05-28T03:41:37.843075Z  INFO aleph_research::utils::create_transaction_data: 📝 Created 256 transactions in 5.585098337s
+2025-05-28T03:41:37.843104Z  INFO aleph_rbc: Node 15: Created proposal with 256 transactions for round 1.
+2025-05-28T03:41:37.843113Z  INFO aleph_research::requests::send_proposals: 🚀 [DEBUG] Node 15 preparing to send proposals to ["10.0.140.30:30333", "10.0.146.116:30333", "10.0.150.109:30333", "10.0.156.31:30333", "10.0.157.28:30333", "10.0.162.108:30333", "10.0.162.57:30333", "10.0.162.94:30333", "10.0.168.72:30333", "10.0.168.94:30333", "10.0.176.203:30333", "10.0.177.172:30333", "10.0.181.18:30333", "10.0.185.96:30333", "10.0.187.116:30333"] for round 1
+2025-05-28T03:41:37.854747Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.140.30:30333 (round 1)
+2025-05-28T03:41:37.898913Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.140.30:30333 (round 1)
+2025-05-28T03:41:37.900613Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.146.116:30333 (round 1)
+2025-05-28T03:41:37.980382Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.146.116:30333 (round 1)
+2025-05-28T03:41:37.982117Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.150.109:30333 (round 1)
+2025-05-28T03:41:38.186470Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.150.109:30333 (round 1)
+2025-05-28T03:41:38.188106Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.156.31:30333 (round 1)
+2025-05-28T03:41:38.248171Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.156.31:30333 (round 1)
+2025-05-28T03:41:38.249680Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.157.28:30333 (round 1)
+2025-05-28T03:41:38.306375Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 13
+2025-05-28T03:41:38.306402Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.306407Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.309708Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 13. Count: 1/11
+2025-05-28T03:41:38.310197Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (1 < 11)
+2025-05-28T03:41:38.454517Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 10
+2025-05-28T03:41:38.454542Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.454546Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.459332Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 10. Count: 2/11
+2025-05-28T03:41:38.459844Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (2 < 11)
+2025-05-28T03:41:38.514091Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.157.28:30333 (round 1)
+2025-05-28T03:41:38.516185Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.162.108:30333 (round 1)
+2025-05-28T03:41:38.551510Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 4
+2025-05-28T03:41:38.551560Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.551564Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.557375Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 4. Count: 3/11
+2025-05-28T03:41:38.557879Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (3 < 11)
+2025-05-28T03:41:38.559899Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 6
+2025-05-28T03:41:38.559908Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.559911Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.566189Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 6. Count: 4/11
+2025-05-28T03:41:38.566611Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (4 < 11)
+2025-05-28T03:41:38.623565Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 11
+2025-05-28T03:41:38.623590Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.623594Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.631685Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 11. Count: 5/11
+2025-05-28T03:41:38.632195Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (5 < 11)
+2025-05-28T03:41:38.636270Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.162.108:30333 (round 1)
+2025-05-28T03:41:38.637757Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.162.57:30333 (round 1)
+2025-05-28T03:41:38.666985Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 2
+2025-05-28T03:41:38.667007Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.667011Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.676348Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 2. Count: 6/11
+2025-05-28T03:41:38.676877Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (6 < 11)
+2025-05-28T03:41:38.677607Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.162.57:30333 (round 1)
+2025-05-28T03:41:38.680818Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.162.94:30333 (round 1)
+2025-05-28T03:41:38.697353Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.162.94:30333 (round 1)
+2025-05-28T03:41:38.699110Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.168.72:30333 (round 1)
+2025-05-28T03:41:38.721690Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.168.72:30333 (round 1)
+2025-05-28T03:41:38.723166Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.168.94:30333 (round 1)
+2025-05-28T03:41:38.737378Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.168.94:30333 (round 1)
+2025-05-28T03:41:38.738672Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.176.203:30333 (round 1)
+2025-05-28T03:41:38.780321Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.176.203:30333 (round 1)
+2025-05-28T03:41:38.781703Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.177.172:30333 (round 1)
+2025-05-28T03:41:38.800570Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.177.172:30333 (round 1)
+2025-05-28T03:41:38.801783Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.181.18:30333 (round 1)
+2025-05-28T03:41:38.803450Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 12
+2025-05-28T03:41:38.803461Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.803465Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.813827Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 12. Count: 7/11
+2025-05-28T03:41:38.814306Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (7 < 11)
+2025-05-28T03:41:38.816318Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.181.18:30333 (round 1)
+2025-05-28T03:41:38.818515Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.185.96:30333 (round 1)
+2025-05-28T03:41:38.834060Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.185.96:30333 (round 1)
+2025-05-28T03:41:38.835577Z  INFO aleph_research::requests::send_proposals: 📤 Attempt 1/3: Sending proposal to 10.0.187.116:30333 (round 1)
+2025-05-28T03:41:38.849937Z  INFO aleph_research::requests::send_proposals: ✅ Proposal delivered to 10.0.187.116:30333 (round 1)
+2025-05-28T03:41:38.851041Z  INFO aleph_research::requests::send_proposals: ✅ Successfully sent all proposals for round 1.
+2025-05-28T03:41:38.855141Z  INFO aleph_research::requests::send_proposals: 📥 [DEBUG] Node 15 enqueuing proposal for round 1 into RBCProcessor queue
+2025-05-28T03:41:38.858757Z  INFO aleph_rbc: Node 15: Proposal for round 1 sent successfully.
+2025-05-28T03:41:38.866558Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 15
+2025-05-28T03:41:38.866580Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.866584Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.878102Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 15. Count: 8/11
+2025-05-28T03:41:38.878594Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (8 < 11)
+2025-05-28T03:41:38.883573Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 7
+2025-05-28T03:41:38.883591Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.883595Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.895902Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 7. Count: 9/11
+2025-05-28T03:41:38.896411Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (9 < 11)
+2025-05-28T03:41:38.927275Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 8
+2025-05-28T03:41:38.927299Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.927303Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.941471Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 8. Count: 10/11
+2025-05-28T03:41:38.942010Z  INFO aleph_research::handlers::handle_propose: Node 15: Waiting for quorum (10 < 11)
+2025-05-28T03:41:38.947866Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 1
+2025-05-28T03:41:38.947882Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:38.947886Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:38.962056Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 1. Count: 11/11
+2025-05-28T03:41:38.962501Z  INFO aleph_research::handlers::handle_propose: Node 15: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T03:41:50.924906Z  INFO aleph_research::handlers::handle_propose: Node 15: handle_propose round 1 done in 11.977022664s [dag_sync: 8.473µs]
+2025-05-28T03:41:50.945602Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.108
+2025-05-28T03:41:50.945635Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (1/11)
+2025-05-28T03:41:50.963291Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.156.31
+2025-05-28T03:41:50.963350Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (2/11)
+2025-05-28T03:41:50.980150Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.176.203
+2025-05-28T03:41:50.980184Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (3/11)
+2025-05-28T03:41:50.997766Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.187.116
+2025-05-28T03:41:50.997800Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (4/11)
+2025-05-28T03:41:51.015396Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.185.96
+2025-05-28T03:41:51.015442Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (5/11)
+2025-05-28T03:41:51.033278Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.146.116
+2025-05-28T03:41:51.033304Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (6/11)
+2025-05-28T03:41:51.051062Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.181.18
+2025-05-28T03:41:51.051095Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (7/11)
+2025-05-28T03:41:51.068475Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.57
+2025-05-28T03:41:51.068527Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (8/11)
+2025-05-28T03:41:51.085913Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.72
+2025-05-28T03:41:51.085937Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (9/11)
+2025-05-28T03:41:51.103564Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.94
+2025-05-28T03:41:51.103590Z  INFO aleph_research::handlers::handle_prevote: Node 15: Waiting for more prevotes (10/11)
+2025-05-28T03:41:51.121020Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.140.30
+2025-05-28T03:41:51.121049Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:41:51.139679Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:41:51.139704Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.178.164
+2025-05-28T03:41:51.139721Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:41:51.158452Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:41:51.158476Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.157.28
+2025-05-28T03:41:51.158490Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:41:51.187148Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:41:51.187178Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 14
+2025-05-28T03:41:51.187187Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:41:51.187192Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:41:51.435641Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 14. Count: 12/11
+2025-05-28T03:41:51.439615Z  INFO aleph_research::handlers::handle_propose: Node 15: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T03:42:03.552364Z  INFO aleph_research::handlers::handle_propose: Node 15: handle_propose round 1 done in 12.365175775s [dag_sync: 11.473µs]
+2025-05-28T03:42:03.563810Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.150.109
+2025-05-28T03:42:03.563834Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:42:03.574634Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:42:03.574662Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.177.172
+2025-05-28T03:42:03.574676Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:42:03.587781Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:42:03.587812Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.94
+2025-05-28T03:42:03.587828Z  INFO aleph_research::handlers::handle_prevote: Node 15: Quorum reached for round 1. Starting verification and reconstruction...
+2025-05-28T03:42:03.601920Z ERROR aleph_research::processors::rbc_processor: Error processing prevote: "Node 15: tx[0] failed RSA proof verification"
+2025-05-28T03:42:03.601951Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.176.203
+2025-05-28T03:42:03.601961Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.176.203 for round 1.
+2025-05-28T03:42:03.609653Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.178.164
+2025-05-28T03:42:03.609672Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.178.164 for round 1.
+2025-05-28T03:42:03.617269Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.94
+2025-05-28T03:42:03.617286Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.168.94 for round 1.
+2025-05-28T03:42:03.624997Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.181.18
+2025-05-28T03:42:03.625013Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.181.18 for round 1.
+2025-05-28T03:42:03.632661Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.140.30
+2025-05-28T03:42:03.632677Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.140.30 for round 1.
+2025-05-28T03:42:03.640421Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.156.31
+2025-05-28T03:42:03.640436Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.156.31 for round 1.
+2025-05-28T03:42:03.648179Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.146.116
+2025-05-28T03:42:03.648193Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.146.116 for round 1.
+2025-05-28T03:42:03.657310Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.108
+2025-05-28T03:42:03.657323Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.108 for round 1.
+2025-05-28T03:42:03.664986Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.150.109
+2025-05-28T03:42:03.665001Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.150.109 for round 1.
+2025-05-28T03:42:03.672216Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.94
+2025-05-28T03:42:03.672231Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.94 for round 1.
+2025-05-28T03:42:03.679478Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.181.18
+2025-05-28T03:42:03.679492Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.181.18 for round 1.
+2025-05-28T03:42:03.686781Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.94
+2025-05-28T03:42:03.686794Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.168.94 for round 1.
+2025-05-28T03:42:03.696189Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.57
+2025-05-28T03:42:03.696201Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.57 for round 1.
+2025-05-28T03:42:03.710591Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.157.28
+2025-05-28T03:42:03.710611Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.157.28 for round 1.
+2025-05-28T03:42:03.727098Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.72
+2025-05-28T03:42:03.727138Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.168.72 for round 1.
+2025-05-28T03:42:03.747004Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.108
+2025-05-28T03:42:03.747025Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.108 for round 1.
+2025-05-28T03:42:03.772459Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.72
+2025-05-28T03:42:03.772487Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.168.72 for round 1.
+2025-05-28T03:42:03.791936Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.140.30
+2025-05-28T03:42:03.791957Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.140.30 for round 1.
+2025-05-28T03:42:03.813725Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.177.172
+2025-05-28T03:42:03.813749Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.177.172 for round 1.
+2025-05-28T03:42:03.830500Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.156.31
+2025-05-28T03:42:03.830525Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.156.31 for round 1.
+2025-05-28T03:42:03.871324Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.187.116
+2025-05-28T03:42:03.871355Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.187.116 for round 1.
+2025-05-28T03:42:03.888724Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.185.96
+2025-05-28T03:42:03.888749Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.185.96 for round 1.
+2025-05-28T03:42:03.904842Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 16
+2025-05-28T03:42:03.904860Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:42:03.904865Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:42:03.954385Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 16. Count: 13/11
+2025-05-28T03:42:03.955672Z  INFO aleph_research::handlers::handle_propose: Node 15: Quorum reached for round 1, broadcasting prevote...
+2025-05-28T03:42:10.851029Z  INFO aleph_research::handlers::handle_propose: Node 15: handle_propose round 1 done in 6.946165798s [dag_sync: 15.842µs]
+2025-05-28T03:42:10.868273Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.57
+2025-05-28T03:42:10.868325Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.57 for round 1.
+2025-05-28T03:42:10.892037Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.146.116
+2025-05-28T03:42:10.892068Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.146.116 for round 1.
+2025-05-28T03:42:10.903325Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.176.203
+2025-05-28T03:42:10.903352Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.176.203 for round 1.
+2025-05-28T03:42:10.914498Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.178.164
+2025-05-28T03:42:10.914522Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.178.164 for round 1.
+2025-05-28T03:42:10.925945Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.162.94
+2025-05-28T03:42:10.925965Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.162.94 for round 1.
+2025-05-28T03:42:10.939133Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.150.109
+2025-05-28T03:42:10.939154Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.150.109 for round 1.
+2025-05-28T03:42:10.952251Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.157.28
+2025-05-28T03:42:10.952271Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.157.28 for round 1.
+2025-05-28T03:42:10.962545Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.185.96
+2025-05-28T03:42:10.962562Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.185.96 for round 1.
+2025-05-28T03:42:10.969346Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.168.72
+2025-05-28T03:42:10.969360Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.168.72 for round 1.
+2025-05-28T03:42:10.983742Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.177.172
+2025-05-28T03:42:10.983757Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.177.172 for round 1.
+2025-05-28T03:42:10.992021Z  INFO aleph_research::processors::rbc_processor: Processing prevote for round 1 from node 10.0.187.116
+2025-05-28T03:42:10.992038Z  INFO aleph_research::handlers::handle_prevote: Node 15: Duplicate prevote from 10.0.187.116 for round 1.
+2025-05-28T03:42:11.000472Z  INFO aleph_research::processors::rbc_processor: Processing proposal for round 1 from node 3
+2025-05-28T03:42:11.000485Z  INFO aleph_research::utils::dag_utils: Node 15: Ensuring DAG synchronization for round 1...
+2025-05-28T03:42:11.000489Z  INFO aleph_research::utils::dag_utils: Node 15: DAG latest round: 0, Target round: 1
+2025-05-28T03:42:11.015745Z  INFO aleph_research::structs::node: Node 15: Added proposal for round 1 from node 3. Count: 14/11
+2025-05-28T03:42:11.016264Z  INFO aleph_research::handlers::handle_propose: Node 15: Quorum reached for round 1, broadcasting prevote...
+sh-4.2$ ^C
+sh-4.2$ tail -f /aleph/logs/node_status

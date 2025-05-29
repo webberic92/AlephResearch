@@ -55,21 +55,20 @@ pub async fn handle_prevote(
     let mut reconstructed_units = Vec::new();
     let mut duration_proof = Duration::ZERO;
     let mut duration_reconstruct = Duration::ZERO;
+    let modulus = get_modulus();
 
     for proposal in &prevote_request.proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
-
-        let acc_bytes = general_purpose::STANDARD
-            .decode(&proposal.batch_accumulator)
-            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let modulus = get_modulus();
-
         let mut reconstructed_transactions = Vec::new();
 
         for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let t1 = Instant::now();
+            let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
+            let acc_bytes = general_purpose::STANDARD
+            .decode(acc_encoded)
+            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
+            let t1 = Instant::now();
             let hash_proof_pairs: Vec<_> = tx.shards
                 .iter()
                 .enumerate()
@@ -187,3 +186,4 @@ pub async fn handle_prevote(
 
     Ok(())
 }
+
