@@ -217,21 +217,20 @@ pub async fn handle_prevote(
     let mut reconstructed_units = Vec::new();
     let mut duration_proof = Duration::ZERO;
     let mut duration_reconstruct = Duration::ZERO;
+    let modulus = get_modulus();
 
     for proposal in &prevote_request.proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
-
-        let acc_bytes = general_purpose::STANDARD
-            .decode(&proposal.batch_accumulator)
-            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let modulus = get_modulus();
-
         let mut reconstructed_transactions = Vec::new();
 
         for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let t1 = Instant::now();
+            let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
+            let acc_bytes = general_purpose::STANDARD
+            .decode(acc_encoded)
+            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
+            let t1 = Instant::now();
             let hash_proof_pairs: Vec<_> = tx.shards
                 .iter()
                 .enumerate()
@@ -349,6 +348,7 @@ pub async fn handle_prevote(
 
     Ok(())
 }
+
 use std::sync::{atomic::Ordering, Arc};
 use base64::{engine::general_purpose, Engine};
 use num_bigint::{BigInt, Sign};
@@ -1920,12 +1920,12 @@ class TestAleph(Stack):
         super().__init__(scope, id, **kwargs)
         #RSA
         INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
-        INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE =  5#(TX PER BATCH) Define the number of transactions in a batch
+        INSTANCES_NUMBER = 16 # Define the number of instances
+        BATCH_SIZE =  256#(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 5 # Define the number of rounds
+        TOTAL_ROUNDS = 3 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
