@@ -52,96 +52,102 @@ pub async fn handle_prevote(
 
     info!("Node {}: Quorum reached for round {}. Starting verification and reconstruction...", node_id, round_id);
 
-    let mut reconstructed_units = Vec::new();
-    let mut duration_proof = Duration::ZERO;
-    let mut duration_reconstruct = Duration::ZERO;
     let modulus = get_modulus();
+    let (reconstructed_units, duration_proof, duration_reconstruct): (Vec<_>, Duration, Duration) = prevote_request
+        .proposals
+        .par_iter()
+        .map(|proposal| {
+            let proposer_id = proposal.base.proposing_node_id as usize;
+            let mut reconstructed_transactions = Vec::new();
+            let mut duration_proof = Duration::ZERO;
+            let mut duration_reconstruct = Duration::ZERO;
 
-    for proposal in &prevote_request.proposals {
-        let proposer_id = proposal.base.proposing_node_id as usize;
-        let mut reconstructed_transactions = Vec::new();
+            for (tx_index, tx) in proposal.transactions.iter().enumerate() {
+                let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
+                let acc_bytes = general_purpose::STANDARD.decode(acc_encoded)
+                    .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+                let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
-            let acc_bytes = general_purpose::STANDARD
-                .decode(acc_encoded)
-                .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
-            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+                let t1 = Instant::now();
+                let hash_proof_pairs: Vec<_> = (0..data_shards).into_par_iter().map(|shard_index| {
+                    let shard = &tx.shards[shard_index];
 
-            let t1 = Instant::now();
-            let hash_proof_pairs: Vec<_> = (0..data_shards).into_par_iter().map(|shard_index| {
-                let shard = &tx.shards[shard_index];
+                    let decoded = general_purpose::STANDARD.decode(&shard.shard_b64)
+                        .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
 
-                let decoded = general_purpose::STANDARD
-                    .decode(&shard.shard_b64)
-                    .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
+                    let expected_len = (transaction_size + data_shards - 1) / data_shards;
+                    if decoded.len() != expected_len {
+                        return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
+                    }
 
-                let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                if decoded.len() != expected_len {
-                    return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
+                    let expected_hash_hex = tx.shard_hashes
+                        .as_ref()
+                        .and_then(|h| h.get(shard_index))
+                        .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
+                    let expected_hash = hex::decode(expected_hash_hex)
+                        .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
+
+                    let proof_b64 = shard.proofs.get(0)
+                        .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
+                    let proof_bytes = general_purpose::STANDARD.decode(proof_b64)
+                        .map_err(|e| format!("Proof decode error: {:?}", e))?;
+                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                    Ok((expected_hash, proof, decoded))
+                }).collect::<Result<_, _>>()?;
+
+                let batch_valid = hash_proof_pairs.par_iter().all(|(hash, proof, _)| {
+                    let prime = hash_to_prime_128(hash);
+                    proof.modpow(&prime, &modulus) == accumulator
+                });
+                duration_proof += t1.elapsed();
+
+                if !batch_valid {
+                    return Err(format!("Node {}: tx[{}] failed RSA proof verification", node_id, tx_index));
                 }
 
-                let expected_hash_hex = tx.shard_hashes
-                    .as_ref()
-                    .and_then(|h| h.get(shard_index))
-                    .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
-                let expected_hash = hex::decode(expected_hash_hex)
-                    .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
+                let t2 = Instant::now();
+                let padded_tx_bytes = {
+                    let mut buffer = Vec::with_capacity(transaction_size);
+                    for i in 0..data_shards {
+                        buffer.extend_from_slice(&hash_proof_pairs[i].2);
+                    }
+                    buffer.truncate(transaction_size);
+                    buffer
+                };
+                duration_reconstruct += t2.elapsed();
 
-                let proof_b64 = shard.proofs.get(0)
-                    .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
-                let proof_bytes = general_purpose::STANDARD
-                    .decode(proof_b64)
-                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+                let hash = Sha256::digest(&padded_tx_bytes);
+                if hash.to_vec() != tx.root {
+                    return Err(format!(
+                        "Node {}: tx[{}] hash mismatch. Expected {}, got {}",
+                        node_id, tx_index, hex::encode(&tx.root), hex::encode(&hash)
+                    ));
+                }
 
-                Ok((expected_hash, proof, decoded))
-            }).collect::<Result<_, _>>()?;
-
-            let batch_valid = hash_proof_pairs.par_iter().all(|(hash, proof, _)| {
-                let prime = hash_to_prime_128(hash);
-                proof.modpow(&prime, &modulus) == accumulator
-            });
-            duration_proof += t1.elapsed();
-
-            if !batch_valid {
-                return Err(format!("Node {}: tx[{}] failed RSA proof verification", node_id, tx_index));
+                reconstructed_transactions.push(tx.clone());
             }
 
-            let t2 = Instant::now();
-            let padded_tx_bytes = {
-                let mut buffer = Vec::with_capacity(transaction_size);
-                for i in 0..data_shards {
-                    buffer.extend_from_slice(&hash_proof_pairs[i].2);
-                }
-                buffer.truncate(transaction_size);
-                buffer
+            let dag_unit = DagUnit {
+                unit_id: format!("U{}-{}", round_id, proposer_id),
+                proposer_node: proposer_id,
+                round: round_id,
+                transactions: reconstructed_transactions,
+                parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
+                accumulator_root: vec![],
+                finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
             };
-            duration_reconstruct += t2.elapsed();
 
-            let hash = Sha256::digest(&padded_tx_bytes);
-            if hash.to_vec() != tx.root {
-                return Err(format!(
-                    "Node {}: tx[{}] hash mismatch. Expected {}, got {}",
-                    node_id, tx_index, hex::encode(&tx.root), hex::encode(&hash)
-                ));
-            }
-
-            reconstructed_transactions.push(tx.clone());
-        }
-
-        let dag_unit = DagUnit {
-            unit_id: format!("U{}-{}", round_id, proposer_id),
-            proposer_node: proposer_id,
-            round: round_id,
-            transactions: reconstructed_transactions,
-            parent_units: proposal.parents.iter().map(|p| String::from_utf8_lossy(p).to_string()).collect(),
-            accumulator_root: vec![],
-            finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
-        };
-
-        reconstructed_units.push(dag_unit);
-    }
+            Ok((dag_unit, duration_proof, duration_reconstruct))
+        })
+        .collect::<Result<Vec<_>, String>>()?
+        .into_iter()
+        .fold((Vec::new(), Duration::ZERO, Duration::ZERO), |mut acc, x| {
+            acc.0.push(x.0);
+            acc.1 += x.1;
+            acc.2 += x.2;
+            acc
+        });
 
     info!(
         "Node {}: Round {} verified. Time: {:?} [proof: {:?}, reconstruct: {:?}]",

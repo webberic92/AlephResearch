@@ -51,7 +51,9 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
-    // 🔒 Parallel shard verification per transaction
+    let modulus = get_modulus();
+
+    // ✅ Parallel shard verification per transaction
     propose_request.transactions.par_iter().try_for_each(|tx| {
         let Some(shard_hashes) = &tx.shard_hashes else {
             return Err("Missing shard_hashes field for transaction".to_string());
@@ -81,7 +83,7 @@ pub async fn handle_propose(
                 .map_err(|e| format!("Hash decode error: {:?}", e))?;
             let prime = hash_to_prime_128(&hash_bytes);
 
-            let valid = proof.modpow(&prime, &get_modulus()) == accumulator;
+            let valid = proof.modpow(&prime, &modulus) == accumulator;
             if !valid {
                 return Err(format!("RSA proof verification failed for tx shard {}", j));
             }

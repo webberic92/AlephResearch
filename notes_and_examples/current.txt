@@ -26,9 +26,7 @@ rounds (keep at 10)	RSA time grows slower per round than Merkle, but absolute ti
 batch_size (increase 256 → 1024)	Merkle should get worse faster than RSA, esp. in bandwidth, not CPU
 🔧 Summary Fixes
 
-    ✅ Parallelize outer transactions loop in handle_prevote and handle_propose.
 
-    ✅ Reduce data_shards for RSA (e.g., 8 or even 4).
 
     ✅ Memoize hash-to-prime and proof validation results per round.
 
