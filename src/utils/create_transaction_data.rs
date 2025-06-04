@@ -1,3 +1,4 @@
+use std::num::NonZero;
 use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine};
@@ -7,6 +8,11 @@ use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use num_bigint::BigInt;
+use lru::LruCache;
+use once_cell::sync::Lazy;
+use std::sync::Mutex as StdMutex;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::{
     structs::{
@@ -19,6 +25,8 @@ use crate::{
         hash_to_prime_128,
     },
 };
+
+static PROOF_CACHE: Lazy<StdMutex<LruCache<u64, BigInt>>> = Lazy::new(|| StdMutex::new(LruCache::new(NonZero::new(10000).unwrap())));
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     if data.len() >= target_len {
@@ -33,7 +41,7 @@ pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
 ) -> Result<ProposeRequest, anyhow::Error> {
     let timer = Instant::now();
-    info!("\u{1f4e6} Starting transaction data creation...");
+    info!("📦 Starting transaction data creation...");
 
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
@@ -78,29 +86,37 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs).unwrap();
 
-        // Step 1: Hash data shards and compute primes
         let tx_hashes: Vec<Vec<u8>> = shards[..data_shards]
             .iter()
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
-        let tx_primes: Vec<BigInt> = tx_hashes
-            .iter()
-            .map(|hash| hash_to_prime_128(hash))
-            .collect();
+        let mut cache = PROOF_CACHE.lock().unwrap();
+        let mut tx_primes = Vec::with_capacity(data_shards);
 
-        // Step 2: Compute accumulator from all primes
+        for hash in &tx_hashes {
+            let mut hasher = DefaultHasher::new();
+            hash.hash(&mut hasher);
+            let key = hasher.finish();
+
+            if let Some(cached_prime) = cache.get(&key) {
+                tx_primes.push(cached_prime.clone());
+            } else {
+                let prime = hash_to_prime_128(hash);
+                cache.put(key, prime.clone());
+                tx_primes.push(prime);
+            }
+        }
+
         let tx_accumulator = compute_accumulator_from_primes(&tx_primes);
         let tx_acc_encoded = general_purpose::STANDARD.encode(tx_accumulator.to_bytes_be().1);
 
-        // Step 3: Generate proofs for each prime against the accumulator
         let proofs = generate_proofs_from_primes_radix(&tx_primes);
         let encoded_proofs: Vec<String> = proofs
             .iter()
             .map(|p| general_purpose::STANDARD.encode(p.to_bytes_be().1))
             .collect();
 
-        // Step 4: Build shard structs, attaching proofs to data shards
         let mut shard_structs = Vec::with_capacity(total_nodes);
         for shard_i in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
@@ -117,7 +133,6 @@ pub async fn create_transaction_data(
             });
         }
 
-        // Step 5: Finalize transaction
         let shard_hashes_hex: Vec<String> = tx_hashes.iter().map(|h| hex::encode(h)).collect();
         let padded_root = pad_to_len(content.into_bytes(), transaction_size);
 
@@ -129,7 +144,7 @@ pub async fn create_transaction_data(
         }
     }).collect();
 
-    info!("\u{1f4dd} Created {} transactions in {:?}", num_txs, timer.elapsed());
+    info!("📝 Created {} transactions in {:?}", num_txs, timer.elapsed());
 
     Ok(ProposeRequest {
         base: BaseRequest {
@@ -141,35 +156,3 @@ pub async fn create_transaction_data(
         batch_accumulator: "".to_string(),
     })
 }
-
-
-// /// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
-// /// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
-// pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
-//     let mut node_guard = node.lock().await;
-
-//     let total_nodes = node_guard.total_nodes;
-//     let num_txs = node_guard.number_of_transactions;
-
-//     // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
-//     let optimal_data_shards = std::cmp::max(
-//         1,
-//         std::cmp::min(num_txs, total_nodes - total_nodes / 3),
-//     );
-
-//     if node_guard.data_shards != optimal_data_shards {
-//         tracing::info!(
-//             "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
-//             node_guard.data_shards,
-//             optimal_data_shards,
-//             total_nodes,
-//             num_txs
-//         );
-//         node_guard.data_shards = optimal_data_shards;
-//     } else {
-//         tracing::info!(
-//             "data_shards already optimal ({}); no update needed.",
-//             node_guard.data_shards
-//         );
-//     }
-// }

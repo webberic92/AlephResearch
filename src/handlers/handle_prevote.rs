@@ -4,7 +4,7 @@ use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use num_bigint::{BigInt, Sign};
 
 use crate::{
@@ -64,42 +64,39 @@ pub async fn handle_prevote(
         for (tx_index, tx) in proposal.transactions.iter().enumerate() {
             let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
             let acc_bytes = general_purpose::STANDARD
-            .decode(acc_encoded)
-            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+                .decode(acc_encoded)
+                .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
             let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
             let t1 = Instant::now();
-            let hash_proof_pairs: Vec<_> = tx.shards
-                .iter()
-                .enumerate()
-                .take(data_shards)
-                .map(|(shard_index, shard)| {
-                    let decoded = general_purpose::STANDARD
-                        .decode(&shard.shard_b64)
-                        .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
+            let hash_proof_pairs: Vec<_> = (0..data_shards).into_par_iter().map(|shard_index| {
+                let shard = &tx.shards[shard_index];
 
-                    let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                    if decoded.len() != expected_len {
-                        return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
-                    }
+                let decoded = general_purpose::STANDARD
+                    .decode(&shard.shard_b64)
+                    .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
 
-                    let expected_hash_hex = tx.shard_hashes
-                        .as_ref()
-                        .and_then(|h| h.get(shard_index))
-                        .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
-                    let expected_hash = hex::decode(expected_hash_hex)
-                        .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
+                let expected_len = (transaction_size + data_shards - 1) / data_shards;
+                if decoded.len() != expected_len {
+                    return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
+                }
 
-                    let proof_b64 = shard.proofs.get(0)
-                        .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
-                    let proof_bytes = general_purpose::STANDARD
-                        .decode(proof_b64)
-                        .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+                let expected_hash_hex = tx.shard_hashes
+                    .as_ref()
+                    .and_then(|h| h.get(shard_index))
+                    .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
+                let expected_hash = hex::decode(expected_hash_hex)
+                    .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
 
-                    Ok((expected_hash, proof, decoded))
-                })
-                .collect::<Result<_, _>>()?;
+                let proof_b64 = shard.proofs.get(0)
+                    .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(proof_b64)
+                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
+                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                Ok((expected_hash, proof, decoded))
+            }).collect::<Result<_, _>>()?;
 
             let batch_valid = hash_proof_pairs.par_iter().all(|(hash, proof, _)| {
                 let prime = hash_to_prime_128(hash);
@@ -186,4 +183,3 @@ pub async fn handle_prevote(
 
     Ok(())
 }
-

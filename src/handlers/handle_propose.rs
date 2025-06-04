@@ -4,8 +4,9 @@ use num_bigint::{BigInt, Sign};
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
-use tracing::{info};
+use tracing::info;
 use rayon::prelude::*;
+
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
@@ -50,8 +51,8 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
-    // 🔒 Validate each transaction's shard proofs using its specific accumulator
-    for tx in &propose_request.transactions {
+    // 🔒 Parallel shard verification per transaction
+    propose_request.transactions.par_iter().try_for_each(|tx| {
         let Some(shard_hashes) = &tx.shard_hashes else {
             return Err("Missing shard_hashes field for transaction".to_string());
         };
@@ -65,10 +66,8 @@ pub async fn handle_propose(
             .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        let results: Result<Vec<_>, String> = (0..shard_hashes.len()).into_par_iter().map(|j| {
-            let shard = &tx.shards[j];
-
-            if shard.proofs.is_empty() {
+        tx.shards.par_iter().enumerate().try_for_each(|(j, shard)| {
+            if j >= shard_hashes.len() || shard.proofs.is_empty() {
                 return Ok(()); // skip parity shards
             }
 
@@ -88,10 +87,8 @@ pub async fn handle_propose(
             }
 
             Ok(())
-        }).collect();
-
-        results?;
-    }
+        })
+    })?;
 
     let prevote_request = {
         let node_guard = node.lock().await;

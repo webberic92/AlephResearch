@@ -166,7 +166,7 @@ use reqwest::Client;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
 use std::{collections::HashSet, sync::{atomic::Ordering, Arc}};
-use tracing::{error, info, warn};
+use tracing::{error, info};
 use num_bigint::{BigInt, Sign};
 
 use crate::{
@@ -226,42 +226,39 @@ pub async fn handle_prevote(
         for (tx_index, tx) in proposal.transactions.iter().enumerate() {
             let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator in transaction")?;
             let acc_bytes = general_purpose::STANDARD
-            .decode(acc_encoded)
-            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+                .decode(acc_encoded)
+                .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
             let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
             let t1 = Instant::now();
-            let hash_proof_pairs: Vec<_> = tx.shards
-                .iter()
-                .enumerate()
-                .take(data_shards)
-                .map(|(shard_index, shard)| {
-                    let decoded = general_purpose::STANDARD
-                        .decode(&shard.shard_b64)
-                        .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
+            let hash_proof_pairs: Vec<_> = (0..data_shards).into_par_iter().map(|shard_index| {
+                let shard = &tx.shards[shard_index];
 
-                    let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                    if decoded.len() != expected_len {
-                        return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
-                    }
+                let decoded = general_purpose::STANDARD
+                    .decode(&shard.shard_b64)
+                    .map_err(|e| format!("tx[{}] shard[{}] decode error: {:?}", tx_index, shard_index, e))?;
 
-                    let expected_hash_hex = tx.shard_hashes
-                        .as_ref()
-                        .and_then(|h| h.get(shard_index))
-                        .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
-                    let expected_hash = hex::decode(expected_hash_hex)
-                        .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
+                let expected_len = (transaction_size + data_shards - 1) / data_shards;
+                if decoded.len() != expected_len {
+                    return Err(format!("tx[{}] shard[{}] length mismatch", tx_index, shard_index));
+                }
 
-                    let proof_b64 = shard.proofs.get(0)
-                        .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
-                    let proof_bytes = general_purpose::STANDARD
-                        .decode(proof_b64)
-                        .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                    let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+                let expected_hash_hex = tx.shard_hashes
+                    .as_ref()
+                    .and_then(|h| h.get(shard_index))
+                    .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?;
+                let expected_hash = hex::decode(expected_hash_hex)
+                    .map_err(|e| format!("Invalid hex in shard_hash[{}]: {:?}", shard_index, e))?;
 
-                    Ok((expected_hash, proof, decoded))
-                })
-                .collect::<Result<_, _>>()?;
+                let proof_b64 = shard.proofs.get(0)
+                    .ok_or_else(|| format!("Missing proof for tx[{}] shard[{}]", tx_index, shard_index))?;
+                let proof_bytes = general_purpose::STANDARD
+                    .decode(proof_b64)
+                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
+                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+
+                Ok((expected_hash, proof, decoded))
+            }).collect::<Result<_, _>>()?;
 
             let batch_valid = hash_proof_pairs.par_iter().all(|(hash, proof, _)| {
                 let prime = hash_to_prime_128(hash);
@@ -348,15 +345,15 @@ pub async fn handle_prevote(
 
     Ok(())
 }
-
 use std::sync::{atomic::Ordering, Arc};
 use base64::{engine::general_purpose, Engine};
 use num_bigint::{BigInt, Sign};
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
-use tracing::{info};
+use tracing::info;
 use rayon::prelude::*;
+
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
@@ -401,8 +398,8 @@ pub async fn handle_propose(
 
     info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
 
-    // 🔒 Validate each transaction's shard proofs using its specific accumulator
-    for tx in &propose_request.transactions {
+    // 🔒 Parallel shard verification per transaction
+    propose_request.transactions.par_iter().try_for_each(|tx| {
         let Some(shard_hashes) = &tx.shard_hashes else {
             return Err("Missing shard_hashes field for transaction".to_string());
         };
@@ -416,10 +413,8 @@ pub async fn handle_propose(
             .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        let results: Result<Vec<_>, String> = (0..shard_hashes.len()).into_par_iter().map(|j| {
-            let shard = &tx.shards[j];
-
-            if shard.proofs.is_empty() {
+        tx.shards.par_iter().enumerate().try_for_each(|(j, shard)| {
+            if j >= shard_hashes.len() || shard.proofs.is_empty() {
                 return Ok(()); // skip parity shards
             }
 
@@ -439,10 +434,8 @@ pub async fn handle_propose(
             }
 
             Ok(())
-        }).collect();
-
-        results?;
-    }
+        })
+    })?;
 
     let prevote_request = {
         let node_guard = node.lock().await;
@@ -712,6 +705,7 @@ pub async fn write_finalized_dag_to_file(
 
     Ok(())
 }
+use std::num::NonZero;
 use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine};
@@ -721,6 +715,11 @@ use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use num_bigint::BigInt;
+use lru::LruCache;
+use once_cell::sync::Lazy;
+use std::sync::Mutex as StdMutex;
+use std::collections::hash_map::DefaultHasher;
+use std::hash::{Hash, Hasher};
 
 use crate::{
     structs::{
@@ -733,6 +732,8 @@ use crate::{
         hash_to_prime_128,
     },
 };
+
+static PROOF_CACHE: Lazy<StdMutex<LruCache<u64, BigInt>>> = Lazy::new(|| StdMutex::new(LruCache::new(NonZero::new(10000).unwrap())));
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     if data.len() >= target_len {
@@ -747,7 +748,7 @@ pub async fn create_transaction_data(
     node: Arc<Mutex<Node>>,
 ) -> Result<ProposeRequest, anyhow::Error> {
     let timer = Instant::now();
-    info!("\u{1f4e6} Starting transaction data creation...");
+    info!("📦 Starting transaction data creation...");
 
     let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
         let node_guard = node.lock().await;
@@ -792,29 +793,37 @@ pub async fn create_transaction_data(
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs).unwrap();
 
-        // Step 1: Hash data shards and compute primes
         let tx_hashes: Vec<Vec<u8>> = shards[..data_shards]
             .iter()
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
-        let tx_primes: Vec<BigInt> = tx_hashes
-            .iter()
-            .map(|hash| hash_to_prime_128(hash))
-            .collect();
+        let mut cache = PROOF_CACHE.lock().unwrap();
+        let mut tx_primes = Vec::with_capacity(data_shards);
 
-        // Step 2: Compute accumulator from all primes
+        for hash in &tx_hashes {
+            let mut hasher = DefaultHasher::new();
+            hash.hash(&mut hasher);
+            let key = hasher.finish();
+
+            if let Some(cached_prime) = cache.get(&key) {
+                tx_primes.push(cached_prime.clone());
+            } else {
+                let prime = hash_to_prime_128(hash);
+                cache.put(key, prime.clone());
+                tx_primes.push(prime);
+            }
+        }
+
         let tx_accumulator = compute_accumulator_from_primes(&tx_primes);
         let tx_acc_encoded = general_purpose::STANDARD.encode(tx_accumulator.to_bytes_be().1);
 
-        // Step 3: Generate proofs for each prime against the accumulator
         let proofs = generate_proofs_from_primes_radix(&tx_primes);
         let encoded_proofs: Vec<String> = proofs
             .iter()
             .map(|p| general_purpose::STANDARD.encode(p.to_bytes_be().1))
             .collect();
 
-        // Step 4: Build shard structs, attaching proofs to data shards
         let mut shard_structs = Vec::with_capacity(total_nodes);
         for shard_i in 0..total_nodes {
             let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
@@ -831,7 +840,6 @@ pub async fn create_transaction_data(
             });
         }
 
-        // Step 5: Finalize transaction
         let shard_hashes_hex: Vec<String> = tx_hashes.iter().map(|h| hex::encode(h)).collect();
         let padded_root = pad_to_len(content.into_bytes(), transaction_size);
 
@@ -843,7 +851,7 @@ pub async fn create_transaction_data(
         }
     }).collect();
 
-    info!("\u{1f4dd} Created {} transactions in {:?}", num_txs, timer.elapsed());
+    info!("📝 Created {} transactions in {:?}", num_txs, timer.elapsed());
 
     Ok(ProposeRequest {
         base: BaseRequest {
@@ -855,38 +863,6 @@ pub async fn create_transaction_data(
         batch_accumulator: "".to_string(),
     })
 }
-
-
-// /// Dynamically adjusts the number of data shards based on total nodes and number of transactions.
-// /// Ensures enough redundancy (i.e., tolerating up to f Byzantine nodes if data_shards = N - f).
-// pub async fn maybe_adjust_shard_count(node: Arc<Mutex<Node>>) {
-//     let mut node_guard = node.lock().await;
-
-//     let total_nodes = node_guard.total_nodes;
-//     let num_txs = node_guard.number_of_transactions;
-
-//     // Aim for up to f = N / 3 fault tolerance: data_shards = N - f
-//     let optimal_data_shards = std::cmp::max(
-//         1,
-//         std::cmp::min(num_txs, total_nodes - total_nodes / 3),
-//     );
-
-//     if node_guard.data_shards != optimal_data_shards {
-//         tracing::info!(
-//             "Adjusting data_shards: {} → {} based on N = {}, txs = {}",
-//             node_guard.data_shards,
-//             optimal_data_shards,
-//             total_nodes,
-//             num_txs
-//         );
-//         node_guard.data_shards = optimal_data_shards;
-//     } else {
-//         tracing::info!(
-//             "data_shards already optimal ({}); no update needed.",
-//             node_guard.data_shards
-//         );
-//     }
-// }
 use std::{ sync::Arc, usize};
 use tokio::sync::Mutex;
 use tracing::{ error, info};
@@ -1925,7 +1901,7 @@ class TestAleph(Stack):
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 3 # Define the number of rounds
+        TOTAL_ROUNDS = 10 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
