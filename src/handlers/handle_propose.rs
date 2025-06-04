@@ -5,16 +5,17 @@ use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::info;
-use rayon::prelude::*;
 
+use crate::utils::rsa_accumulator_util::memoized_hash_to_prime;
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
     utils::{
         dag_utils::ensure_dag_round_sync,
-        rsa_accumulator_util::{hash_to_prime_128, get_modulus},
+        rsa_accumulator_util::get_modulus,
     },
 };
+
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -45,16 +46,21 @@ pub async fn handle_propose(
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
     if proposal_count < quorum_threshold {
-        info!("Node {}: Waiting for quorum ({} < {})", node_id, proposal_count, quorum_threshold);
+        info!(
+            "Node {}: Waiting for quorum ({} < {})",
+            node_id, proposal_count, quorum_threshold
+        );
         return Ok(());
     }
 
-    info!("Node {}: Quorum reached for round {}, broadcasting prevote...", node_id, round_id);
+    info!(
+        "Node {}: Quorum reached for round {}, broadcasting prevote...",
+        node_id, round_id
+    );
 
     let modulus = get_modulus();
 
-    // ✅ Parallel shard verification per transaction
-    propose_request.transactions.par_iter().try_for_each(|tx| {
+    for tx in &propose_request.transactions {
         let Some(shard_hashes) = &tx.shard_hashes else {
             return Err("Missing shard_hashes field for transaction".to_string());
         };
@@ -68,9 +74,9 @@ pub async fn handle_propose(
             .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
-        tx.shards.par_iter().enumerate().try_for_each(|(j, shard)| {
+        for (j, shard) in tx.shards.iter().enumerate() {
             if j >= shard_hashes.len() || shard.proofs.is_empty() {
-                return Ok(()); // skip parity shards
+                continue;
             }
 
             let proof_b64 = &shard.proofs[0];
@@ -79,18 +85,18 @@ pub async fn handle_propose(
                 .map_err(|e| format!("Proof decode error: {:?}", e))?;
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
-            let hash_bytes = hex::decode(&shard_hashes[j])
-                .map_err(|e| format!("Hash decode error: {:?}", e))?;
-            let prime = hash_to_prime_128(&hash_bytes);
+            let hash_hex = &shard_hashes[j];
+            let prime = memoized_hash_to_prime(&node, round_id, hash_hex).await;
 
             let valid = proof.modpow(&prime, &modulus) == accumulator;
             if !valid {
-                return Err(format!("RSA proof verification failed for tx shard {}", j));
+                return Err(format!(
+                    "RSA proof verification failed for tx shard {}",
+                    j
+                ));
             }
-
-            Ok(())
-        })
-    })?;
+        }
+    }
 
     let prevote_request = {
         let node_guard = node.lock().await;
@@ -121,12 +127,17 @@ pub async fn handle_propose(
                 }
                 sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
             }
-            node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+            node.lock()
+                .await
+                .message_count
+                .fetch_add(1, Ordering::Relaxed);
         }
     }
 
     if let Some(rbc_processor) = &node.lock().await.rbc_processor {
-        rbc_processor.enqueue_message(RBCMessage::Prevote(prevote_request)).await;
+        rbc_processor
+            .enqueue_message(RBCMessage::Prevote(prevote_request))
+            .await;
     }
 
     info!(

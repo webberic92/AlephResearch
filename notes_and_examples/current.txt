@@ -33,3 +33,163 @@ batch_size (increase 256 → 1024)	Merkle should get worse faster than RSA, esp.
     ❌ Do not use same optimizations for Merkle — it doesn’t suffer from proof CPU overhead.
 
 Let me know if you want updated code templates or a benchmark script to compare per-round costs.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Here’s a full implementation plan for memoizing hash_to_prime and RSA proof verification per round, which will significantly reduce duplicate work:
+
+
+✅ 2. Wrap hash_to_prime_128 with memoization
+
+Add this helper function:
+
+pub async fn memoized_hash_to_prime(
+    node: &Arc<Mutex<Node>>,
+    round_id: u64,
+    hash_hex: &str,
+) -> BigInt {
+    {
+        let node_guard = node.lock().await;
+        if let Some(prime) = node_guard.hash_to_prime_cache
+            .lock()
+            .await
+            .get(&round_id)
+            .and_then(|m| m.get(hash_hex).cloned()) {
+                return prime;
+        }
+    }
+
+    // Cache miss: compute and store
+    let hash_bytes = hex::decode(hash_hex).unwrap(); // assumed safe at this point
+    let prime = hash_to_prime_128(&hash_bytes);
+
+    {
+        let mut node_guard = node.lock().await;
+        node_guard
+            .hash_to_prime_cache
+            .lock()
+            .await
+            .entry(round_id)
+            .or_default()
+            .insert(hash_hex.to_string(), prime.clone());
+    }
+
+    prime
+}
+
+✅ 3. Wrap proof validation
+
+New helper:
+
+pub async fn is_proof_valid_cached(
+    node: &Arc<Mutex<Node>>,
+    round_id: u64,
+    acc_hex: &str,
+    hash_hex: &str,
+    proof_hex: &str,
+    prime: &BigInt,
+    acc: &BigInt,
+    proof: &BigInt,
+) -> bool {
+    let key = (acc_hex.to_string(), hash_hex.to_string(), proof_hex.to_string());
+
+    {
+        let node_guard = node.lock().await;
+        if node_guard
+            .proof_verification_cache
+            .lock()
+            .await
+            .get(&round_id)
+            .map_or(false, |set| set.contains(&key)) {
+            return true;
+        }
+    }
+
+    let valid = proof.modpow(prime, &get_modulus()) == *acc;
+
+    if valid {
+        let mut node_guard = node.lock().await;
+        node_guard
+            .proof_verification_cache
+            .lock()
+            .await
+            .entry(round_id)
+            .or_default()
+            .insert(key);
+    }
+
+    valid
+}
+
+✅ 4. Use in handle_propose and handle_prevote
+
+Replace:
+
+let prime = hash_to_prime_128(&hash_bytes);
+
+with:
+
+let hash_hex = shard_hashes[j].as_str();
+let prime = memoized_hash_to_prime(&node, round_id, hash_hex).await;
+
+And replace RSA check:
+
+let valid = proof.modpow(&prime, &modulus) == accumulator;
+
+with:
+
+let acc_hex = acc_encoded;
+let proof_hex = proof_b64;
+let valid = is_proof_valid_cached(
+    &node,
+    round_id,
+    acc_hex,
+    hash_hex,
+    proof_hex,
+    &prime,
+    &accumulator,
+    &proof,
+).await;
+
+✅ 5. Clean up cache after round finalize
+
+In handle_commit, after finalizing the round, add:
+
+{
+    let mut node_guard = node.lock().await;
+    node_guard
+        .hash_to_prime_cache
+        .lock()
+        .await
+        .remove(&round_id);
+    node_guard
+        .proof_verification_cache
+        .lock()
+        .await
+        .remove(&round_id);
+}
+
+This will dramatically cut redundant computations in larger networks and longer rounds. Ready to integrate if you want me to paste a full updated file

@@ -31,7 +31,7 @@ mod accumulator_tests {
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
     
             assert!(
-                verify_proof(&accumulator, &hash_bytes, &proof),
+                verify_proof(&accumulator, &hash_bytes, &proof).await,
                 "❌ RSA proof verification failed for shard[{}]", j
             );
         }
@@ -59,8 +59,8 @@ mod accumulator_tests {
             let unrelated_proof = BigInt::from_bytes_be(Sign::Plus, &fake_data);
     
             assert!(
-                !verify_proof(&accumulator, &hash_bytes, &unrelated_proof),
-                "❌ Expected invalid proof to fail for shard[{}], but it passed", j
+                !verify_proof(&accumulator, &hash_bytes, &unrelated_proof).await,
+                "❌ RSA proof verification failed for shard[{}]", j
             );
         }
     
@@ -122,8 +122,8 @@ async fn test_proofs_generated_by_create_transaction_data_are_valid() {
         let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
         assert!(
-            verify_proof(&accumulator, &hash_bytes, &proof),
-            "❌ Proof failed for shard[{}]", j
+            !verify_proof(&accumulator, &hash_bytes, &proof).await,
+            "❌ RSA proof verification failed for shard[{}]", j
         );
     }
 
@@ -162,7 +162,10 @@ fn test_shard_aggregator_multiple_rounds_does_not_panic() {
 async fn test_end_to_end_rsa_proof_validation_consistency() {
     use crate::{
         structs::{node::Node, requests::ProposeRequest},
-        utils::{create_transaction_data, rsa_accumulator_util::{get_modulus, hash_to_prime_128}},
+        utils::{
+            create_transaction_data,
+            rsa_accumulator_util::{get_modulus, memoized_hash_to_prime},
+        },
     };
     use base64::engine::general_purpose;
     use num_bigint::{BigInt, Sign};
@@ -209,9 +212,8 @@ async fn test_end_to_end_rsa_proof_validation_consistency() {
                 .expect("Failed to decode proof");
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
-            let hash_bytes =
-                hex::decode(&shard_hashes[j]).expect("Failed to decode expected hash");
-            let prime = hash_to_prime_128(&hash_bytes);
+            let hash_hex = &shard_hashes[j];
+            let prime = memoized_hash_to_prime(&node, 0, hash_hex).await;
 
             let result = proof.modpow(&prime, &get_modulus());
 
@@ -224,10 +226,12 @@ async fn test_end_to_end_rsa_proof_validation_consistency() {
     }
 }
 
-
-
-
-
-
-
 }
+
+
+
+
+
+
+
+

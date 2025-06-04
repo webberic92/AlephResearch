@@ -2,6 +2,7 @@ use std::{
     collections::{HashMap, HashSet},
     sync::{atomic::AtomicU64, Arc},
 };
+use num_bigint::BigInt;
 use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing::info;
@@ -17,7 +18,7 @@ pub struct Node {
     pub id: usize,
     pub total_nodes: usize,
     pub quorum_votes: Arc<Mutex<HashMap<Vec<u8>, HashSet<String>>>>,
-    pub current_round: Arc<Mutex<u64>>, // Tracks the current epoch explicitly
+    pub current_round: Arc<Mutex<u64>>,
     pub proposal_tracker: Arc<Mutex<HashMap<u64, HashMap<usize, ProposeRequest>>>>,
     pub dag: Arc<Mutex<HashMap<u64, Vec<DagUnit>>>>,
     pub ip_address: String,
@@ -29,10 +30,12 @@ pub struct Node {
     pub total_rounds: usize,
     pub commit_tracker: Arc<Mutex<HashMap<u64, Vec<CommitRequest>>>>,
     pub event_sender: mpsc::Sender<Event>,
-    pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
-    pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
-    pub shard_aggregator: Arc<Mutex<ShardAggregator>>, // NEW
-    }
+    pub rbc_processor: Option<Arc<RBCProcessor>>,
+    pub message_count: Arc<AtomicU64>,
+    pub shard_aggregator: Arc<Mutex<ShardAggregator>>,
+    pub hash_to_prime_cache: Arc<Mutex<HashMap<u64, HashMap<String, BigInt>>>>,
+    pub proof_verification_cache: Arc<Mutex<HashMap<u64, HashSet<(String, String, String)>>>>,
+}
 
 impl Node {
     pub fn new(
@@ -63,12 +66,13 @@ impl Node {
             total_rounds,
             commit_tracker: Arc::new(Mutex::new(HashMap::new())),
             event_sender,
-            rbc_processor: None, // ✅ Initialize as None, will be set later
-            message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
-            shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),       
-            }));
+            rbc_processor: None,
+            message_count: Arc::new(AtomicU64::new(0)),
+            shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),
+            hash_to_prime_cache: Arc::new(Mutex::new(HashMap::new())),
+            proof_verification_cache: Arc::new(Mutex::new(HashMap::new())),
+        }));
 
-        // ✅ Spawn the round manager task, but `rbc_processor` is not set yet
         let node_clone = node.clone();
         tokio::spawn(async move {
             if let Err(e) = round_manager_task(node_clone, event_receiver).await {

@@ -2,7 +2,6 @@ use std::num::NonZero;
 use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine};
-use rayon::prelude::*;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
@@ -11,9 +10,8 @@ use num_bigint::BigInt;
 use lru::LruCache;
 use once_cell::sync::Lazy;
 use std::sync::Mutex as StdMutex;
-use std::collections::hash_map::DefaultHasher;
-use std::hash::{Hash, Hasher};
 
+use crate::utils::rsa_accumulator_util::memoized_hash_to_prime;
 use crate::{
     structs::{
         node::Node,
@@ -22,7 +20,6 @@ use crate::{
     utils::rsa_accumulator_util::{
         compute_accumulator_from_primes,
         generate_proofs_from_primes_radix,
-        hash_to_prime_128,
     },
 };
 
@@ -65,11 +62,13 @@ pub async fn create_transaction_data(
 
     let shard_size = (transaction_size + data_shards - 1) / data_shards;
 
-    let transactions: Vec<_> = (0..num_txs).into_par_iter().map(|tx_index| {
+    let mut transactions = Vec::with_capacity(num_txs);
+
+    for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let padded = pad_to_len(content.clone().into_bytes(), transaction_size);
 
-        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards).unwrap();
+        let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut shards: Vec<Vec<u8>> = padded
             .chunks(shard_size)
             .map(|chunk| {
@@ -84,28 +83,21 @@ pub async fn create_transaction_data(
         }
 
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
-        rs.encode(&mut shard_refs).unwrap();
+        rs.encode(&mut shard_refs)?;
 
         let tx_hashes: Vec<Vec<u8>> = shards[..data_shards]
             .iter()
             .map(|s| Sha256::digest(s).to_vec())
             .collect();
 
-        let mut cache = PROOF_CACHE.lock().unwrap();
         let mut tx_primes = Vec::with_capacity(data_shards);
+        let mut shard_hashes_hex = Vec::with_capacity(data_shards);
 
         for hash in &tx_hashes {
-            let mut hasher = DefaultHasher::new();
-            hash.hash(&mut hasher);
-            let key = hasher.finish();
-
-            if let Some(cached_prime) = cache.get(&key) {
-                tx_primes.push(cached_prime.clone());
-            } else {
-                let prime = hash_to_prime_128(hash);
-                cache.put(key, prime.clone());
-                tx_primes.push(prime);
-            }
+            let hash_hex = hex::encode(hash);
+            let prime = memoized_hash_to_prime(&node, round_id, &hash_hex).await;
+            tx_primes.push(prime);
+            shard_hashes_hex.push(hash_hex);
         }
 
         let tx_accumulator = compute_accumulator_from_primes(&tx_primes);
@@ -133,16 +125,14 @@ pub async fn create_transaction_data(
             });
         }
 
-        let shard_hashes_hex: Vec<String> = tx_hashes.iter().map(|h| hex::encode(h)).collect();
         let padded_root = pad_to_len(content.into_bytes(), transaction_size);
-
-        Transaction {
+        transactions.push(Transaction {
             root: Sha256::digest(&padded_root).to_vec(),
             shards: shard_structs,
             accumulator: Some(tx_acc_encoded),
-            shard_hashes: Some(shard_hashes_hex),
-        }
-    }).collect();
+            shard_hashes: Some(shard_hashes_hex.clone()),
+        });
+    }
 
     info!("📝 Created {} transactions in {:?}", num_txs, timer.elapsed());
 
@@ -156,3 +146,4 @@ pub async fn create_transaction_data(
         batch_accumulator: "".to_string(),
     })
 }
+

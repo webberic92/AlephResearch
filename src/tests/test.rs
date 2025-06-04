@@ -33,7 +33,7 @@ mod tests {
                 let hash_bytes = hex::decode(hash_hex).expect("Hash decode failed");
 
                 assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
+                    verify_proof(&accumulator, &hash_bytes, &proof).await,
                     "❌ Verification failed for tx[{}] shard[{}]", tx_index, j
                 );
             }
@@ -67,7 +67,7 @@ mod tests {
                 let hash_bytes = hex::decode(&shard_hashes[j]).expect("Hash decode failed");
 
                 assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
+                    verify_proof(&accumulator, &hash_bytes, &proof).await,
                     "❌ Invalid proof for data shard[{}]", j
                 );
             } else {
@@ -102,7 +102,7 @@ mod tests {
                 let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
 
                 assert!(
-                    verify_proof(&accumulator, &hash_bytes, &proof),
+                    verify_proof(&accumulator, &hash_bytes, &proof).await,
                     "❌ Invalid proof post-encoding for tx[{}] shard[{}]", tx_index, j
                 );
             }
