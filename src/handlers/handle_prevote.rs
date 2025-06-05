@@ -13,7 +13,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::rsa_accumulator_util::{get_modulus, memoized_hash_to_prime},
+    utils::rsa_accumulator_util::{get_modulus},
 };
 
 pub async fn handle_prevote(

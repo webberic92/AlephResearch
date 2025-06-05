@@ -6,16 +6,15 @@ use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::info;
 
-use crate::utils::rsa_accumulator_util::memoized_hash_to_prime;
+use crate::utils::rsa_accumulator_util::{get_modulus, memoized_hash_to_prime};
 use crate::{
     processors::priority_queue::RBCMessage,
-    structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{
-        dag_utils::ensure_dag_round_sync,
-        rsa_accumulator_util::get_modulus,
+    structs::{
+        node::Node,
+        requests::{PrevoteRequest, ProposeRequest},
     },
+    utils::dag_utils::ensure_dag_round_sync,
 };
-
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -61,14 +60,15 @@ pub async fn handle_propose(
     let modulus = get_modulus();
 
     for tx in &propose_request.transactions {
-        let Some(shard_hashes) = &tx.shard_hashes else {
-            return Err("Missing shard_hashes field for transaction".to_string());
-        };
+        let shard_hashes = tx
+            .shard_hashes
+            .as_ref()
+            .ok_or("Missing shard_hashes field for transaction".to_string())?;
 
         let acc_encoded = tx
             .accumulator
             .as_ref()
-            .ok_or("Missing accumulator in transaction")?;
+            .ok_or("Missing accumulator in transaction".to_string())?;
         let acc_bytes = general_purpose::STANDARD
             .decode(acc_encoded)
             .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
@@ -90,10 +90,7 @@ pub async fn handle_propose(
 
             let valid = proof.modpow(&prime, &modulus) == accumulator;
             if !valid {
-                return Err(format!(
-                    "RSA proof verification failed for tx shard {}",
-                    j
-                ));
+                return Err(format!("RSA proof verification failed for tx shard {}", j));
             }
         }
     }

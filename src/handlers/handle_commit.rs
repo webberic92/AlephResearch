@@ -84,6 +84,22 @@ pub async fn handle_commit(
             dag_guard.clone()
         };
 
+
+
+        {
+            let  node_guard = node.lock().await;
+            node_guard
+                .hash_to_prime_cache
+                .lock()
+                .await
+                .remove(&round_id);
+            node_guard
+                .proof_verification_cache
+                .lock()
+                .await
+                .remove(&round_id);
+        }
+
         if let Err(e) = write_finalized_dag_to_file("/aleph/finalized_dag", &finalized_dag, round_id).await {
             error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
             return Err(format!("DAG write failed: {:?}", e));
