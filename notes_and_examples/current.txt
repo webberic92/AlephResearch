@@ -1,38 +1,76 @@
-    , proofs, and verifies primes every round, costing time.
+sh-4.2$ head -n50 /aleph/finalized_dag/round5.json
+[
+  {
+    "accumulator_root": "",
+    "creator": 8,
+    "finalization_timestamp": 1749089422182,
+    "parent_hashes": [
+      "55342d38",
+      "55342d34",
+      "55342d3131",
+      "55342d37",
+      "55342d33",
+      "55342d3133",
+      "55342d3136",
+      "55342d3135",
+      "55342d35",
+      "55342d36",
+      "55342d3134",
+      "55342d32",
+      "55342d3130"
+    ],
+    "round": 5,
+    "transactions": [
+      {
+        "hash": "7e981324abf138a291fd3b4db0e644f3485a1ab51a14a490cc096a8b0dbd0266",
+        "proofs": [
+          [
+            "A4OLATuW7tvw4ks/x9Vyp7Of3gY0xU8Z4UNVBznq8P+0Hmscx7hg7kagDkA="
+          ],
+          [
+            "AUYdCDRG4x+3DDMbKycHUugk/8l0i8K+JofAZt4QaT6Mkgg6ea8w8GP1SVHR"
+          ],
+          [
+            "AUYdCDRG4x+3DDMbKycHUugk/8l0i8K+JofAZt4QaT6Mkgg6ea8w8GP1SVHR"
+          ],
+          [
+            "AUYdCDRG4x+3DDMbKycHUugk/8l0i8K+JofAZt4QaT6Mkgg6ea8w8GP1SVHR"
+          ],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          [],
+          []
+        ],
 
-✅ Fix: Memoize per-shard hashes and primes across rounds. (Proof cache + hash-to-prime cache).
-✅ Answers to Specific Questions
-🔹 “Is this time unreasonable?”
 
-Yes. handle_propose taking 14s and handle_prevote taking 4–5s is very high for 256 txs at 256 bytes, especially when Merkle takes <1.5s in the same test.
-🔹 “Do both Merkle and RSA use same shard size?”
 
-Yes, in your setup:
 
-SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
 
-So both use the same shard size and data_shards count (likely 10–12 for 16 nodes).
-🔹 “Should Merkle reduce shards like RSA?”
 
-No. Merkle scales better with shard count than RSA. Merkle proof size is O(log N), so Merkle doesn't pay per shard nearly as much. RSA proof verification cost grows linearly with shards due to exponentiation (modpow()).
+✅ Summary of What's Next
+Optimization	Speed Gain	Effort	Suggested
+Parallel RSA proof verification	🚀 High	Medium	✅ Yes
+Batch precompute primes	🚀 High	Low	✅ Yes
+Use 1024-bit RSA in dev	⚡ Fast	Low	✅ Yes
+Compress DAG / transaction units	⚙️ Medium	Medium	Optional
+Gossip-style broadcast	⚙️ Medium	Medium	Optional
+Pipelined shard validation	⚙️ Medium	High	Maybe
+BLS or SNARKs	💡 Long-term	High	No (yet)
 
-So yes, RSA needs shard count reduction more than Merkle does.
-🧪 What To Test Next
 
-To highlight the difference:
-Test Varied	Expectation
-data_shards (reduce from 16 → 8 → 4)	RSA time should drop significantly
-rounds (keep at 10)	RSA time grows slower per round than Merkle, but absolute time is worse due to per-shard proofs
-batch_size (increase 256 → 1024)	Merkle should get worse faster than RSA, esp. in bandwidth, not CPU
-🔧 Summary Fixes
 
 
 
-    ✅ Memoize hash-to-prime and proof validation results per round.
 
-    ❌ Do not use same optimizations for Merkle — it doesn’t suffer from proof CPU overhead.
 
-Let me know if you want updated code templates or a benchmark script to compare per-round costs.
 
 
 
@@ -45,151 +83,4 @@ Let me know if you want updated code templates or a benchmark script to compare 
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-Here’s a full implementation plan for memoizing hash_to_prime and RSA proof verification per round, which will significantly reduce duplicate work:
-
-
-✅ 2. Wrap hash_to_prime_128 with memoization
-
-Add this helper function:
-
-pub async fn memoized_hash_to_prime(
-    node: &Arc<Mutex<Node>>,
-    round_id: u64,
-    hash_hex: &str,
-) -> BigInt {
-    {
-        let node_guard = node.lock().await;
-        if let Some(prime) = node_guard.hash_to_prime_cache
-            .lock()
-            .await
-            .get(&round_id)
-            .and_then(|m| m.get(hash_hex).cloned()) {
-                return prime;
-        }
-    }
-
-    // Cache miss: compute and store
-    let hash_bytes = hex::decode(hash_hex).unwrap(); // assumed safe at this point
-    let prime = hash_to_prime_128(&hash_bytes);
-
-    {
-        let mut node_guard = node.lock().await;
-        node_guard
-            .hash_to_prime_cache
-            .lock()
-            .await
-            .entry(round_id)
-            .or_default()
-            .insert(hash_hex.to_string(), prime.clone());
-    }
-
-    prime
-}
-
-✅ 3. Wrap proof validation
-
-New helper:
-
-pub async fn is_proof_valid_cached(
-    node: &Arc<Mutex<Node>>,
-    round_id: u64,
-    acc_hex: &str,
-    hash_hex: &str,
-    proof_hex: &str,
-    prime: &BigInt,
-    acc: &BigInt,
-    proof: &BigInt,
-) -> bool {
-    let key = (acc_hex.to_string(), hash_hex.to_string(), proof_hex.to_string());
-
-    {
-        let node_guard = node.lock().await;
-        if node_guard
-            .proof_verification_cache
-            .lock()
-            .await
-            .get(&round_id)
-            .map_or(false, |set| set.contains(&key)) {
-            return true;
-        }
-    }
-
-    let valid = proof.modpow(prime, &get_modulus()) == *acc;
-
-    if valid {
-        let mut node_guard = node.lock().await;
-        node_guard
-            .proof_verification_cache
-            .lock()
-            .await
-            .entry(round_id)
-            .or_default()
-            .insert(key);
-    }
-
-    valid
-}
-
-✅ 4. Use in handle_propose and handle_prevote
-
-Replace:
-
-let prime = hash_to_prime_128(&hash_bytes);
-
-with:
-
-let hash_hex = shard_hashes[j].as_str();
-let prime = memoized_hash_to_prime(&node, round_id, hash_hex).await;
-
-And replace RSA check:
-
-let valid = proof.modpow(&prime, &modulus) == accumulator;
-
-with:
-
-let acc_hex = acc_encoded;
-let proof_hex = proof_b64;
-let valid = is_proof_valid_cached(
-    &node,
-    round_id,
-    acc_hex,
-    hash_hex,
-    proof_hex,
-    &prime,
-    &accumulator,
-    &proof,
-).await;
-
-✅ 5. Clean up cache after round finalize
-
-In handle_commit, after finalizing the round, add:
-
-{
-    let mut node_guard = node.lock().await;
-    node_guard
-        .hash_to_prime_cache
-        .lock()
-        .await
-        .remove(&round_id);
-    node_guard
-        .proof_verification_cache
-        .lock()
-        .await
-        .remove(&round_id);
-}
-
-This will dramatically cut redundant computations in larger networks and longer rounds. Ready to integrate if you want me to paste a full updated file
+        

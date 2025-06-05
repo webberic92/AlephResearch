@@ -18,6 +18,7 @@ pub struct Transaction {
     pub shards: Vec<ShardWithProofs>,
     pub accumulator: Option<String>,           // the group accumulator
     pub shard_hashes: Option<Vec<String>>,
+    pub number_of_data_shards: usize, // ✅ Clearer and accurate
 }
 
 
@@ -39,6 +40,7 @@ pub struct PrevoteRequest {
     pub proposals: Vec<ProposeRequest>,
     pub sender_url: String,
     pub sender_id: usize,  // NEW
+    pub batch_accumulator: String, // ✅ Add this
 }
 
 

@@ -1,19 +1,18 @@
-use num_bigint::{BigInt, RandBigInt, Sign};
-use num_traits::{One, Zero};
+use std::collections::{HashMap, HashSet};
+use tokio::sync::Mutex;
+use once_cell::sync::Lazy;
+use sha2::{Digest, Sha256};
+use num_bigint::BigInt;
+use num_bigint::{ RandBigInt, Sign};
+use num_traits::One;
 use num_integer::Integer;
 use rayon::prelude::*;
-use sha2::{Sha256, Digest};
 use rand::thread_rng;
-use tracing::info;
-use once_cell::sync::Lazy;
-use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
-use tokio::sync::Mutex;
 
 use crate::structs::node::Node;
 
-static GLOBAL_PRIME_CACHE: Lazy<Mutex<HashMap<Vec<u8>, BigInt>>> =
-    Lazy::new(|| Mutex::new(HashMap::new()));
+
 
 /// ✅ RSA-1024 modulus
 pub fn get_modulus() -> BigInt {
@@ -25,22 +24,49 @@ pub fn get_modulus() -> BigInt {
     .expect("Failed to parse RSA-1024 modulus")
 }
 
-/// ✅ Global hash-to-prime cache
+
+
+static GLOBAL_PRIME_CACHE: Lazy<Mutex<HashMap<String, BigInt>>> = Lazy::new(|| Mutex::new(HashMap::new()));
+
+pub async fn memoized_hash_to_prime(
+   hash_hex: &str,
+) -> BigInt {
+    {
+        let cache = GLOBAL_PRIME_CACHE.lock().await;
+        if let Some(existing) = cache.get(hash_hex) {
+            return existing.clone();
+        }
+    }
+
+    // Convert hex back to bytes
+    let hash_bytes = hex::decode(hash_hex).expect("Invalid hex in memoized_hash_to_prime");
+    let prime = hash_to_prime_128(&hash_bytes).await;
+
+    let mut cache = GLOBAL_PRIME_CACHE.lock().await;
+    cache.insert(hash_hex.to_string(), prime.clone());
+
+    prime
+}
+
+
+
+
 pub async fn global_hash_to_prime(hash_hex: &str) -> BigInt {
+    let mut cache = GLOBAL_PRIME_CACHE.lock().await;
+    if let Some(prime) = cache.get(hash_hex) {
+        return prime.clone();
+    }
+
     let hash_bytes = match hex::decode(hash_hex) {
         Ok(bytes) => bytes,
         Err(_) => return BigInt::from(0),
     };
 
-    let mut cache = GLOBAL_PRIME_CACHE.lock().await;
-    if let Some(prime) = cache.get(&hash_bytes) {
-        return prime.clone();
-    }
-
     let prime = hash_to_prime_128(&hash_bytes).await;
-    cache.insert(hash_bytes, prime.clone());
+    cache.insert(hash_hex.to_string(), prime.clone());
     prime
 }
+
 
 /// ✅ Hash to 128-bit prime with internal Miller-Rabin
 pub async fn hash_to_prime_128(data: &[u8]) -> BigInt {

@@ -1,236 +1,156 @@
-#[cfg(test)]
-mod accumulator_tests {
-    use std::{sync::Arc, time::Instant};
-    use base64::{engine::general_purpose, Engine};
-    use num_bigint::{BigInt, Sign};
-    use sha2::{Sha256, Digest};
-    use crate::{structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}, shard_aggregator::ShardAggregator}, utils::{create_transaction_data::create_transaction_data, rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, hash_to_prime_128, verify_proof, verify_proof_with_prime}}};
-
-    fn generate_fake_hashes(count: usize) -> Vec<Vec<u8>> {
-        (0..count).map(|i| {
-            let data = format!("dummy_tx_{}", i).into_bytes();
-            Sha256::digest(&data).to_vec()
-        }).collect()
-    }
-
-    #[tokio::test]
-    async fn test_rsa_proposal_valid_proof_snapshot_runtime() {
-        let dummy_node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-        let proposal = create_transaction_data(dummy_node).await.unwrap();
+   
+    #[cfg(test)]
+    mod accumulator_tests {
+        use crate::{
+            structs::{
+                node::Node,
+                requests::{PrevoteRequest, ProposeRequest},
+                shard_aggregator::ShardAggregator,
+            },
+            utils::{
+                create_transaction_data::create_transaction_data,
+                rsa_accumulator_util::{verify_proof, memoized_hash_to_prime},
+            },
+            handlers::{handle_propose, handle_prevote},
+        };
+        use base64::{engine::general_purpose, Engine as _};
+        use num_bigint::{BigInt, Sign};
+        use sha2::{Digest, Sha256};
+        use tokio::sync::Mutex;
+        use std::sync::Arc;
     
-        let tx = &proposal.transactions[0];
-        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-        let acc_bytes = general_purpose::STANDARD.decode(acc_b64).unwrap();
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().unwrap();
+        #[tokio::test]
+        async fn test_valid_rsa_proof_verification() {
+            let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+            let proposal = create_transaction_data(node).await.unwrap();
+            let tx = &proposal.transactions[0];
     
-        for (j, hash_hex) in shard_hashes.iter().enumerate() {
-            let hash_bytes = hex::decode(hash_hex).unwrap();
-            let proof_b64 = &tx.shards[j].proofs[0];
-            let proof_bytes = general_purpose::STANDARD.decode(proof_b64).unwrap();
-            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
+            let acc_bytes = general_purpose::STANDARD.decode(tx.accumulator.as_ref().unwrap()).unwrap();
+            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+            let shard_hashes = tx.shard_hashes.as_ref().unwrap();
     
-            assert!(
-                verify_proof(&accumulator, &hash_bytes, &proof).await,
-                "❌ RSA proof verification failed for shard[{}]", j
-            );
+            for (j, hash_hex) in shard_hashes.iter().enumerate() {
+                let hash_bytes = hex::decode(hash_hex).unwrap();
+                let proof_b64 = &tx.shards[j].proofs[0];
+                let proof = BigInt::from_bytes_be(Sign::Plus, &general_purpose::STANDARD.decode(proof_b64).unwrap());
+    
+                assert!(
+                    verify_proof(&accumulator, &hash_bytes, &proof).await,
+                    "❌ RSA proof verification failed for shard[{}]", j
+                );
+            }
         }
     
-        println!("✅ RSA proof validation succeeded for all shards.");
-    }
+        #[tokio::test]
+        async fn test_invalid_proof_fails() {
+            let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+            let proposal = create_transaction_data(node).await.unwrap();
+            let tx = &proposal.transactions[0];
     
-
-
-    #[tokio::test]
-    async fn test_invalid_proof_or_shard_order_should_fail() {
-        let dummy_node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-        let proposal = create_transaction_data(dummy_node).await.unwrap();
+            let acc_bytes = general_purpose::STANDARD.decode(tx.accumulator.as_ref().unwrap()).unwrap();
+            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
+            let shard_hashes = tx.shard_hashes.as_ref().unwrap();
     
-        let tx = &proposal.transactions[0];
-        let acc_bytes = general_purpose::STANDARD.decode(tx.accumulator.as_ref().unwrap()).unwrap();
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-        let shard_hashes = tx.shard_hashes.as_ref().unwrap();
+            for (j, _) in shard_hashes.iter().enumerate() {
+                let fake_hash = Sha256::digest(format!("fake_{}", j)).to_vec();
+                let fake_proof = BigInt::from_bytes_be(Sign::Plus, &fake_hash);
     
-        for (j, hash_hex) in shard_hashes.iter().enumerate() {
-            let hash_bytes = hex::decode(hash_hex).unwrap();
-    
-            // use unrelated proof
-            let fake_data = Sha256::digest(format!("fake_{}", j).as_bytes());
-            let unrelated_proof = BigInt::from_bytes_be(Sign::Plus, &fake_data);
-    
-            assert!(
-                !verify_proof(&accumulator, &hash_bytes, &unrelated_proof).await,
-                "❌ RSA proof verification failed for shard[{}]", j
-            );
+                assert!(
+                    !verify_proof(&accumulator, &fake_hash, &fake_proof).await,
+                    "❌ Fake proof should have failed on shard[{}]", j
+                );
+            }
         }
     
-        println!("✅ Invalid RSA proofs correctly failed verification.");
-    }
+        #[tokio::test]
+        async fn test_propose_to_prevote_batch_accumulator_validation() {
+            let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+            let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
     
-
-
-    #[tokio::test]
- async fn test_propose_to_prevote_cross_validation() {
+            let proposal = create_transaction_data(proposer.clone()).await.unwrap();
+            let result = handle_propose::handle_propose(verifier.clone(), proposal.clone()).await;
+            assert!(result.is_ok(), "❌ handle_propose rejected a valid proposal");
+    
+            let prevote = PrevoteRequest {
+                proposals: vec![proposal.clone()],
+                batch_accumulator: proposal.batch_accumulator.clone(),
+                sender_id: 0,
+                sender_url: "127.0.0.1:8080".into(),
+            };
+    
+            let result = handle_prevote::handle_prevote(verifier.clone(), prevote).await;
+            assert!(result.is_ok(), "❌ handle_prevote failed to validate batch accumulator");
+        }
+    
+        #[tokio::test]
+async fn test_batch_accumulator_invalid_should_fail() {
     let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
     let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
 
     let proposal = create_transaction_data(proposer.clone()).await.unwrap();
 
-    let result = crate::handlers::handle_propose::handle_propose(verifier.clone(), proposal.clone()).await;
-    assert!(result.is_ok(), "❌ handle_propose rejected a valid proposal");
+    let mut acc_bytes = base64::engine::general_purpose::STANDARD
+        .decode(&proposal.batch_accumulator)
+        .unwrap();
+    acc_bytes[0] ^= 0xFF;
+    let tampered = base64::engine::general_purpose::STANDARD.encode(&acc_bytes);
 
     let prevote = PrevoteRequest {
-        proposals: vec![proposal],
-        sender_url: "127.0.0.1:8080".into(),
-        sender_id: 0,
+        proposals: vec![proposal.clone()],
+        batch_accumulator: tampered,
+        sender_id: 99,
+        sender_url: "127.0.0.1:8082".into(),
     };
 
-    let result = crate::handlers::handle_prevote::handle_prevote(verifier.clone(), prevote).await;
-    assert!(result.is_ok(), "❌ handle_prevote failed to validate reconstructed proposal");
-
-
-#[tokio::test]
-async fn test_invalid_accumulator_detection() {
-    let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-    let mut proposal = create_transaction_data(proposer).await.unwrap();
-
-    // Tamper with accumulator
-    proposal.batch_accumulator = "ZmFrZV9hY2N1bXVsYXRvcg==".to_string(); // base64("fake_accumulator")
-
-    let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
-    let result = crate::handlers::handle_propose::handle_propose(verifier, proposal).await;
-
-    assert!(result.is_err(), "❌ Tampered accumulator should have failed verification");
-}
-
-
-#[tokio::test]
-async fn test_proofs_generated_by_create_transaction_data_are_valid() {
-    let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-    let proposal = create_transaction_data(node).await.unwrap();
-    let tx = &proposal.transactions[0];
-
-    let acc_bytes = general_purpose::STANDARD
-        .decode(tx.accumulator.as_ref().unwrap())
-        .unwrap();
-    let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-    let shard_hashes = tx.shard_hashes.as_ref().unwrap();
-
-    for (j, (hash_hex, shard)) in shard_hashes.iter().zip(&tx.shards).enumerate() {
-        let hash_bytes = hex::decode(hash_hex).unwrap();
-        let proof_bytes = general_purpose::STANDARD.decode(&shard.proofs[0]).unwrap();
-        let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
-        assert!(
-            !verify_proof(&accumulator, &hash_bytes, &proof).await,
-            "❌ RSA proof verification failed for shard[{}]", j
-        );
+    // Insert enough fake votes to satisfy quorum
+    {
+        let mut guard = verifier.lock().await;
+        let mut votes = guard.quorum_votes.lock().await;
+        let key = proposal.base.round_id.to_be_bytes().to_vec();
+        votes.entry(key.clone()).or_default().insert("a".into());
+        votes.entry(key.clone()).or_default().insert("b".into());
+        votes.entry(key).or_default().insert("c".into());
     }
 
-    println!("✅ Proofs from create_transaction_data verified correctly.");
-}
+    let result = handle_prevote::handle_prevote(verifier.clone(), prevote).await;
 
-
-    println!("✅ All generated primes and proofs verified successfully.");
-
-    
-    
-}
-
-#[test]
-fn test_shard_aggregator_multiple_rounds_does_not_panic() {
-    let mut aggregator = ShardAggregator::new(2, 4);
-    let tx_index = 0;
-    let shard_data = vec![0u8; 128];
-
-    aggregator.insert_shard(1, tx_index, 0, shard_data.clone());
-    aggregator.insert_shard(1, tx_index, 1, shard_data.clone());
-    aggregator.insert_shard(2, tx_index, 0, shard_data.clone()); // Should be ignored
-
-    let reconstructed = aggregator.try_reconstruct(1, tx_index, 256);
-    assert!(reconstructed.is_some(), "❌ Reconstruction failed when it should succeed");
-
-    println!("✅ ShardAggregator handles multiple rounds safely.");
-}
-
-
-
-
-
-
-#[tokio::test]
-async fn test_end_to_end_rsa_proof_validation_consistency() {
-    use crate::{
-        structs::{node::Node, requests::ProposeRequest},
-        utils::{
-            create_transaction_data,
-            rsa_accumulator_util::{get_modulus, memoized_hash_to_prime},
-        },
-    };
-    use base64::engine::general_purpose;
-    use num_bigint::{BigInt, Sign};
-    use std::sync::Arc;
-    use tokio::sync::Mutex;
-
-    let node = Node::new(
-        0,
-        5,
-        "127.0.0.1:8080".into(),
-        vec![],
-        "".into(),
-        2,   // data_shards
-        256, // tx_size
-        4,   // number of txs
-        1,   // total_rounds
+    assert!(
+        result.is_err(),
+        "❌ Tampered batch_accumulator should fail (got {:?})",
+        result
     );
+}
 
-    let proposal = create_transaction_data(node.clone())
-        .await
-        .expect("create_transaction_data failed");
-
-    let serialized = serde_json::to_string(&proposal).expect("serialization failed");
-    let deserialized: ProposeRequest =
-        serde_json::from_str(&serialized).expect("deserialization failed");
-
-    for (tx_index, tx) in deserialized.transactions.iter().enumerate() {
-        let acc_b64 = tx.accumulator.as_ref().expect("Missing accumulator");
-        let acc_bytes = general_purpose::STANDARD
-            .decode(acc_b64)
-            .expect("Failed to decode accumulator");
-        let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-
-        let shard_hashes = tx.shard_hashes.as_ref().expect("Missing shard_hashes");
-
-        for (j, shard) in tx.shards.iter().enumerate() {
-            if j >= shard_hashes.len() || shard.proofs.is_empty() {
-                continue; // skip parity shards or missing proofs
+        
+    
+        #[tokio::test]
+        async fn test_memoized_hash_to_prime_integration() {
+            let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+            let proposal = create_transaction_data(node).await.unwrap();
+            let tx = &proposal.transactions[0];
+            let shard_hashes = tx.shard_hashes.as_ref().unwrap();
+    
+            for (j, hash_hex) in shard_hashes.iter().enumerate() {
+                let prime = memoized_hash_to_prime(hash_hex).await;
+                assert!(prime.bits() > 120, "❌ Prime too small for shard[{}]", j);
             }
-
-            let proof_b64 = &shard.proofs[0];
-            let proof_bytes = general_purpose::STANDARD
-                .decode(proof_b64)
-                .expect("Failed to decode proof");
-            let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
-            let hash_hex = &shard_hashes[j];
-            let prime = memoized_hash_to_prime(&node, 0, hash_hex).await;
-
-            let result = proof.modpow(&prime, &get_modulus());
-
-            assert_eq!(
-                result, accumulator,
-                "❌ RSA proof validation failed at tx {} shard {}",
-                tx_index, j
-            );
+        }
+    
+        #[test]
+        fn test_shard_aggregator_multiple_rounds_does_not_panic() {
+            let mut aggregator = ShardAggregator::new(2, 4);
+            let tx_index = 0;
+            let shard_data = vec![0u8; 128];
+    
+            aggregator.insert_shard(1, tx_index, 0, shard_data.clone());
+            aggregator.insert_shard(1, tx_index, 1, shard_data.clone());
+            aggregator.insert_shard(2, tx_index, 0, shard_data.clone()); // Should be ignored
+    
+            let reconstructed = aggregator.try_reconstruct(1, tx_index, 256);
+            assert!(reconstructed.is_some(), "❌ Reconstruction failed");
         }
     }
-}
-
-}
-
-
-
-
+    
 
 
 

@@ -1,4 +1,5 @@
 use std::sync::{atomic::Ordering, Arc};
+
 use base64::{engine::general_purpose, Engine};
 use num_bigint::{BigInt, Sign};
 use reqwest::Client;
@@ -6,7 +7,9 @@ use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::info;
 
-use crate::utils::rsa_accumulator_util::{get_modulus, memoized_hash_to_prime};
+use crate::utils::rsa_accumulator_util::{
+    compute_accumulator_from_primes, get_modulus, memoized_hash_to_prime,
+};
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{
@@ -32,7 +35,10 @@ pub async fn handle_propose(
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
-                info!("Node {}: Duplicate proposal {} for round {}", node_id, proposer_id, round_id);
+                info!(
+                    "Node {}: Duplicate proposal {} for round {}",
+                    node_id, proposer_id, round_id
+                );
                 return Ok(());
             }
         }
@@ -58,6 +64,13 @@ pub async fn handle_propose(
     );
 
     let modulus = get_modulus();
+    let mut all_primes = Vec::with_capacity(
+        propose_request
+            .transactions
+            .iter()
+            .map(|tx| tx.shards.len())
+            .sum(),
+    );
 
     for tx in &propose_request.transactions {
         let shard_hashes = tx
@@ -75,24 +88,36 @@ pub async fn handle_propose(
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
         for (j, shard) in tx.shards.iter().enumerate() {
-            if j >= shard_hashes.len() || shard.proofs.is_empty() {
+            if j >= shard_hashes.len() || j >= tx.number_of_data_shards || shard.proofs.is_empty() {
                 continue;
             }
-
+        
             let proof_b64 = &shard.proofs[0];
             let proof_bytes = general_purpose::STANDARD
                 .decode(proof_b64)
                 .map_err(|e| format!("Proof decode error: {:?}", e))?;
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
+        
             let hash_hex = &shard_hashes[j];
-            let prime = memoized_hash_to_prime(&node, round_id, hash_hex).await;
-
+            let prime = memoized_hash_to_prime(hash_hex).await;
+            all_primes.push(prime.clone());
+        
             let valid = proof.modpow(&prime, &modulus) == accumulator;
             if !valid {
                 return Err(format!("RSA proof verification failed for tx shard {}", j));
             }
         }
+    }
+
+    // ✅ Batch accumulator validation (fast + scalable)
+    let expected_batch_acc = compute_accumulator_from_primes(&all_primes);
+    let received_batch_bytes = general_purpose::STANDARD
+        .decode(&propose_request.batch_accumulator)
+        .map_err(|e| format!("Batch accumulator decode error: {:?}", e))?;
+    let received_batch_acc = BigInt::from_bytes_be(Sign::Plus, &received_batch_bytes);
+
+    if expected_batch_acc != received_batch_acc {
+        return Err("❌ Batch accumulator mismatch".to_string());
     }
 
     let prevote_request = {
@@ -101,6 +126,7 @@ pub async fn handle_propose(
             proposals: stored_proposals.clone(),
             sender_url: node_guard.ip_address.clone(),
             sender_id: node_guard.id,
+            batch_accumulator: propose_request.batch_accumulator.clone(),
         }
     };
 
@@ -109,9 +135,7 @@ pub async fn handle_propose(
         (node_guard.ip_address.clone(), node_guard.nodes.clone())
     };
 
-    let client = Client::builder()
-        .build()
-        .map_err(|e| format!("HTTP client build error: {:?}", e))?;
+    let client = Client::new();
 
     for peer in node_list {
         if peer != node_ip {
