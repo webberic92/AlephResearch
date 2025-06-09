@@ -1,22 +1,23 @@
 use std::sync::{atomic::Ordering, Arc};
 
 use base64::{engine::general_purpose, Engine};
+use futures::future::join_all;
 use num_bigint::{BigInt, Sign};
 use reqwest::Client;
 use tokio::sync::Mutex;
 use tokio::time::{sleep, Duration, Instant};
 use tracing::info;
 
-use crate::utils::rsa_accumulator_util::{
-    compute_accumulator_from_primes, get_modulus, memoized_hash_to_prime,
-};
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{
         node::Node,
         requests::{PrevoteRequest, ProposeRequest},
     },
-    utils::dag_utils::ensure_dag_round_sync,
+    utils::{
+        dag_utils::ensure_dag_round_sync,
+        rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, memoized_hash_to_prime},
+    },
 };
 
 pub async fn handle_propose(
@@ -59,24 +60,20 @@ pub async fn handle_propose(
     }
 
     info!(
-        "Node {}: Quorum reached for round {}, broadcasting prevote...",
+        "Node {}: Quorum reached for round {}, verifying proofs and broadcasting prevote...",
         node_id, round_id
     );
 
     let modulus = get_modulus();
-    let mut all_primes = Vec::with_capacity(
-        propose_request
-            .transactions
-            .iter()
-            .map(|tx| tx.shards.len())
-            .sum(),
-    );
+
+    // ⛓️ Collect verification tasks for all data shard proofs
+    let mut verification_tasks = Vec::new();
 
     for tx in &propose_request.transactions {
         let shard_hashes = tx
             .shard_hashes
             .as_ref()
-            .ok_or("Missing shard_hashes field for transaction".to_string())?;
+            .ok_or("Missing shard_hashes field in transaction".to_string())?;
 
         let acc_encoded = tx
             .accumulator
@@ -84,33 +81,45 @@ pub async fn handle_propose(
             .ok_or("Missing accumulator in transaction".to_string())?;
         let acc_bytes = general_purpose::STANDARD
             .decode(acc_encoded)
-            .map_err(|e| format!("Failed to decode accumulator: {:?}", e))?;
+            .map_err(|e| format!("Accumulator decode failed: {:?}", e))?;
         let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
 
         for (j, shard) in tx.shards.iter().enumerate() {
-            if j >= shard_hashes.len() || j >= tx.number_of_data_shards || shard.proofs.is_empty() {
+            if j >= tx.number_of_data_shards || j >= shard_hashes.len() || shard.proofs.is_empty() {
                 continue;
             }
-        
+
             let proof_b64 = &shard.proofs[0];
             let proof_bytes = general_purpose::STANDARD
                 .decode(proof_b64)
                 .map_err(|e| format!("Proof decode error: {:?}", e))?;
             let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-        
-            let hash_hex = &shard_hashes[j];
-            let prime = memoized_hash_to_prime(hash_hex).await;
-            all_primes.push(prime.clone());
-        
-            let valid = proof.modpow(&prime, &modulus) == accumulator;
-            if !valid {
-                return Err(format!("RSA proof verification failed for tx shard {}", j));
-            }
+            let hash_hex = shard_hashes[j].clone();
+            let accumulator = accumulator.clone();
+            let modulus = modulus.clone();
+
+            verification_tasks.push(async move {
+                let prime = memoized_hash_to_prime(&hash_hex).await;
+                let valid = proof.modpow(&prime, &modulus) == accumulator;
+                if valid {
+                    Ok(prime)
+                } else {
+                    Err(format!("❌ RSA proof invalid for shard hash {}", hash_hex))
+                }
+            });
         }
     }
 
-    // ✅ Batch accumulator validation (fast + scalable)
-    let expected_batch_acc = compute_accumulator_from_primes(&all_primes);
+    // 🧠 Run all async proof validations
+    let results: Vec<Result<BigInt, String>> = join_all(verification_tasks).await;
+    let mut primes: Vec<BigInt> = results.into_iter().collect::<Result<_, _>>()?;
+
+    // 🔁 Sort and deduplicate primes
+    primes.sort();
+    primes.dedup();
+
+    // ✅ Check batch accumulator
+    let expected_batch_acc = compute_accumulator_from_primes(&primes);
     let received_batch_bytes = general_purpose::STANDARD
         .decode(&propose_request.batch_accumulator)
         .map_err(|e| format!("Batch accumulator decode error: {:?}", e))?;
@@ -120,6 +129,7 @@ pub async fn handle_propose(
         return Err("❌ Batch accumulator mismatch".to_string());
     }
 
+    // 📤 Prepare Prevote
     let prevote_request = {
         let node_guard = node.lock().await;
         PrevoteRequest {
@@ -130,13 +140,13 @@ pub async fn handle_propose(
         }
     };
 
+    // 🌍 Broadcast to peers
     let (node_ip, node_list) = {
         let node_guard = node.lock().await;
         (node_guard.ip_address.clone(), node_guard.nodes.clone())
     };
 
     let client = Client::new();
-
     for peer in node_list {
         if peer != node_ip {
             let url = format!("http://{}/prevote", peer);
@@ -155,6 +165,7 @@ pub async fn handle_propose(
         }
     }
 
+    // 🧠 Push to local queue
     if let Some(rbc_processor) = &node.lock().await.rbc_processor {
         rbc_processor
             .enqueue_message(RBCMessage::Prevote(prevote_request))
@@ -162,7 +173,7 @@ pub async fn handle_propose(
     }
 
     info!(
-        "Node {}: handle_propose round {} done in {:?} [dag_sync: {:?}]",
+        "Node {}: ✅ handle_propose round {} done in {:?} [dag_sync: {:?}]",
         node_id,
         round_id,
         timer_total.elapsed(),

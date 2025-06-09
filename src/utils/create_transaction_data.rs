@@ -1,16 +1,14 @@
-use std::num::NonZero;
 use std::sync::Arc;
 
 use base64::{engine::general_purpose, Engine};
+use futures::future::join_all;
+use num_bigint::BigInt;
+use once_cell::sync::Lazy;
+use rayon::prelude::*;
+use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
 use tokio::{sync::Mutex, time::Instant};
 use tracing::info;
-use reed_solomon_erasure::galois_8::ReedSolomon;
-use num_bigint::BigInt;
-use rayon::prelude::*;
-use lru::LruCache;
-use once_cell::sync::Lazy;
-use std::sync::Mutex as StdMutex;
 
 use crate::{
     structs::{
@@ -19,12 +17,10 @@ use crate::{
     },
     utils::rsa_accumulator_util::{
         compute_accumulator_from_primes,
-        generate_proofs_from_primes_radix, memoized_hash_to_prime,
+        generate_proofs_from_primes_radix,
+        memoized_hash_to_prime,
     },
 };
-
-static PROOF_CACHE: Lazy<StdMutex<LruCache<u64, BigInt>>> =
-    Lazy::new(|| StdMutex::new(LruCache::new(NonZero::new(10000).unwrap())));
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     if data.len() >= target_len {
@@ -95,12 +91,15 @@ pub async fn create_transaction_data(
             .map(|shard| hex::encode(Sha256::digest(shard)))
             .collect();
 
-        let mut tx_primes = Vec::with_capacity(data_shards);
-        for hash_hex in &hash_hexes {
-            let prime = memoized_hash_to_prime(hash_hex).await;
-            tx_primes.push(prime.clone());
-            all_primes.push(prime);
-        }
+        // ⚡ Async parallel prime mapping
+        let prime_futures = hash_hexes
+            .iter()
+            .map(|hash| memoized_hash_to_prime(hash))
+            .collect::<Vec<_>>();
+
+        let tx_primes: Vec<BigInt> = join_all(prime_futures).await;
+
+        all_primes.extend(tx_primes.iter().cloned());
 
         let accumulator = compute_accumulator_from_primes(&tx_primes);
         let acc_encoded = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
@@ -119,7 +118,7 @@ pub async fn create_transaction_data(
             } else {
                 vec![] // Parity shard — no proof
             };
-            
+
             shard_structs.push(ShardWithProofs {
                 shard_b64,
                 proofs: proofs_vec,
@@ -132,10 +131,13 @@ pub async fn create_transaction_data(
             shards: shard_structs,
             accumulator: Some(acc_encoded),
             shard_hashes: Some(hash_hexes),
-            number_of_data_shards: data_shards, // ✅ <- Added this line
+            number_of_data_shards: data_shards,
         });
     }
 
+    // ✅ Sort and deduplicate primes before batch accumulator
+    all_primes.sort();
+    all_primes.dedup();
     let batch_acc = compute_accumulator_from_primes(&all_primes);
     let batch_acc_b64 = general_purpose::STANDARD.encode(batch_acc.to_bytes_be().1);
 
@@ -151,6 +153,3 @@ pub async fn create_transaction_data(
         batch_accumulator: batch_acc_b64,
     })
 }
-
-
-
