@@ -8,20 +8,16 @@ pub struct BaseRequest {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ShardWithProofs {
-    pub shard_b64: String,
-    pub proofs: Vec<String>, // each entry is a round-specific proof
+    pub shard_b64: String,  // Base64 encoded shard
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    pub root: Vec<u8>,
+    pub accumulator: String, // Base64 encoded accumulator for this transaction
     pub shards: Vec<ShardWithProofs>,
-    pub accumulator: Option<String>,           // the group accumulator
-    pub shard_hashes: Option<Vec<String>>,
-    pub number_of_data_shards: usize, // ✅ Clearer and accurate
+    pub shard_hashes: Vec<String>, // HEX encoded hashes for data shards (sorted)
+    pub number_of_data_shards: usize,
 }
-
-
 
 
 
@@ -41,6 +37,7 @@ pub struct PrevoteRequest {
     pub sender_url: String,
     pub sender_id: usize,  // NEW
     pub batch_accumulator: String, // ✅ Add this
+    pub proposal_digest: String, // Digest of the proposal for verification
 }
 
 

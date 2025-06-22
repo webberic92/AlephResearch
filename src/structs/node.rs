@@ -7,7 +7,7 @@ use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing::info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
-use super::{requests::{CommitRequest, DagUnit, ProposeRequest}, shard_aggregator::ShardAggregator};
+use super::{requests::{CommitRequest, DagUnit, ProposeRequest}};
 use crate::utils::events::Event;
 
 /// **Events to notify the Round Manager**
@@ -32,9 +32,8 @@ pub struct Node {
     pub event_sender: mpsc::Sender<Event>,
     pub rbc_processor: Option<Arc<RBCProcessor>>,
     pub message_count: Arc<AtomicU64>,
-    pub shard_aggregator: Arc<Mutex<ShardAggregator>>,
     pub hash_to_prime_cache: Arc<Mutex<HashMap<u64, HashMap<String, BigInt>>>>,
-    pub proof_verification_cache: Arc<Mutex<HashMap<u64, HashSet<(String, String, String)>>>>,
+    pub proposal_locks: Arc<Mutex<HashSet<u64>>>,
 }
 
 impl Node {
@@ -68,9 +67,8 @@ impl Node {
             event_sender,
             rbc_processor: None,
             message_count: Arc::new(AtomicU64::new(0)),
-            shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),
             hash_to_prime_cache: Arc::new(Mutex::new(HashMap::new())),
-            proof_verification_cache: Arc::new(Mutex::new(HashMap::new())),
+            proposal_locks: Arc::new(Mutex::new(HashSet::new())),
         }));
 
         let node_clone = node.clone();
@@ -144,38 +142,41 @@ impl Node {
     }
 
 
-    /// **🔄 Update Proposal Tracker**
     pub async fn update_proposal_tracker(
         node: Arc<Mutex<Node>>,
         propose_request: ProposeRequest,
     ) -> Result<(usize, usize, Vec<ProposeRequest>), String> {
-        //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
-let node_guard = node.lock().await;
-//info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
+        let node_guard = node.lock().await;
         let node_id = node_guard.id;
         let round_id = propose_request.base.round_id;
-
-        // tracing::info!("Node {}: Updating proposal tracker for round {}...", node_id, round_id);
-
-        let proposal_count;
-        let stored_proposals;
-
-        {
-            let mut tracker = node_guard.proposal_tracker.lock().await;
-            let entry = tracker.entry(round_id).or_insert_with(HashMap::new);
+    
+        let mut proposal_tracker = node_guard.proposal_tracker.lock().await;
+        let entry = proposal_tracker.entry(round_id).or_insert_with(HashMap::new);
+        let proposal_count = entry.len();
+        let quorum_threshold = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+    
+        // ❗ Critical freeze: once quorum reached, ignore late proposals
+        if proposal_count >= quorum_threshold {
+            tracing::info!(
+                "Node {}: Proposal tracker locked for round {}, ignoring new proposals.",
+                node_id, round_id
+            );
+        } else {
             entry.insert(propose_request.base.proposing_node_id as usize, propose_request.clone());
-            proposal_count = entry.len();
-            stored_proposals = entry.values().cloned().collect();
         }
-
-        let required_proposals = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+    
+        let updated_count = entry.len();
+        let stored_proposals = entry.values().cloned().collect();
+    
         tracing::info!(
-            "Node {}: Added proposal for round {} from node {}. Count: {}/{}",
-            node_id, round_id,propose_request.base.proposing_node_id, proposal_count, required_proposals
+            "Node {}: Added proposal for round {}. Count: {}/{}",
+            node_id, round_id, updated_count, quorum_threshold
         );
-
-        Ok((proposal_count, required_proposals, stored_proposals))
+    
+        Ok((updated_count, quorum_threshold, stored_proposals))
     }
+    
+    
 
     /// **🔍 Get Last Unit ID in the DAG for a Given Round**
     /// **🔍 Get Last Unit ID in the DAG for a Given Round**

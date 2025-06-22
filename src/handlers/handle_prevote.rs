@@ -1,17 +1,15 @@
 use base64::{engine::general_purpose, Engine};
-use futures::stream::{FuturesUnordered, StreamExt};
-use rayon::prelude::*;
 use reqwest::Client;
 use sha2::{Digest, Sha256};
-use tokio::{
-    sync::Mutex,
-    time::{sleep, Duration, Instant},
-};
 use std::{
     collections::HashSet,
     sync::{atomic::Ordering, Arc},
 };
-use tracing::{error, info};
+use tokio::{
+    sync::Mutex,
+    time::{sleep, Duration, Instant},
+};
+use tracing::info;
 use num_bigint::{BigInt, Sign};
 
 use crate::{
@@ -20,7 +18,9 @@ use crate::{
         node::Node,
         requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::rsa_accumulator_util::{compute_accumulator_from_primes, get_modulus, memoized_hash_to_prime},
+    utils::{
+        rsa_accumulator_util::{compute_accumulator_from_primes, memoized_hash_to_prime},
+    },
 };
 
 pub async fn handle_prevote(
@@ -28,7 +28,6 @@ pub async fn handle_prevote(
     prevote_request: PrevoteRequest,
 ) -> Result<(), String> {
     let timer_total = Instant::now();
-    let modulus = get_modulus();
 
     let (node_id, round_id, quorum_threshold, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
@@ -43,145 +42,102 @@ pub async fn handle_prevote(
         )
     };
 
+    // ✅ Canonical proposal order BEFORE doing anything else
+    let mut proposals = prevote_request.proposals.clone();
+    proposals.sort_by_key(|p| (p.base.proposing_node_id, p.base.round_id));
+
+    // ✅ Deterministic proposal_digest verification
+    let mut proposal_hashes: Vec<String> = proposals.iter()
+        .map(|p| {
+            let id_bytes = format!("{}-{}", p.base.proposing_node_id, p.base.round_id).into_bytes();
+            hex::encode(Sha256::digest(&id_bytes))
+        })
+        .collect();
+    proposal_hashes.sort_unstable();
+    let combined_input: Vec<u8> = proposal_hashes.concat().into_bytes();
+    let local_digest = hex::encode(Sha256::digest(&combined_input));
+
+    info!("Node {}: Computed local proposal_digest: {}", node_id, local_digest);
+
+    if local_digest != prevote_request.proposal_digest {
+        return Err(format!("❌ Proposal digest mismatch: received {}, computed {}", 
+            prevote_request.proposal_digest, local_digest));
+    }
+
+    // ✅ Quorum tracking
+    let reached_quorum_now: bool;
     {
-        let node_guard = node.lock().await;
+        let mut node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let voters = quorum_votes
-            .entry(round_id.to_be_bytes().to_vec())
-            .or_insert_with(HashSet::new);
+        let round_key = round_id.to_be_bytes().to_vec();
+        let voters = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
+
         if !voters.insert(prevote_request.sender_url.clone()) {
-            info!(
-                "Node {}: Duplicate prevote from {} for round {}.",
-                node_id, prevote_request.sender_url, round_id
-            );
+            info!("Node {}: Duplicate prevote from {} for round {}.", node_id, prevote_request.sender_url, round_id);
             return Ok(());
         }
-        if voters.len() < quorum_threshold {
-            info!(
-                "Node {}: Waiting for more prevotes ({}/{})",
-                node_id,
-                voters.len(),
-                quorum_threshold
-            );
+
+        let current_votes = voters.len();
+        if current_votes < quorum_threshold {
+            info!("Node {}: Waiting for more prevotes ({}/{})", node_id, current_votes, quorum_threshold);
             return Ok(());
         }
+
+        if current_votes > quorum_threshold {
+            info!("Node {}: Quorum already reached for round {}, skipping duplicate processing.", node_id, round_id);
+            return Ok(());
+        }
+
+        reached_quorum_now = true;
     }
 
-    info!(
-        "Node {}: Quorum reached for round {}. Verifying proofs...",
-        node_id, round_id
-    );
+    if reached_quorum_now {
+        info!("Node {}: ✅ Quorum reached for round {}. Verifying batch accumulator...", node_id, round_id);
 
-    // Collect all hash_hex, proof, accumulator tuples
-    let mut all_proofs = Vec::new();
-
-    for proposal in &prevote_request.proposals {
-        for (tx_index, tx) in proposal.transactions.iter().enumerate() {
-            let acc_encoded = tx.accumulator.as_ref().ok_or("Missing accumulator")?;
-            let acc_bytes = general_purpose::STANDARD
-                .decode(acc_encoded)
-                .map_err(|e| format!("Accumulator decode error: {:?}", e))?;
-            let accumulator = BigInt::from_bytes_be(Sign::Plus, &acc_bytes);
-
-            let data_shards = tx.number_of_data_shards;
-            if tx.shards.len() < data_shards {
-                return Err(format!(
-                    "tx[{}]: not enough shards ({} < {})",
-                    tx_index, tx.shards.len(), data_shards
-                ));
-            }
-
-            for shard_index in 0..data_shards {
-                let shard = &tx.shards[shard_index];
-
-                let expected_hash_hex = tx.shard_hashes
-                    .as_ref()
-                    .and_then(|h| h.get(shard_index))
-                    .ok_or_else(|| format!("Missing hash for tx[{}] shard[{}]", tx_index, shard_index))?
-                    .clone();
-
-                let proof_b64 = shard.proofs.get(0).ok_or("Missing proof")?;
-                let proof_bytes = general_purpose::STANDARD
-                    .decode(proof_b64)
-                    .map_err(|e| format!("Proof decode error: {:?}", e))?;
-                let proof = BigInt::from_bytes_be(Sign::Plus, &proof_bytes);
-
-                all_proofs.push((expected_hash_hex, proof, accumulator.clone()));
+        // ✅ Fully deterministic accumulator reconstruction (exactly same as proposer + propose)
+        let mut all_shard_hashes: Vec<String> = Vec::new();
+        for proposal in &proposals {
+            for tx in &proposal.transactions {
+                for hash_hex in &tx.shard_hashes {
+                    all_shard_hashes.push(hash_hex.clone());
+                }
             }
         }
-    }
 
-    // Fully async prime mapping and RSA proof check
-    let mut verification_tasks = FuturesUnordered::new();
+        all_shard_hashes.sort_unstable();
+        all_shard_hashes.dedup();
 
-    for (hash_hex, proof, accumulator) in all_proofs {
-        let modulus = modulus.clone();
-        verification_tasks.push(async move {
-            let prime = memoized_hash_to_prime(&hash_hex).await;
-            let valid = proof.modpow(&prime, &modulus) == accumulator;
-            if valid {
-                Ok(prime)
-            } else {
-                Err(format!("❌ Invalid RSA proof for hash {}", hash_hex))
-            }
-        });
-    }
-
-    let mut primes = Vec::new();
-    while let Some(result) = verification_tasks.next().await {
-        match result {
-            Ok(prime) => primes.push(prime),
-            Err(e) => return Err(e),
+        let mut all_primes: Vec<BigInt> = Vec::with_capacity(all_shard_hashes.len());
+        for hash_hex in &all_shard_hashes {
+            let prime = memoized_hash_to_prime(hash_hex).await;
+            all_primes.push(prime);
         }
+
+        let computed_batch_acc = compute_accumulator_from_primes(&all_primes);
+
+        let received_batch_bytes = general_purpose::STANDARD
+            .decode(&prevote_request.batch_accumulator)
+            .map_err(|e| format!("Batch accumulator decode failed: {:?}", e))?;
+        let received_batch_acc = BigInt::from_bytes_be(Sign::Plus, &received_batch_bytes);
+
+        if computed_batch_acc != received_batch_acc {
+            return Err(format!("Batch accumulator mismatch: local_computed_acc={:?} received_acc={:?}", computed_batch_acc, received_batch_acc));
+        }
+    
+        info!("Node {}: ✅ Batch accumulator verified. Proceeding to DAG commit...", node_id);
     }
 
-    // ✅ Batch accumulator check
-    let expected_bytes = general_purpose::STANDARD
-        .decode(&prevote_request.batch_accumulator)
-        .map_err(|e| format!("Failed to decode batch accumulator: {:?}", e))?;
-    let expected_acc = BigInt::from_bytes_be(Sign::Plus, &expected_bytes);
-    let computed_acc = compute_accumulator_from_primes(&primes);
-    if computed_acc != expected_acc {
-        return Err("❌ Batch accumulator mismatch".to_string());
-    }
-
-    info!(
-        "Node {}: Proofs validated. Reconstructing transactions...",
-        node_id
-    );
-
-    // Reconstruct all valid transactions
+    // ✅ Reconstruct DAG units
     let mut reconstructed_units = Vec::new();
-    for proposal in &prevote_request.proposals {
+    for proposal in &proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
-        let mut transactions = Vec::new();
-
-        for tx in &proposal.transactions {
-            let mut buffer = Vec::with_capacity(transaction_size);
-            for shard in tx.shards.iter().take(tx.number_of_data_shards) {
-                let decoded = general_purpose::STANDARD
-                    .decode(&shard.shard_b64)
-                    .map_err(|e| format!("Shard decode error: {:?}", e))?;
-                buffer.extend_from_slice(&decoded);
-            }
-            buffer.truncate(transaction_size);
-            let hash = Sha256::digest(&buffer);
-            if hash.to_vec() != tx.root {
-                return Err("❌ Transaction hash mismatch".to_string());
-            }
-            transactions.push(tx.clone());
-        }
 
         reconstructed_units.push(DagUnit {
             unit_id: format!("U{}-{}", round_id, proposer_id),
             proposer_node: proposer_id,
             round: round_id,
-            transactions,
-            parent_units: proposal
-                .parents
-                .iter()
-                .map(|p| String::from_utf8_lossy(p).to_string())
-                .collect(),
+            transactions: proposal.transactions.clone(),
+            parent_units: proposal.parents.iter().map(|p| hex::encode(p)).collect(),
             accumulator_root: vec![],
             finalization_timestamp: chrono::Utc::now().timestamp_millis() as u64,
         });
@@ -193,6 +149,7 @@ pub async fn handle_prevote(
         round_id,
     };
 
+    // ✅ Send CommitRequest to peers
     let message_count = node.lock().await.message_count.clone();
     let client = Client::new();
 
@@ -211,12 +168,6 @@ pub async fn handle_prevote(
         rbc_processor.enqueue_message(RBCMessage::Commit(commit_request)).await;
     }
 
-    info!(
-        "Node {}: ✅ handle_prevote round {} done in {:?}",
-        node_id,
-        round_id,
-        timer_total.elapsed()
-    );
-
+    info!("Node {}: ✅ handle_prevote round {} done in {:?}", node_id, round_id, timer_total.elapsed());
     Ok(())
 }

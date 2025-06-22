@@ -24,14 +24,14 @@ pub fn save_config(toml_config: &TomlConfig, path: Option<&str>) -> Result<(), B
     Ok(())
 }
 
-/// **Writes the finalized DAG to a file in a human-readable format.**
+//// Writes finalized DAG to file
 pub async fn write_finalized_dag_to_file(
     base_path: &str,
     dag: &HashMap<u64, Vec<DagUnit>>,
-    round_id: u64,  
+    round_id: u64,
 ) -> Result<(), Box<dyn std::error::Error>> {
     if dag.is_empty() {
-        return Ok(()); // No units to write
+        return Ok(());
     }
 
     if let Some(units) = dag.get(&round_id) {
@@ -50,8 +50,8 @@ pub async fn write_finalized_dag_to_file(
             "round": unit.round,
             "accumulator_root": hex::encode(&unit.accumulator_root),
             "transactions": unit.transactions.iter().map(|tx| json!({
-                "hash": hex::encode(&tx.root),
-                "proofs": tx.shards.iter().map(|s| s.proofs.clone()).collect::<Vec<_>>(),
+                "accumulator": tx.accumulator,
+                "shard_hashes": tx.shard_hashes,
                 "shards": tx.shards.iter().map(|shard| {
                     let decoded_bytes = general_purpose::STANDARD
                         .decode(&shard.shard_b64)
@@ -67,7 +67,6 @@ pub async fn write_finalized_dag_to_file(
             "parent_hashes": unit.parent_units.iter().map(|p| hex::encode(p)).collect::<Vec<_>>(),
             "finalization_timestamp": unit.finalization_timestamp,
         })).collect();
-        
 
         let mut file = OpenOptions::new()
             .write(true)

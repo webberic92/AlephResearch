@@ -53,28 +53,38 @@ pub async fn handle_commit(
             commit_tracker.remove(&round_id).unwrap_or_default()
         };
 
-        let mut all_units = Vec::new();
+        let mut unique_units = Vec::new();
+        let mut seen_unit_ids = std::collections::HashSet::new();
+
         for commit in &all_commits {
-            all_units.extend(commit.units.clone());
+            for mut unit in commit.units.clone() {
+                if seen_unit_ids.insert(unit.unit_id.clone()) {
+                    // ✅ FINAL PATCH: populate accumulator_root
+                    if let Some(first_tx) = unit.transactions.get(0) {
+                        unit.accumulator_root = first_tx.accumulator.clone().into_bytes();
+                        info!(
+                            "Node {}: Inserted unit {} with accumulator_root = {}",
+                            node_id, unit.unit_id, first_tx.accumulator
+                        );
+                    }
+                    unique_units.push(unit);
+                } else {
+                    info!("Node {}: Skipping duplicate unit {} during DAG insertion", node_id, unit.unit_id);
+                }
+            }
         }
 
         {
             let node_guard = node.lock().await;
             let mut dag = node_guard.dag.lock().await;
             let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
-            info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
-            for unit in all_units {
-                if !dag_units.iter().any(|u| u.unit_id == unit.unit_id) {
-                    dag_units.push(unit.clone());
-                    info!(
-                        "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
-                        node_id,
-                        unit.unit_id,
-                        unit.proposer_node,
-                        unit.transactions.len(),
-                        round_id
-                    );
-                }
+            info!("Node {}: Inserting {} unique units into DAG for round {}", node_id, unique_units.len(), round_id);
+            for unit in unique_units {
+                dag_units.push(unit.clone());
+                info!(
+                    "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
+                    node_id, unit.unit_id, unit.proposer_node, unit.transactions.len(), round_id
+                );
             }
         }
 
@@ -84,20 +94,9 @@ pub async fn handle_commit(
             dag_guard.clone()
         };
 
-
-
         {
-            let  node_guard = node.lock().await;
-            node_guard
-                .hash_to_prime_cache
-                .lock()
-                .await
-                .remove(&round_id);
-            node_guard
-                .proof_verification_cache
-                .lock()
-                .await
-                .remove(&round_id);
+            let node_guard = node.lock().await;
+            node_guard.hash_to_prime_cache.lock().await.remove(&round_id);
         }
 
         if let Err(e) = write_finalized_dag_to_file("/aleph/finalized_dag", &finalized_dag, round_id).await {
@@ -110,10 +109,6 @@ pub async fn handle_commit(
             let message_count = node_guard.message_count.clone();
             info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
             info!("Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC", node_id, round_id, commit_count, quorum_threshold);
-
-            let mut aggregator = node_guard.shard_aggregator.lock().await;
-            aggregator.clear_round(round_id);
-            info!("Node {}: Cleared aggregator state for round {}", node_id, round_id);
         }
 
         {
@@ -152,11 +147,9 @@ pub async fn handle_commit(
                 info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
                 let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
+                    r#"(S3_FOLDER="logs/RSA_N{instances}_T{txs}_R{rounds}/node-{id}" && \
                     aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
-
-                
 
                 tokio::spawn(async move {
                     match Command::new("sh").arg("-c").arg(&s3_upload_cmd).spawn() {
@@ -176,3 +169,4 @@ pub async fn handle_commit(
 
     Ok(())
 }
+

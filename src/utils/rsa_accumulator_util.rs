@@ -7,12 +7,11 @@ use num_bigint::{ RandBigInt, Sign};
 use num_traits::One;
 use num_integer::Integer;
 use rayon::prelude::*;
-use rand::thread_rng;
 use std::sync::Arc;
-
+use dashmap::DashMap;
 use crate::structs::node::Node;
-
-
+use rand::{SeedableRng, Rng};            // Add this
+use rand_chacha::ChaCha20Rng;
 
 /// ✅ RSA-1024 modulus
 pub fn get_modulus() -> BigInt {
@@ -22,6 +21,25 @@ pub fn get_modulus() -> BigInt {
         10,
     )
     .expect("Failed to parse RSA-1024 modulus")
+}
+
+
+// (proof_hex, prime_hex) -> result
+static MODPOW_CACHE: Lazy<DashMap<(String, String), BigInt>> = Lazy::new(DashMap::new);
+
+/// ✅ Cached modular exponentiation
+pub fn cached_modpow(proof: &BigInt, prime: &BigInt) -> BigInt {
+    let proof_hex = format!("{:x}", proof);
+    let prime_hex = format!("{:x}", prime);
+    let key = (proof_hex.clone(), prime_hex.clone());
+
+    if let Some(result) = MODPOW_CACHE.get(&key) {
+        return result.clone();
+    }
+
+    let result = proof.modpow(prime, &get_modulus());
+    MODPOW_CACHE.insert(key, result.clone());
+    result
 }
 
 
@@ -98,8 +116,7 @@ pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
         r += 1;
     }
 
-    let mut rng = thread_rng();
-    'witness: for _ in 0..k {
+        let mut rng = ChaCha20Rng::from_entropy();        'witness: for _ in 0..k {
         let a = rng.gen_bigint_range(&BigInt::from(2u32), &(n - 2u32));
         let mut x = a.modpow(&d, n);
         if x == BigInt::one() || x == n - 1u32 {
@@ -117,13 +134,7 @@ pub fn is_probably_prime(n: &BigInt, k: u32) -> bool {
     true
 }
 
-/// ✅ Computes accumulator from vector of primes
-pub fn compute_accumulator_from_primes(primes: &[BigInt]) -> BigInt {
-    let n = get_modulus();
-    let g = BigInt::from(2u8);
-    let product = primes.par_iter().cloned().reduce(BigInt::one, |a, b| a * b);
-    g.modpow(&product, &n)
-}
+
 
 /// ✅ Tree-based proof generation
 pub fn generate_proofs_from_primes_radix(primes: &[BigInt]) -> Vec<BigInt> {
@@ -169,56 +180,140 @@ pub fn generate_proofs_from_primes_radix(primes: &[BigInt]) -> Vec<BigInt> {
         .collect()
 }
 
-/// ✅ Verifies batch of (prime, proof) pairs
 pub fn verify_proofs(acc: &BigInt, pairs: &[(BigInt, BigInt)]) -> bool {
-    pairs
-        .par_iter()
-        .all(|(prime, proof)| proof.modpow(prime, &get_modulus()) == *acc)
+    pairs.par_iter().all(|(prime, proof)| {
+        cached_modpow(proof, prime) == *acc
+    })
 }
 
-/// ✅ Verifies single (prime, proof)
-pub fn verify_proof_with_prime(acc: &BigInt, prime: &BigInt, proof: &BigInt) -> bool {
-    proof.modpow(prime, &get_modulus()) == *acc
+pub fn verify_all_batches(accumulators: &[BigInt], proof_batches: &[Vec<(BigInt, BigInt)>]) -> bool {
+    accumulators
+        .par_iter()
+        .zip(proof_batches.par_iter())
+        .all(|(acc, pairs)| verify_proofs(acc, pairs))
 }
+
+
+pub fn verify_proof_with_prime(acc: &BigInt, prime: &BigInt, proof: &BigInt) -> bool {
+    cached_modpow(proof, prime) == *acc
+}
+
 
 /// ✅ Verifies proof from hash
 pub async fn verify_proof(acc: &BigInt, hash: &[u8], proof: &BigInt) -> bool {
     let prime = hash_to_prime_128(hash).await;
-    proof.modpow(&prime, &get_modulus()) == *acc
+    cached_modpow(proof, &prime) == *acc
 }
 
 /// ✅ Optional: proof cache scoped per round
 pub async fn is_proof_valid_cached(
-    node: &Arc<Mutex<Node>>,
-    round_id: u64,
-    acc_hex: &str,
-    hash_hex: &str,
-    proof_hex: &str,
     prime: &BigInt,
     acc: &BigInt,
     proof: &BigInt,
 ) -> bool {
-    let key = (acc_hex.to_string(), hash_hex.to_string(), proof_hex.to_string());
 
-    {
-        let node_guard = node.lock().await;
-        let cache_guard = node_guard.proof_verification_cache.lock().await;
+    return cached_modpow(proof, prime) == *acc;
+}
 
-        if cache_guard
-            .get(&round_id)
-            .map_or(false, |set| set.contains(&key))
-        {
-            return true;
+
+/// Fully parallel product tree accumulator builder.
+pub fn compute_accumulator_from_primes(primes: &[BigInt]) -> BigInt {
+    if primes.is_empty() {
+        return BigInt::one();
+    }
+
+    let modulus = get_modulus();
+    
+    // Convert to owned Vec for Rayon parallel chunking
+    let mut level = primes.to_vec();
+
+    while level.len() > 1 {
+        // Pairwise multiply adjacent elements in parallel
+        let next_level: Vec<BigInt> = level
+            .par_chunks(2)
+            .map(|chunk| {
+                if chunk.len() == 2 {
+                    (&chunk[0] * &chunk[1]) % &modulus
+                } else {
+                    chunk[0].clone()
+                }
+            })
+            .collect();
+        level = next_level;
+    }
+
+    level[0].clone() % modulus
+}
+
+
+/// Struct for product tree nodes
+struct ProductTree {
+    product: BigInt,
+    left: Option<Arc<ProductTree>>,
+    right: Option<Arc<ProductTree>>,
+    index_range: (usize, usize),
+}
+
+/// Build full balanced product tree
+fn build_product_tree(primes: &[BigInt], modulus: &BigInt) -> Arc<ProductTree> {
+    fn helper(primes: &[BigInt], range: (usize, usize), modulus: &BigInt) -> Arc<ProductTree> {
+        if range.0 == range.1 {
+            Arc::new(ProductTree {
+                product: primes[range.0].clone() % modulus,
+                left: None,
+                right: None,
+                index_range: range,
+            })
+        } else {
+            let mid = (range.0 + range.1) / 2;
+            let (left, right) = rayon::join(
+                || helper(primes, (range.0, mid), modulus),
+                || helper(primes, (mid + 1, range.1), modulus),
+            );
+            Arc::new(ProductTree {
+                product: (&left.product * &right.product) % modulus,
+                left: Some(left),
+                right: Some(right),
+                index_range: range,
+            })
         }
     }
+    helper(primes, (0, primes.len() - 1), modulus)
+}
 
-    let valid = proof.modpow(prime, &get_modulus()) == *acc;
-
-    if valid {
-        let node_guard = node.lock().await;
-        let mut cache_guard = node_guard.proof_verification_cache.lock().await;
-        cache_guard.entry(round_id).or_insert_with(HashSet::new).insert(key);
+/// Generate proof for a single prime using product tree
+fn generate_proof_for_index(
+    tree: &Arc<ProductTree>,
+    index: usize,
+    modulus: &BigInt,
+) -> BigInt {
+    fn helper(
+        node: &Arc<ProductTree>,
+        index: usize,
+        modulus: &BigInt,
+    ) -> BigInt {
+        if node.index_range.0 == node.index_range.1 {
+            return BigInt::from(1);
+        }
+        let mid = (node.index_range.0 + node.index_range.1) / 2;
+        if index <= mid {
+            let sibling_product = &node.right.as_ref().unwrap().product;
+            (helper(node.left.as_ref().unwrap(), index, modulus) * sibling_product) % modulus
+        } else {
+            let sibling_product = &node.left.as_ref().unwrap().product;
+            (helper(node.right.as_ref().unwrap(), index, modulus) * sibling_product) % modulus
+        }
     }
+    helper(tree, index, modulus)
+}
 
-    valid
+/// Full public API: generate proofs for entire batch
+pub fn generate_proofs_from_primes_tree(primes: &[BigInt]) -> Vec<BigInt> {
+    let modulus = crate::utils::rsa_accumulator_util::get_modulus();
+    let tree = build_product_tree(primes, &modulus);
+
+    (0..primes.len())
+        .into_par_iter()
+        .map(|index| generate_proof_for_index(&tree, index, &modulus))
+        .collect()
 }

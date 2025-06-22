@@ -1,13 +1,10 @@
 use std::sync::Arc;
-
 use base64::{engine::general_purpose, Engine};
 use futures::future::join_all;
 use num_bigint::BigInt;
-use once_cell::sync::Lazy;
-use rayon::prelude::*;
 use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use tokio::{sync::Mutex, time::Instant};
+use tokio::sync::Mutex;
 use tracing::info;
 
 use crate::{
@@ -15,11 +12,7 @@ use crate::{
         node::Node,
         requests::{BaseRequest, ProposeRequest, ShardWithProofs, Transaction},
     },
-    utils::rsa_accumulator_util::{
-        compute_accumulator_from_primes,
-        generate_proofs_from_primes_radix,
-        memoized_hash_to_prime,
-    },
+    utils::rsa_accumulator_util::{compute_accumulator_from_primes, memoized_hash_to_prime},
 };
 
 pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
@@ -31,117 +24,113 @@ pub fn pad_to_len(mut data: Vec<u8>, target_len: usize) -> Vec<u8> {
     data
 }
 
-pub async fn create_transaction_data(
-    node: Arc<Mutex<Node>>,
-) -> Result<ProposeRequest, anyhow::Error> {
-    let timer = Instant::now();
-    info!("📦 Starting transaction data creation...");
-
-    let (node_id, num_txs, data_shards, total_nodes, transaction_size, round_id, parent_units) = {
+pub async fn create_transaction_data(node: Arc<Mutex<Node>>) -> Result<ProposeRequest, anyhow::Error> {
+    // Pull config from node
+    let (node_id, num_txs, data_shards, total_nodes, transaction_size) = {
         let node_guard = node.lock().await;
-        let round_id = *node_guard.current_round.lock().await;
-        let parent_units = node_guard
-            .get_all_parents(round_id)
-            .await
-            .into_iter()
-            .map(|s| s.into_bytes())
-            .collect::<Vec<_>>();
         (
             node_guard.id,
             node_guard.number_of_transactions,
             node_guard.data_shards,
             node_guard.total_nodes,
             node_guard.transaction_size,
-            round_id,
-            parent_units,
         )
     };
 
-    let shard_size = (transaction_size + data_shards - 1) / data_shards;
-    let parent_hash = Sha256::digest(&parent_units.concat());
+    // Get round_id
+    let round_id = {
+        let node_guard = node.lock().await;
+        let current_round = node_guard.current_round.lock().await;
+        *current_round
+    };
 
-    let mut all_primes = Vec::with_capacity(num_txs * data_shards);
-    let mut transactions = Vec::with_capacity(num_txs);
+    // Get parent units
+    let parent_units = {
+        let node_guard = node.lock().await;
+        node_guard.get_all_parents(round_id).await
+    };
 
+    let parent_units_bytes: Vec<Vec<u8>> = parent_units.into_iter().map(|s| s.into_bytes()).collect();
+    let parent_hash = Sha256::digest(&parent_units_bytes.concat());
+
+    let mut transactions: Vec<Transaction> = Vec::with_capacity(num_txs);
+
+    // Generate transactions
     for tx_index in 0..num_txs {
         let content = format!("tx{}_round{}", tx_index + 1, round_id);
         let mut tx_data = content.clone().into_bytes();
-        tx_data.extend(&parent_hash); // ⛓️ Chain parent hashes
+        tx_data.extend(&parent_hash);
         let padded_data = pad_to_len(tx_data, transaction_size);
 
         let rs = ReedSolomon::new(data_shards, total_nodes - data_shards)?;
         let mut shards: Vec<Vec<u8>> = padded_data
-            .chunks(shard_size)
+            .chunks((transaction_size + data_shards - 1) / data_shards)
             .map(|chunk| {
                 let mut v = chunk.to_vec();
-                v.resize(shard_size, 0);
+                v.resize((transaction_size + data_shards - 1) / data_shards, 0);
                 v
             })
             .collect();
 
         while shards.len() < total_nodes {
-            shards.push(vec![0u8; shard_size]);
+            shards.push(vec![0u8; (transaction_size + data_shards - 1) / data_shards]);
         }
 
         let mut shard_refs: Vec<&mut [u8]> = shards.iter_mut().map(|s| s.as_mut_slice()).collect();
         rs.encode(&mut shard_refs)?;
 
-        let hash_hexes: Vec<String> = shards[..data_shards]
-            .par_iter()
+        let shard_hashes: Vec<String> = shards[..data_shards]
+            .iter()
             .map(|shard| hex::encode(Sha256::digest(shard)))
             .collect();
 
-        // ⚡ Async parallel prime mapping
-        let prime_futures = hash_hexes
-            .iter()
-            .map(|hash| memoized_hash_to_prime(hash))
-            .collect::<Vec<_>>();
-
-        let tx_primes: Vec<BigInt> = join_all(prime_futures).await;
-
-        all_primes.extend(tx_primes.iter().cloned());
-
-        let accumulator = compute_accumulator_from_primes(&tx_primes);
-        let acc_encoded = general_purpose::STANDARD.encode(accumulator.to_bytes_be().1);
-
-        let proofs = generate_proofs_from_primes_radix(&tx_primes);
-        let encoded_proofs: Vec<String> = proofs
-            .iter()
-            .map(|p| general_purpose::STANDARD.encode(p.to_bytes_be().1))
+        let shard_structs: Vec<ShardWithProofs> = shards
+            .into_iter()
+            .map(|shard| ShardWithProofs {
+                shard_b64: general_purpose::STANDARD.encode(&shard),
+            })
             .collect();
 
-        let mut shard_structs = Vec::with_capacity(total_nodes);
-        for shard_i in 0..total_nodes {
-            let shard_b64 = general_purpose::STANDARD.encode(&shards[shard_i]);
-            let proofs_vec = if shard_i < data_shards && shard_i < encoded_proofs.len() {
-                vec![encoded_proofs[shard_i].clone()]
-            } else {
-                vec![] // Parity shard — no proof
-            };
-
-            shard_structs.push(ShardWithProofs {
-                shard_b64,
-                proofs: proofs_vec,
-            });
-        }
-
-        let root = Sha256::digest(&padded_data).to_vec();
         transactions.push(Transaction {
-            root,
+            accumulator: String::new(),  // <-- Initially empty
             shards: shard_structs,
-            accumulator: Some(acc_encoded),
-            shard_hashes: Some(hash_hexes),
+            shard_hashes,
             number_of_data_shards: data_shards,
         });
     }
 
-    // ✅ Sort and deduplicate primes before batch accumulator
-    all_primes.sort();
-    all_primes.dedup();
+    // Canonical deterministic ordering before flattening shard hashes
+    transactions.sort_by_key(|tx| {
+        let first_shard_hash = &tx.shard_hashes[0];
+        first_shard_hash.clone()
+    });
+
+    let mut all_shard_hashes: Vec<String> = Vec::new();
+    for tx in &transactions {
+        all_shard_hashes.extend(tx.shard_hashes.clone());
+    }
+
+    all_shard_hashes.sort_unstable();
+    all_shard_hashes.dedup();
+
+    info!("Node {} Round {}: Propose phase - All shard hashes used for batch accumulator:", node_id, round_id);
+    // for (idx, hash_hex) in all_shard_hashes.iter().enumerate() {
+    //     info!("Shard [{}]: {}", idx, hash_hex);
+    // }
+
+    let prime_futures = all_shard_hashes
+        .iter()
+        .map(|hex_str| memoized_hash_to_prime(hex_str))
+        .collect::<Vec<_>>();
+
+    let all_primes: Vec<BigInt> = join_all(prime_futures).await;
     let batch_acc = compute_accumulator_from_primes(&all_primes);
     let batch_acc_b64 = general_purpose::STANDARD.encode(batch_acc.to_bytes_be().1);
 
-    info!("📝 Created {} transactions in {:?}", num_txs, timer.elapsed());
+    // ✅ Inject batch_accumulator into each Transaction
+    for tx in &mut transactions {
+        tx.accumulator = batch_acc_b64.clone();
+    }
 
     Ok(ProposeRequest {
         base: BaseRequest {
@@ -149,7 +138,8 @@ pub async fn create_transaction_data(
             round_id,
         },
         transactions,
-        parents: parent_units,
+        parents: parent_units_bytes,
         batch_accumulator: batch_acc_b64,
     })
 }
+

@@ -20,7 +20,6 @@ pub mod structs{
     pub mod responses;
     pub mod node;
     pub mod dag;
-    pub mod shard_aggregator;
 }
 
 pub mod handlers{
@@ -38,8 +37,6 @@ pub mod requests{
 }
 
 pub mod tests   {
-    pub mod test;
     pub mod accumulatorTests;
-    pub mod regressionTests;
 
 }
