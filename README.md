@@ -14,7 +14,7 @@ To explore the specific work related to each sub-project, you need to check out 
    - Implements the original Aleph protocol with Merkle trees.
    - To view or work on this branch, use the following command:
      ```bash
-     git checkout aleph-orig
+     git checkout aleph-merkle
      ```
 
 2. **`aleph-rsa` Branch**:
