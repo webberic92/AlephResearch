@@ -1,6 +1,6 @@
 
 AlephResearch/rust/target/*
-alephResearch.pem
+*.pem
 .venv/
 */__pycache__
 cdk.out/
