@@ -1,6 +1,5 @@
-use reed_solomon_erasure::galois_8::ReedSolomon;
 use sha2::{Digest, Sha256};
-use tracing::{error, info};
+use tracing::error;
 
 use crate::structs:: requests::{DagUnit, Transaction};
 

@@ -2,10 +2,9 @@
 
 use base64::{engine::general_purpose, Engine};
 use sha2::{Digest, Sha256};
-use tokio::{sync::{Mutex, Semaphore}, time::{sleep, timeout}};
+use tokio::{sync::Mutex, time::sleep};
 use std::{collections::{HashMap, HashSet}, sync::{atomic::Ordering, Arc}, time::Duration};
 use tracing::{error, info, warn};
-use reqwest::Client;
 use crate::{
     processors::priority_queue::RBCMessage, 
     structs::{
@@ -25,15 +24,13 @@ pub async fn handle_prevote(
     .build()
     .expect("Failed to build HTTP client");
 
-    let (node_id, round_id, quorum_threshold, total_nodes, data_shards, node_list, rbc_processor, transaction_size) = {
+    let (node_id, round_id, quorum_threshold, node_list, rbc_processor, transaction_size) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
             node_guard.id,
             prevote_request.proposals[0].base.round_id,
             node_guard.get_quorum_threshold(),
-            node_guard.total_nodes,
-            node_guard.data_shards,
             node_guard.nodes.clone(),
             node_guard.rbc_processor.clone(),
             node_guard.transaction_size,

@@ -1,12 +1,10 @@
 use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
 use base64::{ engine::general_purpose, Engine };
-use reqwest::Client;
-use tokio::{sync::{Mutex, Semaphore}, time::timeout};
-use tracing::{ error, info, warn };
+use tokio::{sync::Mutex, time::timeout};
+use tracing::{ error, info };
 use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::{ check_size, ensure_dag_round_sync }, merkle_utils::verify_merkle_proof}
+    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::ensure_dag_round_sync, merkle_utils::verify_merkle_proof}
 };
-use sha2::Digest;
 
 /*
 **ch-RBC Proof Validation for `handle_propose`**

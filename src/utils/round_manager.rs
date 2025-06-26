@@ -1,4 +1,3 @@
-use reqwest::Client;
 use tokio::sync::{mpsc, Mutex};
 use std::sync::Arc;
 use tracing::{error, info};
@@ -15,18 +14,15 @@ pub async fn round_manager_task(
                 info!("🔄 Round Manager: Processing RoundFinalized event for round {}", r);
 
                 {
-                    //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", r);
                     let node_guard = node.lock().await;
-                    //info!("🔓 [DEBUG] Acquired node lock for round {}", r);
                     let total_rounds = node_guard.total_rounds;
 
                     if r >= total_rounds.try_into().unwrap() {
                         info!("✅ Node {}: All rounds completed. Stopping Round Manager.", node_guard.id);
                         break;
                     }
-                } // 🔓 Release the lock before creating the next proposal
+                } 
 
-                // ✅ **Execute the transaction logic for the next round**
                 if let Err(e) = execute_transaction_logic(node.clone()).await {
                     error!("❌ Failed to start next round {}: {:?}", r + 1, e);
                 }
@@ -40,13 +36,10 @@ async fn execute_transaction_logic(
     node: Arc<Mutex<Node>>, 
 ) -> Result<(), anyhow::Error> {  
 
-    // ✅ Create transaction proposal with multiple transactions
     match create_transaction_data(node.clone()).await {
         Ok(propose_request) => {
             let node_id = {
-                //info!("🔍 [DEBUG] Waiting to acquire node lock for round {}", propose_request.base.round_id);
                 let node_guard = node.lock().await;
-                //info!("🔓 [DEBUG] Acquired node lock for round {}", propose_request.base.round_id);
                 node_guard.id
             };
 
@@ -72,9 +65,7 @@ async fn execute_transaction_logic(
         }
         Err(e) => {
             let node_id = {
-                //info!("🔍 [DEBUG] Waiting to acquire node lock for aleph_rbc_rs");
                 let node_guard = node.lock().await;
-                //info!("🔓 [DEBUG] Acquired node lock for aleph_rbc_rs");
                 node_guard.id
             };
             error!(

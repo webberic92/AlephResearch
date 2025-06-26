@@ -2,7 +2,6 @@ use std::{
     collections::{HashMap, HashSet},
     sync::{atomic::AtomicU64, Arc},
 };
-use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing:: info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};

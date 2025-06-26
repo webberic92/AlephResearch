@@ -1,6 +1,5 @@
 use chrono::Local;
 use tokio::sync::{Mutex, mpsc};
-use tokio::time::{timeout, Duration};
 use tracing::{info, warn, error};
 use std::sync::Arc;
 use std::collections::BinaryHeap;
@@ -82,7 +81,7 @@ impl RBCProcessor {
                     RBCMessage::Commit(req) => req.round_id < last_round,
                     RBCMessage::Prevote(req) => req.proposals.get(0).map_or(true, |p| p.base.round_id < last_round),
                     RBCMessage::Proposal(req) => req.base.round_id < last_round,
-                    _ => false,
+                    // No action needed for unhandled message types
                 };
 
                 if !should_skip {

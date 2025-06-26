@@ -1,13 +1,11 @@
 #[cfg(test)]
 mod tests {
-    use std::sync::Arc;
     use reed_solomon_erasure::galois_8::ReedSolomon;
-    use reqwest::Client;
     use sha2::{Digest, Sha256};
     use tracing::info;
-    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::{DagUnit, PrevoteRequest, Transaction}}, utils::{
+    use crate::{handlers::handle_prevote::handle_prevote, structs::{node::Node, requests::{DagUnit, PrevoteRequest}}, utils::{
         create_transaction_data::{create_transaction_data, pad_to_len},
-        merkle_utils::{compute_merkle_branch, compute_merkle_root, validate_merkle_branch, verify_merkle_proof},
+        merkle_utils::{compute_merkle_branch, compute_merkle_root, verify_merkle_proof},
     }};
     const TX_SIZE: usize = 256; // ✅ Make this configurable if needed
 
@@ -362,7 +360,7 @@ mod tests {
             );
         
             {
-                let mut node_guard = node.lock().await;
+                let node_guard = node.lock().await;
                 let parent_unit = crate::structs::requests::DagUnit {
                     unit_id: "U1-1".to_string(),
                     proposer_node: 1,
@@ -422,7 +420,7 @@ mod tests {
 async fn test_get_all_parents_accumulates_units_across_rounds() {
     use crate::structs::requests::{DagUnit, Transaction};
     use crate::structs::node::Node;
-    use std::collections::HashMap;
+
 
     let node = Node::new(
         0,
@@ -438,7 +436,7 @@ async fn test_get_all_parents_accumulates_units_across_rounds() {
 
     // Insert 1 unit in round 1
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut dag = node_guard.dag.lock().await;
 
         dag.insert(1, vec![DagUnit {
@@ -458,7 +456,7 @@ async fn test_get_all_parents_accumulates_units_across_rounds() {
 
     // Insert 1 unit in round 2
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut dag = node_guard.dag.lock().await;
 
         dag.insert(2, vec![DagUnit {
@@ -478,7 +476,7 @@ async fn test_get_all_parents_accumulates_units_across_rounds() {
 
     // Insert 1 unit in round 3
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut dag = node_guard.dag.lock().await;
 
         dag.insert(3, vec![DagUnit {

@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use tracing::{info, warn, error};
+use tracing::{warn, error};
 use reed_solomon_erasure::galois_8::ReedSolomon;
 
 /// ShardAggregator holds partial shards for a transaction across prevotes.
@@ -38,17 +38,7 @@ impl ShardAggregator {
         }
     
         let received_count = shards.iter().filter(|s| s.is_some()).count();
-        let received_indices: Vec<_> = shards
-            .iter()
-            .enumerate()
-            .filter(|(_, s)| s.is_some())
-            .map(|(i, _)| i)
-            .collect();
-    
-        // info!(
-        //     "Aggregator: tx[{}] round {} has {} out of {} shards: {:?}",
-        //     tx_index, round_id, received_count, self.total_shards, received_indices
-        // );
+
     
         if received_count < self.data_shards {
             warn!(
@@ -89,24 +79,7 @@ impl ShardAggregator {
             return None;
         }
         let padded = combined_data[..transaction_size].to_vec();
-        // let padded = combined_data[..transaction_size.min(combined_data.len())].to_vec();
-        // 🚨 Debug hash from aggregator side
-        use sha2::{Sha256, Digest};
-        let hash = Sha256::digest(&padded);
-        // info!(
-        //     "Aggregator: Reconstructed tx[{}] for round {} → {} bytes, hash = {}",
-        //     tx_index,
-        //     round_id,
-        //     padded.len(),
-        //     hex::encode(&hash)
-        // );
-    
-        // info!(
-        //     "Aggregator: Padded reconstructed tx[{}] bytes = {:?}",
-        //     tx_index,
-        //     padded
-        // );
-    
+
         Some(padded)
     }
     
