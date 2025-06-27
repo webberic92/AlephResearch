@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use tokio::sync::Mutex;
 use once_cell::sync::Lazy;
 use sha2::{Digest, Sha256};
@@ -9,8 +9,7 @@ use num_integer::Integer;
 use rayon::prelude::*;
 use std::sync::Arc;
 use dashmap::DashMap;
-use crate::structs::node::Node;
-use rand::{SeedableRng, Rng};            // Add this
+use rand::SeedableRng;            // Add this
 use rand_chacha::ChaCha20Rng;
 
 /// ✅ RSA-1024 modulus

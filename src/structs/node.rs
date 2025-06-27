@@ -3,11 +3,10 @@ use std::{
     sync::{atomic::AtomicU64, Arc},
 };
 use num_bigint::BigInt;
-use reqwest::Client;
 use tokio::sync::{mpsc::{self}, Mutex};
 use tracing::info;
 use crate::{processors::rbc_processor::RBCProcessor, utils::round_manager::round_manager_task};
-use super::{requests::{CommitRequest, DagUnit, ProposeRequest}};
+use super::requests::{CommitRequest, DagUnit, ProposeRequest};
 use crate::utils::events::Event;
 
 /// **Events to notify the Round Manager**

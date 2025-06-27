@@ -26,7 +26,6 @@ pub async fn handle_propose(
     propose_request: ProposeRequest,
 ) -> Result<(), String> {
     let timer_total = Instant::now();
-    let mut duration_dag_sync = Duration::ZERO;
     let round_id = propose_request.base.round_id;
     let proposer_id = propose_request.base.proposing_node_id as usize;
 
@@ -37,11 +36,11 @@ pub async fn handle_propose(
 
     // Always sync DAG before proposal processing
     ensure_dag_round_sync(node.clone(), round_id).await?;
-    duration_dag_sync = timer_total.elapsed();
+    let duration_dag_sync = timer_total.elapsed();
 
     // Insert proposal into tracker
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
 
         // Duplicate check
         let mut tracker = node_guard.proposal_tracker.lock().await;
@@ -105,7 +104,7 @@ pub async fn handle_propose(
 
     // ✅ Only now lock after verification
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut locks = node_guard.proposal_locks.lock().await;
         if locks.contains(&round_id) {
             info!("Node {}: Proposal set already locked after verification for round {}", node_id, round_id);

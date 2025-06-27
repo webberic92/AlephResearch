@@ -18,9 +18,8 @@ use crate::{
         node::Node,
         requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::{
+    utils::
         rsa_accumulator_util::{compute_accumulator_from_primes, memoized_hash_to_prime},
-    },
 };
 
 pub async fn handle_prevote(
@@ -29,7 +28,7 @@ pub async fn handle_prevote(
 ) -> Result<(), String> {
     let timer_total = Instant::now();
 
-    let (node_id, round_id, quorum_threshold, node_list, rbc_processor, transaction_size) = {
+    let (node_id, round_id, quorum_threshold, node_list, rbc_processor) = {
         let node_guard = node.lock().await;
         node_guard.message_count.fetch_add(1, Ordering::Relaxed);
         (
@@ -38,7 +37,6 @@ pub async fn handle_prevote(
             node_guard.get_quorum_threshold(),
             node_guard.nodes.clone(),
             node_guard.rbc_processor.clone(),
-            node_guard.transaction_size,
         )
     };
 
@@ -67,7 +65,7 @@ pub async fn handle_prevote(
     // ✅ Quorum tracking
     let reached_quorum_now: bool;
     {
-        let mut node_guard = node.lock().await;
+        let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
         let round_key = round_id.to_be_bytes().to_vec();
         let voters = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);

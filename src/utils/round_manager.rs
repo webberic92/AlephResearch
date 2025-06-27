@@ -1,4 +1,3 @@
-use reqwest::Client;
 use tokio::sync::{mpsc, Mutex};
 use std::sync::Arc;
 use tracing::{error, info};
