@@ -227,12 +227,12 @@ let node_guard = node.lock().await;
             .flatten()
             .any(|unit| unit.unit_id == parent_id);
     
-        info!(
-            "Node {}: Parent unit '{}' committed status: {}",
-            self.id,
-            parent_id,
-            result
-        );
+        // info!(
+        //     "Node {}: Parent unit '{}'  {}",
+        //     self.id,
+        //     parent_id,
+        //     result
+        // );
     
         result
     }
