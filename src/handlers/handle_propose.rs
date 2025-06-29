@@ -132,6 +132,15 @@ pub async fn handle_propose(
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
 
+        if proposal_count > quorum_threshold {
+            info!(
+                "Node {}: Proposal count ({}) exceeded quorum threshold ({}). Dropping proposal from node {} for round {}.",
+                node_id, proposal_count, quorum_threshold, proposer_id, round_id
+            );
+            return Ok(());
+        }
+
+
     if proposal_count == quorum_threshold {
         info!(
             "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",

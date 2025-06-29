@@ -1,0 +1,109 @@
+📦 AlephResearch Final Metrics Report
+==============================================
+
+🚀 Transaction Throughput (TPS)
+----------------------------------------------
+📊 Transaction Throughput per Node
+----------------------------------
+Node                                     TPS
+node-1                                   TPS: 72.47
+node-10                                  TPS: 74.56
+node-11                                  TPS: 74.26
+node-12                                  TPS: 73.71
+node-13                                  TPS: 73.14
+node-14                                  TPS: 74.22
+node-15                                  TPS: 74.89
+node-16                                  TPS: 74.04
+node-17                                  TPS: 74.43
+node-18                                  TPS: 73.26
+node-19                                  TPS: 74.11
+node-2                                   TPS: 73.75
+node-20                                  TPS: 73.76
+node-21                                  TPS: 74.44
+node-22                                  TPS: 73.80
+node-23                                  TPS: 75.73
+node-24                                  TPS: 73.92
+node-3                                   TPS: 74.69
+node-4                                   TPS: 73.73
+node-5                                   TPS: 73.47
+node-6                                   TPS: 73.12
+node-7                                   TPS: 74.74
+node-8                                   TPS: 74.07
+node-9                                   TPS: 74.08
+----------------------------------
+📈 Average TPS across 24 nodes (Tx/Round: 2048, Rounds: 16): 74.02
+
+📡 Communication Overhead
+----------------------------------------------
+📡 Communication Overhead per Node (Final Round Only)
+------------------------------------------------------
+node-1/                                  Overhead: 1176 messages
+node-10/                                 Overhead: 1268 messages
+node-11/                                 Overhead: 1269 messages
+node-12/                                 Overhead: 1317 messages
+node-13/                                 Overhead: 1270 messages
+node-14/                                 Overhead: 1258 messages
+node-15/                                 Overhead: 1299 messages
+node-16/                                 Overhead: 1299 messages
+node-17/                                 Overhead: 1221 messages
+node-18/                                 Overhead: 1199 messages
+node-19/                                 Overhead: 1195 messages
+node-2/                                  Overhead: 1237 messages
+node-20/                                 Overhead: 1256 messages
+node-21/                                 Overhead: 1309 messages
+node-22/                                 Overhead: 1254 messages
+node-23/                                 Overhead: 1208 messages
+node-24/                                 Overhead: 1189 messages
+node-3/                                  Overhead: 1302 messages
+node-4/                                  Overhead: 1242 messages
+node-5/                                  Overhead: 1216 messages
+node-6/                                  Overhead: 1210 messages
+node-7/                                  Overhead: 1298 messages
+node-8/                                  Overhead: 1203 messages
+node-9/                                  Overhead: 1353 messages
+------------------------------------------------------
+📈 Average Communication Overhead across 24 nodes: 1252.00 messages
+
+🖥️  Resource Utilization (CPU & Memory)
+----------------------------------------------
+🖥️  Resource Utilization per Node (Average)
+---------------------------------------------------------
+Node                                     CPU Util (%)    Mem Util (%)   
+---------------------------------------------------------
+node-1/                                  25.39           21.42          
+node-10/                                 24.94           20.57          
+node-11/                                 23.02           21.72          
+node-12/                                 22.73           20.98          
+node-13/                                 21.23           20.60          
+node-14/                                 24.99           21.54          
+node-15/                                 24.38           21.59          
+node-16/                                 19.30           20.83          
+node-17/                                 25.23           21.84          
+node-18/                                 20.72           20.36          
+node-19/                                 24.79           21.72          
+node-2/                                  24.78           21.58          
+node-20/                                 25.70           22.03          
+node-21/                                 21.94           20.13          
+node-22/                                 24.46           21.66          
+node-23/                                 23.83           20.95          
+node-24/                                 26.15           21.68          
+node-3/                                  18.75           19.86          
+node-4/                                  23.49           21.26          
+node-5/                                  22.14           21.24          
+node-6/                                  23.65           20.67          
+node-7/                                  23.46           20.70          
+node-8/                                  20.24           20.45          
+node-9/                                  21.24           21.01          
+---------------------------------------------------------
+📊 Average CPU Utilization across 24 nodes: 23.18%
+📊 Average Memory Utilization across 24 nodes: 21.09%
+
+⏱️  Consensus Latency
+----------------------------------------------
+⏱️  Measuring Latency Across Nodes
+--------------------------------------------
+📍 Earliest Start: 2025-06-29T01:13:52.657967
+📍 Latest End:     2025-06-29T01:21:52.110465
+--------------------------------------------
+📈 Total Latency: 479.452 seconds
+

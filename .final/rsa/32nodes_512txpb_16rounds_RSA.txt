@@ -1,0 +1,133 @@
+📦 AlephResearch Final Metrics Report
+==============================================
+
+🚀 Transaction Throughput (TPS)
+----------------------------------------------
+📊 Transaction Throughput per Node
+----------------------------------
+Node                                     TPS
+node-1                                   TPS: 46.53
+node-10                                  TPS: 46.75
+node-11                                  TPS: 48.09
+node-12                                  TPS: 47.41
+node-13                                  TPS: 47.03
+node-14                                  TPS: 47.04
+node-15                                  TPS: 47.41
+node-16                                  TPS: 46.56
+node-17                                  TPS: 47.10
+node-18                                  TPS: 47.22
+node-19                                  TPS: 47.51
+node-2                                   TPS: 47.40
+node-20                                  TPS: 47.51
+node-21                                  TPS: 48.03
+node-22                                  TPS: 46.86
+node-23                                  TPS: 47.35
+node-24                                  TPS: 46.82
+node-25                                  TPS: 46.77
+node-26                                  TPS: 47.16
+node-27                                  TPS: 46.89
+node-28                                  TPS: 46.72
+node-29                                  TPS: 47.13
+node-3                                   TPS: 46.67
+node-30                                  TPS: 47.48
+node-31                                  TPS: 46.83
+node-32                                  TPS: 47.23
+node-4                                   TPS: 46.28
+node-5                                   TPS: 46.75
+node-6                                   TPS: 47.20
+node-7                                   TPS: 46.98
+node-8                                   TPS: 47.03
+node-9                                   TPS: 47.82
+----------------------------------
+📈 Average TPS across 32 nodes (Tx/Round: 512, Rounds: 16): 47.11
+
+📡 Communication Overhead
+----------------------------------------------
+📡 Communication Overhead per Node (Final Round Only)
+------------------------------------------------------
+node-1/                                  Overhead: 1805 messages
+node-10/                                 Overhead: 1714 messages
+node-11/                                 Overhead: 1744 messages
+node-12/                                 Overhead: 1813 messages
+node-13/                                 Overhead: 1668 messages
+node-14/                                 Overhead: 1747 messages
+node-15/                                 Overhead: 1750 messages
+node-16/                                 Overhead: 1758 messages
+node-17/                                 Overhead: 1813 messages
+node-18/                                 Overhead: 1721 messages
+node-19/                                 Overhead: 1700 messages
+node-2/                                  Overhead: 1785 messages
+node-20/                                 Overhead: 1721 messages
+node-21/                                 Overhead: 1763 messages
+node-22/                                 Overhead: 1655 messages
+node-23/                                 Overhead: 1727 messages
+node-24/                                 Overhead: 1640 messages
+node-25/                                 Overhead: 1724 messages
+node-26/                                 Overhead: 1553 messages
+node-27/                                 Overhead: 1727 messages
+node-28/                                 Overhead: 1668 messages
+node-29/                                 Overhead: 1755 messages
+node-3/                                  Overhead: 1791 messages
+node-30/                                 Overhead: 1653 messages
+node-31/                                 Overhead: 1751 messages
+node-32/                                 Overhead: 1715 messages
+node-4/                                  Overhead: 1766 messages
+node-5/                                  Overhead: 1786 messages
+node-6/                                  Overhead: 1742 messages
+node-7/                                  Overhead: 1655 messages
+node-8/                                  Overhead: 1687 messages
+node-9/                                  Overhead: 1535 messages
+------------------------------------------------------
+📈 Average Communication Overhead across 32 nodes: 1719.75 messages
+
+🖥️  Resource Utilization (CPU & Memory)
+----------------------------------------------
+🖥️  Resource Utilization per Node (Average)
+---------------------------------------------------------
+Node                                     CPU Util (%)    Mem Util (%)   
+---------------------------------------------------------
+node-1/                                  18.95           15.28          
+node-10/                                 19.76           15.06          
+node-11/                                 20.45           14.94          
+node-12/                                 19.05           14.82          
+node-13/                                 20.80           15.56          
+node-14/                                 22.99           15.26          
+node-15/                                 22.19           15.70          
+node-16/                                 17.93           15.03          
+node-17/                                 18.42           15.00          
+node-18/                                 22.09           15.37          
+node-19/                                 22.69           15.02          
+node-2/                                  21.03           15.00          
+node-20/                                 19.54           14.64          
+node-21/                                 21.22           14.67          
+node-22/                                 20.99           14.63          
+node-23/                                 21.12           14.58          
+node-24/                                 19.88           15.19          
+node-25/                                 16.98           14.32          
+node-26/                                 24.88           14.66          
+node-27/                                 19.60           14.78          
+node-28/                                 18.55           15.04          
+node-29/                                 21.15           15.43          
+node-3/                                  19.70           15.18          
+node-30/                                 20.42           14.68          
+node-31/                                 16.25           14.68          
+node-32/                                 18.51           15.03          
+node-4/                                  22.49           15.07          
+node-5/                                  18.11           14.82          
+node-6/                                  21.07           14.95          
+node-7/                                  20.79           15.48          
+node-8/                                  20.31           14.68          
+node-9/                                  25.84           15.29          
+---------------------------------------------------------
+📊 Average CPU Utilization across 32 nodes: 20.42%
+📊 Average Memory Utilization across 32 nodes: 14.99%
+
+⏱️  Consensus Latency
+----------------------------------------------
+⏱️  Measuring Latency Across Nodes
+--------------------------------------------
+📍 Earliest Start: 2025-06-29T01:34:00.160783
+📍 Latest End:     2025-06-29T01:37:14.738233
+--------------------------------------------
+📈 Total Latency: 194.577 seconds
+
