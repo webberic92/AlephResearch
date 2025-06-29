@@ -63,7 +63,6 @@ pub async fn handle_propose(
         let node_guard = node.lock().await;
         node_id = node_guard.id;
 
-        // ✅ Only drop if we've already received a proposal from THIS proposer for this round
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
@@ -76,8 +75,6 @@ pub async fn handle_propose(
         }
     }
 
-
-    // ✅ Check if quorum already met BEFORE inserting
     {
         let node_guard = node.lock().await;
         let tracker = node_guard.proposal_tracker.lock().await;
@@ -93,8 +90,15 @@ pub async fn handle_propose(
         }
     }
 
+    ensure_dag_round_sync(node.clone(), round_id).await?;
 
-    // ✅ Validate Merkle proof and shard sizes for each transaction
+    let (proposal_count, quorum_threshold, stored_proposals) =
+        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
+
+    if proposal_count < quorum_threshold {
+        return Ok(());
+    }
+
     if propose_request.batch_proofs.len() != propose_request.transactions.len() {
         return Err(format!(
             "Node {}: batch_proofs length ({}) does not match transactions length ({})",
@@ -143,101 +147,86 @@ pub async fn handle_propose(
         }
     }
 
-    // ✅ Ensure DAG is synchronized to r - 1
-    ensure_dag_round_sync(node.clone(), round_id).await?;
+    info!(
+        "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
+        node_id, stored_proposals.len()
+    );
 
-    // ✅ Add proposal to tracker
-    let (proposal_count, quorum_threshold, stored_proposals) =
-        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
-
-    if proposal_count == quorum_threshold {
-        info!(
-            "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
-            node_id, stored_proposals.len()
-        );
-
-        let prevote_request = {
-            let node_guard = node.lock().await;
-            PrevoteRequest {
-                proposals: stored_proposals.clone(),
-                sender_url: node_guard.ip_address.clone(),
-                sender_id: node_guard.id, // NEW
-            }
-        };
-
-        let (node_ip, node_list) = {
-            let node_guard = node.lock().await;
-            (node_guard.ip_address.clone(), node_guard.nodes.clone())
-        };
-
-        info!("Node {}: Multicasting prevote to all nodes...", node_id);
-
-       
-        for target_node in node_list {
-            if target_node != node_ip {
-                // Clone as needed here
-                let url = format!("http://{}/prevote", target_node);
-                let mut attempt = 0;
-                let max_attempts = 3;
-                let send_timeout = Duration::from_secs(3);
-                let mut success = false;
-        
-                while attempt < max_attempts {
-                    attempt += 1;
-                    info!("📤 Attempt {}/{}: Node {} sending prevote to {} for round {}",
-                          attempt, max_attempts, node_id, url, round_id);
-        
-                    let send_fut = local_client.post(&url).json(&prevote_request).send();
-        
-                    match timeout(send_timeout, send_fut).await {
-                        Ok(Ok(resp)) if resp.status().is_success() => {
-                            info!("✅ Node {}: Prevote success to {}", node_id, url);
-                            success = true;
-                            break;
-                        }
-                        Ok(Ok(resp)) => {
-                            let status = resp.status();
-                            let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
-                            error!("❌ Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
-                        }
-                        Ok(Err(e)) => {
-                            error!("❌ Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
-                        }
-                        Err(_) => {
-                            error!("⏱️ Node {}: Timeout sending prevote to {}", node_id, url);
-                        }
-                    }
-        
-                    let delay = 100 * 2u64.pow((attempt - 1) as u32);
-                    sleep(Duration::from_millis(delay));
-                }
-        
-                if !success {
-                    error!("❌ Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
-                }
-        
-                node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
-            }
+    let prevote_request = {
+        let node_guard = node.lock().await;
+        PrevoteRequest {
+            proposals: stored_proposals.clone(),
+            sender_url: node_guard.ip_address.clone(),
+            sender_id: node_guard.id,
         }
-        
+    };
 
-        // ✅ Handle prevote locally
-        {
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                info!("Node {}: Enqueuing local prevote into RBCProcessor for round {}", node_id, round_id);
-                rbc_processor
-                    .enqueue_message(RBCMessage::Prevote(prevote_request))
-                    .await;
-            } else {
-                error!("Node {}: RBCProcessor not initialized for local prevote enqueue!", node_id);
+    let (node_ip, node_list) = {
+        let node_guard = node.lock().await;
+        (node_guard.ip_address.clone(), node_guard.nodes.clone())
+    };
+
+    info!("Node {}: Multicasting prevote to all nodes...", node_id);
+
+    for target_node in node_list {
+        if target_node != node_ip {
+            let url = format!("http://{}/prevote", target_node);
+            let mut attempt = 0;
+            let max_attempts = 3;
+            let send_timeout = Duration::from_secs(3);
+            let mut success = false;
+
+            while attempt < max_attempts {
+                attempt += 1;
+                info!("\u{1f4e4} Attempt {}/{}: Node {} sending prevote to {} for round {}",
+                      attempt, max_attempts, node_id, url, round_id);
+
+                let send_fut = local_client.post(&url).json(&prevote_request).send();
+
+                match timeout(send_timeout, send_fut).await {
+                    Ok(Ok(resp)) if resp.status().is_success() => {
+                        info!("\u{2705} Node {}: Prevote success to {}", node_id, url);
+                        success = true;
+                        break;
+                    }
+                    Ok(Ok(resp)) => {
+                        let status = resp.status();
+                        let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
+                        error!("Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
+                    }
+                    Ok(Err(e)) => {
+                        error!("Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
+                    }
+                    Err(_) => {
+                        error!("Node {}: Timeout sending prevote to {}", node_id, url);
+                    }
+                }
+
+                let delay = 100 * 2u64.pow((attempt - 1) as u32);
+                sleep(Duration::from_millis(delay));
             }
+
+            if !success {
+                error!("Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
+            }
+
+            node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    {
+        let node_guard = node.lock().await;
+        if let Some(rbc_processor) = &node_guard.rbc_processor {
+            info!("Node {}: Enqueuing local prevote into RBCProcessor for round {}", node_id, round_id);
+            rbc_processor
+                .enqueue_message(RBCMessage::Prevote(prevote_request))
+                .await;
+        } else {
+            error!("Node {}: RBCProcessor not initialized for local prevote enqueue!", node_id);
         }
     }
 
     Ok(())
 }
-
-
 
 
