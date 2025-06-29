@@ -76,6 +76,24 @@ pub async fn handle_propose(
         }
     }
 
+
+    // ✅ Check if quorum already met BEFORE inserting
+    {
+        let node_guard = node.lock().await;
+        let tracker = node_guard.proposal_tracker.lock().await;
+        if let Some(round_map) = tracker.get(&round_id) {
+            let quorum_threshold = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+            if round_map.len() >= quorum_threshold {
+                info!(
+                    "Node {}: Quorum already reached for round {}. Dropping proposal from node {}.",
+                    node_id, round_id, proposer_id
+                );
+                return Ok(());
+            }
+        }
+    }
+
+
     // ✅ Validate Merkle proof and shard sizes for each transaction
     if propose_request.batch_proofs.len() != propose_request.transactions.len() {
         return Err(format!(
@@ -131,15 +149,6 @@ pub async fn handle_propose(
     // ✅ Add proposal to tracker
     let (proposal_count, quorum_threshold, stored_proposals) =
         Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
-
-        if proposal_count > quorum_threshold {
-            info!(
-                "Node {}: Proposal count ({}) exceeded quorum threshold ({}). Dropping proposal from node {} for round {}.",
-                node_id, proposal_count, quorum_threshold, proposer_id, round_id
-            );
-            return Ok(());
-        }
-
 
     if proposal_count == quorum_threshold {
         info!(
