@@ -31,6 +31,7 @@ pub struct Node {
     pub rbc_processor: Option<Arc<RBCProcessor>>, // ✅ Now optional, will be set later
     pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
     pub shard_aggregator: Arc<Mutex<ShardAggregator>>, // NEW
+    pub proposal_locks: Arc<Mutex<HashSet<u64>>>,
     }
 
 impl Node {
@@ -65,6 +66,7 @@ impl Node {
             rbc_processor: None, // ✅ Initialize as None, will be set later
             message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
             shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),       
+            proposal_locks: Arc::new(Mutex::new(HashSet::new())),
             }));
 
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet

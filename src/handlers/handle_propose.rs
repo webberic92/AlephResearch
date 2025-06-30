@@ -3,7 +3,7 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 use base64::{engine::general_purpose, Engine};
-use tokio::{sync::Mutex, time::{sleep, timeout, Duration, Instant}};
+use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
 use tracing::info;
 
 use crate::{
@@ -95,7 +95,7 @@ pub async fn handle_propose(
 
     // ✅ Lock round proposal set after verification
     {
-        let mut guard = node.lock().await;
+        let guard = node.lock().await;
         let mut locks = guard.proposal_locks.lock().await;
         if !locks.contains(&round_id) {
             locks.insert(round_id);
