@@ -7,6 +7,7 @@ use std::{
 };
 use tokio::{
     sync::Mutex,
+    task::spawn_blocking,
     time::{sleep, Duration, Instant},
 };
 use tracing::info;
@@ -18,8 +19,7 @@ use crate::{
         node::Node,
         requests::{CommitRequest, DagUnit, PrevoteRequest},
     },
-    utils::
-        rsa_accumulator_util::{compute_accumulator_from_primes, memoized_hash_to_prime},
+    utils::rsa_accumulator_util::{compute_accumulator_from_primes, memoized_hash_to_prime},
 };
 
 pub async fn handle_prevote(
@@ -40,12 +40,11 @@ pub async fn handle_prevote(
         )
     };
 
-    // ✅ Canonical proposal order BEFORE doing anything else
     let mut proposals = prevote_request.proposals.clone();
     proposals.sort_by_key(|p| (p.base.proposing_node_id, p.base.round_id));
 
-    // ✅ Deterministic proposal_digest verification
-    let mut proposal_hashes: Vec<String> = proposals.iter()
+    let mut proposal_hashes: Vec<String> = proposals
+        .iter()
         .map(|p| {
             let id_bytes = format!("{}-{}", p.base.proposing_node_id, p.base.round_id).into_bytes();
             hex::encode(Sha256::digest(&id_bytes))
@@ -58,11 +57,12 @@ pub async fn handle_prevote(
     info!("Node {}: Computed local proposal_digest: {}", node_id, local_digest);
 
     if local_digest != prevote_request.proposal_digest {
-        return Err(format!("❌ Proposal digest mismatch: received {}, computed {}", 
-            prevote_request.proposal_digest, local_digest));
+        return Err(format!(
+            "❌ Proposal digest mismatch: received {}, computed {}",
+            prevote_request.proposal_digest, local_digest
+        ));
     }
 
-    // ✅ Quorum tracking
     let reached_quorum_now: bool;
     {
         let node_guard = node.lock().await;
@@ -92,7 +92,6 @@ pub async fn handle_prevote(
     if reached_quorum_now {
         info!("Node {}: ✅ Quorum reached for round {}. Verifying batch accumulator...", node_id, round_id);
 
-        // ✅ Fully deterministic accumulator reconstruction (exactly same as proposer + propose)
         let mut all_shard_hashes: Vec<String> = Vec::new();
         for proposal in &proposals {
             for tx in &proposal.transactions {
@@ -105,10 +104,18 @@ pub async fn handle_prevote(
         all_shard_hashes.sort_unstable();
         all_shard_hashes.dedup();
 
-        let mut all_primes: Vec<BigInt> = Vec::with_capacity(all_shard_hashes.len());
-        for hash_hex in &all_shard_hashes {
-            let prime = memoized_hash_to_prime(hash_hex).await;
-            all_primes.push(prime);
+        let prime_tasks = all_shard_hashes.iter().map(|hash_hex| {
+            let hash_hex = hash_hex.clone();
+            spawn_blocking(move || futures::executor::block_on(memoized_hash_to_prime(&hash_hex)))
+        });
+        let prime_results = futures::future::join_all(prime_tasks).await;
+
+        let mut all_primes = Vec::with_capacity(prime_results.len());
+        for res in prime_results {
+            match res {
+                Ok(prime) => all_primes.push(prime),
+                Err(_) => return Err("spawn_blocking failed on hash_to_prime".into()),
+            }
         }
 
         let computed_batch_acc = compute_accumulator_from_primes(&all_primes);
@@ -119,13 +126,15 @@ pub async fn handle_prevote(
         let received_batch_acc = BigInt::from_bytes_be(Sign::Plus, &received_batch_bytes);
 
         if computed_batch_acc != received_batch_acc {
-            return Err(format!("Batch accumulator mismatch: local_computed_acc={:?} received_acc={:?}", computed_batch_acc, received_batch_acc));
+            return Err(format!(
+                "Batch accumulator mismatch: local_computed_acc={:?} received_acc={:?}",
+                computed_batch_acc, received_batch_acc
+            ));
         }
-    
+
         info!("Node {}: ✅ Batch accumulator verified. Proceeding to DAG commit...", node_id);
     }
 
-    // ✅ Reconstruct DAG units
     let mut reconstructed_units = Vec::new();
     for proposal in &proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
@@ -147,7 +156,6 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    // ✅ Send CommitRequest to peers
     let message_count = node.lock().await.message_count.clone();
     let client = Client::new();
 
