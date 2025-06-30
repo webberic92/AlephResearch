@@ -1,13 +1,16 @@
-✅ Want it faster?
+🚀 Immediate Fix Plan
+✅ 1. Lock Optimization (HIGH impact)
 
-Here’s what you should do to make the Merkle version fair:
+Refactor all node.lock().await calls so they're called once at the top and reused across the function. Inside loops, avoid locking again.
+✅ 2. Batch Shard Aggregation (MEDIUM impact)
 
-    Add seen_unit_ids or seen_merkle_roots before inserting into DAG.
+Instead of inserting one shard at a time, collect a batch of (round_id, tx_index, shard_index, data) and insert all at once with a single lock.
+✅ 3. Skip Early Validation (HIGH impact)
 
-    Skip any proposal/commit handling once quorum is met — like your RSA version does.
+Only validate Merkle proofs after quorum is met, or add a fast-check toggle.
+✅ 4. Parallelize HTTP Commits (MEDIUM impact)
 
-    Move validation to after quorum if not already.
+Use tokio::join! or futures::future::join_all to broadcast commits concurrently to all nodes.
+✅ 5. Reuse Decoder (MINOR impact)
 
-    Minimize .lock().await usage and clone cost inside loops.
-
-Would you like a direct patch for that Merkle handler to make it match the RSA logic?
+Reuse and pre-allocate buffers for decoding base64 shards.
