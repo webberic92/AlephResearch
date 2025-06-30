@@ -5,8 +5,8 @@ use std::{
     sync::{atomic::Ordering, Arc},
     time::Duration,
 };
-use tokio::{sync::Mutex, time::sleep};
-use tracing::{error, info, warn};
+use tokio::{sync::Mutex, task::spawn_blocking, time::sleep};
+use tracing::{error, info};
 
 use crate::{
     processors::priority_queue::RBCMessage,
@@ -35,12 +35,9 @@ pub async fn handle_prevote(
     let quorum_threshold = node_guard.get_quorum_threshold();
     let round_key = round_id.to_be_bytes().to_vec();
 
-    // Step 1: Vote tracking
     {
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let voter_set = quorum_votes
-            .entry(round_key.clone())
-            .or_insert_with(HashSet::new);
+        let voter_set = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
 
         if voter_set.len() >= quorum_threshold {
             info!("Node {}: Quorum already met for round {}", node_id, round_id);
@@ -52,14 +49,17 @@ pub async fn handle_prevote(
             return Ok(());
         }
 
-        // Only proceed with commit if this vote pushed us over the threshold
         if voter_set.len() < quorum_threshold {
-            info!("Node {}: Waiting for quorum. Votes: {}/{}", node_id, voter_set.len(), quorum_threshold);
+            info!(
+                "Node {}: Waiting for quorum. Votes: {}/{}",
+                node_id,
+                voter_set.len(),
+                quorum_threshold
+            );
             return Ok(());
         }
     }
 
-    // Step 2: DAG cache (for resolved parents)
     let dag_unit_ids: HashSet<_> = node_guard
         .dag
         .lock()
@@ -69,53 +69,85 @@ pub async fn handle_prevote(
         .map(|u| u.unit_id.clone())
         .collect();
 
-    // Step 3: Transaction reconstruction only AFTER quorum
+    let shard_agg = node_guard.shard_aggregator.clone();
+    let data_shards = node_guard.data_shards;
+    let transaction_size = node_guard.transaction_size;
+    let node_list = node_guard.nodes.clone();
+    let rbc = node_guard.rbc_processor.clone();
+    drop(node_guard); // release lock early
+
     let mut reconstructed_units = Vec::new();
-    let mut shard_agg = node_guard.shard_aggregator.lock().await;
 
     for proposal in &prevote_request.proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
+        let batch_root = proposal.batch_root.clone();
+
+        let results = futures::future::join_all(
+            proposal.transactions.iter().enumerate().map(|(i, tx)| {
+                let tx_clone = tx.clone();
+                let proof_data = proposal.batch_proofs[i].clone();
+                let batch_root = batch_root.clone();
+                let shard_agg = shard_agg.clone();
+
+                async move {
+                    // Insert shards
+                    for (j, shard_str) in tx_clone.shards.iter().enumerate() {
+                        let decoded = general_purpose::STANDARD
+                            .decode(shard_str)
+                            .map_err(|e| format!("Decode error shard {} tx {}: {:?}", j, i, e))?;
+                        if j < data_shards {
+                            shard_agg.lock().await.insert_shard(round_id, i, j, decoded);
+                        }
+                    }
+
+                    // Reconstruct padded tx
+                    let padded_tx = match shard_agg.lock().await.try_reconstruct(round_id, i, transaction_size) {
+                        Some(p) => p,
+                        None => return Err(format!("Failed to reconstruct tx {}", i)),
+                    };
+
+                    // Verify hash
+                    let hash = Sha256::digest(&padded_tx).to_vec();
+                    if hash != tx_clone.root {
+                        return Err(format!(
+                            "Tx {} hash mismatch: {} vs {}",
+                            i,
+                            hex::encode(&tx_clone.root),
+                            hex::encode(&hash)
+                        ));
+                    }
+
+                    let tx_root = tx_clone.root.clone();
+                    let proof_for_spawn = proof_data.clone();
+                    let tx_root_for_spawn = tx_root.clone();
+
+                    // Parallel Merkle proof validation
+                    let proof_valid = spawn_blocking(move || {
+                        validate_merkle_branch(&tx_root_for_spawn, &proof_for_spawn, i, &batch_root)
+                    })
+                    .await
+                    .unwrap();
+
+                    if !proof_valid {
+                        return Err(format!("Invalid Merkle proof for tx {}", i));
+                    }
+
+                    Ok(Transaction {
+                        root: tx_root,
+                        proofs: vec![proof_data.iter().map(hex::encode).collect()],
+                        shards: tx_clone.shards,
+                    })
+                }
+            })
+        )
+        .await;
+
         let mut reconstructed_transactions = Vec::new();
-
-        for (i, tx) in proposal.transactions.iter().enumerate() {
-            for (j, shard_str) in tx.shards.iter().enumerate() {
-                let decoded = general_purpose::STANDARD
-                    .decode(shard_str)
-                    .map_err(|e| format!("Node {}: Decode error shard {} tx {}: {:?}", node_id, j, i, e))?;
-                if j < node_guard.data_shards {
-                    shard_agg.insert_shard(round_id, i, j, decoded);
-                }
+        for result in results {
+            match result {
+                Ok(tx) => reconstructed_transactions.push(tx),
+                Err(e) => return Err(e),
             }
-
-            let padded_tx = match shard_agg.try_reconstruct(round_id, i, node_guard.transaction_size) {
-                Some(p) => p,
-                None => {
-                    warn!("Node {}: Cannot reconstruct tx {} in round {}", node_id, i, round_id);
-                    return Ok(());
-                }
-            };
-
-            let hash = Sha256::digest(&padded_tx).to_vec();
-            if hash != tx.root {
-                return Err(format!(
-                    "Node {}: Tx {} hash mismatch: {} vs {}",
-                    node_id, i, hex::encode(&tx.root), hex::encode(&hash)
-                ));
-            }
-
-            let proof = &proposal.batch_proofs[i];
-            if !validate_merkle_branch(&tx.root, proof, i, &proposal.batch_root) {
-                return Err(format!(
-                    "Node {}: Invalid Merkle proof for tx {} in round {}",
-                    node_id, i, round_id
-                ));
-            }
-
-            reconstructed_transactions.push(Transaction {
-                root: tx.root.clone(),
-                proofs: vec![proof.iter().map(hex::encode).collect()],
-                shards: tx.shards.clone(),
-            });
         }
 
         let resolved_parents = proposal
@@ -134,27 +166,26 @@ pub async fn handle_prevote(
         )?;
 
         if reconstructed_unit.transactions.is_empty() {
-            return Err(format!("Node {}: Reconstructed unit is empty", node_id));
+            return Err("Node: Reconstructed unit is empty".to_string());
         }
 
         reconstructed_units.push(reconstructed_unit);
     }
 
-    // Step 4: Commit multicast
-    info!("Node {}: Quorum met. Sending commits for round {}", node_id, round_id);
+    info!("Quorum met. Sending commits for round {}", round_id);
 
     let commit_request = CommitRequest {
         units: reconstructed_units.clone(),
-        proposing_node_id: node_id,
+        proposing_node_id: node.lock().await.id,
         round_id,
     };
 
-    if let Some(rbc) = &node_guard.rbc_processor {
+    if let Some(rbc) = rbc {
         rbc.enqueue_message(RBCMessage::Commit(commit_request.clone())).await;
     }
 
     let client = &local_client;
-    let futures = node_guard.nodes.iter().map(|target| {
+    let futures = node_list.iter().map(|target| {
         let url = format!("http://{}/commit", target);
         let commit_request = commit_request.clone();
         let client = client.clone();
@@ -178,12 +209,12 @@ pub async fn handle_prevote(
                 }
                 sleep(Duration::from_millis(100 * 2u64.pow(attempt - 1))).await;
             }
-            error!("Node {}: Failed to send commit to {}", node_id, url);
+            error!("Failed to send commit to {}", url);
         }
     });
 
     futures::future::join_all(futures).await;
-    shard_agg.clear_round(round_id);
+    shard_agg.lock().await.clear_round(round_id);
 
     Ok(())
 }

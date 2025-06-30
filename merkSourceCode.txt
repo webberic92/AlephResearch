@@ -171,6 +171,7 @@ use std::{
 };
 use tokio::{sync::Mutex, time::sleep};
 use tracing::{error, info, warn};
+
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{
@@ -190,43 +191,51 @@ pub async fn handle_prevote(
         .build()
         .expect("Failed to build HTTP client");
 
-    let (node_id, round_id, quorum_threshold, node_list, rbc_processor, transaction_size, data_shards) = {
-        let guard = node.lock().await;
-        guard.message_count.fetch_add(1, Ordering::Relaxed);
-        (
-            guard.id,
-            prevote_request.proposals[0].base.round_id,
-            guard.get_quorum_threshold(),
-            guard.nodes.clone(),
-            guard.rbc_processor.clone(),
-            guard.transaction_size,
-            guard.data_shards,
-        )
-    };
+    let node_guard = node.lock().await;
+    node_guard.message_count.fetch_add(1, Ordering::Relaxed);
+
+    let node_id = node_guard.id;
+    let round_id = prevote_request.proposals[0].base.round_id;
+    let quorum_threshold = node_guard.get_quorum_threshold();
     let round_key = round_id.to_be_bytes().to_vec();
 
+    // Step 1: Vote tracking
     {
-        let node_guard = node.lock().await;
-        let quorum_votes_guard = node_guard.quorum_votes.lock().await;
-        if let Some(voter_set) = quorum_votes_guard.get(&round_key) {
-            if voter_set.len() >= quorum_threshold {
-                info!("Node {}: Quorum already met for round {}", node_id, round_id);
-                return Ok(());
-            }
-        }
-    }
-
-    {
-        let node_guard = node.lock().await;
         let mut quorum_votes = node_guard.quorum_votes.lock().await;
-        let voter_set = quorum_votes.entry(round_key.clone()).or_insert_with(HashSet::new);
+        let voter_set = quorum_votes
+            .entry(round_key.clone())
+            .or_insert_with(HashSet::new);
+
+        if voter_set.len() >= quorum_threshold {
+            info!("Node {}: Quorum already met for round {}", node_id, round_id);
+            return Ok(());
+        }
+
         if !voter_set.insert(prevote_request.sender_url.clone()) {
             info!("Node {}: Duplicate prevote from {}", node_id, prevote_request.sender_url);
             return Ok(());
         }
+
+        // Only proceed with commit if this vote pushed us over the threshold
+        if voter_set.len() < quorum_threshold {
+            info!("Node {}: Waiting for quorum. Votes: {}/{}", node_id, voter_set.len(), quorum_threshold);
+            return Ok(());
+        }
     }
 
+    // Step 2: DAG cache (for resolved parents)
+    let dag_unit_ids: HashSet<_> = node_guard
+        .dag
+        .lock()
+        .await
+        .values()
+        .flatten()
+        .map(|u| u.unit_id.clone())
+        .collect();
+
+    // Step 3: Transaction reconstruction only AFTER quorum
     let mut reconstructed_units = Vec::new();
+    let mut shard_agg = node_guard.shard_aggregator.lock().await;
 
     for proposal in &prevote_request.proposals {
         let proposer_id = proposal.base.proposing_node_id as usize;
@@ -234,33 +243,19 @@ pub async fn handle_prevote(
 
         for (i, tx) in proposal.transactions.iter().enumerate() {
             for (j, shard_str) in tx.shards.iter().enumerate() {
-                let decoded = general_purpose::STANDARD.decode(shard_str).map_err(|e| {
-                    format!("Node {}: Decode error shard {} tx {}: {:?}", node_id, j, i, e)
-                })?;
-
-                let expected_len = (transaction_size + data_shards - 1) / data_shards;
-                if decoded.len() != expected_len {
-                    return Err(format!(
-                        "Node {}: Shard {} of tx {} expected {} bytes, got {}",
-                        node_id, j, i, expected_len, decoded.len()
-                    ));
-                }
-
-                if j < data_shards {
-                    let node_guard = node.lock().await;
-                    node_guard.shard_aggregator.lock().await.insert_shard(round_id, i, j, decoded);
+                let decoded = general_purpose::STANDARD
+                    .decode(shard_str)
+                    .map_err(|e| format!("Node {}: Decode error shard {} tx {}: {:?}", node_id, j, i, e))?;
+                if j < node_guard.data_shards {
+                    shard_agg.insert_shard(round_id, i, j, decoded);
                 }
             }
 
-            let padded_tx = {
-                let node_guard = node.lock().await;
-                let aggregator = node_guard.shard_aggregator.lock().await;
-                match aggregator.try_reconstruct(round_id, i, transaction_size) {
-                    Some(p) => p,
-                    None => {
-                        warn!("Node {}: Cannot reconstruct tx {} in round {}", node_id, i, round_id);
-                        return Ok(());
-                    }
+            let padded_tx = match shard_agg.try_reconstruct(round_id, i, node_guard.transaction_size) {
+                Some(p) => p,
+                None => {
+                    warn!("Node {}: Cannot reconstruct tx {} in round {}", node_id, i, round_id);
+                    return Ok(());
                 }
             };
 
@@ -268,10 +263,7 @@ pub async fn handle_prevote(
             if hash != tx.root {
                 return Err(format!(
                     "Node {}: Tx {} hash mismatch: {} vs {}",
-                    node_id,
-                    i,
-                    hex::encode(&tx.root),
-                    hex::encode(&hash)
+                    node_id, i, hex::encode(&tx.root), hex::encode(&hash)
                 ));
             }
 
@@ -290,16 +282,12 @@ pub async fn handle_prevote(
             });
         }
 
-        let resolved_parents = {
-            let node_guard = node.lock().await;
-            let dag_guard = node_guard.dag.lock().await;
-            proposal
-                .parents
-                .iter()
-                .filter(|pid| dag_guard.values().flatten().any(|u| &u.unit_id == *pid))
-                .cloned()
-                .collect::<Vec<_>>()
-        };
+        let resolved_parents = proposal
+            .parents
+            .iter()
+            .filter(|pid| dag_unit_ids.contains(*pid))
+            .cloned()
+            .collect::<Vec<_>>();
 
         let reconstructed_unit = reconstruct_unit(
             &reconstructed_transactions,
@@ -316,29 +304,8 @@ pub async fn handle_prevote(
         reconstructed_units.push(reconstructed_unit);
     }
 
-    {
-        let node_guard = node.lock().await;
-        for unit in &reconstructed_units {
-            for parent in &unit.parent_units {
-                if !node_guard.is_unit_committed(parent).await {
-                    return Err(format!("Node {}: Missing committed parent {}", node_id, parent));
-                }
-            }
-        }
-    }
-
-    let vote_count = {
-        let node_guard = node.lock().await;
-        let quorum_votes = node_guard.quorum_votes.lock().await;
-        quorum_votes[&round_key].len()
-    };
-
-    if vote_count < quorum_threshold {
-        info!("Node {}: Waiting for quorum. Current votes: {}/{}", node_id, vote_count, quorum_threshold);
-        return Ok(());
-    }
-
-    info!("Node {}: Quorum reached. Broadcasting commits for round {}", node_id, round_id);
+    // Step 4: Commit multicast
+    info!("Node {}: Quorum met. Sending commits for round {}", node_id, round_id);
 
     let commit_request = CommitRequest {
         units: reconstructed_units.clone(),
@@ -346,42 +313,41 @@ pub async fn handle_prevote(
         round_id,
     };
 
-    if let Some(rbc) = &rbc_processor {
+    if let Some(rbc) = &node_guard.rbc_processor {
         rbc.enqueue_message(RBCMessage::Commit(commit_request.clone())).await;
     }
 
-    for target in node_list {
+    let client = &local_client;
+    let futures = node_guard.nodes.iter().map(|target| {
         let url = format!("http://{}/commit", target);
-        let mut success = false;
-
-        for attempt in 1..=3 {
-            node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
-            let res = tokio::time::timeout(
-                Duration::from_secs(3),
-                local_client.post(&url).json(&commit_request).send(),
-            )
-            .await;
-
-            match res {
-                Ok(Ok(resp)) if resp.status().is_success() => {
-                    info!("✅ Commit sent to {}", url);
-                    success = true;
-                    break;
+        let commit_request = commit_request.clone();
+        let client = client.clone();
+        let node = node.clone();
+        async move {
+            for attempt in 1..=3 {
+                node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+                match tokio::time::timeout(
+                    Duration::from_secs(3),
+                    client.post(&url).json(&commit_request).send(),
+                )
+                .await
+                {
+                    Ok(Ok(resp)) if resp.status().is_success() => {
+                        info!("✅ Commit sent to {}", url);
+                        return;
+                    }
+                    Ok(Ok(resp)) => error!("❌ Commit to {} failed. Status: {}", url, resp.status()),
+                    Ok(Err(e)) => error!("❌ Commit error to {}: {:?}", url, e),
+                    Err(_) => error!("⏱️ Commit to {} timed out", url),
                 }
-                Ok(Ok(resp)) => error!("❌ Commit to {} failed. Status: {}", url, resp.status()),
-                Ok(Err(e)) => error!("❌ Commit error to {}: {:?}", url, e),
-                Err(_) => error!("⏱️ Commit to {} timed out", url),
+                sleep(Duration::from_millis(100 * 2u64.pow(attempt - 1))).await;
             }
-
-            sleep(Duration::from_millis(100 * 2u64.pow(attempt - 1))).await;
-        }
-
-        if !success {
             error!("Node {}: Failed to send commit to {}", node_id, url);
         }
-    }
+    });
 
-    node.lock().await.shard_aggregator.lock().await.clear_round(round_id);
+    futures::future::join_all(futures).await;
+    shard_agg.clear_round(round_id);
 
     Ok(())
 }
@@ -390,13 +356,22 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 use base64::{engine::general_purpose, Engine};
-use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
-use tracing::info;
+use tokio::{
+    sync::Mutex,
+    time::{sleep, Duration, Instant},
+};
+use tracing::{info, error};
 
 use crate::{
     processors::priority_queue::RBCMessage,
-    structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
-    utils::{dag_utils::ensure_dag_round_sync, merkle_utils::verify_merkle_proof},
+    structs::{
+        node::Node,
+        requests::{PrevoteRequest, ProposeRequest},
+    },
+    utils::{
+        dag_utils::ensure_dag_round_sync,
+        merkle_utils::verify_merkle_proof,
+    },
 };
 
 pub async fn handle_propose(
@@ -407,44 +382,57 @@ pub async fn handle_propose(
     let round_id = propose_request.base.round_id;
     let proposer_id = propose_request.base.proposing_node_id as usize;
 
-    let node_id = {
+    // Lock once and clone necessary fields
+    let (
+        node_id,
+        transaction_size,
+        data_shards,
+        quorum_threshold,
+        ip_address,
+        all_nodes,
+        rbc,
+    ) = {
         let guard = node.lock().await;
-        guard.id
+        (
+            guard.id,
+            guard.transaction_size,
+            guard.data_shards,
+            guard.total_nodes - guard.get_fault_tolerance_threshold(),
+            guard.ip_address.clone(),
+            guard.nodes.clone(),
+            guard.rbc_processor.clone(),
+        )
     };
 
     ensure_dag_round_sync(node.clone(), round_id).await?;
 
+    let mut stored_proposals = Vec::new();
     {
-        let guard = node.lock().await;
+        let mut guard = node.lock().await;
         let mut tracker = guard.proposal_tracker.lock().await;
         let entry = tracker.entry(round_id).or_insert_with(HashMap::new);
 
         if entry.contains_key(&proposer_id) {
-            return Ok(());
+            return Ok(()); // Already processed
         }
 
         entry.insert(proposer_id, propose_request.clone());
 
-        let proposal_count = entry.len();
-        let quorum_threshold = guard.total_nodes - guard.get_fault_tolerance_threshold();
-
-        if proposal_count < quorum_threshold {
-            return Ok(()); // ✅ Fast return before verification
+        if entry.len() < quorum_threshold {
+            return Ok(()); // Wait for quorum before validating
         }
+
+        stored_proposals = entry.values().cloned().collect();
     }
 
-    // ✅ Now validate Merkle proofs only after quorum
-    let stored_proposals = {
-        let guard = node.lock().await;
-        let tracker = guard.proposal_tracker.lock().await;
-        tracker.get(&round_id).unwrap().values().cloned().collect::<Vec<_>>()
-    };
-
+    // Validate Merkle proofs only after quorum is reached
     for (p_idx, prop) in stored_proposals.iter().enumerate() {
         if prop.batch_proofs.len() != prop.transactions.len() {
             return Err(format!(
                 "Proposal {}: proof count mismatch {} vs {}",
-                p_idx, prop.batch_proofs.len(), prop.transactions.len()
+                p_idx,
+                prop.batch_proofs.len(),
+                prop.transactions.len()
             ));
         }
 
@@ -461,12 +449,7 @@ pub async fn handle_propose(
                 .decode(&shard_encoded)
                 .map_err(|e| format!("Decode failed for tx {}: {:?}", i, e))?;
 
-            let (tx_size, data_shards) = {
-                let g = node.lock().await;
-                (g.transaction_size, g.data_shards)
-            };
-            let expected_size = (tx_size + data_shards - 1) / data_shards;
-
+            let expected_size = (transaction_size + data_shards - 1) / data_shards;
             if decoded.len() != expected_size {
                 return Err(format!(
                     "Tx {}: decoded shard size mismatch (expected {}, got {})",
@@ -480,47 +463,52 @@ pub async fn handle_propose(
         }
     }
 
-    // ✅ Lock round proposal set after verification
+    // Mark round as locked
     {
-        let guard = node.lock().await;
+        let mut guard = node.lock().await;
         let mut locks = guard.proposal_locks.lock().await;
-        if !locks.contains(&round_id) {
-            locks.insert(round_id);
-        }
+        locks.insert(round_id);
     }
 
-    let prevote_request = {
-        let guard = node.lock().await;
-        PrevoteRequest {
-            proposals: stored_proposals.clone(),
-            sender_url: guard.ip_address.clone(),
-            sender_id: guard.id,
-        }
-    };
-
-    let (node_ip, node_list) = {
-        let guard = node.lock().await;
-        (guard.ip_address.clone(), guard.nodes.clone())
+    let prevote_request = PrevoteRequest {
+        proposals: stored_proposals.clone(),
+        sender_url: ip_address.clone(),
+        sender_id: node_id,
     };
 
     let client = reqwest::Client::new();
-    for peer in node_list {
-        if peer != node_ip {
+    let mut futures = Vec::new();
+
+    for peer in &all_nodes {
+        if peer != &ip_address {
             let url = format!("http://{}/prevote", peer);
-            for attempt in 1..=3 {
-                if let Ok(resp) = client.post(&url).json(&prevote_request).send().await {
-                    if resp.status().is_success() {
-                        break;
+            let request = prevote_request.clone();
+            let client = client.clone();
+            let node = node.clone();
+
+            futures.push(tokio::spawn(async move {
+                for attempt in 1..=3 {
+                    if let Ok(resp) = client.post(&url).json(&request).send().await {
+                        if resp.status().is_success() {
+                            break;
+                        }
                     }
+                    sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
                 }
-                sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
-            }
-            node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+
+                node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+            }));
         }
     }
 
-    if let Some(rbc_processor) = &node.lock().await.rbc_processor {
-        rbc_processor.enqueue_message(RBCMessage::Prevote(prevote_request)).await;
+    // Wait for all prevote sends to finish
+    futures::future::join_all(futures).await;
+
+    // Push to RBC processor
+    if let Some(rbc_processor) = rbc {
+        rbc_processor
+            .enqueue_message(RBCMessage::Prevote(prevote_request))
+            .await;
     }
 
     info!(

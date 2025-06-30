@@ -1,16 +1,20 @@
-🚀 Immediate Fix Plan
-✅ 1. Lock Optimization (HIGH impact)
+✅ Performance Restoration Suggestions
 
-Refactor all node.lock().await calls so they're called once at the top and reused across the function. Inside loops, avoid locking again.
-✅ 2. Batch Shard Aggregation (MEDIUM impact)
+    Pull out all config values (tx_size, data_shards, quorum, etc.) once at the top.
 
-Instead of inserting one shard at a time, collect a batch of (round_id, tx_index, shard_index, data) and insert all at once with a single lock.
-✅ 3. Skip Early Validation (HIGH impact)
+    Avoid node.lock().await inside loops. Cache guards or use pattern like:
 
-Only validate Merkle proofs after quorum is met, or add a fast-check toggle.
-✅ 4. Parallelize HTTP Commits (MEDIUM impact)
+    let guard = node.lock().await;
+    let tx_size = guard.transaction_size;
+    let nodes = guard.nodes.clone();
+    drop(guard);
 
-Use tokio::join! or futures::future::join_all to broadcast commits concurrently to all nodes.
-✅ 5. Reuse Decoder (MINOR impact)
+    Parallelize Merkle proof checks after quorum using rayon::par_iter() or tokio::task::spawn_blocking.
 
-Reuse and pre-allocate buffers for decoding base64 shards.
+    Avoid re-decoding shards if you’ve already validated them in a past call (introduce a hash map cache).
+
+    Minimize cloning of Client, commit_request, or prevote_request by wrapping them in Arc.
+
+    Benchmark restored version against the older pre-refactor build to measure total execution time per round.
+
+Would you like me to rewrite the handle_propose.rs and handle_prevote.rs with these specific optimizations applied?

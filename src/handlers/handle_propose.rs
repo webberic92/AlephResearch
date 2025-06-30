@@ -3,7 +3,8 @@ use std::{
     sync::{atomic::Ordering, Arc},
 };
 use base64::{engine::general_purpose, Engine};
-use tokio::{sync::Mutex, time::{sleep, Duration, Instant}};
+use futures::future::join_all;
+use tokio::{sync::Mutex, task::spawn_blocking, time::{sleep, Duration, Instant}};
 use tracing::info;
 
 use crate::{
@@ -53,6 +54,14 @@ pub async fn handle_propose(
         tracker.get(&round_id).unwrap().values().cloned().collect::<Vec<_>>()
     };
 
+    let (tx_size, data_shards) = {
+        let g = node.lock().await;
+        (g.transaction_size, g.data_shards)
+    };
+    let expected_size = (tx_size + data_shards - 1) / data_shards;
+
+    let mut verification_tasks = vec![];
+
     for (p_idx, prop) in stored_proposals.iter().enumerate() {
         if prop.batch_proofs.len() != prop.transactions.len() {
             return Err(format!(
@@ -62,34 +71,44 @@ pub async fn handle_propose(
         }
 
         for (i, tx) in prop.transactions.iter().enumerate() {
-            let proof = &prop.batch_proofs[i];
-            let root = &prop.batch_root;
+            let proof = prop.batch_proofs[i].clone();
+            let root = prop.batch_root.clone();
+            let tx_root = tx.root.clone();
+            let shard_encoded = tx.shards.first().cloned().unwrap_or_default();
+            let expected_size = expected_size;
 
-            if tx.root.len() != 32 {
-                return Err(format!("Tx {}: invalid root length {}", i, tx.root.len()));
-            }
+            verification_tasks.push(spawn_blocking(move || {
+                let decoded = general_purpose::STANDARD
+                    .decode(&shard_encoded)
+                    .map_err(|e| format!("Decode failed for tx {}: {:?}", i, e))?;
 
-            let shard_encoded = tx.shards.first().unwrap_or(&String::new()).to_owned();
-            let decoded = general_purpose::STANDARD
-                .decode(&shard_encoded)
-                .map_err(|e| format!("Decode failed for tx {}: {:?}", i, e))?;
+                if tx_root.len() != 32 {
+                    return Err(format!("Tx {}: invalid root length {}", i, tx_root.len()));
+                }
 
-            let (tx_size, data_shards) = {
-                let g = node.lock().await;
-                (g.transaction_size, g.data_shards)
-            };
-            let expected_size = (tx_size + data_shards - 1) / data_shards;
+                if decoded.len() != expected_size {
+                    return Err(format!(
+                        "Tx {}: decoded shard size mismatch (expected {}, got {})",
+                        i, expected_size, decoded.len()
+                    ));
+                }
 
-            if decoded.len() != expected_size {
-                return Err(format!(
-                    "Tx {}: decoded shard size mismatch (expected {}, got {})",
-                    i, expected_size, decoded.len()
-                ));
-            }
+                if !verify_merkle_proof(&tx_root, &proof, &root, i) {
+                    return Err(format!("Tx {}: invalid Merkle proof", i));
+                }
 
-            if !verify_merkle_proof(&tx.root, proof, root, i) {
-                return Err(format!("Tx {}: invalid Merkle proof", i));
-            }
+                Ok::<(), String>(())
+            }));
+        }
+    }
+
+    let results = join_all(verification_tasks).await;
+    for result in results {
+        if let Err(join_err) = result {
+            return Err(format!("Join error in Merkle proof task: {:?}", join_err));
+        }
+        if let Err(validation_err) = result.unwrap() {
+            return Err(validation_err);
         }
     }
 
@@ -117,20 +136,27 @@ pub async fn handle_propose(
     };
 
     let client = reqwest::Client::new();
+    let mut broadcast_tasks = vec![];
     for peer in node_list {
         if peer != node_ip {
             let url = format!("http://{}/prevote", peer);
-            for attempt in 1..=3 {
-                if let Ok(resp) = client.post(&url).json(&prevote_request).send().await {
-                    if resp.status().is_success() {
-                        break;
+            let req = prevote_request.clone();
+            let client = client.clone();
+
+            broadcast_tasks.push(tokio::spawn(async move {
+                for attempt in 1..=3 {
+                    if let Ok(resp) = client.post(&url).json(&req).send().await {
+                        if resp.status().is_success() {
+                            break;
+                        }
                     }
+                    sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
                 }
-                sleep(Duration::from_millis(100 * 2u64.pow((attempt - 1) as u32))).await;
-            }
-            node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
+            }));
         }
     }
+    join_all(broadcast_tasks).await;
+    node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
 
     if let Some(rbc_processor) = &node.lock().await.rbc_processor {
         rbc_processor.enqueue_message(RBCMessage::Prevote(prevote_request)).await;
