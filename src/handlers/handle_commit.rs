@@ -1,7 +1,8 @@
-use std::{process::Command, sync::{atomic::Ordering, Arc}};
+use std::{collections::HashSet, process::Command, sync::{atomic::Ordering, Arc}};
 use chrono::Local;
 use tokio::sync::Mutex;
 use tracing::{info, error};
+
 use crate::{
     processors::priority_queue::RBCMessage,
     structs::{node::Node, requests::CommitRequest},
@@ -27,147 +28,134 @@ pub async fn handle_commit(
         }
     }
 
-    let commit_count;
-    let quorum_threshold;
-    {
+    let (commit_count, quorum_threshold) = {
         let node_guard = node.lock().await;
         let mut commit_tracker = node_guard.commit_tracker.lock().await;
-
         let round_commits = commit_tracker.entry(round_id).or_insert_with(Vec::new);
+
         if round_commits.iter().any(|c| c.proposing_node_id == commit_request.proposing_node_id) {
             info!("Node {}: Duplicate commit from {} for round {}.", node_id, commit_request.proposing_node_id, round_id);
             return Ok(());
         }
 
         round_commits.push(commit_request.clone());
-        commit_count = round_commits.len();
-        quorum_threshold = node_guard.get_quorum_threshold();
-    }
+        (round_commits.len(), node_guard.get_quorum_threshold())
+    };
 
     info!("Node {}: Commit count for round {} is {}/{}.", node_id, round_id, commit_count, quorum_threshold);
 
-    
-    if commit_count == quorum_threshold {
-        info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
+    if commit_count < quorum_threshold {
+        return Ok(());
+    }
 
-        let all_commits = {
-            let node_guard = node.lock().await;
-            let mut commit_tracker = node_guard.commit_tracker.lock().await;
-            commit_tracker.remove(&round_id).unwrap_or_default()
-        };
+    info!("Node {}: Finalizing round {} with quorum.", node_id, round_id);
 
-        let mut all_units = Vec::new();
-        for commit in &all_commits {
-            all_units.extend(commit.units.clone());
-        }
+    let all_commits = {
+        let node_guard = node.lock().await;
+        let mut commit_tracker = node_guard.commit_tracker.lock().await;
+        commit_tracker.remove(&round_id).unwrap_or_default()
+    };
 
-        {
-            let node_guard = node.lock().await;
-            let mut dag = node_guard.dag.lock().await;
-            let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
-            info!("Node {}: Inserting {} units into DAG for round {}", node_id, all_units.len(), round_id);
-            for unit in all_units {
-                
-                if !dag_units.iter().any(|u| u.merkle_root == unit.merkle_root) {
-                    dag_units.push(unit.clone());
-                    info!(
-                        "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
-                        node_id,
-                        unit.unit_id,
-                        unit.proposer_node,
-                        unit.transactions.len(),
-                        round_id
-                    );
-                }
+    let mut unique_units = Vec::new();
+    let mut seen_unit_ids = HashSet::new();
+
+    for commit in &all_commits {
+        for unit in &commit.units {
+            if seen_unit_ids.insert(unit.unit_id.clone()) {
+                unique_units.push(unit.clone());
             }
         }
+    }
 
-        let finalized_dag = {
-            let node_guard = node.lock().await;
-            let dag_guard = node_guard.dag.lock().await;
-            dag_guard.clone()
-        };
+    {
+        let node_guard = node.lock().await;
+        let mut dag = node_guard.dag.lock().await;
+        let dag_units = dag.entry(round_id).or_insert_with(Vec::new);
 
-        if let Err(e) = write_finalized_dag_to_file(
-            "/aleph/finalized_dag",
-            &finalized_dag,
-            round_id,
-        )
-        .await
-        {
-            error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
-            return Err(format!("DAG write failed: {:?}", e));
+        info!("Node {}: Inserting {} unique units into DAG for round {}", node_id, unique_units.len(), round_id);
+
+        for unit in unique_units {
+            dag_units.push(unit.clone());
+            info!(
+                "Node {}: Inserted unit {} (creator: {}, tx count: {}) into DAG round {}",
+                node_id,
+                unit.unit_id,
+                unit.proposer_node,
+                unit.transactions.len(),
+                round_id
+            );
         }
+    }
 
-        let message_count = node.lock().await.message_count.clone();
+    let finalized_dag = {
+        let node_guard = node.lock().await;
+        let dag_guard = node_guard.dag.lock().await;
+        dag_guard.clone()
+    };
+
+    if let Err(e) = write_finalized_dag_to_file("/aleph/finalized_dag", &finalized_dag, round_id).await {
+        error!("Node {}: Failed to write finalized DAG: {:?}", node_id, e);
+        return Err(format!("DAG write failed: {:?}", e));
+    }
+
+    {
+        let node_guard = node.lock().await;
+        let message_count = node_guard.message_count.clone();
         info!("Node {}: Finalized round {}. COMMUNICATION OVERHEAD {:?}", node_id, round_id, message_count);
-        info!(
-            "Node {}: Finalized round {} with {}/{} commits. USE THIS FOR TPS METRIC",
-            node_id, round_id, commit_count, quorum_threshold
-        );
-        // ✅ Update round locally
-        {
-            let node_guard = node.lock().await;
-            let mut current_round = node_guard.current_round.lock().await;
-            if *current_round == round_id {
-                *current_round += 1;
-                info!("Node {}: Local round advanced to {}", node_id, *current_round);
-            }
+        info!("Node {}: Finalized round {} with quorum. USE THIS FOR TPS METRIC", node_id, round_id);
+    }
+
+    {
+        let node_guard = node.lock().await;
+        let mut current_round = node_guard.current_round.lock().await;
+        if *current_round == round_id {
+            *current_round += 1;
+            info!("Node {}: Local round advanced to {}", node_id, *current_round);
         }
+    }
 
-
-        // ✅ Immediately emit RoundFinalized event before doing anything else
-        {
-            info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
-            let round_finalized = RBCMessage::RoundFinalized(round_id);
-            let node_guard = node.lock().await;
-            if let Some(rbc_processor) = &node_guard.rbc_processor {
-                rbc_processor.enqueue_message(round_finalized).await;
-            } else {
-                error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
-            }
+    {
+        info!("Node {}: Enqueuing RoundFinalized event for round {}", node_id, round_id);
+        let round_finalized = RBCMessage::RoundFinalized(round_id);
+        let node_guard = node.lock().await;
+        if let Some(rbc_processor) = &node_guard.rbc_processor {
+            rbc_processor.enqueue_message(round_finalized).await;
+        } else {
+            error!("❌ Node {}: No RBCProcessor to enqueue RoundFinalized!", node_id);
         }
+    }
 
-        // ✅ Final round: log, upload, terminate
-        {
-            let total_rounds = {
-                let node_guard = node.lock().await;
-                node_guard.total_rounds as u64
-            };
+    {
+        let (instances, txs, rounds, id) = {
+            let node_guard = node.lock().await;
+            (
+                node_guard.total_nodes,
+                node_guard.number_of_transactions,
+                node_guard.total_rounds,
+                node_guard.id,
+            )
+        };
 
-            if round_id >= total_rounds {
-                info!("Node {}: Round {} was final. Shutting down.", node_id, round_id);
-                info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
+        if round_id >= rounds as u64 {
+            info!("Node {}: Round {} was final. Shutting down.", node_id, round_id);
+            info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
-                let (instances, txs, rounds, node_id) = {
-                    let node_guard = node.lock().await;
-                    (
-                        node_guard.total_nodes,
-                        node_guard.number_of_transactions,
-                        node_guard.total_rounds,
-                        node_guard.id,
-                    )
-                };
+            let s3_upload_cmd = format!(
+                r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{id}" && \
+                aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
+            );
 
-                let s3_upload_cmd = format!(
-                    r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{node_id}" && \
-                    aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
-                );
-
-                tokio::spawn(async move {
-                    match Command::new("sh").arg("-c").arg(&s3_upload_cmd).spawn() {
-                        Ok(_) => info!("✅ S3 upload triggered."),
-                        Err(e) => error!("❌ S3 upload command failed: {:?}", e),
-                    }
-                });
-
-                {
-                    let mut node_guard = node.lock().await;
-                    if let Some(processor) = node_guard.rbc_processor.take() {
-                        drop(processor);
-                        info!("🛑 RBCProcessor terminated.");
-                    }
+            tokio::spawn(async move {
+                match Command::new("sh").arg("-c").arg(&s3_upload_cmd).spawn() {
+                    Ok(_) => info!("✅ S3 upload triggered."),
+                    Err(e) => error!("❌ S3 upload command failed: {:?}", e),
                 }
+            });
+
+            let mut node_guard = node.lock().await;
+            if let Some(processor) = node_guard.rbc_processor.take() {
+                drop(processor);
+                info!("🛑 RBCProcessor terminated.");
             }
         }
     }

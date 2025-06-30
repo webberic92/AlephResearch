@@ -1,51 +1,15 @@
-use std::{sync::{atomic::Ordering, Arc}, thread::sleep, time::Duration};
-use base64::{ engine::general_purpose, Engine };
-use tokio::{sync::Mutex, time::timeout};
-use tracing::{ error, info };
-use crate::{
-    processors::priority_queue::RBCMessage, structs::{ node::Node, requests::{ PrevoteRequest, ProposeRequest } }, utils::{dag_utils::ensure_dag_round_sync, merkle_utils::verify_merkle_proof}
+use std::{
+    sync::{atomic::Ordering, Arc},
+    thread::sleep,
+    time::Duration,
 };
+use tokio::{sync::Mutex, time::timeout};
+use tracing::error;
 
-/*
-**ch-RBC Proof Validation for `handle_propose`**
---------------------------------------------------
-
-**Step 7:** Upon receiving `propose(h, b_j, s_j)` from `P_s`
-   - This function (`handle_propose`) is invoked upon receiving a `ProposeRequest` from another node.
-
-**Step 8:** If `received_propose(P_i, r)` then terminate
-   - The proposal tracker is checked to ensure no duplicate proposals from the same sender (`P_s`) in the same round (`r`).
-   - If a duplicate exists, the function returns early.
-
-**Step 9:** If `check_size(s_j)` then
-   - The function `check_size(&decoded_shards)` validates the shard sizes.
-   - If the size is invalid, the function returns early.
-
-**Step 20:** Wait until `D_i` reaches round `r−1`
-   - The function `ensure_dag_round_sync(node.clone(), round_id).await?` ensures that the DAG is synchronized to `r-1` before proceeding.
-
-**Step 11:** Multicast `prevote(h, b_j, s_j)` to all nodes
-   - If enough proposals are received (`proposal_count >= required_proposals`), all `prevote` messages are aggregated into a single request and multicast to all nodes.
-
-**Step 12:** `received_propose(P_i, r) = True`
-   - The proposal is stored in `proposal_tracker` using `update_proposal_tracker()`, ensuring that the proposal is marked as received.
-
-**Step 13:** Confirm proposal handling
-   - Log that the proposal was successfully handled.
-*/
-
-// Step 7: Upon receiving `propose(h, b_j, s_j)` from `P_s`
-// - This function `handle_propose` is called when a proposal message is received.
-
-/*
-**ch-RBC Proof Validation for `handle_propose`**
---------------------------------------------------
-Handles proposals containing multiple transactions in a single request.
-Each transaction has:
-  - Merkle root
-  - Proofs
-  - Encoded shards
-*/
+use crate::{
+    processors::priority_queue::RBCMessage,
+    structs::{node::Node, requests::{PrevoteRequest, ProposeRequest}},
+};
 
 pub async fn handle_propose(
     node: Arc<Mutex<Node>>,
@@ -53,105 +17,34 @@ pub async fn handle_propose(
 ) -> Result<(), String> {
     let round_id = propose_request.base.round_id;
     let proposer_id = propose_request.base.proposing_node_id as usize;
-    let node_id;
-    let local_client = reqwest::Client::builder()
-    .pool_max_idle_per_host(64)
-    .tcp_keepalive(Some(std::time::Duration::from_secs(60)))
-    .build()
-    .expect("Failed to build HTTP client");
+
+    // Early skip if already seen this proposal
     {
         let node_guard = node.lock().await;
-        node_id = node_guard.id;
-
         let proposal_tracker = node_guard.proposal_tracker.lock().await;
         if let Some(round_proposals) = proposal_tracker.get(&round_id) {
             if round_proposals.contains_key(&proposer_id) {
-                info!(
-                    "Node {}: Already received proposal for round {} from proposer {}. Ignoring duplicate.",
-                    node_id, round_id, proposer_id
-                );
                 return Ok(());
             }
         }
-    }
 
-    {
-        let node_guard = node.lock().await;
-        let tracker = node_guard.proposal_tracker.lock().await;
-        if let Some(round_map) = tracker.get(&round_id) {
-            let quorum_threshold = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+        let quorum_threshold = node_guard.total_nodes - node_guard.get_fault_tolerance_threshold();
+        if let Some(round_map) = proposal_tracker.get(&round_id) {
             if round_map.len() >= quorum_threshold {
-                info!(
-                    "Node {}: Quorum already reached for round {}. Dropping proposal from node {}.",
-                    node_id, round_id, proposer_id
-                );
                 return Ok(());
             }
         }
     }
 
-    ensure_dag_round_sync(node.clone(), round_id).await?;
-
+    // Register proposal and check quorum
     let (proposal_count, quorum_threshold, stored_proposals) =
-        Node::update_proposal_tracker(node.clone(), propose_request.clone()).await?;
+        Node::update_proposal_tracker(node.clone(), propose_request).await?;
 
     if proposal_count < quorum_threshold {
         return Ok(());
     }
 
-    if propose_request.batch_proofs.len() != propose_request.transactions.len() {
-        return Err(format!(
-            "Node {}: batch_proofs length ({}) does not match transactions length ({})",
-            node_id,
-            propose_request.batch_proofs.len(),
-            propose_request.transactions.len()
-        ));
-    }
-
-    for (i, tx) in propose_request.transactions.iter().enumerate() {
-        let proof = &propose_request.batch_proofs[i];
-        let root = &propose_request.batch_root;
-
-        if tx.root.len() != 32 {
-            return Err(format!(
-                "Node {}: Invalid tx root length at index {}: expected 32, got {}",
-                node_id, i, tx.root.len()
-            ));
-        }
-
-        let encoded_shard = tx.shards.first().unwrap_or(&String::new()).to_owned();
-        let decoded_shard = general_purpose::STANDARD
-            .decode(encoded_shard.as_bytes())
-            .map_err(|e| format!("Node {}: Failed to decode base64 shard at tx {}: {:?}", node_id, i, e))?;
-
-        let (transaction_size, data_shards) = {
-            let node_guard = node.lock().await;
-            (node_guard.transaction_size, node_guard.data_shards)
-        };
-
-        let expected_shard_size = (transaction_size + data_shards - 1) / data_shards;
-
-        if decoded_shard.len() != expected_shard_size {
-            return Err(format!(
-                "Node {}: Transaction {} decoded shard size mismatch. Expected {} bytes ({} / {}), got {} bytes.",
-                node_id, i, expected_shard_size, transaction_size, data_shards, decoded_shard.len()
-            ));
-        }
-
-        let valid = verify_merkle_proof(&tx.root, proof, root, i);
-        if !valid {
-            return Err(format!(
-                "Node {}: Invalid Merkle proof for tx {}. tx.root = {:x?}, Proof = {:?}, Expected root = {:x?}",
-                node_id, i, tx.root, proof, root
-            ));
-        }
-    }
-
-    info!(
-        "Node {}: Proposal quorum met. Aggregating and multicasting prevote for {} proposals.",
-        node_id, stored_proposals.len()
-    );
-
+    // PrevoteRequest after quorum
     let prevote_request = {
         let node_guard = node.lock().await;
         PrevoteRequest {
@@ -161,53 +54,43 @@ pub async fn handle_propose(
         }
     };
 
-    let (node_ip, node_list) = {
+    let (node_ip, node_id, node_list) = {
         let node_guard = node.lock().await;
-        (node_guard.ip_address.clone(), node_guard.nodes.clone())
+        (node_guard.ip_address.clone(), node_guard.id, node_guard.nodes.clone())
     };
 
-    info!("Node {}: Multicasting prevote to all nodes...", node_id);
+    let client = reqwest::Client::builder()
+        .pool_max_idle_per_host(64)
+        .tcp_keepalive(Some(Duration::from_secs(60)))
+        .build()
+        .expect("HTTP client build failed");
 
-    for target_node in node_list {
-        if target_node != node_ip {
-            let url = format!("http://{}/prevote", target_node);
-            let mut attempt = 0;
+    for target in node_list {
+        if target != node_ip {
+            let url = format!("http://{}/prevote", target);
+            let mut attempts = 0;
             let max_attempts = 3;
-            let send_timeout = Duration::from_secs(3);
+            let timeout_duration = Duration::from_secs(3);
             let mut success = false;
 
-            while attempt < max_attempts {
-                attempt += 1;
-                info!("\u{1f4e4} Attempt {}/{}: Node {} sending prevote to {} for round {}",
-                      attempt, max_attempts, node_id, url, round_id);
+            while attempts < max_attempts {
+                attempts += 1;
+                let send_fut = client.post(&url).json(&prevote_request).send();
 
-                let send_fut = local_client.post(&url).json(&prevote_request).send();
-
-                match timeout(send_timeout, send_fut).await {
+                match timeout(timeout_duration, send_fut).await {
                     Ok(Ok(resp)) if resp.status().is_success() => {
-                        info!("\u{2705} Node {}: Prevote success to {}", node_id, url);
                         success = true;
                         break;
                     }
-                    Ok(Ok(resp)) => {
-                        let status = resp.status();
-                        let body = resp.text().await.unwrap_or_else(|_| "No response".to_string());
-                        error!("Node {}: Prevote failed to {}. Status: {}, Body: {}", node_id, url, status, body);
-                    }
-                    Ok(Err(e)) => {
-                        error!("Node {}: Network error sending prevote to {}: {:?}", node_id, url, e);
-                    }
-                    Err(_) => {
-                        error!("Node {}: Timeout sending prevote to {}", node_id, url);
+                    _ => {
+                        let delay = 100 * 2u64.pow((attempts - 1) as u32);
+                        sleep(Duration::from_millis(delay));
                     }
                 }
-
-                let delay = 100 * 2u64.pow((attempt - 1) as u32);
-                sleep(Duration::from_millis(delay));
             }
 
             if !success {
-                error!("Node {}: Final failure sending prevote to {} after {} attempts", node_id, url, max_attempts);
+                error!("Node {}: Failed to send prevote to {} after {} attempts", node_id, url, max_attempts);
             }
 
             node.lock().await.message_count.fetch_add(1, Ordering::Relaxed);
@@ -217,16 +100,12 @@ pub async fn handle_propose(
     {
         let node_guard = node.lock().await;
         if let Some(rbc_processor) = &node_guard.rbc_processor {
-            info!("Node {}: Enqueuing local prevote into RBCProcessor for round {}", node_id, round_id);
-            rbc_processor
-                .enqueue_message(RBCMessage::Prevote(prevote_request))
-                .await;
+            rbc_processor.enqueue_message(RBCMessage::Prevote(prevote_request)).await;
         } else {
-            error!("Node {}: RBCProcessor not initialized for local prevote enqueue!", node_id);
+            error!("Node {}: RBCProcessor not initialized", node_guard.id);
         }
     }
 
     Ok(())
 }
-
 

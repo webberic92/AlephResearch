@@ -1,0 +1,13 @@
+✅ Want it faster?
+
+Here’s what you should do to make the Merkle version fair:
+
+    Add seen_unit_ids or seen_merkle_roots before inserting into DAG.
+
+    Skip any proposal/commit handling once quorum is met — like your RSA version does.
+
+    Move validation to after quorum if not already.
+
+    Minimize .lock().await usage and clone cost inside loops.
+
+Would you like a direct patch for that Merkle handler to make it match the RSA logic?
