@@ -12,15 +12,13 @@ from datetime import datetime
 class TestAleph(Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
-        #RSA
-        INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
-        INSTANCES_NUMBER = 32 # Define the number of instances
-        BATCH_SIZE =  1024#(TX PER BATCH) Define the number of transactions in a batch
+        #MERKLE
+        INSTANCE_TYPE ="t3.medium" # Define the instance type
+        INSTANCES_NUMBER = 5 # Define the number of instances
+        BATCH_SIZE =  5 #(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
-        # SHARD_SIZE = 4
-        # TOTAL_ROUNDS = max(1, BATCH_SIZE // INSTANCES_NUMBER)
-        TOTAL_ROUNDS = 16 # Define the number of rounds
+        TOTAL_ROUNDS = 5 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -195,6 +193,7 @@ class TestAleph(Stack):
                 "echo '' >> /aleph/aleph-node-config.toml",
                 "echo '[node]' >> /aleph/aleph-node-config.toml",
                 f"echo 'id = {i + 1}' >> /aleph/aleph-node-config.toml",
+                f"echo 'instance_type = \"{INSTANCE_TYPE}\"' >> /aleph/aleph-node-config.toml",
                 "cat /aleph/aleph-node-config.toml >> /aleph/logs/node_status"
             )
 

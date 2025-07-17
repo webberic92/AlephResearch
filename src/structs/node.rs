@@ -33,7 +33,8 @@ pub struct Node {
     pub message_count: Arc<AtomicU64>,
     pub hash_to_prime_cache: Arc<Mutex<HashMap<u64, HashMap<String, BigInt>>>>,
     pub proposal_locks: Arc<Mutex<HashSet<u64>>>,
-}
+    pub instance_type: String,
+    }
 
 impl Node {
     pub fn new(
@@ -46,6 +47,7 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
+        instance_type: String,
     ) -> Arc<Mutex<Self>> {
         let (event_sender, event_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -68,7 +70,8 @@ impl Node {
             message_count: Arc::new(AtomicU64::new(0)),
             hash_to_prime_cache: Arc::new(Mutex::new(HashMap::new())),
             proposal_locks: Arc::new(Mutex::new(HashSet::new())),
-        }));
+            instance_type,
+            }));
 
         let node_clone = node.clone();
         tokio::spawn(async move {
