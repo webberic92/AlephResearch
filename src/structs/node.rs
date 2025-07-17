@@ -32,6 +32,7 @@ pub struct Node {
     pub message_count: Arc<AtomicU64>,  // ✅ Now an Arc<AtomicU64>, no Mutex needed
     pub shard_aggregator: Arc<Mutex<ShardAggregator>>, // NEW
     pub proposal_locks: Arc<Mutex<HashSet<u64>>>,
+    pub instance_type: String,
     }
 
 impl Node {
@@ -45,6 +46,7 @@ impl Node {
         transaction_size: usize,
         data_shards: usize,
         total_rounds: usize,
+        instance_type: String,
     ) -> Arc<Mutex<Self>> {
         let (event_sender, event_receiver) = mpsc::channel(100);
         let node = Arc::new(Mutex::new(Self {
@@ -67,6 +69,7 @@ impl Node {
             message_count: Arc::new(AtomicU64::new(0)), // ✅ No Mutex required 
             shard_aggregator: Arc::new(Mutex::new(ShardAggregator::new(data_shards, total_nodes))),       
             proposal_locks: Arc::new(Mutex::new(HashSet::new())),
+            instance_type,
             }));
 
         // ✅ Spawn the round manager task, but `rbc_processor` is not set yet

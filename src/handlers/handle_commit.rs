@@ -126,13 +126,14 @@ pub async fn handle_commit(
     }
 
     {
-        let (instances, txs, rounds, id) = {
+        let (instances, txs, rounds, id, instance_type) = {
             let node_guard = node.lock().await;
             (
                 node_guard.total_nodes,
                 node_guard.number_of_transactions,
                 node_guard.total_rounds,
                 node_guard.id,
+                node_guard.instance_type.clone(),
             )
         };
 
@@ -141,7 +142,7 @@ pub async fn handle_commit(
             info!("LATENCY END: {}", Local::now().format("%Y-%m-%d %H:%M:%S"));
 
             let s3_upload_cmd = format!(
-                r#"(S3_FOLDER="logs/ORIG_N{instances}_T{txs}_R{rounds}/node-{id}" && \
+                r#"(S3_FOLDER="logs/{instance_type}_ORIG_N{instances}_T{txs}_R{rounds}/node-{id}" && \
                 aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
             );
 

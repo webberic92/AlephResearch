@@ -34,6 +34,7 @@ async fn main() -> Result<()> {
         config.consensus.transaction_size.clone(),
         config.consensus.data_shards.clone(),
         config.consensus.total_rounds.clone(),
+        config.node.instance_type.clone(),
     );
 
     // ✅ Step 2: Now that `Node` exists, create `RBCProcessor`

@@ -28,4 +28,5 @@ pub struct ConsensusConfig {
 #[derive(Debug, Deserialize, serde::Serialize)]
 pub struct NodeConfig {
     pub id: usize,
+    pub instance_type: String,
 }

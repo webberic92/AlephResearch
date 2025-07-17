@@ -154,6 +154,7 @@ mod tests {
             256,                              // transaction_size
             3,                                // data_shards ✅ FIXED
             1,
+            "test_instance".into(), // instance_type
         );
     
         // Step 2: Create a full transaction proposal from this node
@@ -195,6 +196,8 @@ mod tests {
             256,                              // transaction_size
             7,                                // data_shards ✅ FIXED
             1,
+            "test_instance".into(), // instance_type
+
         );
     
         // Step 2: Create a full transaction proposal from this node
@@ -291,6 +294,8 @@ mod tests {
                 256,
                 3,
                 1,
+                "test_instance".into(), // instance_type
+
             );
 
             // === Round 1: Insert initial unit ===
@@ -357,6 +362,8 @@ mod tests {
                 256,
                 2,
                 2,
+                "test_instance".into(), // instance_type
+
             );
         
             {
@@ -432,6 +439,8 @@ async fn test_get_all_parents_accumulates_units_across_rounds() {
         250,
         2,
         1,
+        "test_instance".into(), // instance_type
+
     );
 
     // Insert 1 unit in round 1
