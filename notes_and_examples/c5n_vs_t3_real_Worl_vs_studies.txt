@@ -1,0 +1,80 @@
+Excellent follow-up. You're right to ask whether `c5n.xlarge` is representative of a *typical* blockchain node — especially in a permissionless, decentralized network.
+
+---
+
+## ✅ Is `c5n.xlarge` a Good Example?
+
+### `c5n.xlarge` Specs:
+
+* **vCPUs**: 4
+* **RAM**: 10.5 GiB
+* **Network**: Up to 25 Gbps (enhanced networking)
+* **Use case**: High-throughput compute tasks
+
+### ✅ Why It’s Good for Benchmarking:
+
+* Lets you **test peak performance ceiling**
+* Useful for **stress testing** heavy transaction batches (like 1024 × 250B)
+* Great for evaluating protocol **scalability and optimization**
+
+### ⚠️ Why It’s *Not* Representative of Typical Nodes:
+
+* It's **better than what most real blockchain nodes use**
+* Most nodes (especially in permissionless settings) run on:
+
+  * Less CPU (2 vCPUs or fewer)
+  * Less RAM (2–8 GB)
+  * Lower IOPS and bandwidth
+
+---
+
+## 🔎 Real-World Blockchain Node Specs
+
+| Blockchain     | Node Type        | Typical Specs           | Notes                                      |
+| -------------- | ---------------- | ----------------------- | ------------------------------------------ |
+| **Ethereum**   | Full Node (Geth) | 2–4 vCPU, 8–16 GB RAM   | High disk usage for full sync              |
+| **Bitcoin**    | Full Node (Core) | 1–2 vCPU, 2–8 GB RAM    | Modest RAM; needs SSD                      |
+| **Solana**     | Validator        | 12–16 vCPU, 128+ GB RAM | Exceptionally high due to PoH + throughput |
+| **Polkadot**   | Validator        | 4–8 vCPU, 8–32 GB RAM   | Higher RAM for WASM execution              |
+| **Cosmos**     | Validator        | 2–4 vCPU, 4–16 GB RAM   | Mid-tier machines OK                       |
+| **Tezos**      | Baking Node      | 2 vCPU, 8 GB RAM        | Modest RAM, active disk usage              |
+| **Aleph Zero** | Authority Node   | 2–4 vCPU, 8–16 GB RAM   | Similar to Geth setup                      |
+
+---
+
+## 🧠 Implications for Your Work
+
+### If your goal is:
+
+* 🧪 **Protocol ceiling / optimization potential** → ✅ `c5n.xlarge` is **ideal**
+* 🌍 **Real-world realism / cost-effectiveness** → ❌ `c5n.xlarge` is **too powerful**
+* ⚖️ **Benchmarking RSA vs Merkle** → ✅ Good for fairness **if** both get equal resources
+
+---
+
+## 🔁 Recommendation
+
+### Use `c5n.xlarge` for:
+
+* Measuring **peak TPS**
+* Stress-testing large batches (e.g. 1024 txs)
+* Comparing protocol *scaling* limits
+
+### Use `t3.medium` or `t3.large` for:
+
+* Testing **realistic node constraints**
+* Showing **where Merkle fails and RSA survives**
+* Simulating public blockchain deployments
+
+---
+
+## ✅ Final Verdict
+
+| Metric                      | `c5n.xlarge` Role                                    |
+| --------------------------- | ---------------------------------------------------- |
+| Benchmarking fairness       | ✅ Yes (if all protocols get same)                    |
+| Real-world decentralization | ❌ No — too much RAM/CPU                              |
+| Stress testing scalability  | ✅ Ideal for performance eval                         |
+| Publication value           | ✅ Good to show both `t3.medium` **and** `c5n.xlarge` |
+
+Let me know if you want a comparison figure or write-up section for your paper using this analysis.
