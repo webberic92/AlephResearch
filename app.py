@@ -15,10 +15,10 @@ class TestAleph(Stack):
         #MERKLE
         INSTANCE_TYPE ="t3.medium" # Define the instance type
         INSTANCES_NUMBER = 5 # Define the number of instances
-        BATCH_SIZE =  5 #(TX PER BATCH) Define the number of transactions in a batch
+        BATCH_SIZE =  128 #(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
-        TOTAL_ROUNDS = 5 # Define the number of rounds
+        TOTAL_ROUNDS = 16 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack

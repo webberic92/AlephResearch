@@ -29,7 +29,7 @@ mod accumulator_tests {
     }
     #[tokio::test]
     async fn test_valid_batch_accumulator_verification() {
-        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
         let proposal = create_transaction_data(node).await.unwrap();
     
         // Collect ALL shard hashes from ALL transactions
@@ -61,7 +61,7 @@ mod accumulator_tests {
 
     #[tokio::test]
     async fn test_invalid_proof_fails() {
-        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
         let proposal = create_transaction_data(node).await.unwrap();
         let tx = &proposal.transactions[0];
 
@@ -77,8 +77,8 @@ mod accumulator_tests {
 
     #[tokio::test]
     async fn test_propose_to_prevote_batch_accumulator_validation_with_digest() {
-        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
+        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
+        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
 
         let proposal = create_transaction_data(proposer.clone()).await.unwrap();
         let result = handle_propose::handle_propose(verifier.clone(), proposal.clone()).await;
@@ -101,8 +101,8 @@ mod accumulator_tests {
 
     #[tokio::test]
     async fn test_batch_accumulator_invalid_should_fail() {
-        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
+        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
+        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
 
         let proposal = create_transaction_data(proposer.clone()).await.unwrap();
         let proposals = vec![proposal.clone()];
@@ -130,8 +130,8 @@ mod accumulator_tests {
 
     #[tokio::test]
     async fn test_proposal_digest_mismatch_should_fail() {
-        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
-        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1);
+        let proposer = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
+        let verifier = Node::new(1, 5, "127.0.0.1:8081".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
 
         let proposal = create_transaction_data(proposer.clone()).await.unwrap();
         let proposals = vec![proposal.clone()];
@@ -152,7 +152,7 @@ mod accumulator_tests {
 
     #[tokio::test]
     async fn test_memoized_hash_to_prime_integration() {
-        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1);
+        let node = Node::new(0, 5, "127.0.0.1:8080".into(), vec![], "".into(), 2, 256, 4, 1, "".into());
         let proposal = create_transaction_data(node).await.unwrap();
         let tx = &proposal.transactions[0];
         let shard_hashes = &tx.shard_hashes;
