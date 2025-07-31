@@ -150,7 +150,7 @@ pub async fn handle_commit(
 
                 let s3_upload_cmd = format!(
                     r#"(S3_FOLDER="logs/{instance_type}_RSA_N{instances}_T{txs}_R{rounds}/node-{id}" && \
-                    aws s3 cp /aleph/logs/ s3://aleph-research/$S3_FOLDER/ --recursive --quiet) &"#,
+                    aws s3 cp /aleph/logs/ s3://aleph-research/2048_RSA/$S3_FOLDER/ --recursive --quiet) &"#,
                 );
 
                 tokio::spawn(async move {
