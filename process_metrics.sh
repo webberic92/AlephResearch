@@ -3,7 +3,7 @@
 # Settings
 BUCKET_NAME="aleph-research"
 DEST_DIR="/tmp/buckets"
-SCRIPT_DIR="/home/webby/AlephResearch/logs/test"
+SCRIPT_DIR="/home/webbrico/backup2025/AlephResearch/logs/test"
 
 # Ensure destination exists
 mkdir -p "$DEST_DIR"
@@ -30,7 +30,7 @@ for folder in $folders; do
 
     # Rename the output if it exists
     if [[ -f "final_metrics_report.txt" ]]; then
-        if [[ "$folder_name" =~ ([a-z0-9.]+)_RSA_N([0-9]+)_T([0-9]+)_R([0-9]+) ]]; then
+        if [[ "$folder_name" =~ ([a-z0-9.]+)_RSA_([0-9]+)nodes_([0-9]+)txpb_([0-9]+)rounds ]]; then
             instance="${BASH_REMATCH[1]}"
             nodes="${BASH_REMATCH[2]}"
             txpb="${BASH_REMATCH[3]}"
