@@ -1,4 +1,5 @@
 #!/bin/bash
+export AWS_PROFILE=aleph
 
 # Define variables
 TARGET="x86_64-unknown-linux-musl"
