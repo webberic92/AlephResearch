@@ -16,11 +16,11 @@ class TestAleph(cdk.Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         INSTANCE_TYPE ="t3.medium" # Define the instance type
-        INSTANCES_NUMBER = 8 # Define the number of instances
-        BATCH_SIZE =  8 #(TX PER BATCH) Define the number of transactions in a batch
+        INSTANCES_NUMBER = 5 # Define the number of instances
+        BATCH_SIZE =  5 #(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
-        TOTAL_ROUNDS = 8 # Define the number of rounds
+        TOTAL_ROUNDS = 5 # Define the number of rounds
         unique_id = datetime.now().strftime("%Y%m%d%H%M")
 
         # Create a VPC within the scope of this Stack
@@ -79,7 +79,11 @@ class TestAleph(cdk.Stack):
             ec2_instance.user_data.add_commands(
                 # System updates and tools
                 "sudo yum update -y",
-                "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli",
+                "sudo yum install -y gcc wget tar make bison git jq python3 awslogs amazon-ssm-agent aws-cli sysstat",
+
+                # Enable sysstat collection
+                "sudo systemctl enable sysstat",
+                "sudo systemctl start sysstat"
 
                 # Increase max number of incoming connections
                 "echo 'net.core.somaxconn=65535' >> /etc/sysctl.conf",
