@@ -1,47 +1,59 @@
 #!/bin/bash
 
-# Settings
-BUCKET_NAME="aleph-research"
-DEST_DIR="/tmp/buckets"
-SCRIPT_DIR="/home/webbrico/backup2025/AlephResearch/logs/test"
+echo "🖥️  Resource Utilization per Node (Average)"
+echo "---------------------------------------------------------"
+printf "%-40s %-15s %-15s\n" "Node" "CPU Util (%)" "Mem Util (%)"
+echo "---------------------------------------------------------"
 
-# Ensure destination exists
-mkdir -p "$DEST_DIR"
+total_cpu=0
+total_mem=0
+node_count=0
 
-# Find only log folders matching the test naming pattern
-folders=$(aws s3 ls "s3://$BUCKET_NAME/2048_RSA/logs/" | awk '/PRE/ {print $2}' | grep 'RSA_N')
+for node_path in node-*/; do
+    cpu_file="${node_path}/cpu_usage"
+    mem_file="${node_path}/mem_usage"
 
-# Loop through matching folders
-for folder in $folders; do
-    folder_name="${folder%/}"  # remove trailing slash
-    echo "Processing: $folder_name"
+    if [[ -f "$cpu_file" && -f "$mem_file" ]]; then
+        # CPU: extract user + system + steal
+        cpu_sum=$(cat "$cpu_file" | sed $'s/\\r$//; s/[[:space:]]\\{1,\\}/ /g' | awk '
+            $2 == "all" && $1 ~ /^[0-9]{2}:[0-9]{2}:[0-9]{2}$/ {
+                sum += $3 + $5 + $6;
+                count++;
+            }
+            END {
+                if (count > 0) printf "%.2f", sum / count;
+                else print 0;
+            }
+        ')
 
-    # Local path to copy to
-    LOCAL_PATH="$DEST_DIR/$folder_name"
-    mkdir -p "$LOCAL_PATH"
+        # MEM: extract %memused from 3rd column
+        mem_sum=$(cat "$mem_file" | sed $'s/\\r$//; s/[[:space:]]\\{1,\\}/ /g' | awk '
+            $1 ~ /^[0-9]{2}:[0-9]{2}:[0-9]{2}$/ && $3 ~ /^[0-9.]+$/ {
+                sum += $3;
+                count++;
+            }
+            END {
+                if (count > 0) printf "%.2f", sum / count;
+                else print 0;
+            }
+        ')
 
-    # Copy S3 folder recursively
-    aws s3 cp "s3://$BUCKET_NAME/2048_RSA/logs/$folder_name/" "$LOCAL_PATH" --recursive
+        printf "%-40s %-15s %-15s\n" "$node_path" "$cpu_sum" "$mem_sum"
 
-    # Run the report script inside copied folder, using full path to the original tools
-    cp "$SCRIPT_DIR"/*.sh "$LOCAL_PATH"
-    cd "$LOCAL_PATH" || continue
-    bash ./generateReport.sh
-
-    # Rename the output if it exists
-    if [[ -f "final_metrics_report.txt" ]]; then
-        if [[ "$folder_name" =~ ([a-z0-9.]+)_RSA_([0-9]+)nodes_([0-9]+)txpb_([0-9]+)rounds ]]; then
-            instance="${BASH_REMATCH[1]}"
-            nodes="${BASH_REMATCH[2]}"
-            txpb="${BASH_REMATCH[3]}"
-            rounds="${BASH_REMATCH[4]}"
-            new_name="${instance}_${nodes}nodes_${txpb}txpb_rounds${rounds}_RSA.txt"
-            mv final_metrics_report.txt "$new_name"
-            echo "✅ Renamed to: $new_name"
-        else
-            echo "⚠️ Could not parse naming from $folder_name"
-        fi
+        total_cpu=$(echo "$total_cpu + $cpu_sum" | bc -l)
+        total_mem=$(echo "$total_mem + $mem_sum" | bc -l)
+        node_count=$((node_count + 1))
     else
-        echo "⚠️ No report generated in $folder_name"
+        printf "%-40s ⚠️ Missing cpu_usage or mem_usage\n" "$node_path"
     fi
 done
+
+if [[ $node_count -gt 0 ]]; then
+    avg_cpu=$(echo "scale=2; $total_cpu / $node_count" | bc)
+    avg_mem=$(echo "scale=2; $total_mem / $node_count" | bc)
+    echo "---------------------------------------------------------"
+    printf "📊 Average CPU Utilization across %d nodes: %.2f%%\n" "$node_count" "$avg_cpu"
+    printf "📊 Average Memory Utilization across %d nodes: %.2f%%\n" "$node_count" "$avg_mem"
+else
+    echo "❌ No valid resource usage files found."
+fi
