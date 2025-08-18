@@ -16,8 +16,8 @@ class TestAleph(cdk.Stack):
     def __init__(self, scope: Construct, id: str, **kwargs) -> None:
         super().__init__(scope, id, **kwargs)
         INSTANCE_TYPE ="c5n.xlarge" # Define the instance type
-        INSTANCES_NUMBER = 12 # Define the number of instances
-        BATCH_SIZE =  512 #(TX PER BATCH) Define the number of transactions in a batch
+        INSTANCES_NUMBER = 8 # Define the number of instances
+        BATCH_SIZE =  1024 #(TX PER BATCH) Define the number of transactions in a batch
         TRANSACTION_SIZE = 256 #Bytes how many bytes per transaction
         SHARD_SIZE = max(1, min(BATCH_SIZE, INSTANCES_NUMBER - INSTANCES_NUMBER // 3))
         TOTAL_ROUNDS = 16 # Define the number of rounds
