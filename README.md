@@ -75,6 +75,9 @@ After setting up python, AWS CDK, AWS credentials
 You can configure app.py for your scenario. (Nodes, Transactions, and rounds)
 It should be as easy as running 
    ```bash
+build.sh
 cdk deploy
+(once its done, copy logs from AWS to local machine.)
+logs_scripts/generateReport.sh
    ```
 
