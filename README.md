@@ -1,5 +1,5 @@
 ## Configure using app.py
-You can set nodes, transactions, instance type, and rounds in there.
+- You can set nodes, transactions, instance type, and rounds in there.
 
 ## How To Compile
 
@@ -14,4 +14,5 @@ You can set nodes, transactions, instance type, and rounds in there.
 ## How to Deploy to AWS
 - cdk deploy
 
-## To gather metrics cp logs to a sandbox area and run logs/generateReport.sh
+## To gather metrics
+- copy logs to a sandbox area and run logs_scripts/generateReport.sh
