@@ -1,3 +1,6 @@
+## Configure using app.py
+You can set nodes, transactions, instance type, and rounds in there.
+
 ## How To Compile
 
 - cargo build --release --target x86_64-unknown-linux-musl
