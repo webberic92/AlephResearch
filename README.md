@@ -65,6 +65,11 @@ Running large-scale experiments requires AWS resources. Before deploying:
 *AlephResearch* explores the efficiency of the Aleph protocol under different configurations, focusing on reducing communication overhead and enhancing scalability. The project involves implementing and comparing the original and modified protocols to assess improvements in transaction throughput, latency, and resource utilization.
 
 
+## Deploying code
+Each branch has a build.sh file.
+This file compiles the rust code and then uploads it to an S3 bucket.
+You will need to set up S3 bucket and be able to run build.sh before running cdk deploy.
+
 ## How to run.
 After setting up python, AWS CDK, AWS credentials
 You can configure app.py for your scenario. (Nodes, Transactions, and rounds)
