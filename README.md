@@ -65,3 +65,11 @@ Running large-scale experiments requires AWS resources. Before deploying:
 *AlephResearch* explores the efficiency of the Aleph protocol under different configurations, focusing on reducing communication overhead and enhancing scalability. The project involves implementing and comparing the original and modified protocols to assess improvements in transaction throughput, latency, and resource utilization.
 
 
+## How to run.
+After setting up python, AWS CDK, AWS credentials
+You can configure app.py for your scenario. (Nodes, Transactions, and rounds)
+It should be as easy as running 
+   ```bash
+cdk deploy
+   ```
+
