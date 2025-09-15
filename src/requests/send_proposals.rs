@@ -3,28 +3,7 @@ use std::{sync:: Arc, time::Duration};
 use tokio::{sync::Mutex, time::{sleep, timeout}};
 use crate::{processors::priority_queue::RBCMessage, structs::{ node::Node, requests::ProposeRequest }};
 use anyhow::anyhow;
-/* 
-**ch-RBC Proof Validation for `send_proposals`**
---------------------------------------------------
 
-1. If `P_i = P_s`, then:
-   - This function is called when a node needs to broadcast its proposal.
-
-2. `{s_j} j∈N ← shares of (f + 1, N)-erasure coding of U`:
-   - The `shards` parameter represents the erasure-coded shares.
-
-3. `h ← Merkle tree root of {s_j} j∈N`:
-   - The function `compute_merkle_root` is used to compute the Merkle root.
-
-4. For each node `j ∈ N`:
-   - A loop iterates over all nodes in `node_read.nodes` to send proposals.
-
-5. `b_i ← Merkle branch of s_j`:
-   - The function `compute_merkle_branch` computes the Merkle branch.
-
-6. `send propose(h, b_j, s_j) to P_j`:
-   - The proposals are sent asynchronously using `reqwest::Client::post`.
-*/
 
 pub async fn send_proposals(
     node: Arc<Mutex<Node>>,
